@@ -102,6 +102,7 @@ typedef struct mbw_window {
   int visible;
   int resizable;
   int decorated;
+  int transparent;
   int window_level;
   mbw_input_event_t *queued_input_events;
   size_t queued_input_events_len;
@@ -2393,6 +2394,7 @@ int mbw_window_create_utf8(
   window->visible = visible ? 1 : 0;
   window->resizable = resizable ? 1 : 0;
   window->decorated = decorated ? 1 : 0;
+  window->transparent = 0;
   window->window_level = MBW_WINDOW_LEVEL_NORMAL;
   window->queued_input_events = NULL;
   window->queued_input_events_len = 0;
@@ -2659,6 +2661,11 @@ bool mbw_window_maximized(int window_id) {
 bool mbw_window_decorated(int window_id) {
   mbw_window_t *window = mbw_find_window(window_id);
   return window ? window->decorated != 0 : false;
+}
+
+bool mbw_window_transparent(int window_id) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  return window ? window->transparent != 0 : false;
 }
 
 int mbw_window_level(int window_id) {
@@ -3442,6 +3449,38 @@ void mbw_window_set_maximized(int window_id, bool maximized) {
         (id)window->window,
         mbw_sel("zoom:"),
         nil);
+    }
+  }
+#endif
+}
+
+void mbw_window_set_transparent(int window_id, bool transparent) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  if (!window) {
+    return;
+  }
+  window->transparent = transparent ? 1 : 0;
+#if defined(__APPLE__)
+  if (window->window) {
+    ((void(*)(id, SEL, mbw_bool_t))objc_msgSend)(
+      (id)window->window,
+      mbw_sel("setOpaque:"),
+      window->transparent ? NO : YES);
+    Class ns_color_class = objc_getClass("NSColor");
+    if (ns_color_class) {
+      id background_color = window->transparent
+        ? ((id(*)(id, SEL))objc_msgSend)(
+            (id)ns_color_class,
+            mbw_sel("clearColor"))
+        : ((id(*)(id, SEL))objc_msgSend)(
+            (id)ns_color_class,
+            mbw_sel("windowBackgroundColor"));
+      if (background_color) {
+        ((void(*)(id, SEL, id))objc_msgSend)(
+          (id)window->window,
+          mbw_sel("setBackgroundColor:"),
+          background_color);
+      }
     }
   }
 #endif

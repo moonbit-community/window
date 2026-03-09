@@ -115,6 +115,16 @@ pub fn Window::is_decorated(self : Window) -> Bool {
 }
 
 ///|
+pub fn Window::set_transparent(self : Window, transparent : Bool) -> Unit {
+  set_window_transparent(self.id.into_raw(), transparent)
+}
+
+///|
+pub fn Window::is_transparent(self : Window) -> Bool {
+  window_transparent(self.id.into_raw())
+}
+
+///|
 pub fn Window::set_window_level(
   self : Window,
   level : @core.WindowLevel,
@@ -510,6 +520,7 @@ pub fn EventLoop::create_window(
   guard raw_id > 0 else { abort("failed to create macos window") }
   set_ime_purpose(raw_id, ime_purpose_to_native(attributes.ime_purpose()))
   set_window_level(raw_id, window_level_to_native(attributes.window_level()))
+  set_window_transparent(raw_id, attributes.transparent())
   if attributes.maximized() {
     set_window_maximized(raw_id, true)
   }

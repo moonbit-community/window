@@ -261,6 +261,13 @@ struct AttributesMaximizedApp {
 }
 
 ///|
+struct WindowTransparentApp {
+  transparent_after_disable : Ref[Bool]
+  transparent_after_enable : Ref[Bool]
+  transparent_initial : Ref[Bool]
+}
+
+///|
 struct MovedApp {
   moved : Ref[@dpi.PhysicalPosition?]
 }
@@ -505,6 +512,22 @@ impl ApplicationHandler for AttributesMaximizedApp with can_create_surfaces(
     @core.WindowAttributes::default().with_visible(false).with_maximized(true),
   )
   self.maximized.val = window.is_maximized()
+  event_loop.exit()
+}
+
+///|
+impl ApplicationHandler for WindowTransparentApp with can_create_surfaces(
+  self,
+  event_loop,
+) {
+  let window = event_loop.create_window(
+    @core.WindowAttributes::default().with_visible(false).with_transparent(true),
+  )
+  self.transparent_initial.val = window.is_transparent()
+  window.set_transparent(false)
+  self.transparent_after_disable.val = window.is_transparent()
+  window.set_transparent(true)
+  self.transparent_after_enable.val = window.is_transparent()
   event_loop.exit()
 }
 
@@ -1319,6 +1342,23 @@ test "window attributes maximized applies at creation time" {
   let app : AttributesMaximizedApp = { maximized, }
   event_loop.run_app(app)
   assert_true(maximized.val)
+}
+
+///|
+test "window transparency can be configured at create and runtime" {
+  let event_loop = EventLoop::new()
+  let transparent_initial = Ref::new(false)
+  let transparent_after_disable = Ref::new(true)
+  let transparent_after_enable = Ref::new(false)
+  let app : WindowTransparentApp = {
+    transparent_after_disable,
+    transparent_after_enable,
+    transparent_initial,
+  }
+  event_loop.run_app(app)
+  assert_true(transparent_initial.val)
+  assert_false(transparent_after_disable.val)
+  assert_true(transparent_after_enable.val)
 }
 
 ///|

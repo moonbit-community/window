@@ -43,6 +43,7 @@ pub struct WindowAttributes {
   priv mut min_surface_size : @dpi.PhysicalSize?
   priv mut position : @dpi.PhysicalPosition?
   priv mut surface_size : @dpi.PhysicalSize?
+  priv mut transparent : Bool
   priv mut resizable : Bool
   priv mut title : String
   priv mut visible : Bool
@@ -60,6 +61,7 @@ pub fn WindowAttributes::default() -> WindowAttributes {
     max_surface_size: None,
     position: None,
     surface_size: Some(@dpi.PhysicalSize::new(800, 600)),
+    transparent: false,
     resizable: true,
     title: "winit window",
     visible: true,
@@ -149,6 +151,15 @@ pub fn WindowAttributes::with_maximized(
 }
 
 ///|
+pub fn WindowAttributes::with_transparent(
+  self : WindowAttributes,
+  transparent : Bool,
+) -> WindowAttributes {
+  self.transparent = transparent
+  self
+}
+
+///|
 pub fn WindowAttributes::with_title(
   self : WindowAttributes,
   title : String,
@@ -226,6 +237,11 @@ pub fn WindowAttributes::window_level(self : WindowAttributes) -> WindowLevel {
 ///|
 pub fn WindowAttributes::maximized(self : WindowAttributes) -> Bool {
   self.maximized
+}
+
+///|
+pub fn WindowAttributes::transparent(self : WindowAttributes) -> Bool {
+  self.transparent
 }
 
 ///|

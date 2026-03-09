@@ -74,6 +74,11 @@ fn window_decorated(window_id : Int) -> Bool {
 }
 
 ///|
+fn window_transparent(window_id : Int) -> Bool {
+  native_window_transparent(window_id)
+}
+
+///|
 fn window_level(window_id : Int) -> Int {
   native_window_level(window_id)
 }
@@ -284,6 +289,11 @@ fn set_window_decorations(window_id : Int, decorated : Bool) -> Unit {
 }
 
 ///|
+fn set_window_transparent(window_id : Int, transparent : Bool) -> Unit {
+  native_window_set_transparent(window_id, transparent)
+}
+
+///|
 fn set_window_level(window_id : Int, level : Int) -> Unit {
   native_window_set_window_level(window_id, level)
 }
@@ -436,6 +446,9 @@ extern "C" fn native_window_maximized(window_id : Int) -> Bool = "mbw_window_max
 
 ///|
 extern "C" fn native_window_decorated(window_id : Int) -> Bool = "mbw_window_decorated"
+
+///|
+extern "C" fn native_window_transparent(window_id : Int) -> Bool = "mbw_window_transparent"
 
 ///|
 extern "C" fn native_window_level(window_id : Int) -> Int = "mbw_window_level"
@@ -601,6 +614,12 @@ extern "C" fn native_window_set_decorations(
   window_id : Int,
   decorated : Bool,
 ) -> Unit = "mbw_window_set_decorations"
+
+///|
+extern "C" fn native_window_set_transparent(
+  window_id : Int,
+  transparent : Bool,
+) -> Unit = "mbw_window_set_transparent"
 
 ///|
 extern "C" fn native_window_set_window_level(

@@ -74,6 +74,11 @@ fn window_decorated(_window_id : Int) -> Bool {
 }
 
 ///|
+fn window_transparent(_window_id : Int) -> Bool {
+  false
+}
+
+///|
 fn window_level(_window_id : Int) -> Int {
   0
 }
@@ -280,6 +285,11 @@ fn set_window_maximized(_window_id : Int, _maximized : Bool) -> Unit {
 
 ///|
 fn set_window_decorations(_window_id : Int, _decorated : Bool) -> Unit {
+  ()
+}
+
+///|
+fn set_window_transparent(_window_id : Int, _transparent : Bool) -> Unit {
   ()
 }
 
