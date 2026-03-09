@@ -169,6 +169,16 @@ fn input_event_repeat(_window_id : Int) -> Bool {
 }
 
 ///|
+fn input_event_text_with_all_modifiers(_window_id : Int) -> Bytes {
+  Bytes::make(0, (0 : Int).to_byte())
+}
+
+///|
+fn input_event_text_ignoring_modifiers(_window_id : Int) -> Bytes {
+  Bytes::make(0, (0 : Int).to_byte())
+}
+
+///|
 fn wait_for_events(_timeout_ms : Int) -> Bool {
   false
 }

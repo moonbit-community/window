@@ -144,6 +144,15 @@ fn modifiers_from_native(modifiers : Int) -> @core.Modifiers {
 }
 
 ///|
+fn optional_text_from_native(bytes : Bytes) -> String? {
+  if bytes.length() == 0 {
+    None
+  } else {
+    Some(@utf8.decode_lossy(bytes[:], ignore_bom=false))
+  }
+}
+
+///|
 fn[A : ApplicationHandler] EventLoop::dispatch_input_events(
   self : EventLoop,
   app : A,
@@ -239,6 +248,12 @@ fn[A : ApplicationHandler] EventLoop::dispatch_input_events(
                   state,
                   input_event_repeat(raw_id),
                   modifiers_from_native(input_event_modifiers(raw_id)),
+                  optional_text_from_native(
+                    input_event_text_with_all_modifiers(raw_id),
+                  ),
+                  optional_text_from_native(
+                    input_event_text_ignoring_modifiers(raw_id),
+                  ),
                 ),
                 false,
               ),

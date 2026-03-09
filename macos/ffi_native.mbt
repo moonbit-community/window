@@ -169,6 +169,16 @@ fn input_event_repeat(window_id : Int) -> Bool {
 }
 
 ///|
+fn input_event_text_with_all_modifiers(window_id : Int) -> Bytes {
+  native_window_input_event_text_with_all_modifiers(window_id)
+}
+
+///|
+fn input_event_text_ignoring_modifiers(window_id : Int) -> Bytes {
+  native_window_input_event_text_ignoring_modifiers(window_id)
+}
+
+///|
 fn wait_for_events(timeout_ms : Int) -> Bool {
   native_event_loop_wait_millis(timeout_ms)
 }
@@ -356,6 +366,16 @@ extern "C" fn native_window_input_event_scancode(window_id : Int) -> Int = "mbw_
 
 ///|
 extern "C" fn native_window_input_event_repeat(window_id : Int) -> Bool = "mbw_window_input_event_repeat"
+
+///|
+extern "C" fn native_window_input_event_text_with_all_modifiers(
+  window_id : Int,
+) -> Bytes = "mbw_window_input_event_text_with_all_modifiers"
+
+///|
+extern "C" fn native_window_input_event_text_ignoring_modifiers(
+  window_id : Int,
+) -> Bytes = "mbw_window_input_event_text_ignoring_modifiers"
 
 ///|
 pub extern "C" fn native_window_take_surface_resized(window_id : Int) -> Bool = "mbw_window_take_surface_resized"

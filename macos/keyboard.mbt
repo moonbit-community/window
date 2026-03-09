@@ -379,9 +379,26 @@ fn shifted_char(scancode : Int) -> String? {
 }
 
 ///|
+fn normalized_native_text(text : String?) -> String? {
+  match text {
+    Some(text) => if text.length() == 0 { None } else { Some(text) }
+    None => None
+  }
+}
+
+///|
+fn key_from_native_text(text : String?) -> @core.Key? {
+  match normalized_native_text(text) {
+    Some(text) => Some(@core.Key::Character(text))
+    None => None
+  }
+}
+
+///|
 fn key_without_modifiers_from_scancode(
   scancode : Int,
   physical_key : @core.PhysicalKey,
+  text_ignoring_modifiers : String?,
 ) -> @core.Key {
   match physical_key {
     @core.PhysicalKey::Code(@core.KeyCode::Space) => @core.Key::Character(" ")
@@ -389,15 +406,26 @@ fn key_without_modifiers_from_scancode(
       match named_key_from_code(code) {
         Some(named) => @core.Key::Named(named)
         None =>
-          match key_without_modifiers_char(scancode) {
-            Some(character) => @core.Key::Character(character)
-            None => @core.Key::Unidentified(@core.NativeKey::MacOS(scancode))
+          match key_from_native_text(text_ignoring_modifiers) {
+            Some(key) => key
+            None =>
+              match key_without_modifiers_char(scancode) {
+                Some(character) => @core.Key::Character(character)
+                None =>
+                  @core.Key::Unidentified(@core.NativeKey::MacOS(scancode))
+              }
           }
       }
     @core.PhysicalKey::Unidentified(@core.NativeKeyCode::MacOS(code)) =>
-      @core.Key::Unidentified(@core.NativeKey::MacOS(code))
+      match key_from_native_text(text_ignoring_modifiers) {
+        Some(key) => key
+        None => @core.Key::Unidentified(@core.NativeKey::MacOS(code))
+      }
     @core.PhysicalKey::Unidentified(_) =>
-      @core.Key::Unidentified(@core.NativeKey::Unidentified)
+      match key_from_native_text(text_ignoring_modifiers) {
+        Some(key) => key
+        None => @core.Key::Unidentified(@core.NativeKey::Unidentified)
+      }
   }
 }
 
@@ -406,28 +434,74 @@ fn logical_key_from_scancode(
   scancode : Int,
   physical_key : @core.PhysicalKey,
   modifiers : @core.Modifiers,
+  key_without_modifiers : @core.Key,
+  text_with_all_modifiers : String?,
+  text_ignoring_modifiers : String?,
 ) -> @core.Key {
   match physical_key {
     @core.PhysicalKey::Code(@core.KeyCode::Space) => @core.Key::Character(" ")
     @core.PhysicalKey::Code(code) =>
       match named_key_from_code(code) {
         Some(named) => @core.Key::Named(named)
-        None => {
-          let character = if modifiers.shift_key() {
-            shifted_char(scancode)
+        None =>
+          if modifiers.control_key() || modifiers.meta_key() {
+            match key_from_native_text(text_ignoring_modifiers) {
+              Some(key) => key
+              None => key_without_modifiers
+            }
           } else {
-            key_without_modifiers_char(scancode)
+            match key_from_native_text(text_with_all_modifiers) {
+              Some(key) => key
+              None =>
+                match key_from_native_text(text_ignoring_modifiers) {
+                  Some(key) => key
+                  None => {
+                    let fallback_character = if modifiers.shift_key() {
+                      shifted_char(scancode)
+                    } else {
+                      key_without_modifiers_char(scancode)
+                    }
+                    match fallback_character {
+                      Some(character) => @core.Key::Character(character)
+                      None => key_without_modifiers
+                    }
+                  }
+                }
+            }
           }
-          match character {
-            Some(character) => @core.Key::Character(character)
-            None => @core.Key::Unidentified(@core.NativeKey::MacOS(scancode))
-          }
-        }
       }
     @core.PhysicalKey::Unidentified(@core.NativeKeyCode::MacOS(code)) =>
-      @core.Key::Unidentified(@core.NativeKey::MacOS(code))
+      if modifiers.control_key() || modifiers.meta_key() {
+        match key_from_native_text(text_ignoring_modifiers) {
+          Some(key) => key
+          None => @core.Key::Unidentified(@core.NativeKey::MacOS(code))
+        }
+      } else {
+        match key_from_native_text(text_with_all_modifiers) {
+          Some(key) => key
+          None =>
+            match key_from_native_text(text_ignoring_modifiers) {
+              Some(key) => key
+              None => @core.Key::Unidentified(@core.NativeKey::MacOS(code))
+            }
+        }
+      }
     @core.PhysicalKey::Unidentified(_) =>
-      @core.Key::Unidentified(@core.NativeKey::Unidentified)
+      if modifiers.control_key() || modifiers.meta_key() {
+        match key_from_native_text(text_ignoring_modifiers) {
+          Some(key) => key
+          None => key_without_modifiers
+        }
+      } else {
+        match key_from_native_text(text_with_all_modifiers) {
+          Some(key) => key
+          None =>
+            match key_from_native_text(text_ignoring_modifiers) {
+              Some(key) => key
+              None => key_without_modifiers
+            }
+        }
+      }
   }
 }
 
@@ -447,14 +521,33 @@ fn create_key_event(
   state : @core.ElementState,
   repeat : Bool,
   modifiers : @core.Modifiers,
+  text_with_all_modifiers : String?,
+  text_ignoring_modifiers : String?,
 ) -> @core.KeyEvent {
+  let normalized_text_with_all_modifiers = normalized_native_text(
+    text_with_all_modifiers,
+  )
+  let normalized_text_ignoring_modifiers = normalized_native_text(
+    text_ignoring_modifiers,
+  )
   let physical_key = physical_key_from_scancode(scancode)
-  let logical_key = logical_key_from_scancode(scancode, physical_key, modifiers)
   let key_without_modifiers = key_without_modifiers_from_scancode(
-    scancode, physical_key,
+    scancode, physical_key, normalized_text_ignoring_modifiers,
+  )
+  let logical_key = logical_key_from_scancode(
+    scancode, physical_key, modifiers, key_without_modifiers, normalized_text_with_all_modifiers,
+    normalized_text_ignoring_modifiers,
   )
   let text = match state {
     @core.ElementState::Pressed => key_text(logical_key)
+    @core.ElementState::Released => None
+  }
+  let text_with_all_modifiers = match state {
+    @core.ElementState::Pressed =>
+      match normalized_text_with_all_modifiers {
+        Some(text) => Some(text)
+        None => text
+      }
     @core.ElementState::Released => None
   }
   @core.KeyEvent::new(
@@ -465,6 +558,6 @@ fn create_key_event(
     state,
     repeat,
     text,
-    text,
+    text_with_all_modifiers,
   )
 }

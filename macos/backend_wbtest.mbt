@@ -89,6 +89,20 @@ extern "C" fn queue_keyboard_input_for_test(
 ) -> Unit = "mbw_test_window_queue_keyboard_input"
 
 ///|
+#borrow(text_with_all_modifiers, text_ignoring_modifiers)
+extern "C" fn queue_keyboard_input_with_text_for_test(
+  window_id : Int,
+  scancode : Int,
+  state : Int,
+  repeat : Bool,
+  modifiers : Int,
+  text_with_all_modifiers : Bytes,
+  text_with_all_modifiers_len : Int,
+  text_ignoring_modifiers : Bytes,
+  text_ignoring_modifiers_len : Int,
+) -> Unit = "mbw_test_window_queue_keyboard_input_with_text"
+
+///|
 struct StartCauseApp {
   causes : Array[@core.StartCause]
 }
@@ -214,6 +228,8 @@ struct KeyboardInputApp {
   repeat : Bool
   scancode : Int
   state : Int
+  text_with_all_modifiers : String?
+  text_ignoring_modifiers : String?
 }
 
 ///|
@@ -449,13 +465,36 @@ impl ApplicationHandler for KeyboardInputApp with can_create_surfaces(
   let window = event_loop.create_window(
     @core.WindowAttributes::default().with_visible(false),
   )
-  queue_keyboard_input_for_test(
-    window.id().into_raw(),
-    self.scancode,
-    self.state,
-    self.repeat,
-    self.modifiers,
-  )
+  let text_with_all_modifiers = match self.text_with_all_modifiers {
+    Some(text) => @utf8.encode(text[:], bom=false)
+    None => Bytes::make(0, (0 : Int).to_byte())
+  }
+  let text_ignoring_modifiers = match self.text_ignoring_modifiers {
+    Some(text) => @utf8.encode(text[:], bom=false)
+    None => Bytes::make(0, (0 : Int).to_byte())
+  }
+  if self.text_with_all_modifiers is Some(_) ||
+    self.text_ignoring_modifiers is Some(_) {
+    queue_keyboard_input_with_text_for_test(
+      window.id().into_raw(),
+      self.scancode,
+      self.state,
+      self.repeat,
+      self.modifiers,
+      text_with_all_modifiers,
+      text_with_all_modifiers.length(),
+      text_ignoring_modifiers,
+      text_ignoring_modifiers.length(),
+    )
+  } else {
+    queue_keyboard_input_for_test(
+      window.id().into_raw(),
+      self.scancode,
+      self.state,
+      self.repeat,
+      self.modifiers,
+    )
+  }
 }
 
 ///|
@@ -779,6 +818,8 @@ test "keyboard input reports character keys" {
     repeat: false,
     scancode: 0x00,
     state: 1,
+    text_with_all_modifiers: None,
+    text_ignoring_modifiers: None,
   }
   event_loop.run_app(app)
   assert_eq(
@@ -808,6 +849,8 @@ test "keyboard input applies shift and repeat" {
     repeat: true,
     scancode: 0x00,
     state: 1,
+    text_with_all_modifiers: None,
+    text_ignoring_modifiers: None,
   }
   event_loop.run_app(app)
   assert_eq(
@@ -837,6 +880,8 @@ test "keyboard input reports modifier keys with side information" {
     repeat: false,
     scancode: 0x38,
     state: 1,
+    text_with_all_modifiers: None,
+    text_ignoring_modifiers: None,
   }
   event_loop.run_app(app)
   assert_eq(
@@ -866,6 +911,8 @@ test "keyboard input reports key release without text" {
     repeat: false,
     scancode: 0x24,
     state: 2,
+    text_with_all_modifiers: None,
+    text_ignoring_modifiers: None,
   }
   event_loop.run_app(app)
   assert_eq(
@@ -880,6 +927,37 @@ test "keyboard input reports key release without text" {
         false,
         None,
         None,
+      ),
+    ),
+  )
+}
+
+///|
+test "keyboard input prefers native event text when provided" {
+  let event_loop = EventLoop::new()
+  let captured = Ref::new(None)
+  let app : KeyboardInputApp = {
+    captured,
+    modifiers: 0,
+    repeat: false,
+    scancode: 0x00,
+    state: 1,
+    text_with_all_modifiers: Some("q"),
+    text_ignoring_modifiers: Some("q"),
+  }
+  event_loop.run_app(app)
+  assert_eq(
+    captured.val,
+    Some(
+      @core.KeyEvent::new(
+        @core.PhysicalKey::Code(@core.KeyCode::KeyA),
+        @core.Key::Character("q"),
+        @core.Key::Character("q"),
+        @core.KeyLocation::Standard,
+        @core.ElementState::Pressed,
+        false,
+        Some("q"),
+        Some("q"),
       ),
     ),
   )
