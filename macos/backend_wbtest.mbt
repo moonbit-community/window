@@ -12,6 +12,9 @@ extern "C" fn runtime_now_set_for_test(ms : Int64) -> Unit = "mbw_runtime_now_ms
 extern "C" fn runtime_now_clear_for_test() -> Unit = "mbw_runtime_now_ms_clear_for_test"
 
 ///|
+extern "C" fn queue_close_requested_for_test(window_id : Int) -> Unit = "mbw_test_window_queue_close_requested"
+
+///|
 extern "C" fn queue_focus_for_test(window_id : Int, focused : Bool) -> Unit = "mbw_test_window_queue_focused"
 
 ///|
@@ -1270,6 +1273,38 @@ struct DestroyedOnExitApp {
 }
 
 ///|
+struct CloseRequestedApp {
+  close_requested_seen : Ref[Bool]
+}
+
+///|
+impl ApplicationHandler for CloseRequestedApp with can_create_surfaces(
+  _self,
+  event_loop,
+) {
+  let window = event_loop.create_window(
+    @core.WindowAttributes::default().with_visible(false),
+  )
+  queue_close_requested_for_test(window.id().into_raw())
+}
+
+///|
+impl ApplicationHandler for CloseRequestedApp with window_event(
+  self,
+  event_loop,
+  _id,
+  event,
+) {
+  match event {
+    @core.WindowEvent::CloseRequested => {
+      self.close_requested_seen.val = true
+      event_loop.exit()
+    }
+    _ => ()
+  }
+}
+
+///|
 impl ApplicationHandler for DestroyedOnExitApp with can_create_surfaces(
   _self,
   event_loop,
@@ -1982,6 +2017,14 @@ test "occluded events are delivered" {
   event_loop.run_app({ window, current_occluded, occluded })
   assert_eq(occluded.val, Some(true))
   assert_eq(current_occluded.val, Some(true))
+}
+
+///|
+test "close requested is delivered when the backend queues it" {
+  let event_loop = EventLoop::new()
+  let close_requested_seen = Ref::new(false)
+  event_loop.run_app({ close_requested_seen, })
+  assert_true(close_requested_seen.val)
 }
 
 ///|

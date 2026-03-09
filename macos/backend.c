@@ -3099,6 +3099,14 @@ void mbw_window_close(int window_id) {
   window->pending_destroyed = 1;
 }
 
+void mbw_test_window_queue_close_requested(int window_id) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  if (!window || window->should_close) {
+    return;
+  }
+  window->pending_close_requested = 1;
+}
+
 void mbw_test_window_queue_focused(int window_id, bool focused) {
   mbw_window_t *window = mbw_find_window(window_id);
   if (!window) {
