@@ -157,11 +157,24 @@ static int64_t g_now_ms_override_for_test = -1;
 #define MBW_WINDOW_LEVEL_ALWAYS_ON_BOTTOM 2
 
 #define MBW_CURSOR_DEFAULT 0
-#define MBW_CURSOR_POINTER 1
-#define MBW_CURSOR_TEXT 2
-#define MBW_CURSOR_CROSSHAIR 3
-#define MBW_CURSOR_MOVE 4
-#define MBW_CURSOR_NOT_ALLOWED 5
+#define MBW_CURSOR_HELP 1
+#define MBW_CURSOR_PROGRESS 2
+#define MBW_CURSOR_WAIT 3
+#define MBW_CURSOR_CELL 4
+#define MBW_CURSOR_VERTICAL_TEXT 5
+#define MBW_CURSOR_ALIAS 6
+#define MBW_CURSOR_COPY 7
+#define MBW_CURSOR_NO_DROP 8
+#define MBW_CURSOR_GRAB 9
+#define MBW_CURSOR_GRABBING 10
+#define MBW_CURSOR_ALL_SCROLL 11
+#define MBW_CURSOR_ZOOM_IN 12
+#define MBW_CURSOR_ZOOM_OUT 13
+#define MBW_CURSOR_POINTER 14
+#define MBW_CURSOR_TEXT 15
+#define MBW_CURSOR_CROSSHAIR 16
+#define MBW_CURSOR_MOVE 17
+#define MBW_CURSOR_NOT_ALLOWED 18
 
 #define MBW_ELEMENT_STATE_NONE 0
 #define MBW_ELEMENT_STATE_PRESSED 1
@@ -650,6 +663,45 @@ static id mbw_ns_cursor_for_kind(int cursor_kind) {
   }
   const char *selector_name = "arrowCursor";
   switch (cursor_kind) {
+    case MBW_CURSOR_HELP:
+      selector_name = "contextualMenuCursor";
+      break;
+    case MBW_CURSOR_PROGRESS:
+      selector_name = "arrowCursor";
+      break;
+    case MBW_CURSOR_WAIT:
+      selector_name = "arrowCursor";
+      break;
+    case MBW_CURSOR_CELL:
+      selector_name = "crosshairCursor";
+      break;
+    case MBW_CURSOR_VERTICAL_TEXT:
+      selector_name = "IBeamCursorForVerticalLayout";
+      break;
+    case MBW_CURSOR_ALIAS:
+      selector_name = "dragLinkCursor";
+      break;
+    case MBW_CURSOR_COPY:
+      selector_name = "dragCopyCursor";
+      break;
+    case MBW_CURSOR_NO_DROP:
+      selector_name = "operationNotAllowedCursor";
+      break;
+    case MBW_CURSOR_GRAB:
+      selector_name = "openHandCursor";
+      break;
+    case MBW_CURSOR_GRABBING:
+      selector_name = "closedHandCursor";
+      break;
+    case MBW_CURSOR_ALL_SCROLL:
+      selector_name = "openHandCursor";
+      break;
+    case MBW_CURSOR_ZOOM_IN:
+      selector_name = "zoomInCursor";
+      break;
+    case MBW_CURSOR_ZOOM_OUT:
+      selector_name = "zoomOutCursor";
+      break;
     case MBW_CURSOR_POINTER:
       selector_name = "pointingHandCursor";
       break;

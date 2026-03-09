@@ -453,22 +453,48 @@ fn ime_purpose_from_native(purpose : Int) -> @core.ImePurpose {
 fn cursor_icon_to_native(cursor : @core.CursorIcon) -> Int {
   match cursor {
     @core.CursorIcon::Default => 0
-    @core.CursorIcon::Pointer => 1
-    @core.CursorIcon::Text => 2
-    @core.CursorIcon::Crosshair => 3
-    @core.CursorIcon::Move => 4
-    @core.CursorIcon::NotAllowed => 5
+    @core.CursorIcon::Help => 1
+    @core.CursorIcon::Progress => 2
+    @core.CursorIcon::Wait => 3
+    @core.CursorIcon::Cell => 4
+    @core.CursorIcon::VerticalText => 5
+    @core.CursorIcon::Alias => 6
+    @core.CursorIcon::Copy => 7
+    @core.CursorIcon::NoDrop => 8
+    @core.CursorIcon::Grab => 9
+    @core.CursorIcon::Grabbing => 10
+    @core.CursorIcon::AllScroll => 11
+    @core.CursorIcon::ZoomIn => 12
+    @core.CursorIcon::ZoomOut => 13
+    @core.CursorIcon::Pointer => 14
+    @core.CursorIcon::Text => 15
+    @core.CursorIcon::Crosshair => 16
+    @core.CursorIcon::Move => 17
+    @core.CursorIcon::NotAllowed => 18
   }
 }
 
 ///|
 fn cursor_icon_from_native(cursor : Int) -> @core.CursorIcon {
   match cursor {
-    1 => @core.CursorIcon::Pointer
-    2 => @core.CursorIcon::Text
-    3 => @core.CursorIcon::Crosshair
-    4 => @core.CursorIcon::Move
-    5 => @core.CursorIcon::NotAllowed
+    1 => @core.CursorIcon::Help
+    2 => @core.CursorIcon::Progress
+    3 => @core.CursorIcon::Wait
+    4 => @core.CursorIcon::Cell
+    5 => @core.CursorIcon::VerticalText
+    6 => @core.CursorIcon::Alias
+    7 => @core.CursorIcon::Copy
+    8 => @core.CursorIcon::NoDrop
+    9 => @core.CursorIcon::Grab
+    10 => @core.CursorIcon::Grabbing
+    11 => @core.CursorIcon::AllScroll
+    12 => @core.CursorIcon::ZoomIn
+    13 => @core.CursorIcon::ZoomOut
+    14 => @core.CursorIcon::Pointer
+    15 => @core.CursorIcon::Text
+    16 => @core.CursorIcon::Crosshair
+    17 => @core.CursorIcon::Move
+    18 => @core.CursorIcon::NotAllowed
     _ => @core.CursorIcon::Default
   }
 }

@@ -653,10 +653,10 @@ impl ApplicationHandler for WindowCursorApp with can_create_surfaces(
   let window = event_loop.create_window(
     @core.WindowAttributes::default()
     .with_visible(false)
-    .with_cursor(@core.CursorIcon::Pointer),
+    .with_cursor(@core.CursorIcon::Grab),
   )
   self.cursor_initial.val = Some(window.cursor())
-  window.set_cursor(@core.CursorIcon::Text)
+  window.set_cursor(@core.CursorIcon::ZoomIn)
   self.cursor_after_update.val = Some(window.cursor())
   event_loop.exit()
 }
@@ -1735,8 +1735,8 @@ test "window cursor can be configured at create and runtime" {
   let cursor_after_update = Ref::new(None)
   let app : WindowCursorApp = { cursor_after_update, cursor_initial }
   event_loop.run_app(app)
-  assert_eq(cursor_initial.val, Some(@core.CursorIcon::Pointer))
-  assert_eq(cursor_after_update.val, Some(@core.CursorIcon::Text))
+  assert_eq(cursor_initial.val, Some(@core.CursorIcon::Grab))
+  assert_eq(cursor_after_update.val, Some(@core.CursorIcon::ZoomIn))
 }
 
 ///|

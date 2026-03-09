@@ -21,6 +21,19 @@ pub(all) enum WindowLevel {
 ///|
 pub(all) enum CursorIcon {
   Default
+  Help
+  Progress
+  Wait
+  Cell
+  VerticalText
+  Alias
+  Copy
+  NoDrop
+  Grab
+  Grabbing
+  AllScroll
+  ZoomIn
+  ZoomOut
   Pointer
   Text
   Crosshair
