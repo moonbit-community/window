@@ -94,6 +94,21 @@ fn window_decorated(_window_id : Int) -> Bool {
 }
 
 ///|
+fn window_close_button_enabled(_window_id : Int) -> Bool {
+  true
+}
+
+///|
+fn window_minimize_button_enabled(_window_id : Int) -> Bool {
+  true
+}
+
+///|
+fn window_maximize_button_enabled(_window_id : Int) -> Bool {
+  true
+}
+
+///|
 fn window_transparent(_window_id : Int) -> Bool {
   false
 }
@@ -324,6 +339,16 @@ fn set_window_maximized(_window_id : Int, _maximized : Bool) -> Unit {
 
 ///|
 fn set_window_decorations(_window_id : Int, _decorated : Bool) -> Unit {
+  ()
+}
+
+///|
+fn set_window_enabled_buttons(
+  _window_id : Int,
+  _close : Bool,
+  _minimize : Bool,
+  _maximize : Bool,
+) -> Unit {
   ()
 }
 

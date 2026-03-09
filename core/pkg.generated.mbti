@@ -389,6 +389,7 @@ pub fn WindowAttributes::active(Self) -> Bool
 pub fn WindowAttributes::content_protected(Self) -> Bool
 pub fn WindowAttributes::decorations(Self) -> Bool
 pub fn WindowAttributes::default() -> Self
+pub fn WindowAttributes::enabled_buttons(Self) -> WindowButtons
 pub fn WindowAttributes::ime_purpose(Self) -> ImePurpose
 pub fn WindowAttributes::max_surface_size(Self) -> @dpi.PhysicalSize?
 pub fn WindowAttributes::maximized(Self) -> Bool
@@ -405,6 +406,7 @@ pub fn WindowAttributes::window_level(Self) -> WindowLevel
 pub fn WindowAttributes::with_active(Self, Bool) -> Self
 pub fn WindowAttributes::with_content_protected(Self, Bool) -> Self
 pub fn WindowAttributes::with_decorations(Self, Bool) -> Self
+pub fn WindowAttributes::with_enabled_buttons(Self, WindowButtons) -> Self
 pub fn WindowAttributes::with_ime_purpose(Self, ImePurpose) -> Self
 pub fn WindowAttributes::with_max_surface_size(Self, @dpi.PhysicalSize?) -> Self
 pub fn WindowAttributes::with_maximized(Self, Bool) -> Self
@@ -420,6 +422,20 @@ pub fn WindowAttributes::with_visible(Self, Bool) -> Self
 pub fn WindowAttributes::with_window_level(Self, WindowLevel) -> Self
 pub impl Eq for WindowAttributes
 pub impl Show for WindowAttributes
+
+pub struct WindowButtons {
+  // private fields
+}
+pub fn WindowButtons::all() -> Self
+pub fn WindowButtons::close(Self) -> Bool
+pub fn WindowButtons::maximize(Self) -> Bool
+pub fn WindowButtons::minimize(Self) -> Bool
+pub fn WindowButtons::none() -> Self
+pub fn WindowButtons::with_close(Self, Bool) -> Self
+pub fn WindowButtons::with_maximize(Self, Bool) -> Self
+pub fn WindowButtons::with_minimize(Self, Bool) -> Self
+pub impl Eq for WindowButtons
+pub impl Show for WindowButtons
 
 pub(all) enum WindowEvent {
   SurfaceResized(@dpi.PhysicalSize)

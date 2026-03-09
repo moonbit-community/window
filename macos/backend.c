@@ -105,6 +105,9 @@ typedef struct mbw_window {
   int resizable;
   int content_protected;
   int decorated;
+  int close_button_enabled;
+  int minimize_button_enabled;
+  int maximize_button_enabled;
   int transparent;
   int window_level;
   mbw_input_event_t *queued_input_events;
@@ -173,6 +176,13 @@ static int64_t g_now_ms_override_for_test = -1;
 #define MBW_MODIFIERS_CONTROL 2
 #define MBW_MODIFIERS_ALT 4
 #define MBW_MODIFIERS_META 8
+
+void mbw_window_set_enabled_buttons(
+  int window_id,
+  bool close,
+  bool minimize,
+  bool maximize
+);
 
 static int mbw_clamp_size(int value) {
   return value <= 0 ? 1 : value;
@@ -326,6 +336,9 @@ typedef struct {
 #define MBW_NSTRACKING_ACTIVE_ALWAYS (1UL << 7)
 #define MBW_NSTRACKING_IN_VISIBLE_RECT (1UL << 9)
 #define MBW_NS_NOT_FOUND ((mbw_nsuint_t)-1)
+#define MBW_NSWINDOW_BUTTON_CLOSE ((mbw_nsinteger_t)0)
+#define MBW_NSWINDOW_BUTTON_MINIMIZE ((mbw_nsinteger_t)1)
+#define MBW_NSWINDOW_BUTTON_MAXIMIZE ((mbw_nsinteger_t)2)
 #define MBW_NSWINDOW_SHARING_NONE ((mbw_nsuint_t)0)
 #define MBW_NSWINDOW_SHARING_READ_ONLY ((mbw_nsuint_t)1)
 
@@ -2402,6 +2415,9 @@ int mbw_window_create_utf8(
   window->resizable = resizable ? 1 : 0;
   window->content_protected = 0;
   window->decorated = decorated ? 1 : 0;
+  window->close_button_enabled = 1;
+  window->minimize_button_enabled = 1;
+  window->maximize_button_enabled = 1;
   window->transparent = 0;
   window->window_level = MBW_WINDOW_LEVEL_NORMAL;
   window->queued_input_events = NULL;
@@ -2699,6 +2715,21 @@ bool mbw_window_maximized(int window_id) {
 bool mbw_window_decorated(int window_id) {
   mbw_window_t *window = mbw_find_window(window_id);
   return window ? window->decorated != 0 : false;
+}
+
+bool mbw_window_close_button_enabled(int window_id) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  return window ? window->close_button_enabled != 0 : false;
+}
+
+bool mbw_window_minimize_button_enabled(int window_id) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  return window ? window->minimize_button_enabled != 0 : false;
+}
+
+bool mbw_window_maximize_button_enabled(int window_id) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  return window ? window->maximize_button_enabled != 0 : false;
 }
 
 bool mbw_window_transparent(int window_id) {
@@ -3445,6 +3476,11 @@ void mbw_window_set_resizable(int window_id, bool resizable) {
       (id)window->window, mbw_sel("setStyleMask:"), style_mask);
   }
 #endif
+  mbw_window_set_enabled_buttons(
+    window_id,
+    window->close_button_enabled != 0,
+    window->minimize_button_enabled != 0,
+    window->maximize_button_enabled != 0);
 }
 
 void mbw_window_set_decorations(int window_id, bool decorated) {
@@ -3464,6 +3500,54 @@ void mbw_window_set_decorations(int window_id, bool decorated) {
     }
     ((void(*)(id, SEL, mbw_nsuint_t))objc_msgSend)(
       (id)window->window, mbw_sel("setStyleMask:"), style_mask);
+  }
+#endif
+  mbw_window_set_enabled_buttons(
+    window_id,
+    window->close_button_enabled != 0,
+    window->minimize_button_enabled != 0,
+    window->maximize_button_enabled != 0);
+}
+
+void mbw_window_set_enabled_buttons(
+  int window_id,
+  bool close,
+  bool minimize,
+  bool maximize
+) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  if (!window) {
+    return;
+  }
+  window->close_button_enabled = close ? 1 : 0;
+  window->minimize_button_enabled = minimize ? 1 : 0;
+  window->maximize_button_enabled = maximize ? 1 : 0;
+#if defined(__APPLE__)
+  if (window->window) {
+    id close_button = ((id(*)(id, SEL, mbw_nsinteger_t))objc_msgSend)(
+      (id)window->window, mbw_sel("standardWindowButton:"), MBW_NSWINDOW_BUTTON_CLOSE);
+    id minimize_button = ((id(*)(id, SEL, mbw_nsinteger_t))objc_msgSend)(
+      (id)window->window, mbw_sel("standardWindowButton:"), MBW_NSWINDOW_BUTTON_MINIMIZE);
+    id maximize_button = ((id(*)(id, SEL, mbw_nsinteger_t))objc_msgSend)(
+      (id)window->window, mbw_sel("standardWindowButton:"), MBW_NSWINDOW_BUTTON_MAXIMIZE);
+    if (close_button) {
+      ((void(*)(id, SEL, mbw_bool_t))objc_msgSend)(
+        close_button,
+        mbw_sel("setEnabled:"),
+        window->close_button_enabled ? YES : NO);
+    }
+    if (minimize_button) {
+      ((void(*)(id, SEL, mbw_bool_t))objc_msgSend)(
+        minimize_button,
+        mbw_sel("setEnabled:"),
+        window->minimize_button_enabled ? YES : NO);
+    }
+    if (maximize_button) {
+      ((void(*)(id, SEL, mbw_bool_t))objc_msgSend)(
+        maximize_button,
+        mbw_sel("setEnabled:"),
+        window->maximize_button_enabled ? YES : NO);
+    }
   }
 #endif
 }

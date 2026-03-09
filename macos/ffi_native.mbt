@@ -94,6 +94,21 @@ fn window_decorated(window_id : Int) -> Bool {
 }
 
 ///|
+fn window_close_button_enabled(window_id : Int) -> Bool {
+  native_window_close_button_enabled(window_id)
+}
+
+///|
+fn window_minimize_button_enabled(window_id : Int) -> Bool {
+  native_window_minimize_button_enabled(window_id)
+}
+
+///|
+fn window_maximize_button_enabled(window_id : Int) -> Bool {
+  native_window_maximize_button_enabled(window_id)
+}
+
+///|
 fn window_transparent(window_id : Int) -> Bool {
   native_window_transparent(window_id)
 }
@@ -328,6 +343,16 @@ fn set_window_decorations(window_id : Int, decorated : Bool) -> Unit {
 }
 
 ///|
+fn set_window_enabled_buttons(
+  window_id : Int,
+  close : Bool,
+  minimize : Bool,
+  maximize : Bool,
+) -> Unit {
+  native_window_set_enabled_buttons(window_id, close, minimize, maximize)
+}
+
+///|
 fn set_window_transparent(window_id : Int, transparent : Bool) -> Unit {
   native_window_set_transparent(window_id, transparent)
 }
@@ -518,6 +543,15 @@ extern "C" fn native_window_maximized(window_id : Int) -> Bool = "mbw_window_max
 extern "C" fn native_window_decorated(window_id : Int) -> Bool = "mbw_window_decorated"
 
 ///|
+extern "C" fn native_window_close_button_enabled(window_id : Int) -> Bool = "mbw_window_close_button_enabled"
+
+///|
+extern "C" fn native_window_minimize_button_enabled(window_id : Int) -> Bool = "mbw_window_minimize_button_enabled"
+
+///|
+extern "C" fn native_window_maximize_button_enabled(window_id : Int) -> Bool = "mbw_window_maximize_button_enabled"
+
+///|
 extern "C" fn native_window_transparent(window_id : Int) -> Bool = "mbw_window_transparent"
 
 ///|
@@ -691,6 +725,14 @@ extern "C" fn native_window_set_decorations(
   window_id : Int,
   decorated : Bool,
 ) -> Unit = "mbw_window_set_decorations"
+
+///|
+extern "C" fn native_window_set_enabled_buttons(
+  window_id : Int,
+  close : Bool,
+  minimize : Bool,
+  maximize : Bool,
+) -> Unit = "mbw_window_set_enabled_buttons"
 
 ///|
 extern "C" fn native_window_set_transparent(

@@ -137,8 +137,29 @@ pub fn Window::set_decorations(self : Window, decorations : Bool) -> Unit {
 }
 
 ///|
+pub fn Window::set_enabled_buttons(
+  self : Window,
+  buttons : @core.WindowButtons,
+) -> Unit {
+  set_window_enabled_buttons(
+    self.id.into_raw(),
+    buttons.close(),
+    buttons.minimize(),
+    buttons.maximize(),
+  )
+}
+
+///|
 pub fn Window::is_decorated(self : Window) -> Bool {
   window_decorated(self.id.into_raw())
+}
+
+///|
+pub fn Window::enabled_buttons(self : Window) -> @core.WindowButtons {
+  @core.WindowButtons::all()
+  .with_close(window_close_button_enabled(self.id.into_raw()))
+  .with_minimize(window_minimize_button_enabled(self.id.into_raw()))
+  .with_maximize(window_maximize_button_enabled(self.id.into_raw()))
 }
 
 ///|
@@ -589,6 +610,13 @@ pub fn EventLoop::create_window(
   guard raw_id > 0 else { abort("failed to create macos window") }
   set_window_theme(raw_id, theme_to_native(attributes.theme()))
   set_window_content_protected(raw_id, attributes.content_protected())
+  let enabled_buttons = attributes.enabled_buttons()
+  set_window_enabled_buttons(
+    raw_id,
+    enabled_buttons.close(),
+    enabled_buttons.minimize(),
+    enabled_buttons.maximize(),
+  )
   match attributes.surface_resize_increments() {
     Some(increments) =>
       set_surface_resize_increments(

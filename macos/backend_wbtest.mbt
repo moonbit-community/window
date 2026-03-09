@@ -288,6 +288,16 @@ struct WindowContentProtectedApp {
 }
 
 ///|
+struct WindowEnabledButtonsApp {
+  close_after_enable : Ref[Bool]
+  close_initial : Ref[Bool]
+  maximize_after_enable : Ref[Bool]
+  maximize_initial : Ref[Bool]
+  minimize_after_enable : Ref[Bool]
+  minimize_initial : Ref[Bool]
+}
+
+///|
 struct SurfaceResizeIncrementsApp {
   increments_after_disable : Ref[@dpi.PhysicalSize?]
   increments_after_enable : Ref[@dpi.PhysicalSize?]
@@ -594,6 +604,28 @@ impl ApplicationHandler for WindowContentProtectedApp with can_create_surfaces(
   self.protected_after_disable.val = window.is_content_protected()
   window.set_content_protected(true)
   self.protected_after_enable.val = window.is_content_protected()
+  event_loop.exit()
+}
+
+///|
+impl ApplicationHandler for WindowEnabledButtonsApp with can_create_surfaces(
+  self,
+  event_loop,
+) {
+  let window = event_loop.create_window(
+    @core.WindowAttributes::default()
+    .with_visible(false)
+    .with_enabled_buttons(@core.WindowButtons::none().with_minimize(true)),
+  )
+  let initial = window.enabled_buttons()
+  self.close_initial.val = initial.close()
+  self.minimize_initial.val = initial.minimize()
+  self.maximize_initial.val = initial.maximize()
+  window.set_enabled_buttons(@core.WindowButtons::all())
+  let updated = window.enabled_buttons()
+  self.close_after_enable.val = updated.close()
+  self.minimize_after_enable.val = updated.minimize()
+  self.maximize_after_enable.val = updated.maximize()
   event_loop.exit()
 }
 
@@ -1547,6 +1579,32 @@ test "window content protection can be configured at create and runtime" {
   assert_true(protected_initial.val)
   assert_false(protected_after_disable.val)
   assert_true(protected_after_enable.val)
+}
+
+///|
+test "window enabled buttons can be configured at create and runtime" {
+  let event_loop = EventLoop::new()
+  let close_initial = Ref::new(true)
+  let minimize_initial = Ref::new(false)
+  let maximize_initial = Ref::new(true)
+  let close_after_enable = Ref::new(false)
+  let minimize_after_enable = Ref::new(false)
+  let maximize_after_enable = Ref::new(false)
+  let app : WindowEnabledButtonsApp = {
+    close_after_enable,
+    close_initial,
+    maximize_after_enable,
+    maximize_initial,
+    minimize_after_enable,
+    minimize_initial,
+  }
+  event_loop.run_app(app)
+  assert_false(close_initial.val)
+  assert_true(minimize_initial.val)
+  assert_false(maximize_initial.val)
+  assert_true(close_after_enable.val)
+  assert_true(minimize_after_enable.val)
+  assert_true(maximize_after_enable.val)
 }
 
 ///|

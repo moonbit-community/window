@@ -19,6 +19,65 @@ pub(all) enum WindowLevel {
 } derive(Eq, Show)
 
 ///|
+pub struct WindowButtons {
+  priv mut close : Bool
+  priv mut maximize : Bool
+  priv mut minimize : Bool
+} derive(Eq, Show)
+
+///|
+pub fn WindowButtons::all() -> WindowButtons {
+  { close: true, maximize: true, minimize: true }
+}
+
+///|
+pub fn WindowButtons::none() -> WindowButtons {
+  { close: false, maximize: false, minimize: false }
+}
+
+///|
+pub fn WindowButtons::with_close(
+  self : WindowButtons,
+  enabled : Bool,
+) -> WindowButtons {
+  self.close = enabled
+  self
+}
+
+///|
+pub fn WindowButtons::with_maximize(
+  self : WindowButtons,
+  enabled : Bool,
+) -> WindowButtons {
+  self.maximize = enabled
+  self
+}
+
+///|
+pub fn WindowButtons::with_minimize(
+  self : WindowButtons,
+  enabled : Bool,
+) -> WindowButtons {
+  self.minimize = enabled
+  self
+}
+
+///|
+pub fn WindowButtons::close(self : WindowButtons) -> Bool {
+  self.close
+}
+
+///|
+pub fn WindowButtons::maximize(self : WindowButtons) -> Bool {
+  self.maximize
+}
+
+///|
+pub fn WindowButtons::minimize(self : WindowButtons) -> Bool {
+  self.minimize
+}
+
+///|
 pub struct WindowId {
   priv raw : Int
 } derive(Eq, Show)
@@ -38,6 +97,7 @@ pub struct WindowAttributes {
   priv mut active : Bool
   priv mut content_protected : Bool
   priv mut decorations : Bool
+  priv mut enabled_buttons : WindowButtons
   priv mut ime_purpose : ImePurpose
   priv mut max_surface_size : @dpi.PhysicalSize?
   priv mut maximized : Bool
@@ -59,6 +119,7 @@ pub fn WindowAttributes::default() -> WindowAttributes {
     active: true,
     content_protected: false,
     decorations: true,
+    enabled_buttons: WindowButtons::all(),
     ime_purpose: ImePurpose::Normal,
     maximized: false,
     min_surface_size: None,
@@ -153,6 +214,15 @@ pub fn WindowAttributes::with_content_protected(
   content_protected : Bool,
 ) -> WindowAttributes {
   self.content_protected = content_protected
+  self
+}
+
+///|
+pub fn WindowAttributes::with_enabled_buttons(
+  self : WindowAttributes,
+  buttons : WindowButtons,
+) -> WindowAttributes {
+  self.enabled_buttons = buttons
   self
 }
 
@@ -272,6 +342,13 @@ pub fn WindowAttributes::decorations(self : WindowAttributes) -> Bool {
 ///|
 pub fn WindowAttributes::content_protected(self : WindowAttributes) -> Bool {
   self.content_protected
+}
+
+///|
+pub fn WindowAttributes::enabled_buttons(
+  self : WindowAttributes,
+) -> WindowButtons {
+  self.enabled_buttons
 }
 
 ///|
