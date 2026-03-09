@@ -105,6 +105,16 @@ pub fn Window::is_maximized(self : Window) -> Bool {
 }
 
 ///|
+pub fn Window::set_decorations(self : Window, decorations : Bool) -> Unit {
+  set_window_decorations(self.id.into_raw(), decorations)
+}
+
+///|
+pub fn Window::is_decorated(self : Window) -> Bool {
+  window_decorated(self.id.into_raw())
+}
+
+///|
 pub fn Window::set_ime_purpose(
   self : Window,
   purpose : @core.ImePurpose,
@@ -463,6 +473,7 @@ pub fn EventLoop::create_window(
     attributes.visible(),
     attributes.active(),
     attributes.resizable(),
+    attributes.decorations(),
     attributes.title(),
   )
   guard raw_id > 0 else { abort("failed to create macos window") }

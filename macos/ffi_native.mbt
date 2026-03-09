@@ -69,6 +69,11 @@ fn window_maximized(window_id : Int) -> Bool {
 }
 
 ///|
+fn window_decorated(window_id : Int) -> Bool {
+  native_window_decorated(window_id)
+}
+
+///|
 fn take_scale_factor_changed(window_id : Int) -> Bool {
   native_window_take_scale_factor_changed(window_id)
 }
@@ -269,6 +274,11 @@ fn set_window_maximized(window_id : Int, maximized : Bool) -> Unit {
 }
 
 ///|
+fn set_window_decorations(window_id : Int, decorated : Bool) -> Unit {
+  native_window_set_decorations(window_id, decorated)
+}
+
+///|
 fn set_ime_purpose(window_id : Int, purpose : Int) -> Unit {
   native_window_set_ime_purpose(window_id, purpose)
 }
@@ -301,6 +311,7 @@ fn create_window(
   visible : Bool,
   active : Bool,
   resizable : Bool,
+  decorations : Bool,
   title : String,
 ) -> Int {
   let title_bytes = @utf8.encode(title[:], bom=false)
@@ -310,6 +321,7 @@ fn create_window(
     visible,
     active,
     resizable,
+    decorations,
     title_bytes,
     title_bytes.length().to_uint64(),
   )
@@ -353,6 +365,7 @@ pub extern "C" fn native_create_window(
   visible : Bool,
   active : Bool,
   resizable : Bool,
+  decorations : Bool,
   title : Bytes,
   title_len : UInt64,
 ) -> Int = "mbw_window_create_utf8"
@@ -410,6 +423,9 @@ extern "C" fn native_window_minimized(window_id : Int) -> Bool = "mbw_window_min
 
 ///|
 extern "C" fn native_window_maximized(window_id : Int) -> Bool = "mbw_window_maximized"
+
+///|
+extern "C" fn native_window_decorated(window_id : Int) -> Bool = "mbw_window_decorated"
 
 ///|
 extern "C" fn native_window_take_scale_factor_changed(window_id : Int) -> Bool = "mbw_window_take_scale_factor_changed"
@@ -566,6 +582,12 @@ extern "C" fn native_window_set_maximized(
   window_id : Int,
   maximized : Bool,
 ) -> Unit = "mbw_window_set_maximized"
+
+///|
+extern "C" fn native_window_set_decorations(
+  window_id : Int,
+  decorated : Bool,
+) -> Unit = "mbw_window_set_decorations"
 
 ///|
 extern "C" fn native_window_set_ime_purpose(

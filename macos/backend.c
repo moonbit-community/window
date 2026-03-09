@@ -101,6 +101,7 @@ typedef struct mbw_window {
   int ime_cursor_area_height;
   int visible;
   int resizable;
+  int decorated;
   mbw_input_event_t *queued_input_events;
   size_t queued_input_events_len;
   size_t queued_input_events_cap;
@@ -2311,6 +2312,7 @@ int mbw_window_create_utf8(
   bool visible,
   bool active,
   bool resizable,
+  bool decorated,
   const uint8_t *title,
   uint64_t title_len
 ) {
@@ -2373,6 +2375,7 @@ int mbw_window_create_utf8(
   window->ime_cursor_area_height = 1;
   window->visible = visible ? 1 : 0;
   window->resizable = resizable ? 1 : 0;
+  window->decorated = decorated ? 1 : 0;
   window->queued_input_events = NULL;
   window->queued_input_events_len = 0;
   window->queued_input_events_cap = 0;
@@ -2387,7 +2390,10 @@ int mbw_window_create_utf8(
         .origin = {0.0, 0.0},
         .size = {(double)window->width, (double)window->height},
       };
-      mbw_nsuint_t style_mask = (1UL << 0) | (1UL << 1) | (1UL << 2);
+      mbw_nsuint_t style_mask = 0;
+      if (decorated) {
+        style_mask |= (1UL << 0) | (1UL << 1) | (1UL << 2);
+      }
       if (resizable) {
         style_mask |= (1UL << 3);
       }
@@ -2630,6 +2636,11 @@ bool mbw_window_minimized(int window_id) {
 bool mbw_window_maximized(int window_id) {
   mbw_window_t *window = mbw_find_window(window_id);
   return window ? window->maximized != 0 : false;
+}
+
+bool mbw_window_decorated(int window_id) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  return window ? window->decorated != 0 : false;
 }
 
 bool mbw_window_take_scale_factor_changed(int window_id) {
@@ -3317,12 +3328,33 @@ void mbw_window_set_resizable(int window_id, bool resizable) {
   window->resizable = resizable ? 1 : 0;
 #if defined(__APPLE__)
   if (window->window) {
-    mbw_nsuint_t style_mask =
-      ((mbw_nsuint_t(*)(id, SEL))objc_msgSend)((id)window->window, mbw_sel("styleMask"));
-    if (resizable) {
+    mbw_nsuint_t style_mask = 0;
+    if (window->decorated) {
+      style_mask |= (1UL << 0) | (1UL << 1) | (1UL << 2);
+    }
+    if (window->resizable) {
       style_mask |= (1UL << 3);
-    } else {
-      style_mask &= ~(1UL << 3);
+    }
+    ((void(*)(id, SEL, mbw_nsuint_t))objc_msgSend)(
+      (id)window->window, mbw_sel("setStyleMask:"), style_mask);
+  }
+#endif
+}
+
+void mbw_window_set_decorations(int window_id, bool decorated) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  if (!window) {
+    return;
+  }
+  window->decorated = decorated ? 1 : 0;
+#if defined(__APPLE__)
+  if (window->window) {
+    mbw_nsuint_t style_mask = 0;
+    if (window->decorated) {
+      style_mask |= (1UL << 0) | (1UL << 1) | (1UL << 2);
+    }
+    if (window->resizable) {
+      style_mask |= (1UL << 3);
     }
     ((void(*)(id, SEL, mbw_nsuint_t))objc_msgSend)(
       (id)window->window, mbw_sel("setStyleMask:"), style_mask);

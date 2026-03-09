@@ -69,6 +69,11 @@ fn window_maximized(_window_id : Int) -> Bool {
 }
 
 ///|
+fn window_decorated(_window_id : Int) -> Bool {
+  false
+}
+
+///|
 fn take_scale_factor_changed(_window_id : Int) -> Bool {
   false
 }
@@ -269,6 +274,11 @@ fn set_window_maximized(_window_id : Int, _maximized : Bool) -> Unit {
 }
 
 ///|
+fn set_window_decorations(_window_id : Int, _decorated : Bool) -> Unit {
+  ()
+}
+
+///|
 fn set_ime_purpose(_window_id : Int, _purpose : Int) -> Unit {
   ()
 }
@@ -301,6 +311,7 @@ fn create_window(
   _visible : Bool,
   _active : Bool,
   _resizable : Bool,
+  _decorations : Bool,
   _title : String,
 ) -> Int {
   abort("macos backend requires the native target")

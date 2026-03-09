@@ -243,6 +243,13 @@ struct WindowMinMaxStateApp {
 }
 
 ///|
+struct WindowDecorationsApp {
+  decorated_after_disable : Ref[Bool]
+  decorated_after_enable : Ref[Bool]
+  decorated_initial : Ref[Bool]
+}
+
+///|
 struct MovedApp {
   moved : Ref[@dpi.PhysicalPosition?]
 }
@@ -441,6 +448,24 @@ impl ApplicationHandler for WindowMinMaxStateApp with can_create_surfaces(
   self.maximized_after_enable.val = window.is_maximized()
   window.set_maximized(false)
   self.maximized_after_disable.val = window.is_maximized()
+  event_loop.exit()
+}
+
+///|
+impl ApplicationHandler for WindowDecorationsApp with can_create_surfaces(
+  self,
+  event_loop,
+) {
+  let window = event_loop.create_window(
+    @core.WindowAttributes::default()
+    .with_visible(false)
+    .with_decorations(false),
+  )
+  self.decorated_initial.val = window.is_decorated()
+  window.set_decorations(true)
+  self.decorated_after_enable.val = window.is_decorated()
+  window.set_decorations(false)
+  self.decorated_after_disable.val = window.is_decorated()
   event_loop.exit()
 }
 
@@ -1218,6 +1243,23 @@ test "window minimize and maximize state can be controlled" {
   assert_false(minimized_after_disable.val)
   assert_true(maximized_after_enable.val)
   assert_false(maximized_after_disable.val)
+}
+
+///|
+test "window decorations can be configured at create and runtime" {
+  let event_loop = EventLoop::new()
+  let decorated_initial = Ref::new(true)
+  let decorated_after_enable = Ref::new(false)
+  let decorated_after_disable = Ref::new(true)
+  let app : WindowDecorationsApp = {
+    decorated_after_disable,
+    decorated_after_enable,
+    decorated_initial,
+  }
+  event_loop.run_app(app)
+  assert_false(decorated_initial.val)
+  assert_true(decorated_after_enable.val)
+  assert_false(decorated_after_disable.val)
 }
 
 ///|
