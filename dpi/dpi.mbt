@@ -85,6 +85,16 @@ pub fn LogicalPosition::new(x : Double, y : Double) -> LogicalPosition {
 }
 
 ///|
+pub fn LogicalPosition::x(self : LogicalPosition) -> Double {
+  self.x
+}
+
+///|
+pub fn LogicalPosition::y(self : LogicalPosition) -> Double {
+  self.y
+}
+
+///|
 pub struct PhysicalPosition {
   x : Int
   y : Int
@@ -93,4 +103,35 @@ pub struct PhysicalPosition {
 ///|
 pub fn PhysicalPosition::new(x : Int, y : Int) -> PhysicalPosition {
   { x, y }
+}
+
+///|
+pub fn PhysicalPosition::x(self : PhysicalPosition) -> Int {
+  self.x
+}
+
+///|
+pub fn PhysicalPosition::y(self : PhysicalPosition) -> Int {
+  self.y
+}
+
+///|
+pub struct PhysicalPositionF64 {
+  x : Double
+  y : Double
+} derive(Eq, Show)
+
+///|
+pub fn PhysicalPositionF64::new(x : Double, y : Double) -> PhysicalPositionF64 {
+  { x, y }
+}
+
+///|
+pub fn PhysicalPositionF64::x(self : PhysicalPositionF64) -> Double {
+  self.x
+}
+
+///|
+pub fn PhysicalPositionF64::y(self : PhysicalPositionF64) -> Double {
+  self.y
 }

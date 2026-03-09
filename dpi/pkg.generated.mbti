@@ -12,6 +12,8 @@ pub struct LogicalPosition {
   y : Double
 }
 pub fn LogicalPosition::new(Double, Double) -> Self
+pub fn LogicalPosition::x(Self) -> Double
+pub fn LogicalPosition::y(Self) -> Double
 pub impl Eq for LogicalPosition
 pub impl Show for LogicalPosition
 
@@ -31,8 +33,20 @@ pub struct PhysicalPosition {
   y : Int
 }
 pub fn PhysicalPosition::new(Int, Int) -> Self
+pub fn PhysicalPosition::x(Self) -> Int
+pub fn PhysicalPosition::y(Self) -> Int
 pub impl Eq for PhysicalPosition
 pub impl Show for PhysicalPosition
+
+pub struct PhysicalPositionF64 {
+  x : Double
+  y : Double
+}
+pub fn PhysicalPositionF64::new(Double, Double) -> Self
+pub fn PhysicalPositionF64::x(Self) -> Double
+pub fn PhysicalPositionF64::y(Self) -> Double
+pub impl Eq for PhysicalPositionF64
+pub impl Show for PhysicalPositionF64
 
 pub struct PhysicalSize {
   width : Int

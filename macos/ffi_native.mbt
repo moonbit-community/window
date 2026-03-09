@@ -94,6 +94,66 @@ fn pending_occluded(window_id : Int) -> Bool {
 }
 
 ///|
+fn take_input_event(window_id : Int) -> Bool {
+  native_window_take_input_event(window_id)
+}
+
+///|
+fn input_event_kind(window_id : Int) -> Int {
+  native_window_input_event_kind(window_id)
+}
+
+///|
+fn input_event_x(window_id : Int) -> Double {
+  native_window_input_event_x(window_id)
+}
+
+///|
+fn input_event_y(window_id : Int) -> Double {
+  native_window_input_event_y(window_id)
+}
+
+///|
+fn input_event_state(window_id : Int) -> Int {
+  native_window_input_event_state(window_id)
+}
+
+///|
+fn input_event_button(window_id : Int) -> Int {
+  native_window_input_event_button(window_id)
+}
+
+///|
+fn input_event_pointer_source(window_id : Int) -> Int {
+  native_window_input_event_pointer_source(window_id)
+}
+
+///|
+fn input_event_pointer_kind(window_id : Int) -> Int {
+  native_window_input_event_pointer_kind(window_id)
+}
+
+///|
+fn input_event_scroll_delta_kind(window_id : Int) -> Int {
+  native_window_input_event_scroll_delta_kind(window_id)
+}
+
+///|
+fn input_event_scroll_delta_x(window_id : Int) -> Double {
+  native_window_input_event_scroll_delta_x(window_id)
+}
+
+///|
+fn input_event_scroll_delta_y(window_id : Int) -> Double {
+  native_window_input_event_scroll_delta_y(window_id)
+}
+
+///|
+fn input_event_phase(window_id : Int) -> Int {
+  native_window_input_event_phase(window_id)
+}
+
+///|
 fn wait_for_events(timeout_ms : Int) -> Bool {
   native_event_loop_wait_millis(timeout_ms)
 }
@@ -230,6 +290,48 @@ extern "C" fn native_window_take_occluded_changed(window_id : Int) -> Bool = "mb
 
 ///|
 extern "C" fn native_window_pending_occluded(window_id : Int) -> Bool = "mbw_window_pending_occluded"
+
+///|
+extern "C" fn native_window_take_input_event(window_id : Int) -> Bool = "mbw_window_take_input_event"
+
+///|
+extern "C" fn native_window_input_event_kind(window_id : Int) -> Int = "mbw_window_input_event_kind"
+
+///|
+extern "C" fn native_window_input_event_x(window_id : Int) -> Double = "mbw_window_input_event_x"
+
+///|
+extern "C" fn native_window_input_event_y(window_id : Int) -> Double = "mbw_window_input_event_y"
+
+///|
+extern "C" fn native_window_input_event_state(window_id : Int) -> Int = "mbw_window_input_event_state"
+
+///|
+extern "C" fn native_window_input_event_button(window_id : Int) -> Int = "mbw_window_input_event_button"
+
+///|
+extern "C" fn native_window_input_event_pointer_source(window_id : Int) -> Int = "mbw_window_input_event_pointer_source"
+
+///|
+extern "C" fn native_window_input_event_pointer_kind(window_id : Int) -> Int = "mbw_window_input_event_pointer_kind"
+
+///|
+extern "C" fn native_window_input_event_scroll_delta_kind(
+  window_id : Int,
+) -> Int = "mbw_window_input_event_scroll_delta_kind"
+
+///|
+extern "C" fn native_window_input_event_scroll_delta_x(
+  window_id : Int,
+) -> Double = "mbw_window_input_event_scroll_delta_x"
+
+///|
+extern "C" fn native_window_input_event_scroll_delta_y(
+  window_id : Int,
+) -> Double = "mbw_window_input_event_scroll_delta_y"
+
+///|
+extern "C" fn native_window_input_event_phase(window_id : Int) -> Int = "mbw_window_input_event_phase"
 
 ///|
 pub extern "C" fn native_window_take_surface_resized(window_id : Int) -> Bool = "mbw_window_take_surface_resized"

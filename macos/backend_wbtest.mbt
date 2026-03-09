@@ -35,6 +35,45 @@ extern "C" fn queue_theme_changed_for_test(
 extern "C" fn queue_occluded_for_test(window_id : Int, occluded : Bool) -> Unit = "mbw_test_window_queue_occluded"
 
 ///|
+extern "C" fn queue_pointer_moved_for_test(
+  window_id : Int,
+  x : Double,
+  y : Double,
+) -> Unit = "mbw_test_window_queue_pointer_moved"
+
+///|
+extern "C" fn queue_pointer_entered_for_test(
+  window_id : Int,
+  x : Double,
+  y : Double,
+) -> Unit = "mbw_test_window_queue_pointer_entered"
+
+///|
+extern "C" fn queue_pointer_left_for_test(
+  window_id : Int,
+  x : Double,
+  y : Double,
+) -> Unit = "mbw_test_window_queue_pointer_left"
+
+///|
+extern "C" fn queue_pointer_button_for_test(
+  window_id : Int,
+  state : Int,
+  x : Double,
+  y : Double,
+  button : Int,
+) -> Unit = "mbw_test_window_queue_pointer_button"
+
+///|
+extern "C" fn queue_mouse_wheel_for_test(
+  window_id : Int,
+  delta_kind : Int,
+  delta_x : Double,
+  delta_y : Double,
+  phase : Int,
+) -> Unit = "mbw_test_window_queue_mouse_wheel"
+
+///|
 struct StartCauseApp {
   causes : Array[@core.StartCause]
 }
@@ -120,6 +159,30 @@ struct MovedApp {
 }
 
 ///|
+struct PointerMovedApp {
+  moved : Ref[@dpi.PhysicalPositionF64?]
+}
+
+///|
+struct PointerBoundaryApp {
+  entered : Ref[@dpi.PhysicalPositionF64?]
+  left : Ref[@dpi.PhysicalPositionF64?]
+}
+
+///|
+struct PointerButtonApp {
+  state : Ref[@core.ElementState?]
+  position : Ref[@dpi.PhysicalPositionF64?]
+  button : Ref[@core.ButtonSource?]
+}
+
+///|
+struct MouseWheelApp {
+  delta : Ref[@core.MouseScrollDelta?]
+  phase : Ref[@core.TouchPhase?]
+}
+
+///|
 impl ApplicationHandler for FocusApp with can_create_surfaces(_self, event_loop) {
   let window = event_loop.create_window(
     @core.WindowAttributes::default().with_visible(false),
@@ -161,6 +224,126 @@ impl ApplicationHandler for MovedApp with window_event(
   match event {
     @core.WindowEvent::Moved(position) => {
       self.moved.val = Some(position)
+      event_loop.exit()
+    }
+    _ => ()
+  }
+}
+
+///|
+impl ApplicationHandler for PointerMovedApp with can_create_surfaces(
+  _self,
+  event_loop,
+) {
+  let window = event_loop.create_window(
+    @core.WindowAttributes::default().with_visible(false),
+  )
+  queue_pointer_moved_for_test(window.id().into_raw(), 24.5, 48.25)
+}
+
+///|
+impl ApplicationHandler for PointerMovedApp with window_event(
+  self,
+  event_loop,
+  _id,
+  event,
+) {
+  match event {
+    @core.WindowEvent::PointerMoved(position, true, @core.PointerSource::Mouse) => {
+      self.moved.val = Some(position)
+      event_loop.exit()
+    }
+    _ => ()
+  }
+}
+
+///|
+impl ApplicationHandler for PointerBoundaryApp with can_create_surfaces(
+  _self,
+  event_loop,
+) {
+  let window = event_loop.create_window(
+    @core.WindowAttributes::default().with_visible(false),
+  )
+  queue_pointer_entered_for_test(window.id().into_raw(), 16.0, 32.0)
+  queue_pointer_left_for_test(window.id().into_raw(), 64.0, 96.0)
+}
+
+///|
+impl ApplicationHandler for PointerBoundaryApp with window_event(
+  self,
+  event_loop,
+  _id,
+  event,
+) {
+  match event {
+    @core.WindowEvent::PointerEntered(position, true, @core.PointerKind::Mouse) =>
+      self.entered.val = Some(position)
+    @core.WindowEvent::PointerLeft(
+      Some(position),
+      true,
+      @core.PointerKind::Mouse
+    ) => {
+      self.left.val = Some(position)
+      if self.entered.val is Some(_) {
+        event_loop.exit()
+      }
+    }
+    _ => ()
+  }
+}
+
+///|
+impl ApplicationHandler for PointerButtonApp with can_create_surfaces(
+  _self,
+  event_loop,
+) {
+  let window = event_loop.create_window(
+    @core.WindowAttributes::default().with_visible(false),
+  )
+  queue_pointer_button_for_test(window.id().into_raw(), 1, 120.0, 45.5, 1)
+}
+
+///|
+impl ApplicationHandler for PointerButtonApp with window_event(
+  self,
+  event_loop,
+  _id,
+  event,
+) {
+  match event {
+    @core.WindowEvent::PointerButton(state, position, true, button) => {
+      self.state.val = Some(state)
+      self.position.val = Some(position)
+      self.button.val = Some(button)
+      event_loop.exit()
+    }
+    _ => ()
+  }
+}
+
+///|
+impl ApplicationHandler for MouseWheelApp with can_create_surfaces(
+  _self,
+  event_loop,
+) {
+  let window = event_loop.create_window(
+    @core.WindowAttributes::default().with_visible(false),
+  )
+  queue_mouse_wheel_for_test(window.id().into_raw(), 2, 12.5, -24.0, 2)
+}
+
+///|
+impl ApplicationHandler for MouseWheelApp with window_event(
+  self,
+  event_loop,
+  _id,
+  event,
+) {
+  match event {
+    @core.WindowEvent::MouseWheel(delta, phase) => {
+      self.delta.val = Some(delta)
+      self.phase.val = Some(phase)
       event_loop.exit()
     }
     _ => ()
@@ -387,8 +570,60 @@ test "focused events are delivered" {
 test "moved events are delivered" {
   let event_loop = EventLoop::new()
   let moved = Ref::new(None)
-  event_loop.run_app({ moved, })
+  let app : MovedApp = { moved, }
+  event_loop.run_app(app)
   assert_eq(moved.val, Some(@dpi.PhysicalPosition::new(320, 180)))
+}
+
+///|
+test "pointer moved events are delivered" {
+  let event_loop = EventLoop::new()
+  let moved = Ref::new(None)
+  let app : PointerMovedApp = { moved, }
+  event_loop.run_app(app)
+  assert_eq(moved.val, Some(@dpi.PhysicalPositionF64::new(24.5, 48.25)))
+}
+
+///|
+test "pointer entered and left events are delivered" {
+  let event_loop = EventLoop::new()
+  let entered = Ref::new(None)
+  let left = Ref::new(None)
+  event_loop.run_app({ entered, left })
+  assert_eq(entered.val, Some(@dpi.PhysicalPositionF64::new(16.0, 32.0)))
+  assert_eq(left.val, Some(@dpi.PhysicalPositionF64::new(64.0, 96.0)))
+}
+
+///|
+test "pointer button events report state position and button" {
+  let event_loop = EventLoop::new()
+  let state = Ref::new(None)
+  let position = Ref::new(None)
+  let button = Ref::new(None)
+  event_loop.run_app({ state, position, button })
+  assert_eq(state.val, Some(@core.ElementState::Pressed))
+  assert_eq(position.val, Some(@dpi.PhysicalPositionF64::new(120.0, 45.5)))
+  assert_eq(
+    button.val,
+    Some(@core.ButtonSource::Mouse(@core.MouseButton::Right)),
+  )
+}
+
+///|
+test "mouse wheel events deliver pixel deltas and phase" {
+  let event_loop = EventLoop::new()
+  let delta = Ref::new(None)
+  let phase = Ref::new(None)
+  event_loop.run_app({ delta, phase })
+  assert_eq(
+    delta.val,
+    Some(
+      @core.MouseScrollDelta::PixelDelta(
+        @dpi.PhysicalPositionF64::new(12.5, -24.0),
+      ),
+    ),
+  )
+  assert_eq(phase.val, Some(@core.TouchPhase::Moved))
 }
 
 ///|

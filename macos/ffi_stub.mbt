@@ -94,6 +94,66 @@ fn pending_occluded(_window_id : Int) -> Bool {
 }
 
 ///|
+fn take_input_event(_window_id : Int) -> Bool {
+  false
+}
+
+///|
+fn input_event_kind(_window_id : Int) -> Int {
+  0
+}
+
+///|
+fn input_event_x(_window_id : Int) -> Double {
+  0.0
+}
+
+///|
+fn input_event_y(_window_id : Int) -> Double {
+  0.0
+}
+
+///|
+fn input_event_state(_window_id : Int) -> Int {
+  0
+}
+
+///|
+fn input_event_button(_window_id : Int) -> Int {
+  0
+}
+
+///|
+fn input_event_pointer_source(_window_id : Int) -> Int {
+  0
+}
+
+///|
+fn input_event_pointer_kind(_window_id : Int) -> Int {
+  0
+}
+
+///|
+fn input_event_scroll_delta_kind(_window_id : Int) -> Int {
+  0
+}
+
+///|
+fn input_event_scroll_delta_x(_window_id : Int) -> Double {
+  0.0
+}
+
+///|
+fn input_event_scroll_delta_y(_window_id : Int) -> Double {
+  0.0
+}
+
+///|
+fn input_event_phase(_window_id : Int) -> Int {
+  0
+}
+
+///|
 fn wait_for_events(_timeout_ms : Int) -> Bool {
   false
 }

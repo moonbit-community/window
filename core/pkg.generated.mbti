@@ -10,6 +10,13 @@ import {
 // Errors
 
 // Types and methods
+pub(all) enum ButtonSource {
+  Mouse(MouseButton)
+  Unknown(Int)
+}
+pub impl Eq for ButtonSource
+pub impl Show for ButtonSource
+
 pub(all) enum ControlFlow {
   Poll
   Wait
@@ -18,6 +25,45 @@ pub(all) enum ControlFlow {
 pub fn ControlFlow::wait_duration(Int) -> Self
 pub impl Eq for ControlFlow
 pub impl Show for ControlFlow
+
+pub(all) enum ElementState {
+  Pressed
+  Released
+}
+pub impl Eq for ElementState
+pub impl Show for ElementState
+
+pub(all) enum MouseButton {
+  Left
+  Right
+  Middle
+  Back
+  Forward
+  Other(Int)
+}
+pub impl Eq for MouseButton
+pub impl Show for MouseButton
+
+pub(all) enum MouseScrollDelta {
+  LineDelta(Double, Double)
+  PixelDelta(@dpi.PhysicalPositionF64)
+}
+pub impl Eq for MouseScrollDelta
+pub impl Show for MouseScrollDelta
+
+pub(all) enum PointerKind {
+  Mouse
+  Unknown
+}
+pub impl Eq for PointerKind
+pub impl Show for PointerKind
+
+pub(all) enum PointerSource {
+  Mouse
+  Unknown
+}
+pub impl Eq for PointerSource
+pub impl Show for PointerSource
 
 pub(all) enum StartCause {
   Init
@@ -43,6 +89,15 @@ pub(all) enum Theme {
 pub impl Eq for Theme
 pub impl Show for Theme
 
+pub(all) enum TouchPhase {
+  Started
+  Moved
+  Ended
+  Cancelled
+}
+pub impl Eq for TouchPhase
+pub impl Show for TouchPhase
+
 pub struct WindowAttributes {
   // private fields
 }
@@ -64,6 +119,11 @@ pub(all) enum WindowEvent {
   CloseRequested
   Destroyed
   Focused(Bool)
+  PointerMoved(@dpi.PhysicalPositionF64, Bool, PointerSource)
+  PointerEntered(@dpi.PhysicalPositionF64, Bool, PointerKind)
+  PointerLeft(@dpi.PhysicalPositionF64?, Bool, PointerKind)
+  PointerButton(ElementState, @dpi.PhysicalPositionF64, Bool, ButtonSource)
+  MouseWheel(MouseScrollDelta, TouchPhase)
   ScaleFactorChanged(Double, SurfaceSizeWriter)
   ThemeChanged(Theme)
   Occluded(Bool)

@@ -61,6 +61,160 @@ fn theme_from_native(theme : Int) -> @core.Theme? {
 }
 
 ///|
+fn element_state_from_native(state : Int) -> @core.ElementState? {
+  match state {
+    1 => Some(@core.ElementState::Pressed)
+    2 => Some(@core.ElementState::Released)
+    _ => None
+  }
+}
+
+///|
+fn mouse_button_from_native(button : Int) -> @core.MouseButton {
+  match button {
+    0 => @core.MouseButton::Left
+    1 => @core.MouseButton::Right
+    2 => @core.MouseButton::Middle
+    3 => @core.MouseButton::Back
+    4 => @core.MouseButton::Forward
+    _ => @core.MouseButton::Other(button)
+  }
+}
+
+///|
+fn button_source_from_native(button : Int) -> @core.ButtonSource {
+  if button < 0 {
+    @core.ButtonSource::Unknown(button)
+  } else {
+    @core.ButtonSource::Mouse(mouse_button_from_native(button))
+  }
+}
+
+///|
+fn pointer_source_from_native(source : Int) -> @core.PointerSource {
+  match source {
+    1 => @core.PointerSource::Mouse
+    _ => @core.PointerSource::Unknown
+  }
+}
+
+///|
+fn pointer_kind_from_native(kind : Int) -> @core.PointerKind {
+  match kind {
+    1 => @core.PointerKind::Mouse
+    _ => @core.PointerKind::Unknown
+  }
+}
+
+///|
+fn scroll_delta_from_native(
+  kind : Int,
+  x : Double,
+  y : Double,
+) -> @core.MouseScrollDelta? {
+  match kind {
+    1 => Some(@core.MouseScrollDelta::LineDelta(x, y))
+    2 =>
+      Some(
+        @core.MouseScrollDelta::PixelDelta(@dpi.PhysicalPositionF64::new(x, y)),
+      )
+    _ => None
+  }
+}
+
+///|
+fn touch_phase_from_native(phase : Int) -> @core.TouchPhase? {
+  match phase {
+    1 => Some(@core.TouchPhase::Started)
+    2 => Some(@core.TouchPhase::Moved)
+    3 => Some(@core.TouchPhase::Ended)
+    4 => Some(@core.TouchPhase::Cancelled)
+    _ => None
+  }
+}
+
+///|
+fn[A : ApplicationHandler] EventLoop::dispatch_input_events(
+  self : EventLoop,
+  app : A,
+  raw_id : Int,
+  window_id : @core.WindowId,
+) -> Unit {
+  while take_input_event(raw_id) {
+    let position = @dpi.PhysicalPositionF64::new(
+      input_event_x(raw_id),
+      input_event_y(raw_id),
+    )
+    match input_event_kind(raw_id) {
+      1 =>
+        app.window_event(
+          self,
+          window_id,
+          @core.WindowEvent::PointerMoved(
+            position,
+            true,
+            pointer_source_from_native(input_event_pointer_source(raw_id)),
+          ),
+        )
+      2 =>
+        app.window_event(
+          self,
+          window_id,
+          @core.WindowEvent::PointerEntered(
+            position,
+            true,
+            pointer_kind_from_native(input_event_pointer_kind(raw_id)),
+          ),
+        )
+      3 =>
+        app.window_event(
+          self,
+          window_id,
+          @core.WindowEvent::PointerLeft(
+            Some(position),
+            true,
+            pointer_kind_from_native(input_event_pointer_kind(raw_id)),
+          ),
+        )
+      4 =>
+        match element_state_from_native(input_event_state(raw_id)) {
+          Some(state) =>
+            app.window_event(
+              self,
+              window_id,
+              @core.WindowEvent::PointerButton(
+                state,
+                position,
+                true,
+                button_source_from_native(input_event_button(raw_id)),
+              ),
+            )
+          None => ()
+        }
+      5 =>
+        match
+          (
+            scroll_delta_from_native(
+              input_event_scroll_delta_kind(raw_id),
+              input_event_scroll_delta_x(raw_id),
+              input_event_scroll_delta_y(raw_id),
+            ),
+            touch_phase_from_native(input_event_phase(raw_id)),
+          ) {
+          (Some(delta), Some(phase)) =>
+            app.window_event(
+              self,
+              window_id,
+              @core.WindowEvent::MouseWheel(delta, phase),
+            )
+          _ => ()
+        }
+      _ => ()
+    }
+  }
+}
+
+///|
 pub fn Window::theme(self : Window) -> @core.Theme? {
   theme_from_native(window_theme(self.id.into_raw()))
 }
@@ -216,6 +370,7 @@ fn[A : ApplicationHandler] EventLoop::dispatch_window_events(
         @core.WindowEvent::Focused(pending_focused(raw_id)),
       )
     }
+    self.dispatch_input_events(app, raw_id, window_id)
     if take_theme_changed(raw_id) {
       match theme_from_native(pending_theme(raw_id)) {
         Some(theme) =>
