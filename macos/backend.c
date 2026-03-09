@@ -3427,36 +3427,6 @@ void mbw_test_window_queue_ime_disabled(int window_id) {
   mbw_window_queue_ime(window, MBW_IME_EVENT_DISABLED, NULL, 0, -1, -1);
 }
 
-bool mbw_test_window_ime_allowed(int window_id) {
-  mbw_window_t *window = mbw_find_window(window_id);
-  return window ? window->ime_allowed != 0 : false;
-}
-
-int mbw_test_window_ime_cursor_area_x(int window_id) {
-  mbw_window_t *window = mbw_find_window(window_id);
-  return window ? window->ime_cursor_area_x : 0;
-}
-
-int mbw_test_window_ime_cursor_area_y(int window_id) {
-  mbw_window_t *window = mbw_find_window(window_id);
-  return window ? window->ime_cursor_area_y : 0;
-}
-
-int mbw_test_window_ime_cursor_area_width(int window_id) {
-  mbw_window_t *window = mbw_find_window(window_id);
-  return window ? window->ime_cursor_area_width : 0;
-}
-
-int mbw_test_window_ime_cursor_area_height(int window_id) {
-  mbw_window_t *window = mbw_find_window(window_id);
-  return window ? window->ime_cursor_area_height : 0;
-}
-
-int mbw_test_window_ime_purpose(int window_id) {
-  mbw_window_t *window = mbw_find_window(window_id);
-  return window ? window->ime_purpose : MBW_IME_PURPOSE_NORMAL;
-}
-
 void mbw_test_window_queue_destroyed(int window_id) {
   mbw_window_t *window = mbw_find_window(window_id);
   if (!window) {
