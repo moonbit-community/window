@@ -194,6 +194,16 @@ fn set_surface_size(window_id : Int, width : Int, height : Int) -> Unit {
 }
 
 ///|
+fn set_min_surface_size(window_id : Int, width : Int, height : Int) -> Unit {
+  native_window_set_min_surface_size(window_id, width, height)
+}
+
+///|
+fn set_max_surface_size(window_id : Int, width : Int, height : Int) -> Unit {
+  native_window_set_max_surface_size(window_id, width, height)
+}
+
+///|
 fn window_x(window_id : Int) -> Int {
   native_window_x(window_id)
 }
@@ -423,6 +433,20 @@ extern "C" fn native_window_set_surface_size(
   width : Int,
   height : Int,
 ) -> Unit = "mbw_window_set_surface_size"
+
+///|
+extern "C" fn native_window_set_min_surface_size(
+  window_id : Int,
+  width : Int,
+  height : Int,
+) -> Unit = "mbw_window_set_min_surface_size"
+
+///|
+extern "C" fn native_window_set_max_surface_size(
+  window_id : Int,
+  width : Int,
+  height : Int,
+) -> Unit = "mbw_window_set_max_surface_size"
 
 ///|
 extern "C" fn native_window_set_position(

@@ -202,6 +202,27 @@ struct RequestSurfaceSizeApp {
 }
 
 ///|
+struct MinSurfaceSizeApp {
+  resized : Ref[@dpi.PhysicalSize?]
+  surface_size : Ref[@dpi.PhysicalSize?]
+  window : Ref[Window?]
+}
+
+///|
+struct MaxSurfaceSizeApp {
+  resized : Ref[@dpi.PhysicalSize?]
+  surface_size : Ref[@dpi.PhysicalSize?]
+  window : Ref[Window?]
+}
+
+///|
+struct AttributesSurfaceConstraintsApp {
+  resized : Ref[@dpi.PhysicalSize?]
+  surface_size : Ref[@dpi.PhysicalSize?]
+  window : Ref[Window?]
+}
+
+///|
 struct PointerMovedApp {
   moved : Ref[@dpi.PhysicalPositionF64?]
 }
@@ -340,6 +361,106 @@ impl ApplicationHandler for RequestSurfaceSizeApp with can_create_surfaces(
 
 ///|
 impl ApplicationHandler for RequestSurfaceSizeApp with window_event(
+  self,
+  event_loop,
+  _id,
+  event,
+) {
+  match event {
+    @core.WindowEvent::SurfaceResized(size) => {
+      self.resized.val = Some(size)
+      match self.window.val {
+        Some(window) => self.surface_size.val = Some(window.surface_size())
+        None => ()
+      }
+      event_loop.exit()
+    }
+    _ => ()
+  }
+}
+
+///|
+impl ApplicationHandler for MinSurfaceSizeApp with can_create_surfaces(
+  self,
+  event_loop,
+) {
+  let window = event_loop.create_window(
+    @core.WindowAttributes::default().with_visible(false),
+  )
+  self.window.val = Some(window)
+  window.set_min_surface_size(Some(@dpi.PhysicalSize::new(960, 720)))
+  window.request_surface_size(@dpi.PhysicalSize::new(640, 480))
+}
+
+///|
+impl ApplicationHandler for MinSurfaceSizeApp with window_event(
+  self,
+  event_loop,
+  _id,
+  event,
+) {
+  match event {
+    @core.WindowEvent::SurfaceResized(size) => {
+      self.resized.val = Some(size)
+      match self.window.val {
+        Some(window) => self.surface_size.val = Some(window.surface_size())
+        None => ()
+      }
+      event_loop.exit()
+    }
+    _ => ()
+  }
+}
+
+///|
+impl ApplicationHandler for MaxSurfaceSizeApp with can_create_surfaces(
+  self,
+  event_loop,
+) {
+  let window = event_loop.create_window(
+    @core.WindowAttributes::default().with_visible(false),
+  )
+  self.window.val = Some(window)
+  window.set_max_surface_size(Some(@dpi.PhysicalSize::new(1024, 768)))
+  window.request_surface_size(@dpi.PhysicalSize::new(1400, 1050))
+}
+
+///|
+impl ApplicationHandler for MaxSurfaceSizeApp with window_event(
+  self,
+  event_loop,
+  _id,
+  event,
+) {
+  match event {
+    @core.WindowEvent::SurfaceResized(size) => {
+      self.resized.val = Some(size)
+      match self.window.val {
+        Some(window) => self.surface_size.val = Some(window.surface_size())
+        None => ()
+      }
+      event_loop.exit()
+    }
+    _ => ()
+  }
+}
+
+///|
+impl ApplicationHandler for AttributesSurfaceConstraintsApp with can_create_surfaces(
+  self,
+  event_loop,
+) {
+  let window = event_loop.create_window(
+    @core.WindowAttributes::default()
+    .with_visible(false)
+    .with_surface_size(@dpi.PhysicalSize::new(1600, 1200))
+    .with_max_surface_size(Some(@dpi.PhysicalSize::new(1280, 720))),
+  )
+  self.window.val = Some(window)
+}
+
+///|
+impl ApplicationHandler for AttributesSurfaceConstraintsApp with window_event(
   self,
   event_loop,
   _id,
@@ -838,6 +959,42 @@ test "window request surface size delivers resized event" {
   event_loop.run_app(app)
   assert_eq(resized.val, Some(@dpi.PhysicalSize::new(1200, 900)))
   assert_eq(surface_size.val, Some(@dpi.PhysicalSize::new(1200, 900)))
+}
+
+///|
+test "window min surface size clamps resize requests" {
+  let event_loop = EventLoop::new()
+  let resized = Ref::new(None)
+  let surface_size = Ref::new(None)
+  let window = Ref::new(None)
+  let app : MinSurfaceSizeApp = { resized, surface_size, window }
+  event_loop.run_app(app)
+  assert_eq(resized.val, Some(@dpi.PhysicalSize::new(960, 720)))
+  assert_eq(surface_size.val, Some(@dpi.PhysicalSize::new(960, 720)))
+}
+
+///|
+test "window max surface size clamps resize requests" {
+  let event_loop = EventLoop::new()
+  let resized = Ref::new(None)
+  let surface_size = Ref::new(None)
+  let window = Ref::new(None)
+  let app : MaxSurfaceSizeApp = { resized, surface_size, window }
+  event_loop.run_app(app)
+  assert_eq(resized.val, Some(@dpi.PhysicalSize::new(1024, 768)))
+  assert_eq(surface_size.val, Some(@dpi.PhysicalSize::new(1024, 768)))
+}
+
+///|
+test "window attributes max surface size applies at creation time" {
+  let event_loop = EventLoop::new()
+  let resized = Ref::new(None)
+  let surface_size = Ref::new(None)
+  let window = Ref::new(None)
+  let app : AttributesSurfaceConstraintsApp = { resized, surface_size, window }
+  event_loop.run_app(app)
+  assert_eq(resized.val, Some(@dpi.PhysicalSize::new(1280, 720)))
+  assert_eq(surface_size.val, Some(@dpi.PhysicalSize::new(1280, 720)))
 }
 
 ///|

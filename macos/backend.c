@@ -78,6 +78,10 @@ typedef struct mbw_window {
   int pending_redraw_requested;
   int reported_width;
   int reported_height;
+  int min_width;
+  int min_height;
+  int max_width;
+  int max_height;
   int modifiers_state;
   int visible;
   int resizable;
@@ -135,6 +139,32 @@ static int64_t g_now_ms_override_for_test = -1;
 
 static int mbw_clamp_size(int value) {
   return value <= 0 ? 1 : value;
+}
+
+static void mbw_apply_surface_constraints(
+  mbw_window_t *window,
+  int *width,
+  int *height
+) {
+  if (!width || !height) {
+    return;
+  }
+  *width = mbw_clamp_size(*width);
+  *height = mbw_clamp_size(*height);
+  if (window) {
+    if (window->min_width > 0 && *width < window->min_width) {
+      *width = window->min_width;
+    }
+    if (window->min_height > 0 && *height < window->min_height) {
+      *height = window->min_height;
+    }
+    if (window->max_width > 0 && *width > window->max_width) {
+      *width = window->max_width;
+    }
+    if (window->max_height > 0 && *height > window->max_height) {
+      *height = window->max_height;
+    }
+  }
 }
 
 static mbw_window_t *mbw_find_window(int id) {
@@ -1620,8 +1650,9 @@ static void mbw_update_window_state(mbw_window_t *window) {
       ((mbw_rect_t(*)(id, SEL))objc_msgSend)(content_view, mbw_sel("bounds"));
     int width = (int)(bounds.size.width * window->scale_factor + 0.5);
     int height = (int)(bounds.size.height * window->scale_factor + 0.5);
-    window->width = mbw_clamp_size(width);
-    window->height = mbw_clamp_size(height);
+    mbw_apply_surface_constraints(window, &width, &height);
+    window->width = width;
+    window->height = height;
   }
 
   if (!window->pending_scale_factor_changed) {
@@ -1910,6 +1941,10 @@ int mbw_window_create_utf8(
   window->pending_redraw_requested = 0;
   window->reported_width = window->width;
   window->reported_height = window->height;
+  window->min_width = 1;
+  window->min_height = 1;
+  window->max_width = 0;
+  window->max_height = 0;
   window->modifiers_state = 0;
   window->visible = visible ? 1 : 0;
   window->resizable = resizable ? 1 : 0;
@@ -2364,8 +2399,7 @@ void mbw_window_set_surface_size(int window_id, int width, int height) {
     return;
   }
 
-  width = mbw_clamp_size(width);
-  height = mbw_clamp_size(height);
+  mbw_apply_surface_constraints(window, &width, &height);
   window->width = width;
   window->height = height;
   window->reported_width = width;
@@ -2382,6 +2416,92 @@ void mbw_window_set_surface_size(int window_id, int width, int height) {
       (id)window->window, mbw_sel("setContentSize:"), logical_size);
   }
 #endif
+}
+
+void mbw_window_set_min_surface_size(int window_id, int width, int height) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  if (!window) {
+    return;
+  }
+
+  if (width <= 0 || height <= 0) {
+    window->min_width = 1;
+    window->min_height = 1;
+  } else {
+    window->min_width = mbw_clamp_size(width);
+    window->min_height = mbw_clamp_size(height);
+  }
+  if (window->max_width > 0 && window->max_width < window->min_width) {
+    window->max_width = window->min_width;
+  }
+  if (window->max_height > 0 && window->max_height < window->min_height) {
+    window->max_height = window->min_height;
+  }
+#if defined(__APPLE__)
+  if (window->window) {
+    double scale_factor = window->scale_factor > 0.0 ? window->scale_factor : 1.0;
+    mbw_size_t min_size = {
+      .width = (double)window->min_width / scale_factor,
+      .height = (double)window->min_height / scale_factor,
+    };
+    mbw_size_t max_size = {
+      .width = window->max_width > 0
+        ? (double)window->max_width / scale_factor
+        : 10000000.0,
+      .height = window->max_height > 0
+        ? (double)window->max_height / scale_factor
+        : 10000000.0,
+    };
+    ((void(*)(id, SEL, mbw_size_t))objc_msgSend)(
+      (id)window->window, mbw_sel("setContentMinSize:"), min_size);
+    ((void(*)(id, SEL, mbw_size_t))objc_msgSend)(
+      (id)window->window, mbw_sel("setContentMaxSize:"), max_size);
+  }
+#endif
+  mbw_window_set_surface_size(window_id, window->width, window->height);
+}
+
+void mbw_window_set_max_surface_size(int window_id, int width, int height) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  if (!window) {
+    return;
+  }
+
+  if (width <= 0 || height <= 0) {
+    window->max_width = 0;
+    window->max_height = 0;
+  } else {
+    window->max_width = mbw_clamp_size(width);
+    window->max_height = mbw_clamp_size(height);
+    if (window->max_width < window->min_width) {
+      window->max_width = window->min_width;
+    }
+    if (window->max_height < window->min_height) {
+      window->max_height = window->min_height;
+    }
+  }
+#if defined(__APPLE__)
+  if (window->window) {
+    double scale_factor = window->scale_factor > 0.0 ? window->scale_factor : 1.0;
+    mbw_size_t min_size = {
+      .width = (double)window->min_width / scale_factor,
+      .height = (double)window->min_height / scale_factor,
+    };
+    mbw_size_t max_size = {
+      .width = window->max_width > 0
+        ? (double)window->max_width / scale_factor
+        : 10000000.0,
+      .height = window->max_height > 0
+        ? (double)window->max_height / scale_factor
+        : 10000000.0,
+    };
+    ((void(*)(id, SEL, mbw_size_t))objc_msgSend)(
+      (id)window->window, mbw_sel("setContentMinSize:"), min_size);
+    ((void(*)(id, SEL, mbw_size_t))objc_msgSend)(
+      (id)window->window, mbw_sel("setContentMaxSize:"), max_size);
+  }
+#endif
+  mbw_window_set_surface_size(window_id, window->width, window->height);
 }
 
 void mbw_window_close(int window_id) {

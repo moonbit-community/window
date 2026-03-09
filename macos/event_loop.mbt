@@ -35,6 +35,30 @@ pub fn Window::request_surface_size(
 }
 
 ///|
+pub fn Window::set_min_surface_size(
+  self : Window,
+  size : @dpi.PhysicalSize?,
+) -> Unit {
+  match size {
+    Some(size) =>
+      set_min_surface_size(self.id.into_raw(), size.width(), size.height())
+    None => set_min_surface_size(self.id.into_raw(), 0, 0)
+  }
+}
+
+///|
+pub fn Window::set_max_surface_size(
+  self : Window,
+  size : @dpi.PhysicalSize?,
+) -> Unit {
+  match size {
+    Some(size) =>
+      set_max_surface_size(self.id.into_raw(), size.width(), size.height())
+    None => set_max_surface_size(self.id.into_raw(), 0, 0)
+  }
+}
+
+///|
 pub fn Window::outer_position(self : Window) -> @dpi.PhysicalPosition {
   @dpi.PhysicalPosition::new(
     window_x(self.id.into_raw()),
@@ -334,6 +358,16 @@ pub fn EventLoop::create_window(
     attributes.title(),
   )
   guard raw_id > 0 else { abort("failed to create macos window") }
+  match attributes.min_surface_size() {
+    Some(min_size) =>
+      set_min_surface_size(raw_id, min_size.width(), min_size.height())
+    None => ()
+  }
+  match attributes.max_surface_size() {
+    Some(max_size) =>
+      set_max_surface_size(raw_id, max_size.width(), max_size.height())
+    None => ()
+  }
   self.window_ids.push(raw_id)
   { id: @core.WindowId::from_raw(raw_id) }
 }
