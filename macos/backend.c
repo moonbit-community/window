@@ -2648,6 +2648,16 @@ bool mbw_window_has_focus(int window_id) {
   return window ? window->focused != 0 : false;
 }
 
+bool mbw_window_visible(int window_id) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  return window ? window->visible != 0 : false;
+}
+
+bool mbw_window_resizable(int window_id) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  return window ? window->resizable != 0 : false;
+}
+
 bool mbw_window_minimized(int window_id) {
   mbw_window_t *window = mbw_find_window(window_id);
   return window ? window->minimized != 0 : false;

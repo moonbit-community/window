@@ -268,6 +268,16 @@ struct WindowTransparentApp {
 }
 
 ///|
+struct WindowVisibilityResizableApp {
+  resizable_after_disable : Ref[Bool]
+  resizable_after_enable : Ref[Bool]
+  resizable_initial : Ref[Bool]
+  visible_after_disable : Ref[Bool]
+  visible_after_enable : Ref[Bool]
+  visible_initial : Ref[Bool]
+}
+
+///|
 struct MovedApp {
   moved : Ref[@dpi.PhysicalPosition?]
 }
@@ -528,6 +538,27 @@ impl ApplicationHandler for WindowTransparentApp with can_create_surfaces(
   self.transparent_after_disable.val = window.is_transparent()
   window.set_transparent(true)
   self.transparent_after_enable.val = window.is_transparent()
+  event_loop.exit()
+}
+
+///|
+impl ApplicationHandler for WindowVisibilityResizableApp with can_create_surfaces(
+  self,
+  event_loop,
+) {
+  let window = event_loop.create_window(
+    @core.WindowAttributes::default().with_visible(false),
+  )
+  self.visible_initial.val = window.is_visible()
+  self.resizable_initial.val = window.is_resizable()
+  window.set_visible(true)
+  self.visible_after_enable.val = window.is_visible()
+  window.set_visible(false)
+  self.visible_after_disable.val = window.is_visible()
+  window.set_resizable(false)
+  self.resizable_after_disable.val = window.is_resizable()
+  window.set_resizable(true)
+  self.resizable_after_enable.val = window.is_resizable()
   event_loop.exit()
 }
 
@@ -1359,6 +1390,32 @@ test "window transparency can be configured at create and runtime" {
   assert_true(transparent_initial.val)
   assert_false(transparent_after_disable.val)
   assert_true(transparent_after_enable.val)
+}
+
+///|
+test "window visibility and resizable getters reflect runtime updates" {
+  let event_loop = EventLoop::new()
+  let visible_initial = Ref::new(true)
+  let visible_after_enable = Ref::new(false)
+  let visible_after_disable = Ref::new(true)
+  let resizable_initial = Ref::new(false)
+  let resizable_after_disable = Ref::new(true)
+  let resizable_after_enable = Ref::new(false)
+  let app : WindowVisibilityResizableApp = {
+    resizable_after_disable,
+    resizable_after_enable,
+    resizable_initial,
+    visible_after_disable,
+    visible_after_enable,
+    visible_initial,
+  }
+  event_loop.run_app(app)
+  assert_false(visible_initial.val)
+  assert_true(visible_after_enable.val)
+  assert_false(visible_after_disable.val)
+  assert_true(resizable_initial.val)
+  assert_false(resizable_after_disable.val)
+  assert_true(resizable_after_enable.val)
 }
 
 ///|

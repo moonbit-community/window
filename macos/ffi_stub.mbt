@@ -59,6 +59,16 @@ fn window_has_focus(_window_id : Int) -> Bool {
 }
 
 ///|
+fn window_visible(_window_id : Int) -> Bool {
+  false
+}
+
+///|
+fn window_resizable(_window_id : Int) -> Bool {
+  false
+}
+
+///|
 fn window_minimized(_window_id : Int) -> Bool {
   false
 }

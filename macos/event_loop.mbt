@@ -186,8 +186,18 @@ pub fn Window::set_visible(self : Window, visible : Bool) -> Unit {
 }
 
 ///|
+pub fn Window::is_visible(self : Window) -> Bool {
+  window_visible(self.id.into_raw())
+}
+
+///|
 pub fn Window::set_resizable(self : Window, resizable : Bool) -> Unit {
   native_set_resizable(self.id.into_raw(), resizable)
+}
+
+///|
+pub fn Window::is_resizable(self : Window) -> Bool {
+  window_resizable(self.id.into_raw())
 }
 
 ///|

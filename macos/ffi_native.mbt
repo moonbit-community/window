@@ -59,6 +59,16 @@ fn window_has_focus(window_id : Int) -> Bool {
 }
 
 ///|
+fn window_visible(window_id : Int) -> Bool {
+  native_window_visible(window_id)
+}
+
+///|
+fn window_resizable(window_id : Int) -> Bool {
+  native_window_resizable(window_id)
+}
+
+///|
 fn window_minimized(window_id : Int) -> Bool {
   native_window_minimized(window_id)
 }
@@ -437,6 +447,12 @@ extern "C" fn native_window_pending_focused(window_id : Int) -> Bool = "mbw_wind
 
 ///|
 extern "C" fn native_window_has_focus(window_id : Int) -> Bool = "mbw_window_has_focus"
+
+///|
+extern "C" fn native_window_visible(window_id : Int) -> Bool = "mbw_window_visible"
+
+///|
+extern "C" fn native_window_resizable(window_id : Int) -> Bool = "mbw_window_resizable"
 
 ///|
 extern "C" fn native_window_minimized(window_id : Int) -> Bool = "mbw_window_minimized"
