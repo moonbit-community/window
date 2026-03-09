@@ -36,6 +36,7 @@ pub fn WindowId::into_raw(self : WindowId) -> Int {
 ///|
 pub struct WindowAttributes {
   priv mut active : Bool
+  priv mut content_protected : Bool
   priv mut decorations : Bool
   priv mut ime_purpose : ImePurpose
   priv mut max_surface_size : @dpi.PhysicalSize?
@@ -55,6 +56,7 @@ pub struct WindowAttributes {
 pub fn WindowAttributes::default() -> WindowAttributes {
   {
     active: true,
+    content_protected: false,
     decorations: true,
     ime_purpose: ImePurpose::Normal,
     maximized: false,
@@ -131,6 +133,15 @@ pub fn WindowAttributes::with_decorations(
   decorations : Bool,
 ) -> WindowAttributes {
   self.decorations = decorations
+  self
+}
+
+///|
+pub fn WindowAttributes::with_content_protected(
+  self : WindowAttributes,
+  content_protected : Bool,
+) -> WindowAttributes {
+  self.content_protected = content_protected
   self
 }
 
@@ -238,6 +249,11 @@ pub fn WindowAttributes::active(self : WindowAttributes) -> Bool {
 ///|
 pub fn WindowAttributes::decorations(self : WindowAttributes) -> Bool {
   self.decorations
+}
+
+///|
+pub fn WindowAttributes::content_protected(self : WindowAttributes) -> Bool {
+  self.content_protected
 }
 
 ///|

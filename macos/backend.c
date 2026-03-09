@@ -101,6 +101,7 @@ typedef struct mbw_window {
   int ime_cursor_area_height;
   int visible;
   int resizable;
+  int content_protected;
   int decorated;
   int transparent;
   int window_level;
@@ -323,6 +324,8 @@ typedef struct {
 #define MBW_NSTRACKING_ACTIVE_ALWAYS (1UL << 7)
 #define MBW_NSTRACKING_IN_VISIBLE_RECT (1UL << 9)
 #define MBW_NS_NOT_FOUND ((mbw_nsuint_t)-1)
+#define MBW_NSWINDOW_SHARING_NONE ((mbw_nsuint_t)0)
+#define MBW_NSWINDOW_SHARING_READ_ONLY ((mbw_nsuint_t)1)
 
 static bool g_bootstrap_done = false;
 static bool g_bootstrap_ok = false;
@@ -2393,6 +2396,7 @@ int mbw_window_create_utf8(
   window->ime_cursor_area_height = 1;
   window->visible = visible ? 1 : 0;
   window->resizable = resizable ? 1 : 0;
+  window->content_protected = 0;
   window->decorated = decorated ? 1 : 0;
   window->transparent = 0;
   window->window_level = MBW_WINDOW_LEVEL_NORMAL;
@@ -2656,6 +2660,11 @@ bool mbw_window_visible(int window_id) {
 bool mbw_window_resizable(int window_id) {
   mbw_window_t *window = mbw_find_window(window_id);
   return window ? window->resizable != 0 : false;
+}
+
+bool mbw_window_content_protected(int window_id) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  return window ? window->content_protected != 0 : false;
 }
 
 bool mbw_window_is_occluded(int window_id) {
@@ -3569,6 +3578,24 @@ void mbw_window_set_theme(int window_id, int theme) {
   window->reported_theme_kind = next_theme;
   window->pending_theme_changed = 0;
   window->pending_theme_kind = next_theme;
+}
+
+void mbw_window_set_content_protected(int window_id, bool content_protected) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  if (!window) {
+    return;
+  }
+  window->content_protected = content_protected ? 1 : 0;
+#if defined(__APPLE__)
+  if (window->window) {
+    ((void(*)(id, SEL, mbw_nsuint_t))objc_msgSend)(
+      (id)window->window,
+      mbw_sel("setSharingType:"),
+      window->content_protected
+        ? MBW_NSWINDOW_SHARING_NONE
+        : MBW_NSWINDOW_SHARING_READ_ONLY);
+  }
+#endif
 }
 
 void mbw_window_set_ime_purpose(int window_id, int purpose) {

@@ -69,6 +69,11 @@ fn window_resizable(window_id : Int) -> Bool {
 }
 
 ///|
+fn window_content_protected(window_id : Int) -> Bool {
+  native_window_content_protected(window_id)
+}
+
+///|
 fn window_occluded(window_id : Int) -> Bool {
   native_window_occluded(window_id)
 }
@@ -319,6 +324,14 @@ fn set_window_theme(window_id : Int, theme : Int) -> Unit {
 }
 
 ///|
+fn set_window_content_protected(
+  window_id : Int,
+  content_protected : Bool,
+) -> Unit {
+  native_window_set_content_protected(window_id, content_protected)
+}
+
+///|
 fn set_ime_purpose(window_id : Int, purpose : Int) -> Unit {
   native_window_set_ime_purpose(window_id, purpose)
 }
@@ -463,6 +476,9 @@ extern "C" fn native_window_visible(window_id : Int) -> Bool = "mbw_window_visib
 
 ///|
 extern "C" fn native_window_resizable(window_id : Int) -> Bool = "mbw_window_resizable"
+
+///|
+extern "C" fn native_window_content_protected(window_id : Int) -> Bool = "mbw_window_content_protected"
 
 ///|
 extern "C" fn native_window_occluded(window_id : Int) -> Bool = "mbw_window_is_occluded"
@@ -658,6 +674,12 @@ extern "C" fn native_window_set_window_level(
 
 ///|
 extern "C" fn native_window_set_theme(window_id : Int, theme : Int) -> Unit = "mbw_window_set_theme"
+
+///|
+extern "C" fn native_window_set_content_protected(
+  window_id : Int,
+  content_protected : Bool,
+) -> Unit = "mbw_window_set_content_protected"
 
 ///|
 extern "C" fn native_window_set_ime_purpose(

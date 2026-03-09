@@ -386,6 +386,7 @@ pub struct WindowAttributes {
   // private fields
 }
 pub fn WindowAttributes::active(Self) -> Bool
+pub fn WindowAttributes::content_protected(Self) -> Bool
 pub fn WindowAttributes::decorations(Self) -> Bool
 pub fn WindowAttributes::default() -> Self
 pub fn WindowAttributes::ime_purpose(Self) -> ImePurpose
@@ -401,6 +402,7 @@ pub fn WindowAttributes::transparent(Self) -> Bool
 pub fn WindowAttributes::visible(Self) -> Bool
 pub fn WindowAttributes::window_level(Self) -> WindowLevel
 pub fn WindowAttributes::with_active(Self, Bool) -> Self
+pub fn WindowAttributes::with_content_protected(Self, Bool) -> Self
 pub fn WindowAttributes::with_decorations(Self, Bool) -> Self
 pub fn WindowAttributes::with_ime_purpose(Self, ImePurpose) -> Self
 pub fn WindowAttributes::with_max_surface_size(Self, @dpi.PhysicalSize?) -> Self

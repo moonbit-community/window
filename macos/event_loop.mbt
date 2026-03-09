@@ -186,6 +186,14 @@ pub fn Window::set_theme(self : Window, theme : @core.Theme?) -> Unit {
 }
 
 ///|
+pub fn Window::set_content_protected(
+  self : Window,
+  content_protected : Bool,
+) -> Unit {
+  set_window_content_protected(self.id.into_raw(), content_protected)
+}
+
+///|
 pub fn Window::set_visible(self : Window, visible : Bool) -> Unit {
   native_set_visible(self.id.into_raw(), visible)
 }
@@ -203,6 +211,11 @@ pub fn Window::set_resizable(self : Window, resizable : Bool) -> Unit {
 ///|
 pub fn Window::is_resizable(self : Window) -> Bool {
   window_resizable(self.id.into_raw())
+}
+
+///|
+pub fn Window::is_content_protected(self : Window) -> Bool {
+  window_content_protected(self.id.into_raw())
 }
 
 ///|
@@ -548,6 +561,7 @@ pub fn EventLoop::create_window(
   )
   guard raw_id > 0 else { abort("failed to create macos window") }
   set_window_theme(raw_id, theme_to_native(attributes.theme()))
+  set_window_content_protected(raw_id, attributes.content_protected())
   set_ime_purpose(raw_id, ime_purpose_to_native(attributes.ime_purpose()))
   set_window_level(raw_id, window_level_to_native(attributes.window_level()))
   set_window_transparent(raw_id, attributes.transparent())

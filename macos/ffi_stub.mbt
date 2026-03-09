@@ -69,6 +69,11 @@ fn window_resizable(_window_id : Int) -> Bool {
 }
 
 ///|
+fn window_content_protected(_window_id : Int) -> Bool {
+  false
+}
+
+///|
 fn window_occluded(_window_id : Int) -> Bool {
   false
 }
@@ -315,6 +320,14 @@ fn set_window_level(_window_id : Int, _level : Int) -> Unit {
 
 ///|
 fn set_window_theme(_window_id : Int, _theme : Int) -> Unit {
+  ()
+}
+
+///|
+fn set_window_content_protected(
+  _window_id : Int,
+  _content_protected : Bool,
+) -> Unit {
   ()
 }
 

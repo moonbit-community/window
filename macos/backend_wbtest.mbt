@@ -278,6 +278,13 @@ struct WindowVisibilityResizableApp {
 }
 
 ///|
+struct WindowContentProtectedApp {
+  protected_after_disable : Ref[Bool]
+  protected_after_enable : Ref[Bool]
+  protected_initial : Ref[Bool]
+}
+
+///|
 struct MovedApp {
   moved : Ref[@dpi.PhysicalPosition?]
 }
@@ -559,6 +566,24 @@ impl ApplicationHandler for WindowVisibilityResizableApp with can_create_surface
   self.resizable_after_disable.val = window.is_resizable()
   window.set_resizable(true)
   self.resizable_after_enable.val = window.is_resizable()
+  event_loop.exit()
+}
+
+///|
+impl ApplicationHandler for WindowContentProtectedApp with can_create_surfaces(
+  self,
+  event_loop,
+) {
+  let window = event_loop.create_window(
+    @core.WindowAttributes::default()
+    .with_visible(false)
+    .with_content_protected(true),
+  )
+  self.protected_initial.val = window.is_content_protected()
+  window.set_content_protected(false)
+  self.protected_after_disable.val = window.is_content_protected()
+  window.set_content_protected(true)
+  self.protected_after_enable.val = window.is_content_protected()
   event_loop.exit()
 }
 
@@ -1445,6 +1470,23 @@ test "window visibility and resizable getters reflect runtime updates" {
   assert_true(resizable_initial.val)
   assert_false(resizable_after_disable.val)
   assert_true(resizable_after_enable.val)
+}
+
+///|
+test "window content protection can be configured at create and runtime" {
+  let event_loop = EventLoop::new()
+  let protected_initial = Ref::new(false)
+  let protected_after_disable = Ref::new(true)
+  let protected_after_enable = Ref::new(false)
+  let app : WindowContentProtectedApp = {
+    protected_after_disable,
+    protected_after_enable,
+    protected_initial,
+  }
+  event_loop.run_app(app)
+  assert_true(protected_initial.val)
+  assert_false(protected_after_disable.val)
+  assert_true(protected_after_enable.val)
 }
 
 ///|
