@@ -85,6 +85,14 @@ pub fn Window::has_focus(self : Window) -> Bool {
 }
 
 ///|
+pub fn Window::set_ime_purpose(
+  self : Window,
+  purpose : @core.ImePurpose,
+) -> Unit {
+  set_ime_purpose(self.id.into_raw(), ime_purpose_to_native(purpose))
+}
+
+///|
 pub fn Window::set_ime_allowed(self : Window, allowed : Bool) -> Unit {
   set_ime_allowed(self.id.into_raw(), allowed)
 }
@@ -219,6 +227,15 @@ fn modifiers_from_native(modifiers : Int) -> @core.Modifiers {
     (modifiers & 4) != 0,
     (modifiers & 8) != 0,
   )
+}
+
+///|
+fn ime_purpose_to_native(purpose : @core.ImePurpose) -> Int {
+  match purpose {
+    @core.ImePurpose::Normal => 0
+    @core.ImePurpose::Password => 1
+    @core.ImePurpose::Terminal => 2
+  }
 }
 
 ///|
@@ -425,6 +442,7 @@ pub fn EventLoop::create_window(
     attributes.title(),
   )
   guard raw_id > 0 else { abort("failed to create macos window") }
+  set_ime_purpose(raw_id, ime_purpose_to_native(attributes.ime_purpose()))
   match attributes.min_surface_size() {
     Some(min_size) =>
       set_min_surface_size(raw_id, min_size.width(), min_size.height())

@@ -249,6 +249,11 @@ fn focus_window(window_id : Int) -> Unit {
 }
 
 ///|
+fn set_ime_purpose(window_id : Int, purpose : Int) -> Unit {
+  native_window_set_ime_purpose(window_id, purpose)
+}
+
+///|
 fn set_ime_allowed(window_id : Int, allowed : Bool) -> Unit {
   native_window_set_ime_allowed(window_id, allowed)
 }
@@ -520,6 +525,12 @@ extern "C" fn native_window_set_position(
 
 ///|
 extern "C" fn native_window_focus(window_id : Int) -> Unit = "mbw_window_focus"
+
+///|
+extern "C" fn native_window_set_ime_purpose(
+  window_id : Int,
+  purpose : Int,
+) -> Unit = "mbw_window_set_ime_purpose"
 
 ///|
 extern "C" fn native_window_set_ime_allowed(

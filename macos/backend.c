@@ -92,6 +92,7 @@ typedef struct mbw_window {
   int ime_cursor_start;
   int ime_cursor_end;
   int ime_allowed;
+  int ime_purpose;
   int ime_cursor_area_x;
   int ime_cursor_area_y;
   int ime_cursor_area_width;
@@ -131,6 +132,10 @@ static int64_t g_now_ms_override_for_test = -1;
 #define MBW_IME_EVENT_PREEDIT 2
 #define MBW_IME_EVENT_COMMIT 3
 #define MBW_IME_EVENT_DISABLED 4
+
+#define MBW_IME_PURPOSE_NORMAL 0
+#define MBW_IME_PURPOSE_PASSWORD 1
+#define MBW_IME_PURPOSE_TERMINAL 2
 
 #define MBW_ELEMENT_STATE_NONE 0
 #define MBW_ELEMENT_STATE_PRESSED 1
@@ -2350,6 +2355,7 @@ int mbw_window_create_utf8(
   window->ime_cursor_start = -1;
   window->ime_cursor_end = -1;
   window->ime_allowed = 1;
+  window->ime_purpose = MBW_IME_PURPOSE_NORMAL;
   window->ime_cursor_area_x = 0;
   window->ime_cursor_area_y = 0;
   window->ime_cursor_area_width = 1;
@@ -3223,6 +3229,11 @@ int mbw_test_window_ime_cursor_area_height(int window_id) {
   return window ? window->ime_cursor_area_height : 0;
 }
 
+int mbw_test_window_ime_purpose(int window_id) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  return window ? window->ime_purpose : MBW_IME_PURPOSE_NORMAL;
+}
+
 void mbw_test_window_queue_destroyed(int window_id) {
   mbw_window_t *window = mbw_find_window(window_id);
   if (!window) {
@@ -3309,6 +3320,20 @@ void mbw_window_focus(int window_id) {
       nil);
   }
 #endif
+}
+
+void mbw_window_set_ime_purpose(int window_id, int purpose) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  if (!window) {
+    return;
+  }
+  int next_purpose = MBW_IME_PURPOSE_NORMAL;
+  if (purpose == MBW_IME_PURPOSE_PASSWORD) {
+    next_purpose = MBW_IME_PURPOSE_PASSWORD;
+  } else if (purpose == MBW_IME_PURPOSE_TERMINAL) {
+    next_purpose = MBW_IME_PURPOSE_TERMINAL;
+  }
+  window->ime_purpose = next_purpose;
 }
 
 void mbw_window_set_ime_allowed(int window_id, bool allowed) {

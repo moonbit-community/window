@@ -53,6 +53,14 @@ pub fn ImeCursorRange::start(Self) -> Int
 pub impl Eq for ImeCursorRange
 pub impl Show for ImeCursorRange
 
+pub(all) enum ImePurpose {
+  Normal
+  Password
+  Terminal
+}
+pub impl Eq for ImePurpose
+pub impl Show for ImePurpose
+
 pub(all) enum Key {
   Named(NamedKey)
   Character(String)
@@ -378,6 +386,7 @@ pub struct WindowAttributes {
   // private fields
 }
 pub fn WindowAttributes::default() -> Self
+pub fn WindowAttributes::ime_purpose(Self) -> ImePurpose
 pub fn WindowAttributes::max_surface_size(Self) -> @dpi.PhysicalSize?
 pub fn WindowAttributes::min_surface_size(Self) -> @dpi.PhysicalSize?
 pub fn WindowAttributes::position(Self) -> @dpi.PhysicalPosition?
@@ -385,6 +394,7 @@ pub fn WindowAttributes::resizable(Self) -> Bool
 pub fn WindowAttributes::surface_size(Self) -> @dpi.PhysicalSize?
 pub fn WindowAttributes::title(Self) -> String
 pub fn WindowAttributes::visible(Self) -> Bool
+pub fn WindowAttributes::with_ime_purpose(Self, ImePurpose) -> Self
 pub fn WindowAttributes::with_max_surface_size(Self, @dpi.PhysicalSize?) -> Self
 pub fn WindowAttributes::with_min_surface_size(Self, @dpi.PhysicalSize?) -> Self
 pub fn WindowAttributes::with_position(Self, @dpi.PhysicalPosition?) -> Self

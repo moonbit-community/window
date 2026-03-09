@@ -5,6 +5,13 @@ pub(all) enum Theme {
 } derive(Eq, Show)
 
 ///|
+pub(all) enum ImePurpose {
+  Normal
+  Password
+  Terminal
+} derive(Eq, Show)
+
+///|
 pub struct WindowId {
   priv raw : Int
 } derive(Eq, Show)
@@ -21,6 +28,7 @@ pub fn WindowId::into_raw(self : WindowId) -> Int {
 
 ///|
 pub struct WindowAttributes {
+  priv mut ime_purpose : ImePurpose
   priv mut max_surface_size : @dpi.PhysicalSize?
   priv mut min_surface_size : @dpi.PhysicalSize?
   priv mut position : @dpi.PhysicalPosition?
@@ -33,6 +41,7 @@ pub struct WindowAttributes {
 ///|
 pub fn WindowAttributes::default() -> WindowAttributes {
   {
+    ime_purpose: ImePurpose::Normal,
     min_surface_size: None,
     max_surface_size: None,
     position: None,
@@ -76,6 +85,15 @@ pub fn WindowAttributes::with_position(
   position : @dpi.PhysicalPosition?,
 ) -> WindowAttributes {
   self.position = position
+  self
+}
+
+///|
+pub fn WindowAttributes::with_ime_purpose(
+  self : WindowAttributes,
+  purpose : ImePurpose,
+) -> WindowAttributes {
+  self.ime_purpose = purpose
   self
 }
 
@@ -132,6 +150,11 @@ pub fn WindowAttributes::position(
   self : WindowAttributes,
 ) -> @dpi.PhysicalPosition? {
   self.position
+}
+
+///|
+pub fn WindowAttributes::ime_purpose(self : WindowAttributes) -> ImePurpose {
+  self.ime_purpose
 }
 
 ///|

@@ -249,6 +249,11 @@ fn focus_window(_window_id : Int) -> Unit {
 }
 
 ///|
+fn set_ime_purpose(_window_id : Int, _purpose : Int) -> Unit {
+  ()
+}
+
+///|
 fn set_ime_allowed(_window_id : Int, _allowed : Bool) -> Unit {
   ()
 }

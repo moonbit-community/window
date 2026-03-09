@@ -139,6 +139,9 @@ extern "C" fn ime_cursor_area_width_for_test(window_id : Int) -> Int = "mbw_test
 extern "C" fn ime_cursor_area_height_for_test(window_id : Int) -> Int = "mbw_test_window_ime_cursor_area_height"
 
 ///|
+extern "C" fn ime_purpose_for_test(window_id : Int) -> Int = "mbw_test_window_ime_purpose"
+
+///|
 struct StartCauseApp {
   causes : Array[@core.StartCause]
 }
@@ -325,6 +328,7 @@ struct ImeApp {
 
 ///|
 struct ImeConfigurationApp {
+  initial_purpose : Ref[Int]
   window_id : Ref[Int]
 }
 
@@ -887,9 +891,13 @@ impl ApplicationHandler for ImeConfigurationApp with can_create_surfaces(
   event_loop,
 ) {
   let window = event_loop.create_window(
-    @core.WindowAttributes::default().with_visible(false),
+    @core.WindowAttributes::default()
+    .with_visible(false)
+    .with_ime_purpose(@core.ImePurpose::Password),
   )
   self.window_id.val = window.id().into_raw()
+  self.initial_purpose.val = ime_purpose_for_test(window.id().into_raw())
+  window.set_ime_purpose(@core.ImePurpose::Terminal)
   window.set_ime_allowed(false)
   window.set_ime_cursor_area(
     @dpi.PhysicalPosition::new(48, 96),
@@ -1523,10 +1531,13 @@ test "ime preedit always includes enabled first" {
 ///|
 test "window ime configuration updates native state" {
   let event_loop = EventLoop::new()
+  let initial_purpose = Ref::new(0)
   let window_id = Ref::new(0)
-  let app : ImeConfigurationApp = { window_id, }
+  let app : ImeConfigurationApp = { initial_purpose, window_id }
   event_loop.run_app(app)
   let raw_id = window_id.val
+  assert_eq(initial_purpose.val, 1)
+  assert_eq(ime_purpose_for_test(raw_id), 2)
   assert_false(ime_allowed_for_test(raw_id))
   assert_eq(ime_cursor_area_x_for_test(raw_id), 48)
   assert_eq(ime_cursor_area_y_for_test(raw_id), 96)
