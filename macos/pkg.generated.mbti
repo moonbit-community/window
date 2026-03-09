@@ -75,6 +75,7 @@ pub struct Window {
 }
 pub fn Window::id(Self) -> @core.WindowId
 pub fn Window::request_redraw(Self) -> Unit
+pub fn Window::scale_factor(Self) -> Double
 pub fn Window::set_resizable(Self, Bool) -> Unit
 pub fn Window::set_title(Self, String) -> Unit
 pub fn Window::set_visible(Self, Bool) -> Unit

@@ -27,6 +27,11 @@ pub fn Window::surface_size(self : Window) -> @dpi.PhysicalSize {
 }
 
 ///|
+pub fn Window::scale_factor(self : Window) -> Double {
+  window_scale_factor(self.id.into_raw())
+}
+
+///|
 pub fn Window::request_redraw(self : Window) -> Unit {
   native_window_request_redraw(self.id.into_raw())
 }
@@ -155,6 +160,13 @@ impl ApplicationHandler with about_to_wait(_self, _event_loop) {
 }
 
 ///|
+fn EventLoop::close_windows(self : EventLoop) -> Unit {
+  for raw_id in self.window_ids {
+    close_window(raw_id)
+  }
+}
+
+///|
 fn EventLoop::has_open_windows(self : EventLoop) -> Bool {
   for raw_id in self.window_ids {
     if native_window_should_close(raw_id) == false {
@@ -176,6 +188,28 @@ fn[A : ApplicationHandler] EventLoop::dispatch_window_events(
       polled = true
     }
     let window_id = @core.WindowId::from_raw(raw_id)
+    if take_focused_changed(raw_id) {
+      app.window_event(
+        self,
+        window_id,
+        @core.WindowEvent::Focused(pending_focused(raw_id)),
+      )
+    }
+    if take_scale_factor_changed(raw_id) {
+      let scale_factor = pending_scale_factor(raw_id)
+      let suggested_size = @dpi.PhysicalSize::new(
+        pending_scale_width(raw_id),
+        pending_scale_height(raw_id),
+      )
+      let writer = @core.SurfaceSizeWriter::new(suggested_size)
+      app.window_event(
+        self,
+        window_id,
+        @core.WindowEvent::ScaleFactorChanged(scale_factor, writer),
+      )
+      let requested_size = writer.surface_size()
+      set_surface_size(raw_id, requested_size.width(), requested_size.height())
+    }
     if native_window_take_surface_resized(raw_id) {
       let size = @dpi.PhysicalSize::new(
         native_window_width(raw_id),
@@ -189,8 +223,8 @@ fn[A : ApplicationHandler] EventLoop::dispatch_window_events(
     if native_window_take_close_requested(raw_id) {
       app.window_event(self, window_id, @core.WindowEvent::CloseRequested)
     }
-    if self.exit_requested {
-      return
+    if take_destroyed(raw_id) {
+      app.window_event(self, window_id, @core.WindowEvent::Destroyed)
     }
   }
 }
@@ -246,5 +280,9 @@ pub fn[A : ApplicationHandler] EventLoop::run_app(
       break
     }
     app.new_events(self, self.wait_next_iteration())
+  }
+  if self.exit_requested {
+    self.close_windows()
+    self.dispatch_window_events(app)
   }
 }

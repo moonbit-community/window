@@ -17,3 +17,10 @@ test "start cause constructors are available" {
     StartCause::ResumeTimeReached(3L, 4L),
   )
 }
+
+///|
+test "surface size writer updates the requested size" {
+  let writer = SurfaceSizeWriter::new(@dpi.PhysicalSize::new(800, 600))
+  writer.request_surface_size(@dpi.PhysicalSize::new(1200, 900))
+  assert_eq(writer.surface_size(), @dpi.PhysicalSize::new(1200, 900))
+}

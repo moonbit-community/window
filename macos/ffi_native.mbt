@@ -14,8 +14,58 @@ fn runtime_now_ms() -> Int64 {
 }
 
 ///|
+fn window_scale_factor(window_id : Int) -> Double {
+  native_window_scale_factor(window_id)
+}
+
+///|
+fn take_destroyed(window_id : Int) -> Bool {
+  native_window_take_destroyed(window_id)
+}
+
+///|
+fn take_focused_changed(window_id : Int) -> Bool {
+  native_window_take_focused_changed(window_id)
+}
+
+///|
+fn pending_focused(window_id : Int) -> Bool {
+  native_window_pending_focused(window_id)
+}
+
+///|
+fn take_scale_factor_changed(window_id : Int) -> Bool {
+  native_window_take_scale_factor_changed(window_id)
+}
+
+///|
+fn pending_scale_factor(window_id : Int) -> Double {
+  native_window_pending_scale_factor(window_id)
+}
+
+///|
+fn pending_scale_width(window_id : Int) -> Int {
+  native_window_pending_scale_width(window_id)
+}
+
+///|
+fn pending_scale_height(window_id : Int) -> Int {
+  native_window_pending_scale_height(window_id)
+}
+
+///|
 fn wait_for_events(timeout_ms : Int) -> Bool {
   native_event_loop_wait_millis(timeout_ms)
+}
+
+///|
+fn set_surface_size(window_id : Int, width : Int, height : Int) -> Unit {
+  native_window_set_surface_size(window_id, width, height)
+}
+
+///|
+fn close_window(window_id : Int) -> Unit {
+  native_window_close(window_id)
 }
 
 ///|
@@ -88,10 +138,34 @@ pub extern "C" fn native_window_width(window_id : Int) -> Int = "mbw_window_widt
 pub extern "C" fn native_window_height(window_id : Int) -> Int = "mbw_window_height"
 
 ///|
+extern "C" fn native_window_scale_factor(window_id : Int) -> Double = "mbw_window_scale_factor"
+
+///|
 pub extern "C" fn native_window_should_close(window_id : Int) -> Bool = "mbw_window_should_close"
 
 ///|
 pub extern "C" fn native_window_take_close_requested(window_id : Int) -> Bool = "mbw_window_take_close_requested"
+
+///|
+extern "C" fn native_window_take_destroyed(window_id : Int) -> Bool = "mbw_window_take_destroyed"
+
+///|
+extern "C" fn native_window_take_focused_changed(window_id : Int) -> Bool = "mbw_window_take_focused_changed"
+
+///|
+extern "C" fn native_window_pending_focused(window_id : Int) -> Bool = "mbw_window_pending_focused"
+
+///|
+extern "C" fn native_window_take_scale_factor_changed(window_id : Int) -> Bool = "mbw_window_take_scale_factor_changed"
+
+///|
+extern "C" fn native_window_pending_scale_factor(window_id : Int) -> Double = "mbw_window_pending_scale_factor"
+
+///|
+extern "C" fn native_window_pending_scale_width(window_id : Int) -> Int = "mbw_window_pending_scale_width"
+
+///|
+extern "C" fn native_window_pending_scale_height(window_id : Int) -> Int = "mbw_window_pending_scale_height"
 
 ///|
 pub extern "C" fn native_window_take_surface_resized(window_id : Int) -> Bool = "mbw_window_take_surface_resized"
@@ -101,6 +175,16 @@ pub extern "C" fn native_window_take_redraw_requested(window_id : Int) -> Bool =
 
 ///|
 pub extern "C" fn native_window_request_redraw(window_id : Int) -> Unit = "mbw_window_request_redraw"
+
+///|
+extern "C" fn native_window_set_surface_size(
+  window_id : Int,
+  width : Int,
+  height : Int,
+) -> Unit = "mbw_window_set_surface_size"
+
+///|
+extern "C" fn native_window_close(window_id : Int) -> Unit = "mbw_window_close"
 
 ///|
 #borrow(title)

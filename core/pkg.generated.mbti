@@ -28,6 +28,14 @@ pub(all) enum StartCause {
 pub impl Eq for StartCause
 pub impl Show for StartCause
 
+pub struct SurfaceSizeWriter {
+  size : Ref[@dpi.PhysicalSize]
+}
+pub fn SurfaceSizeWriter::new(@dpi.PhysicalSize) -> Self
+pub fn SurfaceSizeWriter::request_surface_size(Self, @dpi.PhysicalSize) -> Unit
+pub fn SurfaceSizeWriter::surface_size(Self) -> @dpi.PhysicalSize
+pub impl Show for SurfaceSizeWriter
+
 pub(all) enum Theme {
   Light
   Dark
@@ -52,10 +60,12 @@ pub impl Show for WindowAttributes
 
 pub(all) enum WindowEvent {
   CloseRequested
+  Destroyed
+  Focused(Bool)
   SurfaceResized(@dpi.PhysicalSize)
+  ScaleFactorChanged(Double, SurfaceSizeWriter)
   RedrawRequested
 }
-pub impl Eq for WindowEvent
 pub impl Show for WindowEvent
 
 pub struct WindowId {

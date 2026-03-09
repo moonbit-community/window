@@ -14,8 +14,58 @@ fn runtime_now_ms() -> Int64 {
 }
 
 ///|
+fn window_scale_factor(_window_id : Int) -> Double {
+  1.0
+}
+
+///|
+fn take_destroyed(_window_id : Int) -> Bool {
+  false
+}
+
+///|
+fn take_focused_changed(_window_id : Int) -> Bool {
+  false
+}
+
+///|
+fn pending_focused(_window_id : Int) -> Bool {
+  false
+}
+
+///|
+fn take_scale_factor_changed(_window_id : Int) -> Bool {
+  false
+}
+
+///|
+fn pending_scale_factor(_window_id : Int) -> Double {
+  1.0
+}
+
+///|
+fn pending_scale_width(_window_id : Int) -> Int {
+  0
+}
+
+///|
+fn pending_scale_height(_window_id : Int) -> Int {
+  0
+}
+
+///|
 fn wait_for_events(_timeout_ms : Int) -> Bool {
   false
+}
+
+///|
+fn set_surface_size(_window_id : Int, _width : Int, _height : Int) -> Unit {
+  ()
+}
+
+///|
+fn close_window(_window_id : Int) -> Unit {
+  ()
 }
 
 ///|

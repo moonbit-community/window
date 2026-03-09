@@ -12,6 +12,17 @@ extern "C" fn runtime_now_set_for_test(ms : Int64) -> Unit = "mbw_runtime_now_ms
 extern "C" fn runtime_now_clear_for_test() -> Unit = "mbw_runtime_now_ms_clear_for_test"
 
 ///|
+extern "C" fn queue_focus_for_test(window_id : Int, focused : Bool) -> Unit = "mbw_test_window_queue_focused"
+
+///|
+extern "C" fn queue_scale_factor_changed_for_test(
+  window_id : Int,
+  scale_factor : Double,
+  width : Int,
+  height : Int,
+) -> Unit = "mbw_test_window_queue_scale_factor_changed"
+
+///|
 struct StartCauseApp {
   causes : Array[@core.StartCause]
 }
@@ -87,6 +98,101 @@ struct ProxyWakeApp {
 }
 
 ///|
+struct FocusApp {
+  focused_values : Array[Bool]
+}
+
+///|
+impl ApplicationHandler for FocusApp with can_create_surfaces(_self, event_loop) {
+  let window = event_loop.create_window(
+    @core.WindowAttributes::default().with_visible(false),
+  )
+  queue_focus_for_test(window.id().into_raw(), true)
+}
+
+///|
+impl ApplicationHandler for FocusApp with window_event(
+  self,
+  event_loop,
+  _id,
+  event,
+) {
+  match event {
+    @core.WindowEvent::Focused(focused) => {
+      self.focused_values.push(focused)
+      event_loop.exit()
+    }
+    _ => ()
+  }
+}
+
+///|
+struct ScaleFactorApp {
+  seen_scale_factor : Ref[Double?]
+  resized : Ref[@dpi.PhysicalSize?]
+}
+
+///|
+impl ApplicationHandler for ScaleFactorApp with can_create_surfaces(
+  _self,
+  event_loop,
+) {
+  let window = event_loop.create_window(
+    @core.WindowAttributes::default().with_visible(false),
+  )
+  queue_scale_factor_changed_for_test(window.id().into_raw(), 2.0, 1600, 1200)
+}
+
+///|
+impl ApplicationHandler for ScaleFactorApp with window_event(
+  self,
+  event_loop,
+  _id,
+  event,
+) {
+  match event {
+    @core.WindowEvent::ScaleFactorChanged(scale_factor, writer) => {
+      self.seen_scale_factor.val = Some(scale_factor)
+      writer.request_surface_size(@dpi.PhysicalSize::new(1200, 900))
+    }
+    @core.WindowEvent::SurfaceResized(size) => {
+      self.resized.val = Some(size)
+      event_loop.exit()
+    }
+    _ => ()
+  }
+}
+
+///|
+struct DestroyedOnExitApp {
+  destroyed_seen : Ref[Bool]
+}
+
+///|
+impl ApplicationHandler for DestroyedOnExitApp with can_create_surfaces(
+  _self,
+  event_loop,
+) {
+  let _ = event_loop.create_window(
+    @core.WindowAttributes::default().with_visible(false),
+  )
+  event_loop.exit()
+}
+
+///|
+impl ApplicationHandler for DestroyedOnExitApp with window_event(
+  self,
+  _event_loop,
+  _id,
+  event,
+) {
+  match event {
+    @core.WindowEvent::Destroyed => self.destroyed_seen.val = true
+    _ => ()
+  }
+}
+
+///|
 impl ApplicationHandler for ProxyWakeApp with can_create_surfaces(
   _self,
   event_loop,
@@ -158,4 +264,30 @@ test "wait blocks on native wake source until proxy wake arrives" {
     fail("expected WaitCancelled without a timeout")
   }
   assert_eq(start_ms, 200L)
+}
+
+///|
+test "focused events are delivered" {
+  let event_loop = EventLoop::new()
+  let app = { focused_values: [] }
+  event_loop.run_app(app)
+  assert_eq(app.focused_values, [true])
+}
+
+///|
+test "scale factor changes can request a replacement surface size" {
+  let event_loop = EventLoop::new()
+  let seen_scale_factor = Ref::new(None)
+  let resized = Ref::new(None)
+  event_loop.run_app({ seen_scale_factor, resized })
+  assert_eq(seen_scale_factor.val, Some(2.0))
+  assert_eq(resized.val, Some(@dpi.PhysicalSize::new(1200, 900)))
+}
+
+///|
+test "destroyed is delivered when the event loop exits" {
+  let event_loop = EventLoop::new()
+  let destroyed_seen = Ref::new(false)
+  event_loop.run_app({ destroyed_seen, })
+  assert_true(destroyed_seen.val)
 }

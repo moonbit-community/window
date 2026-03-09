@@ -6,7 +6,8 @@ native builds and focuses on `macos-arm64`.
 ## Status
 
 - Supported backend: macOS AppKit on the native target
-- Current event surface: `CloseRequested`, `SurfaceResized`, `RedrawRequested`
+- Current event surface: `CloseRequested`, `Destroyed`, `Focused`,
+  `SurfaceResized`, `ScaleFactorChanged`, `RedrawRequested`
 - Event loop support: `run_app`, `EventLoopProxy::wake_up()`,
   `ControlFlow::{Poll, Wait, WaitUntil}`
 - Other platforms are planned but not implemented yet

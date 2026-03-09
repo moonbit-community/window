@@ -17,8 +17,18 @@ typedef struct mbw_window {
   int width;
   int height;
   double scale_factor;
+  double reported_scale_factor;
   int should_close;
+  int allow_close;
   int pending_close_requested;
+  int pending_destroyed;
+  int pending_focused_changed;
+  int focused;
+  int pending_focus_value;
+  int pending_scale_factor_changed;
+  double pending_scale_factor;
+  int pending_scale_width;
+  int pending_scale_height;
   int pending_surface_resized;
   int pending_redraw_requested;
   int reported_width;
@@ -151,6 +161,21 @@ static void mbw_window_delegate_did_resize(id self, SEL _cmd, id notification) {
   window->pending_surface_resized = 1;
 }
 
+static mbw_bool_t mbw_window_delegate_should_close(id self, SEL _cmd, id notification) {
+  (void)_cmd;
+  (void)notification;
+  mbw_window_t *window = mbw_delegate_window(self);
+  if (!window) {
+    return NO;
+  }
+  if (window->allow_close) {
+    window->allow_close = 0;
+    return YES;
+  }
+  window->pending_close_requested = 1;
+  return NO;
+}
+
 static void mbw_window_delegate_will_close(id self, SEL _cmd, id notification) {
   (void)_cmd;
   (void)notification;
@@ -159,7 +184,31 @@ static void mbw_window_delegate_will_close(id self, SEL _cmd, id notification) {
     return;
   }
   window->should_close = 1;
-  window->pending_close_requested = 1;
+  window->pending_destroyed = 1;
+}
+
+static void mbw_window_delegate_did_become_key(id self, SEL _cmd, id notification) {
+  (void)_cmd;
+  (void)notification;
+  mbw_window_t *window = mbw_delegate_window(self);
+  if (!window) {
+    return;
+  }
+  window->focused = 1;
+  window->pending_focus_value = 1;
+  window->pending_focused_changed = 1;
+}
+
+static void mbw_window_delegate_did_resign_key(id self, SEL _cmd, id notification) {
+  (void)_cmd;
+  (void)notification;
+  mbw_window_t *window = mbw_delegate_window(self);
+  if (!window) {
+    return;
+  }
+  window->focused = 0;
+  window->pending_focus_value = 0;
+  window->pending_focused_changed = 1;
 }
 
 static Class mbw_get_window_delegate_class(void) {
@@ -194,8 +243,23 @@ static Class mbw_get_window_delegate_class(void) {
 
   class_addMethod(
     delegate_class,
+    mbw_sel("windowShouldClose:"),
+    (IMP)mbw_window_delegate_should_close,
+    "c@:@");
+  class_addMethod(
+    delegate_class,
     mbw_sel("windowDidResize:"),
     (IMP)mbw_window_delegate_did_resize,
+    "v@:@");
+  class_addMethod(
+    delegate_class,
+    mbw_sel("windowDidBecomeKey:"),
+    (IMP)mbw_window_delegate_did_become_key,
+    "v@:@");
+  class_addMethod(
+    delegate_class,
+    mbw_sel("windowDidResignKey:"),
+    (IMP)mbw_window_delegate_did_resign_key,
     "v@:@");
   class_addMethod(
     delegate_class,
@@ -339,6 +403,9 @@ static void mbw_update_window_state(mbw_window_t *window) {
   mbw_bool_t is_visible = ((mbw_bool_t(*)(id, SEL))objc_msgSend)(
     (id)window->window, mbw_sel("isVisible"));
   window->visible = is_visible ? 1 : 0;
+  mbw_bool_t is_focused = ((mbw_bool_t(*)(id, SEL))objc_msgSend)(
+    (id)window->window, mbw_sel("isKeyWindow"));
+  window->focused = is_focused ? 1 : 0;
 
   window->scale_factor = ((double(*)(id, SEL))objc_msgSend)(
     (id)window->window, mbw_sel("backingScaleFactor"));
@@ -357,6 +424,16 @@ static void mbw_update_window_state(mbw_window_t *window) {
     int height = (int)(bounds.size.height * window->scale_factor + 0.5);
     window->width = mbw_clamp_size(width);
     window->height = mbw_clamp_size(height);
+  }
+
+  if (window->reported_scale_factor <= 0.0) {
+    window->reported_scale_factor = window->scale_factor;
+  } else if (window->scale_factor != window->reported_scale_factor) {
+    window->reported_scale_factor = window->scale_factor;
+    window->pending_scale_factor_changed = 1;
+    window->pending_scale_factor = window->scale_factor;
+    window->pending_scale_width = window->width;
+    window->pending_scale_height = window->height;
   }
 
   if (window->width != window->reported_width || window->height != window->reported_height) {
@@ -499,8 +576,18 @@ int mbw_window_create_utf8(
   window->width = mbw_clamp_size(width);
   window->height = mbw_clamp_size(height);
   window->scale_factor = 1.0;
+  window->reported_scale_factor = 0.0;
   window->should_close = 0;
+  window->allow_close = 0;
   window->pending_close_requested = 0;
+  window->pending_destroyed = 0;
+  window->pending_focused_changed = 0;
+  window->focused = 0;
+  window->pending_focus_value = 0;
+  window->pending_scale_factor_changed = 0;
+  window->pending_scale_factor = 1.0;
+  window->pending_scale_width = window->width;
+  window->pending_scale_height = window->height;
   window->pending_surface_resized = 0;
   window->pending_redraw_requested = 0;
   window->reported_width = window->width;
@@ -596,6 +683,11 @@ int mbw_window_height(int window_id) {
   return window ? window->height : 0;
 }
 
+double mbw_window_scale_factor(int window_id) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  return window ? window->scale_factor : 1.0;
+}
+
 bool mbw_window_should_close(int window_id) {
   mbw_window_t *window = mbw_find_window(window_id);
   return window ? window->should_close != 0 : true;
@@ -608,6 +700,53 @@ bool mbw_window_take_close_requested(int window_id) {
   }
   window->pending_close_requested = 0;
   return true;
+}
+
+bool mbw_window_take_destroyed(int window_id) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  if (!window || !window->pending_destroyed) {
+    return false;
+  }
+  window->pending_destroyed = 0;
+  return true;
+}
+
+bool mbw_window_take_focused_changed(int window_id) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  if (!window || !window->pending_focused_changed) {
+    return false;
+  }
+  window->pending_focused_changed = 0;
+  return true;
+}
+
+bool mbw_window_pending_focused(int window_id) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  return window ? window->pending_focus_value != 0 : false;
+}
+
+bool mbw_window_take_scale_factor_changed(int window_id) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  if (!window || !window->pending_scale_factor_changed) {
+    return false;
+  }
+  window->pending_scale_factor_changed = 0;
+  return true;
+}
+
+double mbw_window_pending_scale_factor(int window_id) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  return window ? window->pending_scale_factor : 1.0;
+}
+
+int mbw_window_pending_scale_width(int window_id) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  return window ? window->pending_scale_width : 0;
+}
+
+int mbw_window_pending_scale_height(int window_id) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  return window ? window->pending_scale_height : 0;
 }
 
 bool mbw_window_take_surface_resized(int window_id) {
@@ -634,6 +773,85 @@ void mbw_window_request_redraw(int window_id) {
     return;
   }
   window->pending_redraw_requested = 1;
+}
+
+void mbw_window_set_surface_size(int window_id, int width, int height) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  if (!window) {
+    return;
+  }
+
+  width = mbw_clamp_size(width);
+  height = mbw_clamp_size(height);
+  window->width = width;
+  window->height = height;
+  window->reported_width = width;
+  window->reported_height = height;
+  window->pending_surface_resized = 1;
+#if defined(__APPLE__)
+  if (window->window) {
+    double scale_factor = window->scale_factor > 0.0 ? window->scale_factor : 1.0;
+    mbw_size_t logical_size = {
+      .width = (double)width / scale_factor,
+      .height = (double)height / scale_factor,
+    };
+    ((void(*)(id, SEL, mbw_size_t))objc_msgSend)(
+      (id)window->window, mbw_sel("setContentSize:"), logical_size);
+  }
+#endif
+}
+
+void mbw_window_close(int window_id) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  if (!window || window->should_close) {
+    return;
+  }
+#if defined(__APPLE__)
+  if (window->window) {
+    window->allow_close = 1;
+    ((void(*)(id, SEL))objc_msgSend)((id)window->window, mbw_sel("close"));
+    return;
+  }
+#endif
+  window->should_close = 1;
+  window->pending_destroyed = 1;
+}
+
+void mbw_test_window_queue_focused(int window_id, bool focused) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  if (!window) {
+    return;
+  }
+  window->focused = focused ? 1 : 0;
+  window->pending_focus_value = focused ? 1 : 0;
+  window->pending_focused_changed = 1;
+}
+
+void mbw_test_window_queue_scale_factor_changed(
+  int window_id,
+  double scale_factor,
+  int width,
+  int height
+) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  if (!window) {
+    return;
+  }
+  window->pending_scale_factor_changed = 1;
+  window->pending_scale_factor = scale_factor > 0.0 ? scale_factor : 1.0;
+  window->scale_factor = window->pending_scale_factor;
+  window->reported_scale_factor = window->pending_scale_factor;
+  window->pending_scale_width = mbw_clamp_size(width);
+  window->pending_scale_height = mbw_clamp_size(height);
+}
+
+void mbw_test_window_queue_destroyed(int window_id) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  if (!window) {
+    return;
+  }
+  window->should_close = 1;
+  window->pending_destroyed = 1;
 }
 
 void mbw_window_set_title_utf8(int window_id, const uint8_t *title, uint64_t title_len) {

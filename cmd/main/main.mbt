@@ -28,6 +28,7 @@ pub impl @macos.ApplicationHandler for App with window_event(
         None => ()
       }
     @core.WindowEvent::RedrawRequested => println("redraw requested")
+    _ => ()
   }
 }
 
