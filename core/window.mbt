@@ -29,6 +29,56 @@ pub(all) enum CursorIcon {
 } derive(Eq, Show)
 
 ///|
+pub(all) enum BadIcon {
+  ByteCountNotDivisibleBy4(Int)
+  DimensionsVsPixelCount(Int, Int, Int, Int)
+} derive(Eq, Show)
+
+///|
+pub struct Icon {
+  priv height : Int
+  priv rgba : Bytes
+  priv width : Int
+} derive(Eq, Show)
+
+///|
+pub fn Icon::new(
+  rgba : Bytes,
+  width : Int,
+  height : Int,
+) -> Result[Icon, BadIcon] {
+  if rgba.length() % 4 != 0 {
+    return Err(BadIcon::ByteCountNotDivisibleBy4(rgba.length()))
+  }
+  let pixel_count = rgba.length() / 4
+  let width_x_height = width * height
+  if width <= 0 || height <= 0 || pixel_count != width_x_height {
+    Err(
+      BadIcon::DimensionsVsPixelCount(
+        width, height, width_x_height, pixel_count,
+      ),
+    )
+  } else {
+    Ok({ width, height, rgba })
+  }
+}
+
+///|
+pub fn Icon::width(self : Icon) -> Int {
+  self.width
+}
+
+///|
+pub fn Icon::height(self : Icon) -> Int {
+  self.height
+}
+
+///|
+pub fn Icon::rgba(self : Icon) -> Bytes {
+  self.rgba
+}
+
+///|
 pub struct WindowButtons {
   priv mut close : Bool
   priv mut maximize : Bool
@@ -119,6 +169,7 @@ pub struct WindowAttributes {
   priv mut surface_size : @dpi.PhysicalSize?
   priv mut surface_resize_increments : @dpi.PhysicalSize?
   priv mut theme : Theme?
+  priv mut window_icon : Icon?
   priv mut transparent : Bool
   priv mut resizable : Bool
   priv mut title : String
@@ -144,6 +195,7 @@ pub fn WindowAttributes::default() -> WindowAttributes {
     surface_size: Some(@dpi.PhysicalSize::new(800, 600)),
     surface_resize_increments: None,
     theme: None,
+    window_icon: None,
     transparent: false,
     resizable: true,
     title: "winit window",
@@ -288,6 +340,15 @@ pub fn WindowAttributes::with_theme(
 }
 
 ///|
+pub fn WindowAttributes::with_window_icon(
+  self : WindowAttributes,
+  window_icon : Icon?,
+) -> WindowAttributes {
+  self.window_icon = window_icon
+  self
+}
+
+///|
 pub fn WindowAttributes::with_maximized(
   self : WindowAttributes,
   maximized : Bool,
@@ -417,6 +478,11 @@ pub fn WindowAttributes::window_level(self : WindowAttributes) -> WindowLevel {
 ///|
 pub fn WindowAttributes::theme(self : WindowAttributes) -> Theme? {
   self.theme
+}
+
+///|
+pub fn WindowAttributes::window_icon(self : WindowAttributes) -> Icon? {
+  self.window_icon
 }
 
 ///|

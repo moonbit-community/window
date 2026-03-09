@@ -22,12 +22,17 @@ test "window attributes follow winit defaults" {
   assert_eq(attrs.ime_purpose(), ImePurpose::Normal)
   assert_eq(attrs.window_level(), WindowLevel::Normal)
   assert_eq(attrs.theme(), None)
+  assert_eq(attrs.window_icon(), None)
   assert_false(attrs.maximized())
   assert_false(attrs.transparent())
 }
 
 ///|
 test "window attributes builders update fields" {
+  let icon = match Icon::new(Bytes::make(4, (255 : Int).to_byte()), 1, 1) {
+    Ok(icon) => icon
+    Err(_) => abort("expected 1x1 icon to be valid")
+  }
   let attrs = WindowAttributes::default()
     .with_title("hello")
     .with_visible(false)
@@ -47,6 +52,7 @@ test "window attributes builders update fields" {
     .with_fullscreen(true)
     .with_window_level(WindowLevel::AlwaysOnTop)
     .with_theme(Some(Theme::Dark))
+    .with_window_icon(Some(icon))
     .with_maximized(true)
     .with_transparent(true)
   assert_eq(attrs.title(), "hello")
@@ -73,6 +79,7 @@ test "window attributes builders update fields" {
   assert_eq(attrs.ime_purpose(), ImePurpose::Password)
   assert_eq(attrs.window_level(), WindowLevel::AlwaysOnTop)
   assert_eq(attrs.theme(), Some(Theme::Dark))
+  assert_eq(attrs.window_icon(), Some(icon))
   assert_true(attrs.maximized())
   assert_true(attrs.transparent())
 }
@@ -86,4 +93,21 @@ test "window buttons builders work as expected" {
   assert_false(buttons.close())
   assert_false(buttons.minimize())
   assert_true(buttons.maximize())
+}
+
+///|
+test "icon validation follows winit rgba rules" {
+  let bad_alignment = Icon::new(Bytes::make(3, (1 : Int).to_byte()), 1, 1)
+  assert_eq(bad_alignment, Err(BadIcon::ByteCountNotDivisibleBy4(3)))
+  let bad_dimensions = Icon::new(Bytes::make(8, (1 : Int).to_byte()), 1, 1)
+  assert_eq(bad_dimensions, Err(BadIcon::DimensionsVsPixelCount(1, 1, 1, 2)))
+  let good = Icon::new(Bytes::make(4, (1 : Int).to_byte()), 1, 1)
+  match good {
+    Ok(icon) => {
+      assert_eq(icon.width(), 1)
+      assert_eq(icon.height(), 1)
+      assert_eq(icon.rgba().length(), 4)
+    }
+    Err(_) => abort("expected valid icon")
+  }
 }

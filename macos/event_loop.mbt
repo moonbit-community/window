@@ -290,6 +290,14 @@ pub fn Window::set_theme(self : Window, theme : @core.Theme?) -> Unit {
 }
 
 ///|
+pub fn Window::set_window_icon(
+  self : Window,
+  window_icon : @core.Icon?,
+) -> Unit {
+  set_window_icon(self.id.into_raw(), window_icon)
+}
+
+///|
 pub fn Window::set_content_protected(
   self : Window,
   content_protected : Bool,
@@ -698,6 +706,7 @@ pub fn EventLoop::create_window(
   )
   guard raw_id > 0 else { abort("failed to create macos window") }
   set_window_theme(raw_id, theme_to_native(attributes.theme()))
+  set_window_icon(raw_id, attributes.window_icon())
   set_window_content_protected(raw_id, attributes.content_protected())
   set_window_blur(raw_id, attributes.blur())
   set_window_cursor(raw_id, cursor_icon_to_native(attributes.cursor()))

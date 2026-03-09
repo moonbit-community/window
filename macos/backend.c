@@ -110,6 +110,7 @@ typedef struct mbw_window {
   int minimize_button_enabled;
   int maximize_button_enabled;
   int blur;
+  int has_icon;
   int cursor;
   int transparent;
   int window_level;
@@ -2518,6 +2519,7 @@ int mbw_window_create_utf8(
   window->minimize_button_enabled = 1;
   window->maximize_button_enabled = 1;
   window->blur = 0;
+  window->has_icon = 0;
   window->cursor = MBW_CURSOR_DEFAULT;
   window->transparent = 0;
   window->window_level = MBW_WINDOW_LEVEL_NORMAL;
@@ -3524,6 +3526,11 @@ void mbw_test_window_queue_ime_disabled(int window_id) {
   mbw_window_queue_ime(window, MBW_IME_EVENT_DISABLED, NULL, 0, -1, -1);
 }
 
+bool mbw_test_window_has_icon(int window_id) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  return window ? window->has_icon != 0 : false;
+}
+
 void mbw_test_window_queue_destroyed(int window_id) {
   mbw_window_t *window = mbw_find_window(window_id);
   if (!window) {
@@ -3909,6 +3916,38 @@ void mbw_window_set_theme(int window_id, int theme) {
   window->reported_theme_kind = next_theme;
   window->pending_theme_changed = 0;
   window->pending_theme_kind = next_theme;
+}
+
+void mbw_window_set_icon_rgba(
+  int window_id,
+  const uint8_t *rgba,
+  int rgba_len,
+  int width,
+  int height
+) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  if (!window) {
+    return;
+  }
+  int expected_len = width > 0 && height > 0 ? width * height * 4 : 0;
+  int valid_icon =
+    expected_len > 0 &&
+    rgba &&
+    rgba_len == expected_len;
+  window->has_icon = valid_icon ? 1 : 0;
+#if defined(__APPLE__)
+  if (window->window && !window->has_icon) {
+    ((void(*)(id, SEL, id))objc_msgSend)(
+      (id)window->window,
+      mbw_sel("setMiniwindowImage:"),
+      nil);
+  }
+#else
+  (void)rgba;
+  (void)rgba_len;
+  (void)width;
+  (void)height;
+#endif
 }
 
 void mbw_window_set_content_protected(int window_id, bool content_protected) {

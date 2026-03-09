@@ -117,6 +117,7 @@ pub fn Window::set_theme(Self, @core.Theme?) -> Unit
 pub fn Window::set_title(Self, String) -> Unit
 pub fn Window::set_transparent(Self, Bool) -> Unit
 pub fn Window::set_visible(Self, Bool) -> Unit
+pub fn Window::set_window_icon(Self, @core.Icon?) -> Unit
 pub fn Window::set_window_level(Self, @core.WindowLevel) -> Unit
 pub fn Window::surface_resize_increments(Self) -> @dpi.PhysicalSize?
 pub fn Window::surface_size(Self) -> @dpi.PhysicalSize

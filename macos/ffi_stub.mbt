@@ -428,6 +428,11 @@ fn set_window_theme(_window_id : Int, _theme : Int) -> Unit {
 }
 
 ///|
+fn set_window_icon(_window_id : Int, _window_icon : @core.Icon?) -> Unit {
+  ()
+}
+
+///|
 fn set_window_content_protected(
   _window_id : Int,
   _content_protected : Bool,

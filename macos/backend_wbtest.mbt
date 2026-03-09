@@ -127,6 +127,9 @@ extern "C" fn queue_ime_commit_for_test(
 ) -> Unit = "mbw_test_window_queue_ime_commit"
 
 ///|
+extern "C" fn icon_present_for_test(window_id : Int) -> Bool = "mbw_test_window_has_icon"
+
+///|
 struct StartCauseApp {
   causes : Array[@core.StartCause]
 }
@@ -270,6 +273,13 @@ struct WindowBlurApp {
 struct WindowCursorApp {
   cursor_after_update : Ref[@core.CursorIcon?]
   cursor_initial : Ref[@core.CursorIcon?]
+}
+
+///|
+struct WindowIconApp {
+  icon_after_clear : Ref[Bool]
+  icon_after_restore : Ref[Bool]
+  icon_initial : Ref[Bool]
 }
 
 ///|
@@ -623,6 +633,30 @@ impl ApplicationHandler for WindowCursorApp with can_create_surfaces(
   self.cursor_initial.val = Some(window.cursor())
   window.set_cursor(@core.CursorIcon::Text)
   self.cursor_after_update.val = Some(window.cursor())
+  event_loop.exit()
+}
+
+///|
+impl ApplicationHandler for WindowIconApp with can_create_surfaces(
+  self,
+  event_loop,
+) {
+  let icon = match
+    @core.Icon::new(Bytes::make(4, (255 : Int).to_byte()), 1, 1) {
+    Ok(icon) => icon
+    Err(_) => abort("expected 1x1 icon to be valid")
+  }
+  let window = event_loop.create_window(
+    @core.WindowAttributes::default()
+    .with_visible(false)
+    .with_window_icon(Some(icon)),
+  )
+  let raw_id = window.id().into_raw()
+  self.icon_initial.val = icon_present_for_test(raw_id)
+  window.set_window_icon(None)
+  self.icon_after_clear.val = icon_present_for_test(raw_id)
+  window.set_window_icon(Some(icon))
+  self.icon_after_restore.val = icon_present_for_test(raw_id)
   event_loop.exit()
 }
 
@@ -1669,6 +1703,23 @@ test "window cursor can be configured at create and runtime" {
   event_loop.run_app(app)
   assert_eq(cursor_initial.val, Some(@core.CursorIcon::Pointer))
   assert_eq(cursor_after_update.val, Some(@core.CursorIcon::Text))
+}
+
+///|
+test "window icon can be configured at create and runtime" {
+  let event_loop = EventLoop::new()
+  let icon_initial = Ref::new(false)
+  let icon_after_clear = Ref::new(true)
+  let icon_after_restore = Ref::new(false)
+  let app : WindowIconApp = {
+    icon_after_clear,
+    icon_after_restore,
+    icon_initial,
+  }
+  event_loop.run_app(app)
+  assert_true(icon_initial.val)
+  assert_false(icon_after_clear.val)
+  assert_true(icon_after_restore.val)
 }
 
 ///|

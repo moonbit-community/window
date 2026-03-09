@@ -428,6 +428,30 @@ fn set_window_theme(window_id : Int, theme : Int) -> Unit {
 }
 
 ///|
+fn set_window_icon(window_id : Int, window_icon : @core.Icon?) -> Unit {
+  match window_icon {
+    Some(icon) => {
+      let rgba = icon.rgba()
+      native_window_set_icon_rgba(
+        window_id,
+        rgba,
+        rgba.length(),
+        icon.width(),
+        icon.height(),
+      )
+    }
+    None =>
+      native_window_set_icon_rgba(
+        window_id,
+        Bytes::make(0, (0 : Int).to_byte()),
+        0,
+        0,
+        0,
+      )
+  }
+}
+
+///|
 fn set_window_content_protected(
   window_id : Int,
   content_protected : Bool,
@@ -847,6 +871,16 @@ extern "C" fn native_window_set_window_level(
 
 ///|
 extern "C" fn native_window_set_theme(window_id : Int, theme : Int) -> Unit = "mbw_window_set_theme"
+
+///|
+#borrow(rgba)
+extern "C" fn native_window_set_icon_rgba(
+  window_id : Int,
+  rgba : Bytes,
+  rgba_len : Int,
+  width : Int,
+  height : Int,
+) -> Unit = "mbw_window_set_icon_rgba"
 
 ///|
 extern "C" fn native_window_set_content_protected(
