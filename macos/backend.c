@@ -1993,7 +1993,9 @@ static void mbw_update_window_state(mbw_window_t *window) {
   window->visible = is_visible ? 1 : 0;
   mbw_bool_t is_focused = ((mbw_bool_t(*)(id, SEL))objc_msgSend)(
     (id)window->window, mbw_sel("isKeyWindow"));
-  window->focused = is_focused ? 1 : 0;
+  if (!window->pending_focused_changed) {
+    window->focused = is_focused ? 1 : 0;
+  }
 
   window->scale_factor = ((double(*)(id, SEL))objc_msgSend)(
     (id)window->window, mbw_sel("backingScaleFactor"));
@@ -2591,6 +2593,11 @@ bool mbw_window_take_focused_changed(int window_id) {
 bool mbw_window_pending_focused(int window_id) {
   mbw_window_t *window = mbw_find_window(window_id);
   return window ? window->pending_focus_value != 0 : false;
+}
+
+bool mbw_window_has_focus(int window_id) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  return window ? window->focused != 0 : false;
 }
 
 bool mbw_window_take_scale_factor_changed(int window_id) {
@@ -3282,6 +3289,24 @@ void mbw_window_set_resizable(int window_id, bool resizable) {
     }
     ((void(*)(id, SEL, mbw_nsuint_t))objc_msgSend)(
       (id)window->window, mbw_sel("setStyleMask:"), style_mask);
+  }
+#endif
+}
+
+void mbw_window_focus(int window_id) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  if (!window || window->should_close) {
+    return;
+  }
+  window->focused = 1;
+  window->pending_focus_value = 1;
+  window->pending_focused_changed = 1;
+#if defined(__APPLE__)
+  if (window->window && window->visible) {
+    ((void(*)(id, SEL, id))objc_msgSend)(
+      (id)window->window,
+      mbw_sel("makeKeyAndOrderFront:"),
+      nil);
   }
 #endif
 }

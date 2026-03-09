@@ -54,6 +54,11 @@ fn pending_focused(_window_id : Int) -> Bool {
 }
 
 ///|
+fn window_has_focus(_window_id : Int) -> Bool {
+  false
+}
+
+///|
 fn take_scale_factor_changed(_window_id : Int) -> Bool {
   false
 }
@@ -235,6 +240,11 @@ fn window_y(_window_id : Int) -> Int {
 
 ///|
 fn set_window_position(_window_id : Int, _x : Int, _y : Int) -> Unit {
+  ()
+}
+
+///|
+fn focus_window(_window_id : Int) -> Unit {
   ()
 }
 

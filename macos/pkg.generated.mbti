@@ -73,6 +73,8 @@ pub impl Show for EventLoopProxy
 pub struct Window {
   // private fields
 }
+pub fn Window::focus_window(Self) -> Unit
+pub fn Window::has_focus(Self) -> Bool
 pub fn Window::id(Self) -> @core.WindowId
 pub fn Window::outer_position(Self) -> @dpi.PhysicalPosition
 pub fn Window::request_redraw(Self) -> Unit

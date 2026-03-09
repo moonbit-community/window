@@ -219,6 +219,13 @@ struct FocusApp {
 }
 
 ///|
+struct FocusWindowApp {
+  focused_event : Ref[Bool?]
+  has_focus : Ref[Bool?]
+  window : Ref[Window?]
+}
+
+///|
 struct MovedApp {
   moved : Ref[@dpi.PhysicalPosition?]
 }
@@ -339,6 +346,38 @@ impl ApplicationHandler for FocusApp with window_event(
   match event {
     @core.WindowEvent::Focused(focused) => {
       self.focused_values.push(focused)
+      event_loop.exit()
+    }
+    _ => ()
+  }
+}
+
+///|
+impl ApplicationHandler for FocusWindowApp with can_create_surfaces(
+  self,
+  event_loop,
+) {
+  let window = event_loop.create_window(
+    @core.WindowAttributes::default().with_visible(false),
+  )
+  self.window.val = Some(window)
+  window.focus_window()
+}
+
+///|
+impl ApplicationHandler for FocusWindowApp with window_event(
+  self,
+  event_loop,
+  _id,
+  event,
+) {
+  match event {
+    @core.WindowEvent::Focused(focused) => {
+      self.focused_event.val = Some(focused)
+      match self.window.val {
+        Some(window) => self.has_focus.val = Some(window.has_focus())
+        None => ()
+      }
       event_loop.exit()
     }
     _ => ()
@@ -1073,6 +1112,18 @@ test "focused events are delivered" {
   let app = { focused_values: [] }
   event_loop.run_app(app)
   assert_eq(app.focused_values, [true])
+}
+
+///|
+test "focus_window updates focus state and has_focus" {
+  let event_loop = EventLoop::new()
+  let focused_event = Ref::new(None)
+  let has_focus = Ref::new(None)
+  let window = Ref::new(None)
+  let app : FocusWindowApp = { focused_event, has_focus, window }
+  event_loop.run_app(app)
+  assert_eq(focused_event.val, Some(true))
+  assert_eq(has_focus.val, Some(true))
 }
 
 ///|

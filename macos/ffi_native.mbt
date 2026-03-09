@@ -54,6 +54,11 @@ fn pending_focused(window_id : Int) -> Bool {
 }
 
 ///|
+fn window_has_focus(window_id : Int) -> Bool {
+  native_window_has_focus(window_id)
+}
+
+///|
 fn take_scale_factor_changed(window_id : Int) -> Bool {
   native_window_take_scale_factor_changed(window_id)
 }
@@ -239,6 +244,11 @@ fn set_window_position(window_id : Int, x : Int, y : Int) -> Unit {
 }
 
 ///|
+fn focus_window(window_id : Int) -> Unit {
+  native_window_focus(window_id)
+}
+
+///|
 fn set_ime_allowed(window_id : Int, allowed : Bool) -> Unit {
   native_window_set_ime_allowed(window_id, allowed)
 }
@@ -363,6 +373,9 @@ extern "C" fn native_window_take_focused_changed(window_id : Int) -> Bool = "mbw
 
 ///|
 extern "C" fn native_window_pending_focused(window_id : Int) -> Bool = "mbw_window_pending_focused"
+
+///|
+extern "C" fn native_window_has_focus(window_id : Int) -> Bool = "mbw_window_has_focus"
 
 ///|
 extern "C" fn native_window_take_scale_factor_changed(window_id : Int) -> Bool = "mbw_window_take_scale_factor_changed"
@@ -504,6 +517,9 @@ extern "C" fn native_window_set_position(
   x : Int,
   y : Int,
 ) -> Unit = "mbw_window_set_position"
+
+///|
+extern "C" fn native_window_focus(window_id : Int) -> Unit = "mbw_window_focus"
 
 ///|
 extern "C" fn native_window_set_ime_allowed(

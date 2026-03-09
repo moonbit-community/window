@@ -75,6 +75,16 @@ pub fn Window::set_outer_position(
 }
 
 ///|
+pub fn Window::focus_window(self : Window) -> Unit {
+  focus_window(self.id.into_raw())
+}
+
+///|
+pub fn Window::has_focus(self : Window) -> Bool {
+  window_has_focus(self.id.into_raw())
+}
+
+///|
 pub fn Window::set_ime_allowed(self : Window, allowed : Bool) -> Unit {
   set_ime_allowed(self.id.into_raw(), allowed)
 }
