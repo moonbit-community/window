@@ -9,6 +9,16 @@ fn reset_proxy_wake_state() -> Unit {
 }
 
 ///|
+fn proxy_wake_up_pending() -> Bool {
+  false
+}
+
+///|
+fn runtime_now_ms() -> Int64 {
+  0L
+}
+
+///|
 fn sleep_millis(_ms : Int) -> Unit {
   ()
 }

@@ -1,9 +1,9 @@
 // Generated using `moon info`, DON'T EDIT IT
-package "username/window"
+package "Milky2018/window"
 
 import {
-  "username/window/core",
-  "username/window/macos",
+  "Milky2018/window/core",
+  "Milky2018/window/macos",
 }
 
 // Values

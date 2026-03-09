@@ -1,5 +1,5 @@
 // Generated using `moon info`, DON'T EDIT IT
-package "username/window/dpi"
+package "Milky2018/window/dpi"
 
 // Values
 pub fn validate_scale_factor(Double) -> Bool

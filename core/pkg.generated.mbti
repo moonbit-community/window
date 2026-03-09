@@ -1,8 +1,8 @@
 // Generated using `moon info`, DON'T EDIT IT
-package "username/window/core"
+package "Milky2018/window/core"
 
 import {
-  "username/window/dpi",
+  "Milky2018/window/dpi",
 }
 
 // Values
@@ -18,6 +18,15 @@ pub(all) enum ControlFlow {
 pub fn ControlFlow::wait_duration(Int) -> Self
 pub impl Eq for ControlFlow
 pub impl Show for ControlFlow
+
+pub(all) enum StartCause {
+  Init
+  Poll
+  WaitCancelled(Int64, Int64?)
+  ResumeTimeReached(Int64, Int64)
+}
+pub impl Eq for StartCause
+pub impl Show for StartCause
 
 pub(all) enum Theme {
   Light

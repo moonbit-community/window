@@ -1,6 +1,6 @@
 import {
-  "username/window/core",
-  "username/window/macos",
+  "Milky2018/window/core",
+  "Milky2018/window/macos",
 }
 
 options(

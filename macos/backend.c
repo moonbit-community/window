@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/time.h>
+#include <time.h>
 #include <unistd.h>
 
 #if defined(__APPLE__)
@@ -27,6 +28,7 @@ typedef struct mbw_window {
 #if defined(__APPLE__)
   void *window;
   void *content_view;
+  void *delegate;
 #endif
 } mbw_window_t;
 
@@ -35,6 +37,7 @@ static size_t g_windows_len = 0;
 static size_t g_windows_cap = 0;
 static int g_next_window_id = 1;
 static atomic_int g_pending_proxy_wake_up = 0;
+static int64_t g_now_ms_override_for_test = -1;
 
 static int mbw_clamp_size(int value) {
   return value <= 0 ? 1 : value;
@@ -107,6 +110,7 @@ typedef struct {
 static bool g_bootstrap_done = false;
 static bool g_bootstrap_ok = false;
 static id g_ns_app = nil;
+static Class g_window_delegate_class = Nil;
 
 static SEL mbw_sel(const char *name) {
   return sel_registerName(name);
@@ -118,6 +122,78 @@ static id mbw_msg_id(id obj, const char *sel_name) {
 
 static void mbw_msg_void(id obj, const char *sel_name) {
   ((void(*)(id, SEL))objc_msgSend)(obj, mbw_sel(sel_name));
+}
+
+static mbw_window_t *mbw_delegate_window(id delegate) {
+  void *window_ptr = NULL;
+  object_getInstanceVariable(delegate, "mbwWindow", &window_ptr);
+  return (mbw_window_t *)window_ptr;
+}
+
+static void mbw_window_delegate_did_resize(id self, SEL _cmd, id notification) {
+  (void)_cmd;
+  (void)notification;
+  mbw_window_t *window = mbw_delegate_window(self);
+  if (!window) {
+    return;
+  }
+  window->pending_surface_resized = 1;
+}
+
+static void mbw_window_delegate_will_close(id self, SEL _cmd, id notification) {
+  (void)_cmd;
+  (void)notification;
+  mbw_window_t *window = mbw_delegate_window(self);
+  if (!window) {
+    return;
+  }
+  window->should_close = 1;
+  window->pending_close_requested = 1;
+}
+
+static Class mbw_get_window_delegate_class(void) {
+  if (g_window_delegate_class) {
+    return g_window_delegate_class;
+  }
+
+  Class existing = objc_getClass("MBWWindowDelegate");
+  if (existing) {
+    g_window_delegate_class = existing;
+    return existing;
+  }
+
+  Class ns_object = objc_getClass("NSObject");
+  if (!ns_object) {
+    return Nil;
+  }
+
+  Class delegate_class = objc_allocateClassPair(ns_object, "MBWWindowDelegate", 0);
+  if (!delegate_class) {
+    return Nil;
+  }
+
+  if (!class_addIvar(
+        delegate_class,
+        "mbwWindow",
+        sizeof(void *),
+        (uint8_t)__alignof__(void *),
+        "^v")) {
+    return Nil;
+  }
+
+  class_addMethod(
+    delegate_class,
+    mbw_sel("windowDidResize:"),
+    (IMP)mbw_window_delegate_did_resize,
+    "v@:@");
+  class_addMethod(
+    delegate_class,
+    mbw_sel("windowWillClose:"),
+    (IMP)mbw_window_delegate_will_close,
+    "v@:@");
+  objc_registerClassPair(delegate_class);
+  g_window_delegate_class = delegate_class;
+  return delegate_class;
 }
 
 static id mbw_make_nsstring(const char *utf8) {
@@ -164,10 +240,6 @@ static void mbw_update_window_state(mbw_window_t *window) {
   mbw_bool_t is_visible = ((mbw_bool_t(*)(id, SEL))objc_msgSend)(
     (id)window->window, mbw_sel("isVisible"));
   window->visible = is_visible ? 1 : 0;
-  if (!is_visible && !window->should_close) {
-    window->should_close = 1;
-    window->pending_close_requested = 1;
-  }
 
   window->scale_factor = ((double(*)(id, SEL))objc_msgSend)(
     (id)window->window, mbw_sel("backingScaleFactor"));
@@ -208,6 +280,10 @@ void mbw_event_loop_reset_proxy(void) {
   atomic_store_explicit(&g_pending_proxy_wake_up, 0, memory_order_release);
 }
 
+bool mbw_event_loop_peek_proxy_wake_up(void) {
+  return atomic_load_explicit(&g_pending_proxy_wake_up, memory_order_acquire) != 0;
+}
+
 bool mbw_event_loop_take_proxy_wake_up(void) {
   return atomic_exchange_explicit(&g_pending_proxy_wake_up, 0, memory_order_acq_rel) != 0;
 }
@@ -216,8 +292,37 @@ void mbw_event_loop_wake_up(void) {
   atomic_store_explicit(&g_pending_proxy_wake_up, 1, memory_order_release);
 }
 
+static int64_t mbw_now_ms(void) {
+  if (g_now_ms_override_for_test >= 0) {
+    return g_now_ms_override_for_test;
+  }
+#if defined(__APPLE__) || defined(__linux__)
+  struct timespec ts;
+  clock_gettime(CLOCK_MONOTONIC, &ts);
+  return (int64_t)ts.tv_sec * 1000 + (int64_t)(ts.tv_nsec / 1000000);
+#else
+  return 0;
+#endif
+}
+
+int64_t mbw_runtime_now_ms(void) {
+  return mbw_now_ms();
+}
+
+void mbw_runtime_now_ms_set_for_test(int64_t ms) {
+  g_now_ms_override_for_test = ms;
+}
+
+void mbw_runtime_now_ms_clear_for_test(void) {
+  g_now_ms_override_for_test = -1;
+}
+
 void mbw_sleep_millis(int ms) {
   if (ms <= 0) {
+    return;
+  }
+  if (g_now_ms_override_for_test >= 0) {
+    g_now_ms_override_for_test += (int64_t)ms;
     return;
   }
   usleep((useconds_t)ms * 1000U);
@@ -291,6 +396,16 @@ int mbw_window_create_utf8(
         }
         window->window = (void *)ns_window;
         window->content_view = (void *)mbw_msg_id(ns_window, "contentView");
+        Class delegate_class = mbw_get_window_delegate_class();
+        if (delegate_class) {
+          id delegate = mbw_msg_id((id)delegate_class, "new");
+          if (delegate) {
+            object_setInstanceVariable(delegate, "mbwWindow", window);
+            ((void(*)(id, SEL, id))objc_msgSend)(
+              ns_window, mbw_sel("setDelegate:"), delegate);
+            window->delegate = (void *)delegate;
+          }
+        }
         mbw_update_window_state(window);
       }
     }

@@ -1,13 +1,51 @@
 // Generated using `moon info`, DON'T EDIT IT
-package "username/window/macos"
+package "Milky2018/window/macos"
 
 import {
-  "username/window/core",
-  "username/window/dpi",
+  "Milky2018/window/core",
+  "Milky2018/window/dpi",
 }
 
 // Values
 pub fn backend_available() -> Bool
+
+pub fn native_backend_available() -> Bool
+
+pub fn native_create_window(Int, Int, Bool, Bool, Bytes, UInt64) -> Int
+
+pub fn native_event_loop_peek_proxy_wake_up() -> Bool
+
+pub fn native_event_loop_reset_proxy() -> Unit
+
+pub fn native_event_loop_take_proxy_wake_up() -> Bool
+
+pub fn native_event_loop_wake_up() -> Unit
+
+pub fn native_poll_window(Int) -> Unit
+
+pub fn native_runtime_now_ms() -> Int64
+
+pub fn native_set_resizable(Int, Bool) -> Unit
+
+pub fn native_set_title(Int, Bytes, UInt64) -> Unit
+
+pub fn native_set_visible(Int, Bool) -> Unit
+
+pub fn native_sleep_millis(Int) -> Unit
+
+pub fn native_window_height(Int) -> Int
+
+pub fn native_window_request_redraw(Int) -> Unit
+
+pub fn native_window_should_close(Int) -> Bool
+
+pub fn native_window_take_close_requested(Int) -> Bool
+
+pub fn native_window_take_redraw_requested(Int) -> Bool
+
+pub fn native_window_take_surface_resized(Int) -> Bool
+
+pub fn native_window_width(Int) -> Int
 
 // Errors
 
@@ -49,6 +87,7 @@ pub impl Show for Window
 
 // Traits
 pub(open) trait ApplicationHandler {
+  new_events(Self, EventLoop, @core.StartCause) -> Unit = _
   can_create_surfaces(Self, EventLoop) -> Unit = _
   proxy_wake_up(Self, EventLoop) -> Unit = _
   window_event(Self, EventLoop, @core.WindowId, @core.WindowEvent) -> Unit = _

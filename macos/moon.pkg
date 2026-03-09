@@ -1,7 +1,7 @@
 import {
   "moonbitlang/core/encoding/utf8",
-  "username/window/core" @core,
-  "username/window/dpi" @dpi,
+  "Milky2018/window/core" @core,
+  "Milky2018/window/dpi" @dpi,
 }
 
 options(
@@ -13,7 +13,7 @@ options(
   },
   "native-stub": [ "backend.c" ],
   targets: {
-    "backend_test.mbt": [ "native" ],
+    "backend_wbtest.mbt": [ "native" ],
     "ffi_native.mbt": [ "native" ],
     "ffi_stub.mbt": [ "not", "native" ],
   },

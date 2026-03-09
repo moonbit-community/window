@@ -122,10 +122,16 @@ pub fn EventLoop::exiting(self : EventLoop) -> Bool {
 
 ///|
 pub(open) trait ApplicationHandler {
+  new_events(Self, EventLoop, @core.StartCause) -> Unit = _
   can_create_surfaces(Self, EventLoop) -> Unit = _
   proxy_wake_up(Self, EventLoop) -> Unit = _
   window_event(Self, EventLoop, @core.WindowId, @core.WindowEvent) -> Unit = _
   about_to_wait(Self, EventLoop) -> Unit = _
+}
+
+///|
+impl ApplicationHandler with new_events(_self, _event_loop, _cause) {
+  ()
 }
 
 ///|
@@ -196,11 +202,35 @@ fn[A : ApplicationHandler] EventLoop::dispatch_proxy_wake_up(
 }
 
 ///|
-fn EventLoop::wait_next_iteration(self : EventLoop) -> Unit {
+fn EventLoop::wait_next_iteration(self : EventLoop) -> @core.StartCause {
   match self.control_flow_ {
-    @core.ControlFlow::Poll => sleep_millis(1)
-    @core.ControlFlow::Wait => sleep_millis(16)
-    @core.ControlFlow::WaitUntil(timeout_ms) => sleep_millis(timeout_ms)
+    @core.ControlFlow::Poll => {
+      sleep_millis(1)
+      @core.StartCause::Poll
+    }
+    @core.ControlFlow::Wait => {
+      let start_ms = runtime_now_ms()
+      sleep_millis(1)
+      @core.StartCause::WaitCancelled(start_ms, None)
+    }
+    @core.ControlFlow::WaitUntil(timeout_ms) => {
+      let start_ms = runtime_now_ms()
+      let requested_resume_ms = start_ms + timeout_ms.to_int64()
+      if timeout_ms <= 0 {
+        @core.StartCause::ResumeTimeReached(start_ms, start_ms)
+      } else {
+        while runtime_now_ms() < requested_resume_ms {
+          if proxy_wake_up_pending() {
+            return @core.StartCause::WaitCancelled(
+              start_ms,
+              Some(requested_resume_ms),
+            )
+          }
+          sleep_millis(1)
+        }
+        @core.StartCause::ResumeTimeReached(start_ms, requested_resume_ms)
+      }
+    }
   }
 }
 
@@ -209,6 +239,7 @@ pub fn[A : ApplicationHandler] EventLoop::run_app(
   self : EventLoop,
   app : A,
 ) -> Unit {
+  app.new_events(self, @core.StartCause::Init)
   app.can_create_surfaces(self)
   while self.exit_requested == false {
     self.dispatch_window_events(app)
@@ -220,6 +251,6 @@ pub fn[A : ApplicationHandler] EventLoop::run_app(
     if self.exit_requested || self.has_open_windows() == false {
       break
     }
-    self.wait_next_iteration()
+    app.new_events(self, self.wait_next_iteration())
   }
 }
