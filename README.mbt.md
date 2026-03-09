@@ -44,6 +44,8 @@ native builds and focuses on `macos-arm64`.
   blur/transparency/decorations/content protection, enabled buttons, window
   level, IME purpose, and macOS platform attributes (such as
   `simple_fullscreen`).
+- `Fullscreen` supports both `Borderless(MonitorHandle?)` and
+  `Exclusive(MonitorHandle, VideoMode)` payloads in the core API.
 - Current keyboard support is macOS-first and now prefers native
   `NSEvent` text (`characters` / `charactersIgnoringModifiers`) for
   `logical_key` and `text`; `key_without_modifiers` uses Carbon

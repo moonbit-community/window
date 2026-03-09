@@ -53,7 +53,7 @@ test "window attributes builders update fields" {
     .with_decorations(false)
     .with_content_protected(true)
     .with_enabled_buttons(WindowButtons::none().with_minimize(true))
-    .with_fullscreen(Some(Fullscreen::Borderless))
+    .with_fullscreen(Some(Fullscreen::Borderless(None)))
     .with_window_level(WindowLevel::AlwaysOnTop)
     .with_theme(Some(Theme::Dark))
     .with_window_icon(Some(icon))
@@ -71,7 +71,7 @@ test "window attributes builders update fields" {
   assert_false(buttons.close())
   assert_true(buttons.minimize())
   assert_false(buttons.maximize())
-  assert_eq(attrs.fullscreen(), Some(Fullscreen::Borderless))
+  assert_eq(attrs.fullscreen(), Some(Fullscreen::Borderless(None)))
   assert_eq(attrs.surface_size(), Some(@dpi.PhysicalSize::new(1024, 768)))
   assert_eq(
     attrs.surface_resize_increments(),
@@ -87,6 +87,28 @@ test "window attributes builders update fields" {
   assert_eq(attrs.window_icon(), Some(icon))
   assert_true(attrs.maximized())
   assert_true(attrs.transparent())
+}
+
+///|
+test "fullscreen enum supports exclusive mode payload" {
+  let monitor = MonitorHandle::new(
+    (1 : Int).to_uint64(),
+    Some("test monitor"),
+    @dpi.PhysicalPosition::new(0, 0),
+    @dpi.PhysicalSize::new(1920, 1080),
+    2.0,
+    None,
+    [],
+  )
+  let mode = VideoMode::new(
+    @dpi.PhysicalSize::new(1920, 1080),
+    Some(32),
+    Some(60000),
+  )
+  let attrs = WindowAttributes::default().with_fullscreen(
+    Some(Fullscreen::Exclusive(monitor, mode)),
+  )
+  assert_eq(attrs.fullscreen(), Some(Fullscreen::Exclusive(monitor, mode)))
 }
 
 ///|

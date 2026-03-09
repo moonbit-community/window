@@ -668,12 +668,12 @@ impl ApplicationHandler for WindowFullscreenStateApp with can_create_surfaces(
   let window = event_loop.create_window(
     @core.WindowAttributes::default()
     .with_visible(false)
-    .with_fullscreen(Some(@core.Fullscreen::Borderless)),
+    .with_fullscreen(Some(@core.Fullscreen::Borderless(None))),
   )
   self.fullscreen_initial.val = window.fullscreen()
   window.set_fullscreen(None)
   self.fullscreen_after_disable.val = window.fullscreen()
-  window.set_fullscreen(Some(@core.Fullscreen::Borderless))
+  window.set_fullscreen(Some(@core.Fullscreen::Borderless(None)))
   self.fullscreen_after_enable.val = window.fullscreen()
   event_loop.exit()
 }
@@ -1976,7 +1976,9 @@ test "window minimize and maximize state can be controlled" {
 test "window fullscreen state can be controlled" {
   let event_loop = EventLoop::new()
   let fullscreen_initial = Ref::new(None)
-  let fullscreen_after_disable = Ref::new(Some(@core.Fullscreen::Borderless))
+  let fullscreen_after_disable = Ref::new(
+    Some(@core.Fullscreen::Borderless(None)),
+  )
   let fullscreen_after_enable = Ref::new(None)
   let app : WindowFullscreenStateApp = {
     fullscreen_after_disable,
@@ -1984,9 +1986,12 @@ test "window fullscreen state can be controlled" {
     fullscreen_initial,
   }
   event_loop.run_app(app)
-  assert_eq(fullscreen_initial.val, Some(@core.Fullscreen::Borderless))
+  assert_eq(fullscreen_initial.val, Some(@core.Fullscreen::Borderless(None)))
   assert_eq(fullscreen_after_disable.val, None)
-  assert_eq(fullscreen_after_enable.val, Some(@core.Fullscreen::Borderless))
+  assert_eq(
+    fullscreen_after_enable.val,
+    Some(@core.Fullscreen::Borderless(None)),
+  )
 }
 
 ///|

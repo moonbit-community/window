@@ -83,7 +83,8 @@ pub(all) enum CursorIcon {
 
 ///|
 pub(all) enum Fullscreen {
-  Borderless
+  Borderless(MonitorHandle?)
+  Exclusive(MonitorHandle, VideoMode)
 } derive(Eq, Show)
 
 ///|

@@ -208,7 +208,29 @@ pub fn Window::set_fullscreen(
   self : Window,
   fullscreen : @core.Fullscreen?,
 ) -> Unit {
-  set_window_fullscreen(self.id.into_raw(), fullscreen is Some(_))
+  let raw_id = self.id.into_raw()
+  match fullscreen {
+    None => set_window_fullscreen(raw_id, false)
+    Some(@core.Fullscreen::Borderless(target_monitor)) => {
+      match target_monitor {
+        Some(monitor) =>
+          set_window_position(
+            raw_id,
+            monitor.position().x(),
+            monitor.position().y(),
+          )
+        None => ()
+      }
+      set_window_fullscreen(raw_id, true)
+    }
+    Some(@core.Fullscreen::Exclusive(target_monitor, video_mode)) => {
+      let position = target_monitor.position()
+      let mode_size = video_mode.surface_size()
+      set_window_position(raw_id, position.x(), position.y())
+      set_surface_size(raw_id, mode_size.width(), mode_size.height())
+      set_window_fullscreen(raw_id, true)
+    }
+  }
 }
 
 ///|
@@ -219,7 +241,7 @@ pub fn Window::is_maximized(self : Window) -> Bool {
 ///|
 pub fn Window::fullscreen(self : Window) -> @core.Fullscreen? {
   if window_fullscreen(self.id.into_raw()) {
-    Some(@core.Fullscreen::Borderless)
+    Some(@core.Fullscreen::Borderless(None))
   } else {
     None
   }
@@ -1182,10 +1204,30 @@ pub fn EventLoop::create_window(
   if attributes.maximized() {
     set_window_maximized(raw_id, true)
   }
-  if attributes.fullscreen() is Some(_) {
-    set_window_fullscreen(raw_id, true)
-  } else if attributes.platform_attributes().simple_fullscreen() == Some(true) {
-    set_window_fullscreen(raw_id, true)
+  match attributes.fullscreen() {
+    Some(@core.Fullscreen::Borderless(target_monitor)) => {
+      match target_monitor {
+        Some(monitor) =>
+          set_window_position(
+            raw_id,
+            monitor.position().x(),
+            monitor.position().y(),
+          )
+        None => ()
+      }
+      set_window_fullscreen(raw_id, true)
+    }
+    Some(@core.Fullscreen::Exclusive(target_monitor, video_mode)) => {
+      let monitor_position = target_monitor.position()
+      let mode_size = video_mode.surface_size()
+      set_window_position(raw_id, monitor_position.x(), monitor_position.y())
+      set_surface_size(raw_id, mode_size.width(), mode_size.height())
+      set_window_fullscreen(raw_id, true)
+    }
+    None =>
+      if attributes.platform_attributes().simple_fullscreen() == Some(true) {
+        set_window_fullscreen(raw_id, true)
+      }
   }
   match attributes.min_surface_size() {
     Some(min_size) =>
