@@ -107,6 +107,13 @@ pub(all) enum ImeRequest {
 } derive(Eq, Show)
 
 ///|
+pub(all) enum ImeRequestError {
+  NotEnabled
+  AlreadyEnabled
+  NotSupported
+} derive(Eq, Show)
+
+///|
 pub(all) enum WindowLevel {
   Normal
   AlwaysOnTop

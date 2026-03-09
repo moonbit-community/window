@@ -159,6 +159,14 @@ pub(all) enum ImeRequest {
 pub impl Eq for ImeRequest
 pub impl Show for ImeRequest
 
+pub(all) enum ImeRequestError {
+  NotEnabled
+  AlreadyEnabled
+  NotSupported
+}
+pub impl Eq for ImeRequestError
+pub impl Show for ImeRequestError
+
 pub struct ImeSurroundingText {
   // private fields
 }

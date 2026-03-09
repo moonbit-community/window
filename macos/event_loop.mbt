@@ -474,23 +474,51 @@ pub fn Window::request_ime_update(
   self : Window,
   request : @core.ImeRequest,
 ) -> Bool {
+  match self.request_ime_update_result(request) {
+    Ok(_) => true
+    Err(_) => false
+  }
+}
+
+///|
+pub fn Window::request_ime_update_result(
+  self : Window,
+  request : @core.ImeRequest,
+) -> Result[Unit, @core.ImeRequestError] {
   match request {
-    @core.ImeRequest::SetAllowed(allowed) => {
-      self.set_ime_allowed(allowed)
-      true
-    }
-    @core.ImeRequest::SetPurpose(purpose) => {
-      self.set_ime_purpose(purpose)
-      true
-    }
-    @core.ImeRequest::SetCursorArea(position, size) => {
-      self.set_ime_cursor_area(position, size)
-      true
-    }
-    @core.ImeRequest::SetSurroundingText(surrounding_text) => {
-      self.set_ime_surrounding_text(surrounding_text)
-      true
-    }
+    @core.ImeRequest::SetAllowed(allowed) =>
+      if allowed {
+        if self.ime_allowed() {
+          Err(@core.ImeRequestError::AlreadyEnabled)
+        } else {
+          self.set_ime_allowed(true)
+          Ok(())
+        }
+      } else {
+        self.set_ime_allowed(false)
+        Ok(())
+      }
+    @core.ImeRequest::SetPurpose(purpose) =>
+      if self.ime_allowed() == false {
+        Err(@core.ImeRequestError::NotEnabled)
+      } else {
+        self.set_ime_purpose(purpose)
+        Ok(())
+      }
+    @core.ImeRequest::SetCursorArea(position, size) =>
+      if self.ime_allowed() == false {
+        Err(@core.ImeRequestError::NotEnabled)
+      } else {
+        self.set_ime_cursor_area(position, size)
+        Ok(())
+      }
+    @core.ImeRequest::SetSurroundingText(surrounding_text) =>
+      if self.ime_allowed() == false {
+        Err(@core.ImeRequestError::NotEnabled)
+      } else {
+        self.set_ime_surrounding_text(surrounding_text)
+        Ok(())
+      }
   }
 }
 

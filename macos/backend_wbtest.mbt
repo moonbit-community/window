@@ -537,6 +537,7 @@ struct ImeApp {
 
 ///|
 struct ImeConfigurationApp {
+  cursor_when_disabled_error : Ref[@core.ImeRequestError?]
   cursor_position : Ref[@dpi.PhysicalPosition?]
   cursor_size : Ref[@dpi.PhysicalSize?]
   ime_capabilities : Ref[@core.ImeCapabilities?]
@@ -1615,15 +1616,25 @@ impl ApplicationHandler for ImeConfigurationApp with can_create_surfaces(
   self.request_surrounding_ok.val = self.request_surrounding_ok.val &&
     window.request_ime_update(@core.ImeRequest::SetSurroundingText(None))
   self.surrounding_text_after_clear.val = window.ime_surrounding_text()
-  self.request_allowed_ok.val = window.request_ime_update(
-    @core.ImeRequest::SetAllowed(false),
-  )
   self.request_cursor_ok.val = window.request_ime_update(
     @core.ImeRequest::SetCursorArea(
       @dpi.PhysicalPosition::new(48, 96),
       @dpi.PhysicalSize::new(20, 32),
     ),
   )
+  self.request_allowed_ok.val = window.request_ime_update(
+    @core.ImeRequest::SetAllowed(false),
+  )
+  self.cursor_when_disabled_error.val = match
+    window.request_ime_update_result(
+      @core.ImeRequest::SetCursorArea(
+        @dpi.PhysicalPosition::new(48, 96),
+        @dpi.PhysicalSize::new(20, 32),
+      ),
+    ) {
+    Ok(_) => None
+    Err(error) => Some(error)
+  }
   window.set_ime_cursor_area(
     @dpi.PhysicalPosition::new(48, 96),
     @dpi.PhysicalSize::new(20, 32),
@@ -2764,6 +2775,7 @@ test "ime preedit always includes enabled first" {
 ///|
 test "window ime configuration updates native state" {
   let event_loop = EventLoop::new()
+  let cursor_when_disabled_error = Ref::new(None)
   let ime_capabilities = Ref::new(None)
   let initial_purpose = Ref::new(@core.ImePurpose::Normal)
   let updated_purpose = Ref::new(@core.ImePurpose::Normal)
@@ -2777,6 +2789,7 @@ test "window ime configuration updates native state" {
   let cursor_position = Ref::new(None)
   let cursor_size = Ref::new(None)
   let app : ImeConfigurationApp = {
+    cursor_when_disabled_error,
     cursor_position,
     cursor_size,
     ime_capabilities,
@@ -2799,6 +2812,10 @@ test "window ime configuration updates native state" {
   assert_true(request_allowed_ok.val)
   assert_true(request_purpose_ok.val)
   assert_true(request_cursor_ok.val)
+  assert_eq(
+    cursor_when_disabled_error.val,
+    Some(@core.ImeRequestError::NotEnabled),
+  )
   assert_true(request_surrounding_ok.val)
   assert_eq(
     surrounding_text_after_request.val,

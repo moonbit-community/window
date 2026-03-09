@@ -151,6 +151,7 @@ test "ime capability and request models are constructible" {
     ImeSurroundingText::new("abc", 1, 8),
     Err(ImeSurroundingTextError::AnchorOutOfRange(8, 3)),
   )
+  assert_eq(ImeRequestError::NotSupported, ImeRequestError::NotSupported)
 }
 
 ///|

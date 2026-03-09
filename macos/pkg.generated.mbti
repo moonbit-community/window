@@ -111,6 +111,7 @@ pub fn Window::outer_size(Self) -> @dpi.PhysicalSize
 pub fn Window::pre_present_notify(Self) -> Unit
 pub fn Window::primary_monitor(Self) -> @core.MonitorHandle?
 pub fn Window::request_ime_update(Self, @core.ImeRequest) -> Bool
+pub fn Window::request_ime_update_result(Self, @core.ImeRequest) -> Result[Unit, @core.ImeRequestError]
 pub fn Window::request_redraw(Self) -> Unit
 pub fn Window::request_surface_size(Self, @dpi.PhysicalSize) -> Unit
 pub fn Window::request_user_attention(Self, @core.UserAttentionType?) -> Unit
