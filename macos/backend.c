@@ -119,6 +119,7 @@ typedef struct mbw_window {
   int cursor_hittest;
   int transparent;
   int window_level;
+  int user_attention_request_id;
   mbw_input_event_t *queued_input_events;
   size_t queued_input_events_len;
   size_t queued_input_events_cap;
@@ -3300,6 +3301,7 @@ int mbw_window_create_utf8(
   window->cursor_hittest = 1;
   window->transparent = 0;
   window->window_level = MBW_WINDOW_LEVEL_NORMAL;
+  window->user_attention_request_id = 0;
   window->queued_input_events = NULL;
   window->queued_input_events_len = 0;
   window->queued_input_events_cap = 0;
@@ -4724,7 +4726,7 @@ void mbw_window_set_title_utf8(int window_id, const uint8_t *title, uint64_t tit
 
 void mbw_window_request_user_attention(int window_id, int request_type) {
   mbw_window_t *window = mbw_find_window(window_id);
-  if (!window || request_type == MBW_USER_ATTENTION_NONE) {
+  if (!window) {
     return;
   }
 #if defined(__APPLE__)
@@ -4737,15 +4739,28 @@ void mbw_window_request_user_attention(int window_id, int request_type) {
       }
     }
     if (app) {
+      if (request_type == MBW_USER_ATTENTION_NONE) {
+        if (window->user_attention_request_id > 0) {
+          ((void(*)(id, SEL, mbw_nsinteger_t))objc_msgSend)(
+            app,
+            mbw_sel("cancelUserAttentionRequest:"),
+            (mbw_nsinteger_t)window->user_attention_request_id);
+          window->user_attention_request_id = 0;
+        }
+        return;
+      }
       mbw_nsinteger_t ns_request_type = request_type == MBW_USER_ATTENTION_CRITICAL
         ? MBW_NS_REQUEST_USER_ATTENTION_CRITICAL
         : MBW_NS_REQUEST_USER_ATTENTION_INFORMATIONAL;
-      ((mbw_nsinteger_t(*)(id, SEL, mbw_nsinteger_t))objc_msgSend)(
+      mbw_nsinteger_t request_id = ((mbw_nsinteger_t(*)(id, SEL, mbw_nsinteger_t))objc_msgSend)(
         app,
         mbw_sel("requestUserAttention:"),
         ns_request_type);
+      window->user_attention_request_id = request_id > 0 ? (int)request_id : 0;
     }
   }
+#else
+  (void)request_type;
 #endif
 }
 
