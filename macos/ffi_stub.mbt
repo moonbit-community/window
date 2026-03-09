@@ -383,6 +383,16 @@ fn window_outer_height(_window_id : Int) -> Int {
 }
 
 ///|
+fn window_surface_x(_window_id : Int) -> Int {
+  0
+}
+
+///|
+fn window_surface_y(_window_id : Int) -> Int {
+  0
+}
+
+///|
 fn set_window_position(_window_id : Int, _x : Int, _y : Int) -> Unit {
   ()
 }

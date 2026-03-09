@@ -2831,6 +2831,54 @@ int mbw_window_outer_height(int window_id) {
   return height;
 }
 
+int mbw_window_surface_x(int window_id) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  if (!window) {
+    return 0;
+  }
+  int x = 0;
+#if defined(__APPLE__)
+  if (window->window) {
+    mbw_rect_t frame =
+      ((mbw_rect_t(*)(id, SEL))objc_msgSend)((id)window->window, mbw_sel("frame"));
+    mbw_rect_t content =
+      ((mbw_rect_t(*)(id, SEL, mbw_rect_t))objc_msgSend)(
+        (id)window->window,
+        mbw_sel("contentRectForFrameRect:"),
+        frame);
+    double scale_factor = window->scale_factor > 0.0 ? window->scale_factor : 1.0;
+    double scaled_x = (content.origin.x - frame.origin.x) * scale_factor;
+    x = (int)(scaled_x < 0.0 ? scaled_x - 0.5 : scaled_x + 0.5);
+  }
+#endif
+  return x;
+}
+
+int mbw_window_surface_y(int window_id) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  if (!window) {
+    return 0;
+  }
+  int y = 0;
+#if defined(__APPLE__)
+  if (window->window) {
+    mbw_rect_t frame =
+      ((mbw_rect_t(*)(id, SEL))objc_msgSend)((id)window->window, mbw_sel("frame"));
+    mbw_rect_t content =
+      ((mbw_rect_t(*)(id, SEL, mbw_rect_t))objc_msgSend)(
+        (id)window->window,
+        mbw_sel("contentRectForFrameRect:"),
+        frame);
+    double frame_top = frame.origin.y + frame.size.height;
+    double content_top = content.origin.y + content.size.height;
+    double scale_factor = window->scale_factor > 0.0 ? window->scale_factor : 1.0;
+    double scaled_y = (frame_top - content_top) * scale_factor;
+    y = (int)(scaled_y < 0.0 ? scaled_y - 0.5 : scaled_y + 0.5);
+  }
+#endif
+  return y;
+}
+
 int mbw_window_resize_increment_width(int window_id) {
   mbw_window_t *window = mbw_find_window(window_id);
   return window ? window->resize_increment_width : 0;

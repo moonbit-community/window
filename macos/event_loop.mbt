@@ -35,6 +35,14 @@ pub fn Window::outer_size(self : Window) -> @dpi.PhysicalSize {
 }
 
 ///|
+pub fn Window::surface_position(self : Window) -> @dpi.PhysicalPosition {
+  @dpi.PhysicalPosition::new(
+    window_surface_x(self.id.into_raw()),
+    window_surface_y(self.id.into_raw()),
+  )
+}
+
+///|
 pub fn Window::request_surface_size(
   self : Window,
   size : @dpi.PhysicalSize,
