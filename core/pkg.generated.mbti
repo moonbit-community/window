@@ -390,6 +390,7 @@ pub fn WindowAttributes::decorations(Self) -> Bool
 pub fn WindowAttributes::default() -> Self
 pub fn WindowAttributes::ime_purpose(Self) -> ImePurpose
 pub fn WindowAttributes::max_surface_size(Self) -> @dpi.PhysicalSize?
+pub fn WindowAttributes::maximized(Self) -> Bool
 pub fn WindowAttributes::min_surface_size(Self) -> @dpi.PhysicalSize?
 pub fn WindowAttributes::position(Self) -> @dpi.PhysicalPosition?
 pub fn WindowAttributes::resizable(Self) -> Bool
@@ -401,6 +402,7 @@ pub fn WindowAttributes::with_active(Self, Bool) -> Self
 pub fn WindowAttributes::with_decorations(Self, Bool) -> Self
 pub fn WindowAttributes::with_ime_purpose(Self, ImePurpose) -> Self
 pub fn WindowAttributes::with_max_surface_size(Self, @dpi.PhysicalSize?) -> Self
+pub fn WindowAttributes::with_maximized(Self, Bool) -> Self
 pub fn WindowAttributes::with_min_surface_size(Self, @dpi.PhysicalSize?) -> Self
 pub fn WindowAttributes::with_position(Self, @dpi.PhysicalPosition?) -> Self
 pub fn WindowAttributes::with_resizable(Self, Bool) -> Self

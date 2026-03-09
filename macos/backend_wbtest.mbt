@@ -256,6 +256,11 @@ struct WindowLevelApp {
 }
 
 ///|
+struct AttributesMaximizedApp {
+  maximized : Ref[Bool]
+}
+
+///|
 struct MovedApp {
   moved : Ref[@dpi.PhysicalPosition?]
 }
@@ -488,6 +493,18 @@ impl ApplicationHandler for WindowLevelApp with can_create_surfaces(
   self.level_initial.val = Some(window.window_level())
   window.set_window_level(@core.WindowLevel::AlwaysOnBottom)
   self.level_after_update.val = Some(window.window_level())
+  event_loop.exit()
+}
+
+///|
+impl ApplicationHandler for AttributesMaximizedApp with can_create_surfaces(
+  self,
+  event_loop,
+) {
+  let window = event_loop.create_window(
+    @core.WindowAttributes::default().with_visible(false).with_maximized(true),
+  )
+  self.maximized.val = window.is_maximized()
   event_loop.exit()
 }
 
@@ -1293,6 +1310,15 @@ test "window level can be configured at create and runtime" {
   event_loop.run_app(app)
   assert_eq(level_initial.val, Some(@core.WindowLevel::AlwaysOnTop))
   assert_eq(level_after_update.val, Some(@core.WindowLevel::AlwaysOnBottom))
+}
+
+///|
+test "window attributes maximized applies at creation time" {
+  let event_loop = EventLoop::new()
+  let maximized = Ref::new(false)
+  let app : AttributesMaximizedApp = { maximized, }
+  event_loop.run_app(app)
+  assert_true(maximized.val)
 }
 
 ///|

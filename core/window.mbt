@@ -39,6 +39,7 @@ pub struct WindowAttributes {
   priv mut decorations : Bool
   priv mut ime_purpose : ImePurpose
   priv mut max_surface_size : @dpi.PhysicalSize?
+  priv mut maximized : Bool
   priv mut min_surface_size : @dpi.PhysicalSize?
   priv mut position : @dpi.PhysicalPosition?
   priv mut surface_size : @dpi.PhysicalSize?
@@ -54,6 +55,7 @@ pub fn WindowAttributes::default() -> WindowAttributes {
     active: true,
     decorations: true,
     ime_purpose: ImePurpose::Normal,
+    maximized: false,
     min_surface_size: None,
     max_surface_size: None,
     position: None,
@@ -138,6 +140,15 @@ pub fn WindowAttributes::with_window_level(
 }
 
 ///|
+pub fn WindowAttributes::with_maximized(
+  self : WindowAttributes,
+  maximized : Bool,
+) -> WindowAttributes {
+  self.maximized = maximized
+  self
+}
+
+///|
 pub fn WindowAttributes::with_title(
   self : WindowAttributes,
   title : String,
@@ -210,6 +221,11 @@ pub fn WindowAttributes::decorations(self : WindowAttributes) -> Bool {
 ///|
 pub fn WindowAttributes::window_level(self : WindowAttributes) -> WindowLevel {
   self.window_level
+}
+
+///|
+pub fn WindowAttributes::maximized(self : WindowAttributes) -> Bool {
+  self.maximized
 }
 
 ///|
