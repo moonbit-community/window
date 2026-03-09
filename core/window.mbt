@@ -114,6 +114,26 @@ pub(all) enum ImeRequestError {
 } derive(Eq, Show)
 
 ///|
+pub struct ActivationToken {
+  priv token : String
+} derive(Eq, Show)
+
+///|
+pub fn ActivationToken::from_raw(token : String) -> ActivationToken {
+  { token, }
+}
+
+///|
+pub fn ActivationToken::into_raw(self : ActivationToken) -> String {
+  self.token
+}
+
+///|
+pub fn ActivationToken::as_raw(self : ActivationToken) -> String {
+  self.token
+}
+
+///|
 pub(all) enum WindowLevel {
   Normal
   AlwaysOnTop

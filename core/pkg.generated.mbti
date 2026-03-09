@@ -10,6 +10,15 @@ import {
 // Errors
 
 // Types and methods
+pub struct ActivationToken {
+  // private fields
+}
+pub fn ActivationToken::as_raw(Self) -> String
+pub fn ActivationToken::from_raw(String) -> Self
+pub fn ActivationToken::into_raw(Self) -> String
+pub impl Eq for ActivationToken
+pub impl Show for ActivationToken
+
 pub(all) enum BadIcon {
   ByteCountNotDivisibleBy4(Int)
   DimensionsVsPixelCount(Int, Int, Int, Int)
@@ -625,6 +634,7 @@ pub impl Eq for WindowButtons
 pub impl Show for WindowButtons
 
 pub(all) enum WindowEvent {
+  ActivationTokenDone(Int, ActivationToken)
   SurfaceResized(@dpi.PhysicalSize)
   Moved(@dpi.PhysicalPosition)
   CloseRequested

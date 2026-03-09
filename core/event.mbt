@@ -161,6 +161,7 @@ pub fn Modifiers::is_empty(self : Modifiers) -> Bool {
 
 ///|
 pub(all) enum WindowEvent {
+  ActivationTokenDone(Int, ActivationToken)
   SurfaceResized(@dpi.PhysicalSize)
   Moved(@dpi.PhysicalPosition)
   CloseRequested

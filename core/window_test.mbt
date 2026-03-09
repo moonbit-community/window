@@ -155,6 +155,13 @@ test "ime capability and request models are constructible" {
 }
 
 ///|
+test "activation token can be round-tripped" {
+  let token = ActivationToken::from_raw("activation-token")
+  assert_eq(token.as_raw(), "activation-token")
+  assert_eq(token.into_raw(), "activation-token")
+}
+
+///|
 test "icon validation follows winit rgba rules" {
   let bad_alignment = Icon::new(Bytes::make(3, (1 : Int).to_byte()), 1, 1)
   assert_eq(bad_alignment, Err(BadIcon::ByteCountNotDivisibleBy4(3)))
