@@ -157,24 +157,40 @@ static int64_t g_now_ms_override_for_test = -1;
 #define MBW_WINDOW_LEVEL_ALWAYS_ON_BOTTOM 2
 
 #define MBW_CURSOR_DEFAULT 0
-#define MBW_CURSOR_HELP 1
-#define MBW_CURSOR_PROGRESS 2
-#define MBW_CURSOR_WAIT 3
-#define MBW_CURSOR_CELL 4
-#define MBW_CURSOR_VERTICAL_TEXT 5
-#define MBW_CURSOR_ALIAS 6
-#define MBW_CURSOR_COPY 7
-#define MBW_CURSOR_NO_DROP 8
-#define MBW_CURSOR_GRAB 9
-#define MBW_CURSOR_GRABBING 10
-#define MBW_CURSOR_ALL_SCROLL 11
-#define MBW_CURSOR_ZOOM_IN 12
-#define MBW_CURSOR_ZOOM_OUT 13
-#define MBW_CURSOR_POINTER 14
-#define MBW_CURSOR_TEXT 15
-#define MBW_CURSOR_CROSSHAIR 16
-#define MBW_CURSOR_MOVE 17
-#define MBW_CURSOR_NOT_ALLOWED 18
+#define MBW_CURSOR_CONTEXT_MENU 1
+#define MBW_CURSOR_HELP 2
+#define MBW_CURSOR_PROGRESS 3
+#define MBW_CURSOR_WAIT 4
+#define MBW_CURSOR_CELL 5
+#define MBW_CURSOR_VERTICAL_TEXT 6
+#define MBW_CURSOR_ALIAS 7
+#define MBW_CURSOR_COPY 8
+#define MBW_CURSOR_NO_DROP 9
+#define MBW_CURSOR_GRAB 10
+#define MBW_CURSOR_GRABBING 11
+#define MBW_CURSOR_E_RESIZE 12
+#define MBW_CURSOR_N_RESIZE 13
+#define MBW_CURSOR_NE_RESIZE 14
+#define MBW_CURSOR_NW_RESIZE 15
+#define MBW_CURSOR_S_RESIZE 16
+#define MBW_CURSOR_SE_RESIZE 17
+#define MBW_CURSOR_SW_RESIZE 18
+#define MBW_CURSOR_W_RESIZE 19
+#define MBW_CURSOR_EW_RESIZE 20
+#define MBW_CURSOR_NS_RESIZE 21
+#define MBW_CURSOR_NESW_RESIZE 22
+#define MBW_CURSOR_NWSE_RESIZE 23
+#define MBW_CURSOR_COL_RESIZE 24
+#define MBW_CURSOR_ROW_RESIZE 25
+#define MBW_CURSOR_ALL_SCROLL 26
+#define MBW_CURSOR_ZOOM_IN 27
+#define MBW_CURSOR_ZOOM_OUT 28
+#define MBW_CURSOR_POINTER 29
+#define MBW_CURSOR_TEXT 30
+#define MBW_CURSOR_CROSSHAIR 31
+#define MBW_CURSOR_MOVE 32
+#define MBW_CURSOR_NOT_ALLOWED 33
+#define MBW_CURSOR_MAX MBW_CURSOR_NOT_ALLOWED
 
 #define MBW_ELEMENT_STATE_NONE 0
 #define MBW_ELEMENT_STATE_PRESSED 1
@@ -663,14 +679,17 @@ static id mbw_ns_cursor_for_kind(int cursor_kind) {
   }
   const char *selector_name = "arrowCursor";
   switch (cursor_kind) {
-    case MBW_CURSOR_HELP:
+    case MBW_CURSOR_CONTEXT_MENU:
       selector_name = "contextualMenuCursor";
       break;
+    case MBW_CURSOR_HELP:
+      selector_name = "_helpCursor";
+      break;
     case MBW_CURSOR_PROGRESS:
-      selector_name = "arrowCursor";
+      selector_name = "busyButClickableCursor";
       break;
     case MBW_CURSOR_WAIT:
-      selector_name = "arrowCursor";
+      selector_name = "busyButClickableCursor";
       break;
     case MBW_CURSOR_CELL:
       selector_name = "crosshairCursor";
@@ -692,6 +711,48 @@ static id mbw_ns_cursor_for_kind(int cursor_kind) {
       break;
     case MBW_CURSOR_GRABBING:
       selector_name = "closedHandCursor";
+      break;
+    case MBW_CURSOR_E_RESIZE:
+      selector_name = "resizeRightCursor";
+      break;
+    case MBW_CURSOR_N_RESIZE:
+      selector_name = "resizeUpCursor";
+      break;
+    case MBW_CURSOR_NE_RESIZE:
+      selector_name = "_windowResizeNorthEastCursor";
+      break;
+    case MBW_CURSOR_NW_RESIZE:
+      selector_name = "_windowResizeNorthWestCursor";
+      break;
+    case MBW_CURSOR_S_RESIZE:
+      selector_name = "resizeDownCursor";
+      break;
+    case MBW_CURSOR_SE_RESIZE:
+      selector_name = "_windowResizeSouthEastCursor";
+      break;
+    case MBW_CURSOR_SW_RESIZE:
+      selector_name = "_windowResizeSouthWestCursor";
+      break;
+    case MBW_CURSOR_W_RESIZE:
+      selector_name = "resizeLeftCursor";
+      break;
+    case MBW_CURSOR_EW_RESIZE:
+      selector_name = "resizeLeftRightCursor";
+      break;
+    case MBW_CURSOR_NS_RESIZE:
+      selector_name = "resizeUpDownCursor";
+      break;
+    case MBW_CURSOR_NESW_RESIZE:
+      selector_name = "_windowResizeNorthEastSouthWestCursor";
+      break;
+    case MBW_CURSOR_NWSE_RESIZE:
+      selector_name = "_windowResizeNorthWestSouthEastCursor";
+      break;
+    case MBW_CURSOR_COL_RESIZE:
+      selector_name = "resizeLeftRightCursor";
+      break;
+    case MBW_CURSOR_ROW_RESIZE:
+      selector_name = "resizeUpDownCursor";
       break;
     case MBW_CURSOR_ALL_SCROLL:
       selector_name = "openHandCursor";
@@ -3884,7 +3945,7 @@ void mbw_window_set_cursor(int window_id, int cursor) {
     return;
   }
   int next_cursor = MBW_CURSOR_DEFAULT;
-  if (cursor >= MBW_CURSOR_DEFAULT && cursor <= MBW_CURSOR_NOT_ALLOWED) {
+  if (cursor >= MBW_CURSOR_DEFAULT && cursor <= MBW_CURSOR_MAX) {
     next_cursor = cursor;
   }
   window->cursor = next_cursor;

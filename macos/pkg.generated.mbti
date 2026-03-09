@@ -77,6 +77,7 @@ pub struct Window {
 pub fn Window::cursor(Self) -> @core.CursorIcon
 pub fn Window::enabled_buttons(Self) -> @core.WindowButtons
 pub fn Window::focus_window(Self) -> Unit
+pub fn Window::fullscreen(Self) -> @core.Fullscreen?
 pub fn Window::has_focus(Self) -> Bool
 pub fn Window::id(Self) -> @core.WindowId
 pub fn Window::ime_allowed(Self) -> Bool
@@ -102,7 +103,7 @@ pub fn Window::set_content_protected(Self, Bool) -> Unit
 pub fn Window::set_cursor(Self, @core.CursorIcon) -> Unit
 pub fn Window::set_decorations(Self, Bool) -> Unit
 pub fn Window::set_enabled_buttons(Self, @core.WindowButtons) -> Unit
-pub fn Window::set_fullscreen(Self, Bool) -> Unit
+pub fn Window::set_fullscreen(Self, @core.Fullscreen?) -> Unit
 pub fn Window::set_ime_allowed(Self, Bool) -> Unit
 pub fn Window::set_ime_cursor_area(Self, @dpi.PhysicalPosition, @dpi.PhysicalSize) -> Unit
 pub fn Window::set_ime_purpose(Self, @core.ImePurpose) -> Unit

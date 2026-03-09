@@ -127,13 +127,25 @@ pub fn Window::set_maximized(self : Window, maximized : Bool) -> Unit {
 }
 
 ///|
-pub fn Window::set_fullscreen(self : Window, fullscreen : Bool) -> Unit {
-  set_window_fullscreen(self.id.into_raw(), fullscreen)
+pub fn Window::set_fullscreen(
+  self : Window,
+  fullscreen : @core.Fullscreen?,
+) -> Unit {
+  set_window_fullscreen(self.id.into_raw(), fullscreen is Some(_))
 }
 
 ///|
 pub fn Window::is_maximized(self : Window) -> Bool {
   window_maximized(self.id.into_raw())
+}
+
+///|
+pub fn Window::fullscreen(self : Window) -> @core.Fullscreen? {
+  if window_fullscreen(self.id.into_raw()) {
+    Some(@core.Fullscreen::Borderless)
+  } else {
+    None
+  }
 }
 
 ///|
@@ -453,48 +465,78 @@ fn ime_purpose_from_native(purpose : Int) -> @core.ImePurpose {
 fn cursor_icon_to_native(cursor : @core.CursorIcon) -> Int {
   match cursor {
     @core.CursorIcon::Default => 0
-    @core.CursorIcon::Help => 1
-    @core.CursorIcon::Progress => 2
-    @core.CursorIcon::Wait => 3
-    @core.CursorIcon::Cell => 4
-    @core.CursorIcon::VerticalText => 5
-    @core.CursorIcon::Alias => 6
-    @core.CursorIcon::Copy => 7
-    @core.CursorIcon::NoDrop => 8
-    @core.CursorIcon::Grab => 9
-    @core.CursorIcon::Grabbing => 10
-    @core.CursorIcon::AllScroll => 11
-    @core.CursorIcon::ZoomIn => 12
-    @core.CursorIcon::ZoomOut => 13
-    @core.CursorIcon::Pointer => 14
-    @core.CursorIcon::Text => 15
-    @core.CursorIcon::Crosshair => 16
-    @core.CursorIcon::Move => 17
-    @core.CursorIcon::NotAllowed => 18
+    @core.CursorIcon::ContextMenu => 1
+    @core.CursorIcon::Help => 2
+    @core.CursorIcon::Progress => 3
+    @core.CursorIcon::Wait => 4
+    @core.CursorIcon::Cell => 5
+    @core.CursorIcon::VerticalText => 6
+    @core.CursorIcon::Alias => 7
+    @core.CursorIcon::Copy => 8
+    @core.CursorIcon::NoDrop => 9
+    @core.CursorIcon::Grab => 10
+    @core.CursorIcon::Grabbing => 11
+    @core.CursorIcon::EResize => 12
+    @core.CursorIcon::NResize => 13
+    @core.CursorIcon::NeResize => 14
+    @core.CursorIcon::NwResize => 15
+    @core.CursorIcon::SResize => 16
+    @core.CursorIcon::SeResize => 17
+    @core.CursorIcon::SwResize => 18
+    @core.CursorIcon::WResize => 19
+    @core.CursorIcon::EwResize => 20
+    @core.CursorIcon::NsResize => 21
+    @core.CursorIcon::NeswResize => 22
+    @core.CursorIcon::NwseResize => 23
+    @core.CursorIcon::ColResize => 24
+    @core.CursorIcon::RowResize => 25
+    @core.CursorIcon::AllScroll => 26
+    @core.CursorIcon::ZoomIn => 27
+    @core.CursorIcon::ZoomOut => 28
+    @core.CursorIcon::Pointer => 29
+    @core.CursorIcon::Text => 30
+    @core.CursorIcon::Crosshair => 31
+    @core.CursorIcon::Move => 32
+    @core.CursorIcon::NotAllowed => 33
   }
 }
 
 ///|
 fn cursor_icon_from_native(cursor : Int) -> @core.CursorIcon {
   match cursor {
-    1 => @core.CursorIcon::Help
-    2 => @core.CursorIcon::Progress
-    3 => @core.CursorIcon::Wait
-    4 => @core.CursorIcon::Cell
-    5 => @core.CursorIcon::VerticalText
-    6 => @core.CursorIcon::Alias
-    7 => @core.CursorIcon::Copy
-    8 => @core.CursorIcon::NoDrop
-    9 => @core.CursorIcon::Grab
-    10 => @core.CursorIcon::Grabbing
-    11 => @core.CursorIcon::AllScroll
-    12 => @core.CursorIcon::ZoomIn
-    13 => @core.CursorIcon::ZoomOut
-    14 => @core.CursorIcon::Pointer
-    15 => @core.CursorIcon::Text
-    16 => @core.CursorIcon::Crosshair
-    17 => @core.CursorIcon::Move
-    18 => @core.CursorIcon::NotAllowed
+    1 => @core.CursorIcon::ContextMenu
+    2 => @core.CursorIcon::Help
+    3 => @core.CursorIcon::Progress
+    4 => @core.CursorIcon::Wait
+    5 => @core.CursorIcon::Cell
+    6 => @core.CursorIcon::VerticalText
+    7 => @core.CursorIcon::Alias
+    8 => @core.CursorIcon::Copy
+    9 => @core.CursorIcon::NoDrop
+    10 => @core.CursorIcon::Grab
+    11 => @core.CursorIcon::Grabbing
+    12 => @core.CursorIcon::EResize
+    13 => @core.CursorIcon::NResize
+    14 => @core.CursorIcon::NeResize
+    15 => @core.CursorIcon::NwResize
+    16 => @core.CursorIcon::SResize
+    17 => @core.CursorIcon::SeResize
+    18 => @core.CursorIcon::SwResize
+    19 => @core.CursorIcon::WResize
+    20 => @core.CursorIcon::EwResize
+    21 => @core.CursorIcon::NsResize
+    22 => @core.CursorIcon::NeswResize
+    23 => @core.CursorIcon::NwseResize
+    24 => @core.CursorIcon::ColResize
+    25 => @core.CursorIcon::RowResize
+    26 => @core.CursorIcon::AllScroll
+    27 => @core.CursorIcon::ZoomIn
+    28 => @core.CursorIcon::ZoomOut
+    29 => @core.CursorIcon::Pointer
+    30 => @core.CursorIcon::Text
+    31 => @core.CursorIcon::Crosshair
+    32 => @core.CursorIcon::Move
+    33 => @core.CursorIcon::NotAllowed
     _ => @core.CursorIcon::Default
   }
 }

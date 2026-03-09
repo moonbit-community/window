@@ -21,6 +21,7 @@ pub(all) enum WindowLevel {
 ///|
 pub(all) enum CursorIcon {
   Default
+  ContextMenu
   Help
   Progress
   Wait
@@ -31,6 +32,20 @@ pub(all) enum CursorIcon {
   NoDrop
   Grab
   Grabbing
+  EResize
+  NResize
+  NeResize
+  NwResize
+  SResize
+  SeResize
+  SwResize
+  WResize
+  EwResize
+  NsResize
+  NeswResize
+  NwseResize
+  ColResize
+  RowResize
   AllScroll
   ZoomIn
   ZoomOut

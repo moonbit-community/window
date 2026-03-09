@@ -232,9 +232,9 @@ struct WindowMinMaxStateApp {
 
 ///|
 struct WindowFullscreenStateApp {
-  fullscreen_after_disable : Ref[Bool]
-  fullscreen_after_enable : Ref[Bool]
-  fullscreen_initial : Ref[Bool]
+  fullscreen_after_disable : Ref[@core.Fullscreen?]
+  fullscreen_after_enable : Ref[@core.Fullscreen?]
+  fullscreen_initial : Ref[@core.Fullscreen?]
 }
 
 ///|
@@ -276,7 +276,8 @@ struct WindowBlurApp {
 
 ///|
 struct WindowCursorApp {
-  cursor_after_update : Ref[@core.CursorIcon?]
+  cursor_after_first_update : Ref[@core.CursorIcon?]
+  cursor_after_second_update : Ref[@core.CursorIcon?]
   cursor_initial : Ref[@core.CursorIcon?]
 }
 
@@ -541,11 +542,11 @@ impl ApplicationHandler for WindowFullscreenStateApp with can_create_surfaces(
     .with_visible(false)
     .with_fullscreen(Some(@core.Fullscreen::Borderless)),
   )
-  self.fullscreen_initial.val = window.is_fullscreen()
-  window.set_fullscreen(false)
-  self.fullscreen_after_disable.val = window.is_fullscreen()
-  window.set_fullscreen(true)
-  self.fullscreen_after_enable.val = window.is_fullscreen()
+  self.fullscreen_initial.val = window.fullscreen()
+  window.set_fullscreen(None)
+  self.fullscreen_after_disable.val = window.fullscreen()
+  window.set_fullscreen(Some(@core.Fullscreen::Borderless))
+  self.fullscreen_after_enable.val = window.fullscreen()
   event_loop.exit()
 }
 
@@ -653,11 +654,13 @@ impl ApplicationHandler for WindowCursorApp with can_create_surfaces(
   let window = event_loop.create_window(
     @core.WindowAttributes::default()
     .with_visible(false)
-    .with_cursor(@core.CursorIcon::Grab),
+    .with_cursor(@core.CursorIcon::NeResize),
   )
   self.cursor_initial.val = Some(window.cursor())
-  window.set_cursor(@core.CursorIcon::ZoomIn)
-  self.cursor_after_update.val = Some(window.cursor())
+  window.set_cursor(@core.CursorIcon::ContextMenu)
+  self.cursor_after_first_update.val = Some(window.cursor())
+  window.set_cursor(@core.CursorIcon::RowResize)
+  self.cursor_after_second_update.val = Some(window.cursor())
   event_loop.exit()
 }
 
@@ -1634,18 +1637,18 @@ test "window minimize and maximize state can be controlled" {
 ///|
 test "window fullscreen state can be controlled" {
   let event_loop = EventLoop::new()
-  let fullscreen_initial = Ref::new(false)
-  let fullscreen_after_disable = Ref::new(true)
-  let fullscreen_after_enable = Ref::new(false)
+  let fullscreen_initial = Ref::new(None)
+  let fullscreen_after_disable = Ref::new(Some(@core.Fullscreen::Borderless))
+  let fullscreen_after_enable = Ref::new(None)
   let app : WindowFullscreenStateApp = {
     fullscreen_after_disable,
     fullscreen_after_enable,
     fullscreen_initial,
   }
   event_loop.run_app(app)
-  assert_true(fullscreen_initial.val)
-  assert_false(fullscreen_after_disable.val)
-  assert_true(fullscreen_after_enable.val)
+  assert_eq(fullscreen_initial.val, Some(@core.Fullscreen::Borderless))
+  assert_eq(fullscreen_after_disable.val, None)
+  assert_eq(fullscreen_after_enable.val, Some(@core.Fullscreen::Borderless))
 }
 
 ///|
@@ -1732,11 +1735,17 @@ test "window blur can be configured at create and runtime" {
 test "window cursor can be configured at create and runtime" {
   let event_loop = EventLoop::new()
   let cursor_initial = Ref::new(None)
-  let cursor_after_update = Ref::new(None)
-  let app : WindowCursorApp = { cursor_after_update, cursor_initial }
+  let cursor_after_first_update = Ref::new(None)
+  let cursor_after_second_update = Ref::new(None)
+  let app : WindowCursorApp = {
+    cursor_after_first_update,
+    cursor_after_second_update,
+    cursor_initial,
+  }
   event_loop.run_app(app)
-  assert_eq(cursor_initial.val, Some(@core.CursorIcon::Grab))
-  assert_eq(cursor_after_update.val, Some(@core.CursorIcon::ZoomIn))
+  assert_eq(cursor_initial.val, Some(@core.CursorIcon::NeResize))
+  assert_eq(cursor_after_first_update.val, Some(@core.CursorIcon::ContextMenu))
+  assert_eq(cursor_after_second_update.val, Some(@core.CursorIcon::RowResize))
 }
 
 ///|

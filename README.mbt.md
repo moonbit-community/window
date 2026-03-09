@@ -13,18 +13,22 @@ native builds and focuses on `macos-arm64`.
   `Occluded`, `RedrawRequested`
 - Event loop support: `run_app`, `EventLoopProxy::wake_up()`,
   `ControlFlow::{Poll, Wait, WaitUntil}`
-- Runtime window control currently includes `surface_size`,
-  `request_surface_size`, `set_min_surface_size`, `set_max_surface_size`,
-  `outer_position`, `set_outer_position`, `focus_window`, `has_focus`,
-  `set_minimized`, `is_minimized`, `set_maximized`, `is_maximized`,
-  `set_decorations`, `is_decorated`, `set_window_level`, `window_level`,
-  `set_transparent`, `is_transparent`, `set_visible`, `is_visible`,
-  `set_resizable`, `is_resizable`, `set_ime_allowed`, and
-  `set_ime_cursor_area`
-- `WindowAttributes` now supports `with_position`,
-  `with_min_surface_size`, `with_max_surface_size`, `with_ime_purpose`,
-  `with_active`, `with_decorations`, `with_window_level`,
-  `with_maximized`, and `with_transparent`
+- Runtime window control currently includes surface sizing and constraints
+  (`surface_size`, `request_surface_size`, `set_min_surface_size`,
+  `set_max_surface_size`, `set_surface_resize_increments`), position and focus
+  (`outer_position`, `set_outer_position`, `focus_window`, `has_focus`),
+  state (`set_minimized`, `is_minimized`, `set_maximized`, `is_maximized`,
+  `set_fullscreen`, `fullscreen`, `is_fullscreen`), appearance (`set_title`,
+  `set_theme`, `set_window_icon`, `set_cursor`, `set_blur`,
+  `set_transparent`, `set_decorations`, `set_window_level`), visibility and
+  capability flags (`set_visible`, `set_resizable`, `set_enabled_buttons`,
+  `set_content_protected`), and IME control (`set_ime_purpose`,
+  `set_ime_allowed`, `set_ime_cursor_area`).
+- `WindowAttributes` supports initial surface sizing/constraints and position,
+  title/visibility/resizable, focus/active, fullscreen, theme, cursor/icon,
+  blur/transparency/decorations/content protection, enabled buttons, window
+  level, IME purpose, and macOS platform attributes (such as
+  `simple_fullscreen`).
 - Current keyboard support is macOS-first and now prefers native
   `NSEvent` text (`characters` / `charactersIgnoringModifiers`) for
   `logical_key` and `text`; `key_without_modifiers` uses Carbon
