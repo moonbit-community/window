@@ -184,6 +184,26 @@ fn input_event_text_without_modifiers(window_id : Int) -> Bytes {
 }
 
 ///|
+fn input_event_ime_kind(window_id : Int) -> Int {
+  native_window_input_event_ime_kind(window_id)
+}
+
+///|
+fn input_event_ime_text(window_id : Int) -> Bytes {
+  native_window_input_event_ime_text(window_id)
+}
+
+///|
+fn input_event_ime_cursor_start(window_id : Int) -> Int {
+  native_window_input_event_ime_cursor_start(window_id)
+}
+
+///|
+fn input_event_ime_cursor_end(window_id : Int) -> Int {
+  native_window_input_event_ime_cursor_end(window_id)
+}
+
+///|
 fn wait_for_events(timeout_ms : Int) -> Bool {
   native_event_loop_wait_millis(timeout_ms)
 }
@@ -417,6 +437,20 @@ extern "C" fn native_window_input_event_text_ignoring_modifiers(
 extern "C" fn native_window_input_event_text_without_modifiers(
   window_id : Int,
 ) -> Bytes = "mbw_window_input_event_text_without_modifiers"
+
+///|
+extern "C" fn native_window_input_event_ime_kind(window_id : Int) -> Int = "mbw_window_input_event_ime_kind"
+
+///|
+extern "C" fn native_window_input_event_ime_text(window_id : Int) -> Bytes = "mbw_window_input_event_ime_text"
+
+///|
+extern "C" fn native_window_input_event_ime_cursor_start(
+  window_id : Int,
+) -> Int = "mbw_window_input_event_ime_cursor_start"
+
+///|
+extern "C" fn native_window_input_event_ime_cursor_end(window_id : Int) -> Int = "mbw_window_input_event_ime_cursor_end"
 
 ///|
 pub extern "C" fn native_window_take_surface_resized(window_id : Int) -> Bool = "mbw_window_take_surface_resized"

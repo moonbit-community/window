@@ -103,6 +103,27 @@ extern "C" fn queue_keyboard_input_with_text_for_test(
 ) -> Unit = "mbw_test_window_queue_keyboard_input_with_text"
 
 ///|
+extern "C" fn queue_ime_disabled_for_test(window_id : Int) -> Unit = "mbw_test_window_queue_ime_disabled"
+
+///|
+#borrow(text)
+extern "C" fn queue_ime_preedit_for_test(
+  window_id : Int,
+  text : Bytes,
+  text_len : Int,
+  cursor_start : Int,
+  cursor_end : Int,
+) -> Unit = "mbw_test_window_queue_ime_preedit"
+
+///|
+#borrow(text)
+extern "C" fn queue_ime_commit_for_test(
+  window_id : Int,
+  text : Bytes,
+  text_len : Int,
+) -> Unit = "mbw_test_window_queue_ime_commit"
+
+///|
 struct StartCauseApp {
   causes : Array[@core.StartCause]
 }
@@ -272,6 +293,12 @@ struct KeyboardInputApp {
   state : Int
   text_with_all_modifiers : String?
   text_ignoring_modifiers : String?
+}
+
+///|
+struct ImeApp {
+  events : Array[@core.Ime]
+  scenario : Int
 }
 
 ///|
@@ -747,6 +774,49 @@ impl ApplicationHandler for KeyboardInputApp with window_event(
     @core.WindowEvent::KeyboardInput(key_event, false) => {
       self.captured.val = Some(key_event)
       event_loop.exit()
+    }
+    _ => ()
+  }
+}
+
+///|
+impl ApplicationHandler for ImeApp with can_create_surfaces(self, event_loop) {
+  let window = event_loop.create_window(
+    @core.WindowAttributes::default().with_visible(false),
+  )
+  let raw_id = window.id().into_raw()
+  match self.scenario {
+    1 => {
+      let preedit = @utf8.encode("nihao"[:], bom=false)
+      queue_ime_preedit_for_test(raw_id, preedit, preedit.length(), 2, 5)
+      let commit = @utf8.encode("你好"[:], bom=false)
+      queue_ime_commit_for_test(raw_id, commit, commit.length())
+      queue_ime_disabled_for_test(raw_id)
+    }
+    2 => {
+      let preedit = @utf8.encode("a"[:], bom=false)
+      queue_ime_preedit_for_test(raw_id, preedit, preedit.length(), 0, 1)
+    }
+    _ => ()
+  }
+}
+
+///|
+impl ApplicationHandler for ImeApp with window_event(
+  self,
+  event_loop,
+  _id,
+  event,
+) {
+  match event {
+    @core.WindowEvent::Ime(ime) => {
+      self.events.push(ime)
+      if self.scenario == 1 && self.events.length() >= 4 {
+        event_loop.exit()
+      }
+      if self.scenario == 2 && self.events.length() >= 2 {
+        event_loop.exit()
+      }
     }
     _ => ()
   }
@@ -1334,6 +1404,32 @@ test "keyboard input with control prefers ignoring-modifier logical text" {
       ),
     ),
   )
+}
+
+///|
+test "ime preedit commit and disabled events are delivered" {
+  let event_loop = EventLoop::new()
+  let events = []
+  let app : ImeApp = { events, scenario: 1 }
+  event_loop.run_app(app)
+  assert_eq(events, [
+    @core.Ime::Enabled,
+    @core.Ime::Preedit("nihao", Some(@core.ImeCursorRange::new(2, 5))),
+    @core.Ime::Commit("你好"),
+    @core.Ime::Disabled,
+  ])
+}
+
+///|
+test "ime preedit always includes enabled first" {
+  let event_loop = EventLoop::new()
+  let events = []
+  let app : ImeApp = { events, scenario: 2 }
+  event_loop.run_app(app)
+  assert_eq(events, [
+    @core.Ime::Enabled,
+    @core.Ime::Preedit("a", Some(@core.ImeCursorRange::new(0, 1))),
+  ])
 }
 
 ///|

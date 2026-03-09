@@ -39,6 +39,11 @@ typedef struct mbw_input_event {
   uint8_t text_ignoring_modifiers[MBW_KEY_TEXT_CAP];
   int text_without_modifiers_len;
   uint8_t text_without_modifiers[MBW_KEY_TEXT_CAP];
+  int ime_kind;
+  int ime_text_len;
+  uint8_t ime_text[MBW_KEY_TEXT_CAP];
+  int ime_cursor_start;
+  int ime_cursor_end;
 } mbw_input_event_t;
 
 typedef struct mbw_window {
@@ -83,6 +88,9 @@ typedef struct mbw_window {
   int max_width;
   int max_height;
   int modifiers_state;
+  int ime_marked_active;
+  int ime_cursor_start;
+  int ime_cursor_end;
   int visible;
   int resizable;
   mbw_input_event_t *queued_input_events;
@@ -111,6 +119,13 @@ static int64_t g_now_ms_override_for_test = -1;
 #define MBW_INPUT_EVENT_MOUSE_WHEEL 5
 #define MBW_INPUT_EVENT_MODIFIERS_CHANGED 6
 #define MBW_INPUT_EVENT_KEYBOARD_INPUT 7
+#define MBW_INPUT_EVENT_IME 8
+
+#define MBW_IME_EVENT_NONE 0
+#define MBW_IME_EVENT_ENABLED 1
+#define MBW_IME_EVENT_PREEDIT 2
+#define MBW_IME_EVENT_COMMIT 3
+#define MBW_IME_EVENT_DISABLED 4
 
 #define MBW_ELEMENT_STATE_NONE 0
 #define MBW_ELEMENT_STATE_PRESSED 1
@@ -247,6 +262,11 @@ typedef struct {
   mbw_size_t size;
 } mbw_rect_t;
 
+typedef struct {
+  mbw_nsuint_t location;
+  mbw_nsuint_t length;
+} mbw_range_t;
+
 #ifndef YES
 #define YES ((mbw_bool_t)1)
 #endif
@@ -283,6 +303,7 @@ typedef struct {
 #define MBW_NSTRACKING_MOUSE_MOVED (1UL << 1)
 #define MBW_NSTRACKING_ACTIVE_ALWAYS (1UL << 7)
 #define MBW_NSTRACKING_IN_VISIBLE_RECT (1UL << 9)
+#define MBW_NS_NOT_FOUND ((mbw_nsuint_t)-1)
 
 static bool g_bootstrap_done = false;
 static bool g_bootstrap_ok = false;
@@ -322,6 +343,14 @@ static void mbw_window_queue_keyboard_input(
   const uint8_t *text_without_modifiers,
   int text_without_modifiers_len
 );
+static void mbw_window_queue_ime(
+  mbw_window_t *window,
+  int ime_kind,
+  const uint8_t *text,
+  int text_len,
+  int cursor_start,
+  int cursor_end
+);
 static void mbw_window_queue_pointer_button(
   mbw_window_t *window,
   int state,
@@ -336,6 +365,7 @@ static void mbw_window_queue_mouse_wheel(
   double delta_y,
   int phase
 );
+static int mbw_text_input_object_utf8(id text_input, uint8_t *dst, int dst_cap);
 
 static SEL mbw_sel(const char *name) {
   return sel_registerName(name);
@@ -396,6 +426,20 @@ static int mbw_event_nsstring_utf8(
   }
   id string = ((id(*)(id, SEL))objc_msgSend)(event, mbw_sel(selector_name));
   return mbw_copy_nsstring_utf8(string, dst, dst_cap);
+}
+
+static int mbw_text_input_object_utf8(id text_input, uint8_t *dst, int dst_cap) {
+  if (!text_input) {
+    return 0;
+  }
+  id candidate = text_input;
+  if (((mbw_bool_t(*)(id, SEL, SEL))objc_msgSend)(
+        candidate,
+        mbw_sel("respondsToSelector:"),
+        mbw_sel("string"))) {
+    candidate = ((id(*)(id, SEL))objc_msgSend)(candidate, mbw_sel("string"));
+  }
+  return mbw_copy_nsstring_utf8(candidate, dst, dst_cap);
 }
 
 static int mbw_modifierless_char_from_scancode(
@@ -674,6 +718,29 @@ static void mbw_window_queue_keyboard_input(
   (void)mbw_push_input_event(window, &event);
 }
 
+static void mbw_window_queue_ime(
+  mbw_window_t *window,
+  int ime_kind,
+  const uint8_t *text,
+  int text_len,
+  int cursor_start,
+  int cursor_end
+) {
+  mbw_input_event_t event = {
+    .kind = MBW_INPUT_EVENT_IME,
+    .ime_kind = ime_kind,
+    .ime_text_len = 0,
+    .ime_cursor_start = cursor_start,
+    .ime_cursor_end = cursor_end,
+  };
+  event.ime_text_len = mbw_copy_utf8_slice(
+    text,
+    text_len,
+    event.ime_text,
+    MBW_KEY_TEXT_CAP);
+  (void)mbw_push_input_event(window, &event);
+}
+
 static void mbw_window_queue_pointer_button(
   mbw_window_t *window,
   int state,
@@ -841,6 +908,214 @@ static mbw_bool_t mbw_content_view_accepts_first_responder(id self, SEL _cmd) {
   return YES;
 }
 
+static void mbw_content_view_queue_ime(
+  id self,
+  int ime_kind,
+  id text_input,
+  int cursor_start,
+  int cursor_end
+) {
+  mbw_window_t *window = mbw_view_window(self);
+  if (!window) {
+    return;
+  }
+  uint8_t text[MBW_KEY_TEXT_CAP];
+  int text_len = mbw_text_input_object_utf8(text_input, text, MBW_KEY_TEXT_CAP);
+  mbw_window_queue_ime(window, ime_kind, text, text_len, cursor_start, cursor_end);
+}
+
+static void mbw_content_view_insert_text(
+  id self,
+  SEL _cmd,
+  id text_input,
+  mbw_range_t replacement_range
+) {
+  (void)_cmd;
+  (void)replacement_range;
+  mbw_window_t *window = mbw_view_window(self);
+  if (!window) {
+    return;
+  }
+  window->ime_marked_active = 0;
+  window->ime_cursor_start = -1;
+  window->ime_cursor_end = -1;
+  mbw_content_view_queue_ime(
+    self,
+    MBW_IME_EVENT_COMMIT,
+    text_input,
+    -1,
+    -1);
+}
+
+static void mbw_content_view_insert_text_legacy(id self, SEL _cmd, id text_input) {
+  mbw_content_view_insert_text(
+    self,
+    _cmd,
+    text_input,
+    (mbw_range_t){ .location = MBW_NS_NOT_FOUND, .length = 0 });
+}
+
+static void mbw_content_view_set_marked_text(
+  id self,
+  SEL _cmd,
+  id text_input,
+  mbw_range_t selected_range,
+  mbw_range_t replacement_range
+) {
+  (void)_cmd;
+  (void)replacement_range;
+  mbw_window_t *window = mbw_view_window(self);
+  if (!window) {
+    return;
+  }
+  int cursor_start = -1;
+  int cursor_end = -1;
+  if (selected_range.location != MBW_NS_NOT_FOUND) {
+    cursor_start = (int)selected_range.location;
+    cursor_end = (int)(selected_range.location + selected_range.length);
+  }
+  if (!window->ime_marked_active) {
+    mbw_content_view_queue_ime(
+      self,
+      MBW_IME_EVENT_ENABLED,
+      nil,
+      -1,
+      -1);
+  }
+  window->ime_marked_active = 1;
+  window->ime_cursor_start = cursor_start;
+  window->ime_cursor_end = cursor_end;
+  mbw_content_view_queue_ime(
+    self,
+    MBW_IME_EVENT_PREEDIT,
+    text_input,
+    cursor_start,
+    cursor_end);
+}
+
+static void mbw_content_view_set_marked_text_legacy(
+  id self,
+  SEL _cmd,
+  id text_input,
+  mbw_range_t selected_range
+) {
+  mbw_content_view_set_marked_text(
+    self,
+    _cmd,
+    text_input,
+    selected_range,
+    (mbw_range_t){ .location = MBW_NS_NOT_FOUND, .length = 0 });
+}
+
+static void mbw_content_view_unmark_text(id self, SEL _cmd) {
+  (void)_cmd;
+  mbw_window_t *window = mbw_view_window(self);
+  if (!window) {
+    return;
+  }
+  int had_marked_text = window->ime_marked_active;
+  window->ime_marked_active = 0;
+  window->ime_cursor_start = -1;
+  window->ime_cursor_end = -1;
+  if (had_marked_text) {
+    mbw_content_view_queue_ime(
+      self,
+      MBW_IME_EVENT_DISABLED,
+      nil,
+      -1,
+      -1);
+  }
+}
+
+static mbw_bool_t mbw_content_view_has_marked_text(id self, SEL _cmd) {
+  (void)_cmd;
+  mbw_window_t *window = mbw_view_window(self);
+  return window && window->ime_marked_active ? YES : NO;
+}
+
+static mbw_range_t mbw_content_view_marked_range(id self, SEL _cmd) {
+  (void)_cmd;
+  mbw_window_t *window = mbw_view_window(self);
+  if (!window || !window->ime_marked_active) {
+    return (mbw_range_t){ .location = MBW_NS_NOT_FOUND, .length = 0 };
+  }
+  return (mbw_range_t){ .location = 0, .length = 1 };
+}
+
+static mbw_range_t mbw_content_view_selected_range(id self, SEL _cmd) {
+  (void)_cmd;
+  mbw_window_t *window = mbw_view_window(self);
+  if (!window || window->ime_cursor_start < 0 || window->ime_cursor_end < window->ime_cursor_start) {
+    return (mbw_range_t){ .location = MBW_NS_NOT_FOUND, .length = 0 };
+  }
+  return (mbw_range_t){
+    .location = (mbw_nsuint_t)window->ime_cursor_start,
+    .length = (mbw_nsuint_t)(window->ime_cursor_end - window->ime_cursor_start),
+  };
+}
+
+static id mbw_content_view_valid_attributes_for_marked_text(id self, SEL _cmd) {
+  (void)self;
+  (void)_cmd;
+  Class ns_array = objc_getClass("NSArray");
+  if (!ns_array) {
+    return nil;
+  }
+  return ((id(*)(id, SEL))objc_msgSend)((id)ns_array, mbw_sel("array"));
+}
+
+static id mbw_content_view_attributed_substring_for_proposed_range(
+  id self,
+  SEL _cmd,
+  mbw_range_t range,
+  mbw_range_t *actual_range
+) {
+  (void)self;
+  (void)_cmd;
+  (void)range;
+  if (actual_range) {
+    actual_range->location = MBW_NS_NOT_FOUND;
+    actual_range->length = 0;
+  }
+  return nil;
+}
+
+static mbw_nsuint_t mbw_content_view_character_index_for_point(
+  id self,
+  SEL _cmd,
+  mbw_point_t point
+) {
+  (void)self;
+  (void)_cmd;
+  (void)point;
+  return 0;
+}
+
+static mbw_rect_t mbw_content_view_first_rect_for_character_range(
+  id self,
+  SEL _cmd,
+  mbw_range_t range,
+  mbw_range_t *actual_range
+) {
+  (void)_cmd;
+  (void)range;
+  if (actual_range) {
+    actual_range->location = MBW_NS_NOT_FOUND;
+    actual_range->length = 0;
+  }
+  mbw_rect_t rect = {
+    .origin = {0.0, 0.0},
+    .size = {1.0, 1.0},
+  };
+  mbw_window_t *window = mbw_view_window(self);
+  if (window && window->window) {
+    rect = ((mbw_rect_t(*)(id, SEL))objc_msgSend)(
+      (id)window->window,
+      mbw_sel("frame"));
+  }
+  return rect;
+}
+
 static void mbw_content_view_key_down(id self, SEL _cmd, id event) {
   (void)_cmd;
   mbw_window_t *window = mbw_view_window(self);
@@ -888,6 +1163,21 @@ static void mbw_content_view_key_down(id self, SEL _cmd, id event) {
     text_ignoring_modifiers_len,
     text_without_modifiers,
     text_without_modifiers_len);
+  if ((modifiers & MBW_MODIFIERS_META) == 0) {
+    Class ns_array = objc_getClass("NSArray");
+    if (ns_array) {
+      id events = ((id(*)(id, SEL, id))objc_msgSend)(
+        (id)ns_array,
+        mbw_sel("arrayWithObject:"),
+        event);
+      if (events) {
+        ((void(*)(id, SEL, id))objc_msgSend)(
+          self,
+          mbw_sel("interpretKeyEvents:"),
+          events);
+      }
+    }
+  }
 }
 
 static void mbw_content_view_key_up(id self, SEL _cmd, id event) {
@@ -1336,6 +1626,66 @@ static Class mbw_get_content_view_class(void) {
     "c@:");
   class_addMethod(
     view_class,
+    mbw_sel("insertText:replacementRange:"),
+    (IMP)mbw_content_view_insert_text,
+    "v@:@{_NSRange=QQ}{_NSRange=QQ}");
+  class_addMethod(
+    view_class,
+    mbw_sel("insertText:"),
+    (IMP)mbw_content_view_insert_text_legacy,
+    "v@:@");
+  class_addMethod(
+    view_class,
+    mbw_sel("setMarkedText:selectedRange:replacementRange:"),
+    (IMP)mbw_content_view_set_marked_text,
+    "v@:@{_NSRange=QQ}{_NSRange=QQ}");
+  class_addMethod(
+    view_class,
+    mbw_sel("setMarkedText:selectedRange:"),
+    (IMP)mbw_content_view_set_marked_text_legacy,
+    "v@:@{_NSRange=QQ}");
+  class_addMethod(
+    view_class,
+    mbw_sel("unmarkText"),
+    (IMP)mbw_content_view_unmark_text,
+    "v@:");
+  class_addMethod(
+    view_class,
+    mbw_sel("hasMarkedText"),
+    (IMP)mbw_content_view_has_marked_text,
+    "c@:");
+  class_addMethod(
+    view_class,
+    mbw_sel("markedRange"),
+    (IMP)mbw_content_view_marked_range,
+    "{_NSRange=QQ}@:");
+  class_addMethod(
+    view_class,
+    mbw_sel("selectedRange"),
+    (IMP)mbw_content_view_selected_range,
+    "{_NSRange=QQ}@:");
+  class_addMethod(
+    view_class,
+    mbw_sel("validAttributesForMarkedText"),
+    (IMP)mbw_content_view_valid_attributes_for_marked_text,
+    "@@:");
+  class_addMethod(
+    view_class,
+    mbw_sel("attributedSubstringForProposedRange:actualRange:"),
+    (IMP)mbw_content_view_attributed_substring_for_proposed_range,
+    "@@:{_NSRange=QQ}^{_NSRange=QQ}");
+  class_addMethod(
+    view_class,
+    mbw_sel("characterIndexForPoint:"),
+    (IMP)mbw_content_view_character_index_for_point,
+    "Q@:{_NSPoint=dd}");
+  class_addMethod(
+    view_class,
+    mbw_sel("firstRectForCharacterRange:actualRange:"),
+    (IMP)mbw_content_view_first_rect_for_character_range,
+    "{_NSRect={_NSPoint=dd}{_NSSize=dd}}@:{_NSRange=QQ}^{_NSRange=QQ}");
+  class_addMethod(
+    view_class,
     mbw_sel("viewDidMoveToWindow"),
     (IMP)mbw_content_view_view_did_move_to_window,
     "v@:");
@@ -1775,6 +2125,29 @@ static void mbw_window_queue_mouse_wheel(
   };
   (void)mbw_push_input_event(window, &event);
 }
+
+static void mbw_window_queue_ime(
+  mbw_window_t *window,
+  int ime_kind,
+  const uint8_t *text,
+  int text_len,
+  int cursor_start,
+  int cursor_end
+) {
+  mbw_input_event_t event = {
+    .kind = MBW_INPUT_EVENT_IME,
+    .ime_kind = ime_kind,
+    .ime_text_len = 0,
+    .ime_cursor_start = cursor_start,
+    .ime_cursor_end = cursor_end,
+  };
+  event.ime_text_len = mbw_copy_utf8_slice(
+    text,
+    text_len,
+    event.ime_text,
+    MBW_KEY_TEXT_CAP);
+  (void)mbw_push_input_event(window, &event);
+}
 #endif
 
 bool mbw_backend_available(void) {
@@ -1946,6 +2319,9 @@ int mbw_window_create_utf8(
   window->max_width = 0;
   window->max_height = 0;
   window->modifiers_state = 0;
+  window->ime_marked_active = 0;
+  window->ime_cursor_start = -1;
+  window->ime_cursor_end = -1;
   window->visible = visible ? 1 : 0;
   window->resizable = resizable ? 1 : 0;
   window->queued_input_events = NULL;
@@ -2367,6 +2743,31 @@ moonbit_bytes_t mbw_window_input_event_text_without_modifiers(int window_id) {
     window->current_input_event.text_without_modifiers_len);
 }
 
+int mbw_window_input_event_ime_kind(int window_id) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  return window ? window->current_input_event.ime_kind : MBW_IME_EVENT_NONE;
+}
+
+moonbit_bytes_t mbw_window_input_event_ime_text(int window_id) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  if (!window) {
+    return moonbit_make_bytes_raw(0);
+  }
+  return mbw_make_bytes_from_slice(
+    window->current_input_event.ime_text,
+    window->current_input_event.ime_text_len);
+}
+
+int mbw_window_input_event_ime_cursor_start(int window_id) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  return window ? window->current_input_event.ime_cursor_start : -1;
+}
+
+int mbw_window_input_event_ime_cursor_end(int window_id) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  return window ? window->current_input_event.ime_cursor_end : -1;
+}
+
 bool mbw_window_take_surface_resized(int window_id) {
   mbw_window_t *window = mbw_find_window(window_id);
   if (!window || !window->pending_surface_resized) {
@@ -2710,6 +3111,54 @@ void mbw_test_window_queue_keyboard_input_with_text(
     text_ignoring_modifiers_len,
     text_ignoring_modifiers,
     text_ignoring_modifiers_len);
+}
+
+void mbw_test_window_queue_ime_preedit(
+  int window_id,
+  const uint8_t *text,
+  int text_len,
+  int cursor_start,
+  int cursor_end
+) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  if (!window) {
+    return;
+  }
+  if (!window->ime_marked_active) {
+    mbw_window_queue_ime(window, MBW_IME_EVENT_ENABLED, NULL, 0, -1, -1);
+  }
+  window->ime_marked_active = 1;
+  window->ime_cursor_start = cursor_start;
+  window->ime_cursor_end = cursor_end;
+  mbw_window_queue_ime(
+    window,
+    MBW_IME_EVENT_PREEDIT,
+    text,
+    text_len,
+    cursor_start,
+    cursor_end);
+}
+
+void mbw_test_window_queue_ime_commit(int window_id, const uint8_t *text, int text_len) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  if (!window) {
+    return;
+  }
+  window->ime_marked_active = 0;
+  window->ime_cursor_start = -1;
+  window->ime_cursor_end = -1;
+  mbw_window_queue_ime(window, MBW_IME_EVENT_COMMIT, text, text_len, -1, -1);
+}
+
+void mbw_test_window_queue_ime_disabled(int window_id) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  if (!window) {
+    return;
+  }
+  window->ime_marked_active = 0;
+  window->ime_cursor_start = -1;
+  window->ime_cursor_end = -1;
+  mbw_window_queue_ime(window, MBW_IME_EVENT_DISABLED, NULL, 0, -1, -1);
 }
 
 void mbw_test_window_queue_destroyed(int window_id) {

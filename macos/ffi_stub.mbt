@@ -184,6 +184,26 @@ fn input_event_text_without_modifiers(_window_id : Int) -> Bytes {
 }
 
 ///|
+fn input_event_ime_kind(_window_id : Int) -> Int {
+  0
+}
+
+///|
+fn input_event_ime_text(_window_id : Int) -> Bytes {
+  Bytes::make(0, (0 : Int).to_byte())
+}
+
+///|
+fn input_event_ime_cursor_start(_window_id : Int) -> Int {
+  -1
+}
+
+///|
+fn input_event_ime_cursor_end(_window_id : Int) -> Int {
+  -1
+}
+
+///|
 fn wait_for_events(_timeout_ms : Int) -> Bool {
   false
 }

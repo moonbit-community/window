@@ -34,6 +34,25 @@ pub(all) enum ElementState {
 pub impl Eq for ElementState
 pub impl Show for ElementState
 
+pub(all) enum Ime {
+  Enabled
+  Preedit(String, ImeCursorRange?)
+  Commit(String)
+  Disabled
+}
+pub impl Eq for Ime
+pub impl Show for Ime
+
+pub struct ImeCursorRange {
+  end : Int
+  start : Int
+}
+pub fn ImeCursorRange::end(Self) -> Int
+pub fn ImeCursorRange::new(Int, Int) -> Self
+pub fn ImeCursorRange::start(Self) -> Int
+pub impl Eq for ImeCursorRange
+pub impl Show for ImeCursorRange
+
 pub(all) enum Key {
   Named(NamedKey)
   Character(String)
@@ -382,6 +401,7 @@ pub(all) enum WindowEvent {
   CloseRequested
   Destroyed
   Focused(Bool)
+  Ime(Ime)
   KeyboardInput(KeyEvent, Bool)
   ModifiersChanged(Modifiers)
   PointerMoved(@dpi.PhysicalPositionF64, Bool, PointerSource)

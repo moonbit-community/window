@@ -80,6 +80,35 @@ pub(all) enum TouchPhase {
 } derive(Eq, Show)
 
 ///|
+pub struct ImeCursorRange {
+  end : Int
+  start : Int
+} derive(Eq, Show)
+
+///|
+pub fn ImeCursorRange::new(start : Int, end : Int) -> ImeCursorRange {
+  { start, end }
+}
+
+///|
+pub fn ImeCursorRange::start(self : ImeCursorRange) -> Int {
+  self.start
+}
+
+///|
+pub fn ImeCursorRange::end(self : ImeCursorRange) -> Int {
+  self.end
+}
+
+///|
+pub(all) enum Ime {
+  Enabled
+  Preedit(String, ImeCursorRange?)
+  Commit(String)
+  Disabled
+} derive(Eq, Show)
+
+///|
 pub struct Modifiers {
   alt : Bool
   control : Bool
@@ -137,6 +166,7 @@ pub(all) enum WindowEvent {
   CloseRequested
   Destroyed
   Focused(Bool)
+  Ime(Ime)
   KeyboardInput(KeyEvent, Bool)
   ModifiersChanged(Modifiers)
   PointerMoved(@dpi.PhysicalPositionF64, Bool, PointerSource)

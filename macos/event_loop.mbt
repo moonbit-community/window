@@ -201,6 +201,37 @@ fn optional_text_from_native(bytes : Bytes) -> String? {
 }
 
 ///|
+fn text_from_native(bytes : Bytes) -> String {
+  @utf8.decode_lossy(bytes[:], ignore_bom=false)
+}
+
+///|
+fn ime_from_native(window_id : Int) -> @core.Ime? {
+  match input_event_ime_kind(window_id) {
+    1 => Some(@core.Ime::Enabled)
+    2 => {
+      let cursor_start = input_event_ime_cursor_start(window_id)
+      let cursor_end = input_event_ime_cursor_end(window_id)
+      let cursor = if cursor_start >= 0 && cursor_end >= cursor_start {
+        Some(@core.ImeCursorRange::new(cursor_start, cursor_end))
+      } else {
+        None
+      }
+      Some(
+        @core.Ime::Preedit(
+          text_from_native(input_event_ime_text(window_id)),
+          cursor,
+        ),
+      )
+    }
+    3 =>
+      Some(@core.Ime::Commit(text_from_native(input_event_ime_text(window_id))))
+    4 => Some(@core.Ime::Disabled)
+    _ => None
+  }
+}
+
+///|
 fn[A : ApplicationHandler] EventLoop::dispatch_input_events(
   self : EventLoop,
   app : A,
@@ -309,6 +340,12 @@ fn[A : ApplicationHandler] EventLoop::dispatch_input_events(
                 false,
               ),
             )
+          None => ()
+        }
+      8 =>
+        match ime_from_native(raw_id) {
+          Some(ime) =>
+            app.window_event(self, window_id, @core.WindowEvent::Ime(ime))
           None => ()
         }
       _ => ()

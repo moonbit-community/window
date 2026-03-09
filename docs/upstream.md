@@ -21,4 +21,4 @@ Known deltas against upstream `winit`:
 - Only the macOS backend is implemented.
 - `ApplicationHandler` currently receives a concrete `EventLoop` instead of an `ActiveEventLoop` trait object.
 - `KeyboardInput` now prefers native AppKit text payloads for logical/text reconstruction and keeps the US scancode map only as fallback.
-- Full IME/preedit handling is not implemented yet.
+- IME text events are available (`Enabled`, `Preedit`, `Commit`, `Disabled`), but candidate UI geometry is still minimal.

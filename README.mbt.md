@@ -7,7 +7,7 @@ native builds and focuses on `macos-arm64`.
 
 - Supported backend: macOS AppKit on the native target
 - Current event surface: `CloseRequested`, `Destroyed`, `Focused`,
-  `KeyboardInput`, `ModifiersChanged`, `Moved`, `PointerMoved`,
+  `Ime`, `KeyboardInput`, `ModifiersChanged`, `Moved`, `PointerMoved`,
   `PointerEntered`, `PointerLeft`, `PointerButton`, `MouseWheel`,
   `SurfaceResized`, `ScaleFactorChanged`, `ThemeChanged`,
   `Occluded`, `RedrawRequested`
@@ -22,7 +22,9 @@ native builds and focuses on `macos-arm64`.
   `NSEvent` text (`characters` / `charactersIgnoringModifiers`) for
   `logical_key` and `text`; `key_without_modifiers` uses Carbon
   `UCKeyTranslate` and falls back to scancode mapping when needed. Dead keys
-  are surfaced as `Key::Dead` when applicable. IME is not implemented yet.
+  are surfaced as `Key::Dead` when applicable.
+- Basic IME events are bridged from AppKit text input (`Enabled`, `Preedit`,
+  `Commit`, `Disabled`).
 - `Cmd + keyUp` is forwarded to the key window in the event pump so key
   release events are not dropped while Command is held.
 - Other platforms are planned but not implemented yet
