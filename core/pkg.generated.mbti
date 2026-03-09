@@ -369,6 +369,15 @@ pub(all) enum PhysicalKey {
 pub impl Eq for PhysicalKey
 pub impl Show for PhysicalKey
 
+pub struct PlatformWindowAttributes {
+  // private fields
+}
+pub fn PlatformWindowAttributes::default() -> Self
+pub fn PlatformWindowAttributes::simple_fullscreen(Self) -> Bool?
+pub fn PlatformWindowAttributes::with_simple_fullscreen(Self, Bool?) -> Self
+pub impl Eq for PlatformWindowAttributes
+pub impl Show for PlatformWindowAttributes
+
 pub(all) enum PointerKind {
   Mouse
   Unknown
@@ -431,6 +440,7 @@ pub fn WindowAttributes::ime_purpose(Self) -> ImePurpose
 pub fn WindowAttributes::max_surface_size(Self) -> @dpi.PhysicalSize?
 pub fn WindowAttributes::maximized(Self) -> Bool
 pub fn WindowAttributes::min_surface_size(Self) -> @dpi.PhysicalSize?
+pub fn WindowAttributes::platform_attributes(Self) -> PlatformWindowAttributes
 pub fn WindowAttributes::position(Self) -> @dpi.PhysicalPosition?
 pub fn WindowAttributes::resizable(Self) -> Bool
 pub fn WindowAttributes::surface_resize_increments(Self) -> @dpi.PhysicalSize?
@@ -452,6 +462,7 @@ pub fn WindowAttributes::with_ime_purpose(Self, ImePurpose) -> Self
 pub fn WindowAttributes::with_max_surface_size(Self, @dpi.PhysicalSize?) -> Self
 pub fn WindowAttributes::with_maximized(Self, Bool) -> Self
 pub fn WindowAttributes::with_min_surface_size(Self, @dpi.PhysicalSize?) -> Self
+pub fn WindowAttributes::with_platform_attributes(Self, PlatformWindowAttributes) -> Self
 pub fn WindowAttributes::with_position(Self, @dpi.PhysicalPosition?) -> Self
 pub fn WindowAttributes::with_resizable(Self, Bool) -> Self
 pub fn WindowAttributes::with_surface_resize_increments(Self, @dpi.PhysicalSize?) -> Self

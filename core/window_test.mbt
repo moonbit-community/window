@@ -19,6 +19,7 @@ test "window attributes follow winit defaults" {
   assert_eq(attrs.min_surface_size(), None)
   assert_eq(attrs.max_surface_size(), None)
   assert_eq(attrs.position(), None)
+  assert_eq(attrs.platform_attributes().simple_fullscreen(), None)
   assert_eq(attrs.ime_purpose(), ImePurpose::Normal)
   assert_eq(attrs.window_level(), WindowLevel::Normal)
   assert_eq(attrs.theme(), None)
@@ -42,6 +43,9 @@ test "window attributes builders update fields" {
     .with_min_surface_size(Some(@dpi.PhysicalSize::new(640, 480)))
     .with_max_surface_size(Some(@dpi.PhysicalSize::new(1920, 1080)))
     .with_position(Some(@dpi.PhysicalPosition::new(320, 180)))
+    .with_platform_attributes(
+      PlatformWindowAttributes::default().with_simple_fullscreen(Some(true)),
+    )
     .with_ime_purpose(ImePurpose::Password)
     .with_active(false)
     .with_blur(true)
@@ -76,6 +80,7 @@ test "window attributes builders update fields" {
   assert_eq(attrs.min_surface_size(), Some(@dpi.PhysicalSize::new(640, 480)))
   assert_eq(attrs.max_surface_size(), Some(@dpi.PhysicalSize::new(1920, 1080)))
   assert_eq(attrs.position(), Some(@dpi.PhysicalPosition::new(320, 180)))
+  assert_eq(attrs.platform_attributes().simple_fullscreen(), Some(true))
   assert_eq(attrs.ime_purpose(), ImePurpose::Password)
   assert_eq(attrs.window_level(), WindowLevel::AlwaysOnTop)
   assert_eq(attrs.theme(), Some(Theme::Dark))

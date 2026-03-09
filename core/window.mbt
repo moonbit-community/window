@@ -34,6 +34,32 @@ pub(all) enum Fullscreen {
 } derive(Eq, Show)
 
 ///|
+pub struct PlatformWindowAttributes {
+  priv mut simple_fullscreen : Bool?
+} derive(Eq, Show)
+
+///|
+pub fn PlatformWindowAttributes::default() -> PlatformWindowAttributes {
+  { simple_fullscreen: None }
+}
+
+///|
+pub fn PlatformWindowAttributes::with_simple_fullscreen(
+  self : PlatformWindowAttributes,
+  simple_fullscreen : Bool?,
+) -> PlatformWindowAttributes {
+  self.simple_fullscreen = simple_fullscreen
+  self
+}
+
+///|
+pub fn PlatformWindowAttributes::simple_fullscreen(
+  self : PlatformWindowAttributes,
+) -> Bool? {
+  self.simple_fullscreen
+}
+
+///|
 pub(all) enum BadIcon {
   ByteCountNotDivisibleBy4(Int)
   DimensionsVsPixelCount(Int, Int, Int, Int)
@@ -170,6 +196,7 @@ pub struct WindowAttributes {
   priv mut max_surface_size : @dpi.PhysicalSize?
   priv mut maximized : Bool
   priv mut min_surface_size : @dpi.PhysicalSize?
+  priv mut platform_attributes : PlatformWindowAttributes
   priv mut position : @dpi.PhysicalPosition?
   priv mut surface_size : @dpi.PhysicalSize?
   priv mut surface_resize_increments : @dpi.PhysicalSize?
@@ -196,6 +223,7 @@ pub fn WindowAttributes::default() -> WindowAttributes {
     maximized: false,
     min_surface_size: None,
     max_surface_size: None,
+    platform_attributes: PlatformWindowAttributes::default(),
     position: None,
     surface_size: Some(@dpi.PhysicalSize::new(800, 600)),
     surface_resize_increments: None,
@@ -251,6 +279,15 @@ pub fn WindowAttributes::with_position(
   position : @dpi.PhysicalPosition?,
 ) -> WindowAttributes {
   self.position = position
+  self
+}
+
+///|
+pub fn WindowAttributes::with_platform_attributes(
+  self : WindowAttributes,
+  platform_attributes : PlatformWindowAttributes,
+) -> WindowAttributes {
+  self.platform_attributes = platform_attributes
   self
 }
 
@@ -431,6 +468,13 @@ pub fn WindowAttributes::position(
   self : WindowAttributes,
 ) -> @dpi.PhysicalPosition? {
   self.position
+}
+
+///|
+pub fn WindowAttributes::platform_attributes(
+  self : WindowAttributes,
+) -> PlatformWindowAttributes {
+  self.platform_attributes
 }
 
 ///|

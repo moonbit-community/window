@@ -734,6 +734,8 @@ pub fn EventLoop::create_window(
   }
   if attributes.fullscreen() is Some(_) {
     set_window_fullscreen(raw_id, true)
+  } else if attributes.platform_attributes().simple_fullscreen() == Some(true) {
+    set_window_fullscreen(raw_id, true)
   }
   match attributes.min_surface_size() {
     Some(min_size) =>
