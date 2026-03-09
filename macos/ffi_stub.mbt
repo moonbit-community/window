@@ -74,6 +74,39 @@ fn monitor_scale_factor(_monitor_id : UInt64) -> Double {
 }
 
 ///|
+fn monitor_video_mode_count(_monitor_id : UInt64) -> Int {
+  0
+}
+
+///|
+fn monitor_video_mode_width(_monitor_id : UInt64, _index : Int) -> Int {
+  0
+}
+
+///|
+fn monitor_video_mode_height(_monitor_id : UInt64, _index : Int) -> Int {
+  0
+}
+
+///|
+fn monitor_video_mode_bit_depth(_monitor_id : UInt64, _index : Int) -> Int {
+  0
+}
+
+///|
+fn monitor_video_mode_refresh_rate_millihertz(
+  _monitor_id : UInt64,
+  _index : Int,
+) -> Int {
+  0
+}
+
+///|
+fn monitor_current_video_mode_index(_monitor_id : UInt64) -> Int {
+  -1
+}
+
+///|
 fn window_scale_factor(_window_id : Int) -> Double {
   1.0
 }

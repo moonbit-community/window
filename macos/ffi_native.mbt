@@ -74,6 +74,39 @@ fn monitor_scale_factor(monitor_id : UInt64) -> Double {
 }
 
 ///|
+fn monitor_video_mode_count(monitor_id : UInt64) -> Int {
+  native_monitor_video_mode_count(monitor_id)
+}
+
+///|
+fn monitor_video_mode_width(monitor_id : UInt64, index : Int) -> Int {
+  native_monitor_video_mode_width(monitor_id, index)
+}
+
+///|
+fn monitor_video_mode_height(monitor_id : UInt64, index : Int) -> Int {
+  native_monitor_video_mode_height(monitor_id, index)
+}
+
+///|
+fn monitor_video_mode_bit_depth(monitor_id : UInt64, index : Int) -> Int {
+  native_monitor_video_mode_bit_depth(monitor_id, index)
+}
+
+///|
+fn monitor_video_mode_refresh_rate_millihertz(
+  monitor_id : UInt64,
+  index : Int,
+) -> Int {
+  native_monitor_video_mode_refresh_rate_millihertz(monitor_id, index)
+}
+
+///|
+fn monitor_current_video_mode_index(monitor_id : UInt64) -> Int {
+  native_monitor_current_video_mode_index(monitor_id)
+}
+
+///|
 fn window_scale_factor(window_id : Int) -> Double {
   native_window_scale_factor(window_id)
 }
@@ -813,6 +846,38 @@ extern "C" fn native_monitor_height(monitor_id : UInt64) -> Int = "mbw_monitor_h
 
 ///|
 extern "C" fn native_monitor_scale_factor(monitor_id : UInt64) -> Double = "mbw_monitor_scale_factor"
+
+///|
+extern "C" fn native_monitor_video_mode_count(monitor_id : UInt64) -> Int = "mbw_monitor_video_mode_count"
+
+///|
+extern "C" fn native_monitor_video_mode_width(
+  monitor_id : UInt64,
+  index : Int,
+) -> Int = "mbw_monitor_video_mode_width"
+
+///|
+extern "C" fn native_monitor_video_mode_height(
+  monitor_id : UInt64,
+  index : Int,
+) -> Int = "mbw_monitor_video_mode_height"
+
+///|
+extern "C" fn native_monitor_video_mode_bit_depth(
+  monitor_id : UInt64,
+  index : Int,
+) -> Int = "mbw_monitor_video_mode_bit_depth"
+
+///|
+extern "C" fn native_monitor_video_mode_refresh_rate_millihertz(
+  monitor_id : UInt64,
+  index : Int,
+) -> Int = "mbw_monitor_video_mode_refresh_rate_millihertz"
+
+///|
+extern "C" fn native_monitor_current_video_mode_index(
+  monitor_id : UInt64,
+) -> Int = "mbw_monitor_current_video_mode_index"
 
 ///|
 extern "C" fn native_window_scale_factor(window_id : Int) -> Double = "mbw_window_scale_factor"

@@ -316,12 +316,14 @@ pub impl Show for Modifiers
 pub struct MonitorHandle {
   // private fields
 }
+pub fn MonitorHandle::current_video_mode(Self) -> VideoMode?
 pub fn MonitorHandle::name(Self) -> String?
 pub fn MonitorHandle::native_id(Self) -> UInt64
-pub fn MonitorHandle::new(UInt64, String?, @dpi.PhysicalPosition, @dpi.PhysicalSize, Double) -> Self
+pub fn MonitorHandle::new(UInt64, String?, @dpi.PhysicalPosition, @dpi.PhysicalSize, Double, VideoMode?, Array[VideoMode]) -> Self
 pub fn MonitorHandle::position(Self) -> @dpi.PhysicalPosition
 pub fn MonitorHandle::scale_factor(Self) -> Double
 pub fn MonitorHandle::surface_size(Self) -> @dpi.PhysicalSize
+pub fn MonitorHandle::video_modes(Self) -> Array[VideoMode]
 pub impl Eq for MonitorHandle
 pub impl Show for MonitorHandle
 
@@ -492,6 +494,16 @@ pub(all) enum UserAttentionType {
 }
 pub impl Eq for UserAttentionType
 pub impl Show for UserAttentionType
+
+pub struct VideoMode {
+  // private fields
+}
+pub fn VideoMode::bit_depth(Self) -> Int?
+pub fn VideoMode::new(@dpi.PhysicalSize, Int?, Int?) -> Self
+pub fn VideoMode::refresh_rate_millihertz(Self) -> Int?
+pub fn VideoMode::surface_size(Self) -> @dpi.PhysicalSize
+pub impl Eq for VideoMode
+pub impl Show for VideoMode
 
 pub struct WindowAttributes {
   // private fields

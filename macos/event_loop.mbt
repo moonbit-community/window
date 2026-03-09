@@ -774,6 +774,42 @@ fn monitor_from_native_id(monitor_id : UInt64) -> @core.MonitorHandle? {
   } else {
     let width = monitor_width(monitor_id)
     let height = monitor_height(monitor_id)
+    let video_mode_count = monitor_video_mode_count(monitor_id)
+    let video_modes : Array[@core.VideoMode] = []
+    let mut mode_index = 0
+    while mode_index < video_mode_count {
+      let mode_width = monitor_video_mode_width(monitor_id, mode_index)
+      let mode_height = monitor_video_mode_height(monitor_id, mode_index)
+      if mode_width > 0 && mode_height > 0 {
+        let bit_depth_raw = monitor_video_mode_bit_depth(monitor_id, mode_index)
+        let refresh_rate_raw = monitor_video_mode_refresh_rate_millihertz(
+          monitor_id, mode_index,
+        )
+        video_modes.push(
+          @core.VideoMode::new(
+            @dpi.PhysicalSize::new(mode_width, mode_height),
+            if bit_depth_raw > 0 {
+              Some(bit_depth_raw)
+            } else {
+              None
+            },
+            if refresh_rate_raw > 0 {
+              Some(refresh_rate_raw)
+            } else {
+              None
+            },
+          ),
+        )
+      }
+      mode_index = mode_index + 1
+    }
+    let current_mode_index = monitor_current_video_mode_index(monitor_id)
+    let current_video_mode = if current_mode_index >= 0 &&
+      current_mode_index < video_modes.length() {
+      Some(video_modes[current_mode_index])
+    } else {
+      None
+    }
     Some(
       @core.MonitorHandle::new(
         monitor_id,
@@ -795,6 +831,8 @@ fn monitor_from_native_id(monitor_id : UInt64) -> @core.MonitorHandle? {
           },
         ),
         monitor_scale_factor(monitor_id),
+        current_video_mode,
+        video_modes,
       ),
     )
   }

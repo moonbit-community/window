@@ -2807,6 +2807,31 @@ test "monitor api returns available primary and current monitor handles" {
       assert_true(primary_from_loop.surface_size().width() > 0)
       assert_true(primary_from_loop.surface_size().height() > 0)
       assert_true(primary_from_loop.scale_factor() > 0.0)
+      for mode in primary_from_loop.video_modes() {
+        assert_true(mode.surface_size().width() > 0)
+        assert_true(mode.surface_size().height() > 0)
+        match mode.bit_depth() {
+          Some(bit_depth) => assert_true(bit_depth > 0)
+          None => ()
+        }
+        match mode.refresh_rate_millihertz() {
+          Some(refresh_rate_millihertz) =>
+            assert_true(refresh_rate_millihertz > 0)
+          None => ()
+        }
+      }
+      match primary_from_loop.current_video_mode() {
+        Some(current_mode) => {
+          let mut found = false
+          for mode in primary_from_loop.video_modes() {
+            if mode == current_mode {
+              found = true
+            }
+          }
+          assert_true(found)
+        }
+        None => ()
+      }
       match primary_monitor_from_window.val {
         Some(primary_from_window) =>
           assert_eq(

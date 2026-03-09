@@ -4049,6 +4049,219 @@ double mbw_monitor_scale_factor(uint64_t monitor_id) {
 #endif
 }
 
+#if defined(__APPLE__)
+static CGDisplayModeRef mbw_monitor_video_mode_at(
+  CGDirectDisplayID display_id,
+  int index,
+  CFArrayRef *modes_out
+) {
+  if (modes_out) {
+    *modes_out = NULL;
+  }
+  if (index < 0) {
+    return NULL;
+  }
+  CFArrayRef modes = CGDisplayCopyAllDisplayModes(display_id, NULL);
+  if (!modes) {
+    return NULL;
+  }
+  CFIndex count = CFArrayGetCount(modes);
+  if ((CFIndex)index >= count) {
+    CFRelease(modes);
+    return NULL;
+  }
+  CGDisplayModeRef mode = (CGDisplayModeRef)CFArrayGetValueAtIndex(modes, (CFIndex)index);
+  if (modes_out) {
+    *modes_out = modes;
+  } else {
+    CFRelease(modes);
+  }
+  return mode;
+}
+
+static int mbw_display_mode_bit_depth(CGDisplayModeRef mode) {
+  if (!mode) {
+    return 0;
+  }
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+#endif
+  CFStringRef encoding = CGDisplayModeCopyPixelEncoding(mode);
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#endif
+  if (!encoding) {
+    return 0;
+  }
+  char text[64];
+  text[0] = '\0';
+  Boolean ok = CFStringGetCString(encoding, text, (CFIndex)sizeof(text), kCFStringEncodingUTF8);
+  CFRelease(encoding);
+  if (!ok) {
+    return 0;
+  }
+  int bit_depth = 0;
+  const char *cursor = text;
+  while (*cursor && (*cursor < '0' || *cursor > '9')) {
+    cursor += 1;
+  }
+  while (*cursor >= '0' && *cursor <= '9') {
+    bit_depth = bit_depth * 10 + (*cursor - '0');
+    cursor += 1;
+  }
+  return bit_depth > 0 ? bit_depth : 0;
+}
+
+static int mbw_display_mode_refresh_rate_millihertz(CGDisplayModeRef mode) {
+  if (!mode) {
+    return 0;
+  }
+  double refresh_rate = CGDisplayModeGetRefreshRate(mode);
+  if (refresh_rate <= 0.0) {
+    return 0;
+  }
+  double millihertz = refresh_rate * 1000.0;
+  return (int)(millihertz + 0.5);
+}
+#endif
+
+int mbw_monitor_video_mode_count(uint64_t monitor_id) {
+#if defined(__APPLE__)
+  CFArrayRef modes = CGDisplayCopyAllDisplayModes((CGDirectDisplayID)monitor_id, NULL);
+  if (!modes) {
+    return 0;
+  }
+  CFIndex count = CFArrayGetCount(modes);
+  CFRelease(modes);
+  return count > 0 ? (int)count : 0;
+#else
+  (void)monitor_id;
+  return 0;
+#endif
+}
+
+int mbw_monitor_video_mode_width(uint64_t monitor_id, int index) {
+#if defined(__APPLE__)
+  CFArrayRef modes = NULL;
+  CGDisplayModeRef mode = mbw_monitor_video_mode_at(
+    (CGDirectDisplayID)monitor_id,
+    index,
+    &modes);
+  if (!mode) {
+    return 0;
+  }
+  int width = (int)CGDisplayModeGetPixelWidth(mode);
+  if (modes) {
+    CFRelease(modes);
+  }
+  return width > 0 ? width : 0;
+#else
+  (void)monitor_id;
+  (void)index;
+  return 0;
+#endif
+}
+
+int mbw_monitor_video_mode_height(uint64_t monitor_id, int index) {
+#if defined(__APPLE__)
+  CFArrayRef modes = NULL;
+  CGDisplayModeRef mode = mbw_monitor_video_mode_at(
+    (CGDirectDisplayID)monitor_id,
+    index,
+    &modes);
+  if (!mode) {
+    return 0;
+  }
+  int height = (int)CGDisplayModeGetPixelHeight(mode);
+  if (modes) {
+    CFRelease(modes);
+  }
+  return height > 0 ? height : 0;
+#else
+  (void)monitor_id;
+  (void)index;
+  return 0;
+#endif
+}
+
+int mbw_monitor_video_mode_bit_depth(uint64_t monitor_id, int index) {
+#if defined(__APPLE__)
+  CFArrayRef modes = NULL;
+  CGDisplayModeRef mode = mbw_monitor_video_mode_at(
+    (CGDirectDisplayID)monitor_id,
+    index,
+    &modes);
+  if (!mode) {
+    return 0;
+  }
+  int bit_depth = mbw_display_mode_bit_depth(mode);
+  if (modes) {
+    CFRelease(modes);
+  }
+  return bit_depth;
+#else
+  (void)monitor_id;
+  (void)index;
+  return 0;
+#endif
+}
+
+int mbw_monitor_video_mode_refresh_rate_millihertz(uint64_t monitor_id, int index) {
+#if defined(__APPLE__)
+  CFArrayRef modes = NULL;
+  CGDisplayModeRef mode = mbw_monitor_video_mode_at(
+    (CGDirectDisplayID)monitor_id,
+    index,
+    &modes);
+  if (!mode) {
+    return 0;
+  }
+  int refresh_rate = mbw_display_mode_refresh_rate_millihertz(mode);
+  if (modes) {
+    CFRelease(modes);
+  }
+  return refresh_rate;
+#else
+  (void)monitor_id;
+  (void)index;
+  return 0;
+#endif
+}
+
+int mbw_monitor_current_video_mode_index(uint64_t monitor_id) {
+#if defined(__APPLE__)
+  CGDirectDisplayID display_id = (CGDirectDisplayID)monitor_id;
+  CFArrayRef modes = CGDisplayCopyAllDisplayModes(display_id, NULL);
+  CGDisplayModeRef current_mode = CGDisplayCopyDisplayMode(display_id);
+  if (!modes || !current_mode) {
+    if (current_mode) {
+      CGDisplayModeRelease(current_mode);
+    }
+    if (modes) {
+      CFRelease(modes);
+    }
+    return -1;
+  }
+  uint32_t current_mode_id = CGDisplayModeGetIODisplayModeID(current_mode);
+  CFIndex count = CFArrayGetCount(modes);
+  int result = -1;
+  for (CFIndex i = 0; i < count; ++i) {
+    CGDisplayModeRef mode = (CGDisplayModeRef)CFArrayGetValueAtIndex(modes, i);
+    if (CGDisplayModeGetIODisplayModeID(mode) == current_mode_id) {
+      result = (int)i;
+      break;
+    }
+  }
+  CGDisplayModeRelease(current_mode);
+  CFRelease(modes);
+  return result;
+#else
+  (void)monitor_id;
+  return -1;
+#endif
+}
+
 double mbw_window_scale_factor(int window_id) {
   mbw_window_t *window = mbw_find_window(window_id);
   return window ? window->scale_factor : 1.0;

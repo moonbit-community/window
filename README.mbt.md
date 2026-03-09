@@ -38,7 +38,7 @@ native builds and focuses on `macos-arm64`.
 - Monitor APIs are available on macOS via `EventLoop::{available_monitors,
   primary_monitor}` and `Window::{available_monitors, primary_monitor,
   current_monitor}`; monitor handles include native id, name, position,
-  surface size, and scale factor.
+  surface size, scale factor, current video mode, and video mode list.
 - `WindowAttributes` supports initial surface sizing/constraints and position,
   title/visibility/resizable, focus/active, fullscreen, theme, cursor/icon,
   blur/transparency/decorations/content protection, enabled buttons, window
