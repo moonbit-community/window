@@ -95,6 +95,7 @@ pub fn WindowId::into_raw(self : WindowId) -> Int {
 ///|
 pub struct WindowAttributes {
   priv mut active : Bool
+  priv mut blur : Bool
   priv mut content_protected : Bool
   priv mut decorations : Bool
   priv mut enabled_buttons : WindowButtons
@@ -118,6 +119,7 @@ pub struct WindowAttributes {
 pub fn WindowAttributes::default() -> WindowAttributes {
   {
     active: true,
+    blur: false,
     content_protected: false,
     decorations: true,
     enabled_buttons: WindowButtons::all(),
@@ -198,6 +200,15 @@ pub fn WindowAttributes::with_active(
   active : Bool,
 ) -> WindowAttributes {
   self.active = active
+  self
+}
+
+///|
+pub fn WindowAttributes::with_blur(
+  self : WindowAttributes,
+  blur : Bool,
+) -> WindowAttributes {
+  self.blur = blur
   self
 }
 
@@ -343,6 +354,11 @@ pub fn WindowAttributes::ime_purpose(self : WindowAttributes) -> ImePurpose {
 ///|
 pub fn WindowAttributes::active(self : WindowAttributes) -> Bool {
   self.active
+}
+
+///|
+pub fn WindowAttributes::blur(self : WindowAttributes) -> Bool {
+  self.blur
 }
 
 ///|

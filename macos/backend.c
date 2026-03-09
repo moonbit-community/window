@@ -109,6 +109,7 @@ typedef struct mbw_window {
   int close_button_enabled;
   int minimize_button_enabled;
   int maximize_button_enabled;
+  int blur;
   int transparent;
   int window_level;
   mbw_input_event_t *queued_input_events;
@@ -2425,6 +2426,7 @@ int mbw_window_create_utf8(
   window->close_button_enabled = 1;
   window->minimize_button_enabled = 1;
   window->maximize_button_enabled = 1;
+  window->blur = 0;
   window->transparent = 0;
   window->window_level = MBW_WINDOW_LEVEL_NORMAL;
   window->queued_input_events = NULL;
@@ -2742,6 +2744,11 @@ bool mbw_window_minimize_button_enabled(int window_id) {
 bool mbw_window_maximize_button_enabled(int window_id) {
   mbw_window_t *window = mbw_find_window(window_id);
   return window ? window->maximize_button_enabled != 0 : false;
+}
+
+bool mbw_window_blur(int window_id) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  return window ? window->blur != 0 : false;
 }
 
 bool mbw_window_transparent(int window_id) {
@@ -3687,13 +3694,47 @@ void mbw_window_set_transparent(int window_id, bool transparent) {
   window->transparent = transparent ? 1 : 0;
 #if defined(__APPLE__)
   if (window->window) {
+    int use_clear_background = (window->transparent || window->blur) ? 1 : 0;
     ((void(*)(id, SEL, mbw_bool_t))objc_msgSend)(
       (id)window->window,
       mbw_sel("setOpaque:"),
-      window->transparent ? NO : YES);
+      use_clear_background ? NO : YES);
     Class ns_color_class = objc_getClass("NSColor");
     if (ns_color_class) {
-      id background_color = window->transparent
+      id background_color = use_clear_background
+        ? ((id(*)(id, SEL))objc_msgSend)(
+            (id)ns_color_class,
+            mbw_sel("clearColor"))
+        : ((id(*)(id, SEL))objc_msgSend)(
+            (id)ns_color_class,
+            mbw_sel("windowBackgroundColor"));
+      if (background_color) {
+        ((void(*)(id, SEL, id))objc_msgSend)(
+          (id)window->window,
+          mbw_sel("setBackgroundColor:"),
+          background_color);
+      }
+    }
+  }
+#endif
+}
+
+void mbw_window_set_blur(int window_id, bool blur) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  if (!window) {
+    return;
+  }
+  window->blur = blur ? 1 : 0;
+#if defined(__APPLE__)
+  if (window->window) {
+    int use_clear_background = (window->transparent || window->blur) ? 1 : 0;
+    ((void(*)(id, SEL, mbw_bool_t))objc_msgSend)(
+      (id)window->window,
+      mbw_sel("setOpaque:"),
+      use_clear_background ? NO : YES);
+    Class ns_color_class = objc_getClass("NSColor");
+    if (ns_color_class) {
+      id background_color = use_clear_background
         ? ((id(*)(id, SEL))objc_msgSend)(
             (id)ns_color_class,
             mbw_sel("clearColor"))

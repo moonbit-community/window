@@ -160,6 +160,11 @@ pub fn Window::set_enabled_buttons(
 }
 
 ///|
+pub fn Window::set_blur(self : Window, blur : Bool) -> Unit {
+  set_window_blur(self.id.into_raw(), blur)
+}
+
+///|
 pub fn Window::is_decorated(self : Window) -> Bool {
   window_decorated(self.id.into_raw())
 }
@@ -170,6 +175,11 @@ pub fn Window::enabled_buttons(self : Window) -> @core.WindowButtons {
   .with_close(window_close_button_enabled(self.id.into_raw()))
   .with_minimize(window_minimize_button_enabled(self.id.into_raw()))
   .with_maximize(window_maximize_button_enabled(self.id.into_raw()))
+}
+
+///|
+pub fn Window::is_blurred(self : Window) -> Bool {
+  window_blur(self.id.into_raw())
 }
 
 ///|
@@ -655,6 +665,7 @@ pub fn EventLoop::create_window(
   guard raw_id > 0 else { abort("failed to create macos window") }
   set_window_theme(raw_id, theme_to_native(attributes.theme()))
   set_window_content_protected(raw_id, attributes.content_protected())
+  set_window_blur(raw_id, attributes.blur())
   let enabled_buttons = attributes.enabled_buttons()
   set_window_enabled_buttons(
     raw_id,

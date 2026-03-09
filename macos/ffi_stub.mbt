@@ -114,6 +114,11 @@ fn window_maximize_button_enabled(_window_id : Int) -> Bool {
 }
 
 ///|
+fn window_blur(_window_id : Int) -> Bool {
+  false
+}
+
+///|
 fn window_transparent(_window_id : Int) -> Bool {
   false
 }
@@ -389,6 +394,11 @@ fn set_window_enabled_buttons(
   _minimize : Bool,
   _maximize : Bool,
 ) -> Unit {
+  ()
+}
+
+///|
+fn set_window_blur(_window_id : Int, _blur : Bool) -> Unit {
   ()
 }
 

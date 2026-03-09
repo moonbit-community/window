@@ -114,6 +114,11 @@ fn window_maximize_button_enabled(window_id : Int) -> Bool {
 }
 
 ///|
+fn window_blur(window_id : Int) -> Bool {
+  native_window_blur(window_id)
+}
+
+///|
 fn window_transparent(window_id : Int) -> Bool {
   native_window_transparent(window_id)
 }
@@ -393,6 +398,11 @@ fn set_window_enabled_buttons(
 }
 
 ///|
+fn set_window_blur(window_id : Int, blur : Bool) -> Unit {
+  native_window_set_blur(window_id, blur)
+}
+
+///|
 fn set_window_transparent(window_id : Int, transparent : Bool) -> Unit {
   native_window_set_transparent(window_id, transparent)
 }
@@ -593,6 +603,9 @@ extern "C" fn native_window_minimize_button_enabled(window_id : Int) -> Bool = "
 
 ///|
 extern "C" fn native_window_maximize_button_enabled(window_id : Int) -> Bool = "mbw_window_maximize_button_enabled"
+
+///|
+extern "C" fn native_window_blur(window_id : Int) -> Bool = "mbw_window_blur"
 
 ///|
 extern "C" fn native_window_transparent(window_id : Int) -> Bool = "mbw_window_transparent"
@@ -800,6 +813,9 @@ extern "C" fn native_window_set_enabled_buttons(
   minimize : Bool,
   maximize : Bool,
 ) -> Unit = "mbw_window_set_enabled_buttons"
+
+///|
+extern "C" fn native_window_set_blur(window_id : Int, blur : Bool) -> Unit = "mbw_window_set_blur"
 
 ///|
 extern "C" fn native_window_set_transparent(

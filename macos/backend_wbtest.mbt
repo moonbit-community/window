@@ -260,6 +260,13 @@ struct WindowTransparentApp {
 }
 
 ///|
+struct WindowBlurApp {
+  blur_after_disable : Ref[Bool]
+  blur_after_enable : Ref[Bool]
+  blur_initial : Ref[Bool]
+}
+
+///|
 struct WindowVisibilityResizableApp {
   resizable_after_disable : Ref[Bool]
   resizable_after_enable : Ref[Bool]
@@ -578,6 +585,22 @@ impl ApplicationHandler for WindowTransparentApp with can_create_surfaces(
   self.transparent_after_disable.val = window.is_transparent()
   window.set_transparent(true)
   self.transparent_after_enable.val = window.is_transparent()
+  event_loop.exit()
+}
+
+///|
+impl ApplicationHandler for WindowBlurApp with can_create_surfaces(
+  self,
+  event_loop,
+) {
+  let window = event_loop.create_window(
+    @core.WindowAttributes::default().with_visible(false).with_blur(true),
+  )
+  self.blur_initial.val = window.is_blurred()
+  window.set_blur(false)
+  self.blur_after_disable.val = window.is_blurred()
+  window.set_blur(true)
+  self.blur_after_enable.val = window.is_blurred()
   event_loop.exit()
 }
 
@@ -1596,6 +1619,23 @@ test "window transparency can be configured at create and runtime" {
   assert_true(transparent_initial.val)
   assert_false(transparent_after_disable.val)
   assert_true(transparent_after_enable.val)
+}
+
+///|
+test "window blur can be configured at create and runtime" {
+  let event_loop = EventLoop::new()
+  let blur_initial = Ref::new(false)
+  let blur_after_disable = Ref::new(true)
+  let blur_after_enable = Ref::new(false)
+  let app : WindowBlurApp = {
+    blur_after_disable,
+    blur_after_enable,
+    blur_initial,
+  }
+  event_loop.run_app(app)
+  assert_true(blur_initial.val)
+  assert_false(blur_after_disable.val)
+  assert_true(blur_after_enable.val)
 }
 
 ///|
