@@ -995,6 +995,37 @@ test "keyboard input emits dead key when only ignoring-modifier text is present"
 }
 
 ///|
+test "keyboard input with control prefers ignoring-modifier logical text" {
+  let event_loop = EventLoop::new()
+  let captured = Ref::new(None)
+  let app : KeyboardInputApp = {
+    captured,
+    modifiers: 2,
+    repeat: false,
+    scancode: 0x1C,
+    state: 1,
+    text_with_all_modifiers: Some("{"),
+    text_ignoring_modifiers: Some("8"),
+  }
+  event_loop.run_app(app)
+  assert_eq(
+    captured.val,
+    Some(
+      @core.KeyEvent::new(
+        @core.PhysicalKey::Code(@core.KeyCode::Digit8),
+        @core.Key::Character("8"),
+        @core.Key::Character("8"),
+        @core.KeyLocation::Standard,
+        @core.ElementState::Pressed,
+        false,
+        Some("8"),
+        Some("{"),
+      ),
+    ),
+  )
+}
+
+///|
 test "scale factor changes can request a replacement surface size" {
   let event_loop = EventLoop::new()
   let seen_scale_factor = Ref::new(None)
