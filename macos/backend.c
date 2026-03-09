@@ -3936,11 +3936,72 @@ void mbw_window_set_icon_rgba(
     rgba_len == expected_len;
   window->has_icon = valid_icon ? 1 : 0;
 #if defined(__APPLE__)
-  if (window->window && !window->has_icon) {
+  if (window->window) {
+    if (!window->has_icon) {
+      ((void(*)(id, SEL, id))objc_msgSend)(
+        (id)window->window,
+        mbw_sel("setMiniwindowImage:"),
+        nil);
+      return;
+    }
+
+    Class rep_class = objc_getClass("NSBitmapImageRep");
+    Class image_class = objc_getClass("NSImage");
+    if (!rep_class || !image_class) {
+      return;
+    }
+
+    id allocated_rep = mbw_msg_id((id)rep_class, "alloc");
+    if (!allocated_rep) {
+      return;
+    }
+
+    id color_space_name = mbw_make_nsstring("NSCalibratedRGBColorSpace");
+    id rep = ((id(*)(id, SEL, uint8_t **, mbw_nsinteger_t, mbw_nsinteger_t, mbw_nsinteger_t, mbw_nsinteger_t, mbw_bool_t, mbw_bool_t, id, mbw_nsinteger_t, mbw_nsinteger_t))objc_msgSend)(
+      allocated_rep,
+      mbw_sel("initWithBitmapDataPlanes:pixelsWide:pixelsHigh:bitsPerSample:samplesPerPixel:hasAlpha:isPlanar:colorSpaceName:bytesPerRow:bitsPerPixel:"),
+      NULL,
+      (mbw_nsinteger_t)width,
+      (mbw_nsinteger_t)height,
+      (mbw_nsinteger_t)8,
+      (mbw_nsinteger_t)4,
+      YES,
+      NO,
+      color_space_name,
+      (mbw_nsinteger_t)(width * 4),
+      (mbw_nsinteger_t)32);
+    if (!rep) {
+      return;
+    }
+
+    uint8_t *bitmap_data = ((uint8_t *(*)(id, SEL))objc_msgSend)(
+      rep,
+      mbw_sel("bitmapData"));
+    if (!bitmap_data) {
+      return;
+    }
+    memcpy(bitmap_data, rgba, (size_t)rgba_len);
+
+    id allocated_image = mbw_msg_id((id)image_class, "alloc");
+    if (!allocated_image) {
+      return;
+    }
+    mbw_size_t image_size = { (double)width, (double)height };
+    id image = ((id(*)(id, SEL, mbw_size_t))objc_msgSend)(
+      allocated_image,
+      mbw_sel("initWithSize:"),
+      image_size);
+    if (!image) {
+      return;
+    }
+    ((void(*)(id, SEL, id))objc_msgSend)(
+      image,
+      mbw_sel("addRepresentation:"),
+      rep);
     ((void(*)(id, SEL, id))objc_msgSend)(
       (id)window->window,
       mbw_sel("setMiniwindowImage:"),
-      nil);
+      image);
   }
 #else
   (void)rgba;
