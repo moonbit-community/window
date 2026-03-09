@@ -132,9 +132,15 @@ test "ime capability and request models are constructible" {
     Ok(value) => value
     Err(_) => abort("expected surrounding text to be valid")
   }
+  let capabilities_for_enable = ImeCapabilities::new(true, true, true)
   assert_eq(surrounding.text(), "editor")
   assert_eq(surrounding.cursor(), 3)
   assert_eq(surrounding.anchor(), 1)
+  assert_eq(
+    ImeRequest::Enable(capabilities_for_enable),
+    ImeRequest::Enable(capabilities_for_enable),
+  )
+  assert_eq(ImeRequest::Disable, ImeRequest::Disable)
   assert_eq(
     ImeRequest::SetPurpose(ImePurpose::DateTime),
     ImeRequest::SetPurpose(ImePurpose::DateTime),

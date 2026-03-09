@@ -100,6 +100,8 @@ pub fn ImeCapabilities::surrounding_text(self : ImeCapabilities) -> Bool {
 
 ///|
 pub(all) enum ImeRequest {
+  Enable(ImeCapabilities)
+  Disable
   SetAllowed(Bool)
   SetPurpose(ImePurpose)
   SetCursorArea(@dpi.PhysicalPosition, @dpi.PhysicalSize)

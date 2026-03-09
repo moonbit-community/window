@@ -538,6 +538,7 @@ struct ImeApp {
 ///|
 struct ImeConfigurationApp {
   cursor_when_disabled_error : Ref[@core.ImeRequestError?]
+  enable_when_enabled_error : Ref[@core.ImeRequestError?]
   cursor_position : Ref[@dpi.PhysicalPosition?]
   cursor_size : Ref[@dpi.PhysicalSize?]
   ime_capabilities : Ref[@core.ImeCapabilities?]
@@ -1606,6 +1607,13 @@ impl ApplicationHandler for ImeConfigurationApp with can_create_surfaces(
     Ok(value) => value
     Err(_) => abort("expected surrounding text to be valid")
   }
+  self.enable_when_enabled_error.val = match
+    window.request_ime_update_result(
+      @core.ImeRequest::Enable(@core.ImeCapabilities::new(true, true, true)),
+    ) {
+    Ok(_) => None
+    Err(error) => Some(error)
+  }
   self.request_purpose_ok.val = window.request_ime_update(
     @core.ImeRequest::SetPurpose(@core.ImePurpose::DateTime),
   )
@@ -1623,7 +1631,7 @@ impl ApplicationHandler for ImeConfigurationApp with can_create_surfaces(
     ),
   )
   self.request_allowed_ok.val = window.request_ime_update(
-    @core.ImeRequest::SetAllowed(false),
+    @core.ImeRequest::Disable,
   )
   self.cursor_when_disabled_error.val = match
     window.request_ime_update_result(
@@ -2776,6 +2784,7 @@ test "ime preedit always includes enabled first" {
 test "window ime configuration updates native state" {
   let event_loop = EventLoop::new()
   let cursor_when_disabled_error = Ref::new(None)
+  let enable_when_enabled_error = Ref::new(None)
   let ime_capabilities = Ref::new(None)
   let initial_purpose = Ref::new(@core.ImePurpose::Normal)
   let updated_purpose = Ref::new(@core.ImePurpose::Normal)
@@ -2790,6 +2799,7 @@ test "window ime configuration updates native state" {
   let cursor_size = Ref::new(None)
   let app : ImeConfigurationApp = {
     cursor_when_disabled_error,
+    enable_when_enabled_error,
     cursor_position,
     cursor_size,
     ime_capabilities,
@@ -2812,6 +2822,10 @@ test "window ime configuration updates native state" {
   assert_true(request_allowed_ok.val)
   assert_true(request_purpose_ok.val)
   assert_true(request_cursor_ok.val)
+  assert_eq(
+    enable_when_enabled_error.val,
+    Some(@core.ImeRequestError::AlreadyEnabled),
+  )
   assert_eq(
     cursor_when_disabled_error.val,
     Some(@core.ImeRequestError::NotEnabled),

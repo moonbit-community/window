@@ -486,6 +486,17 @@ pub fn Window::request_ime_update_result(
   request : @core.ImeRequest,
 ) -> Result[Unit, @core.ImeRequestError] {
   match request {
+    @core.ImeRequest::Enable(_capabilities) =>
+      if self.ime_allowed() {
+        Err(@core.ImeRequestError::AlreadyEnabled)
+      } else {
+        self.set_ime_allowed(true)
+        Ok(())
+      }
+    @core.ImeRequest::Disable => {
+      self.set_ime_allowed(false)
+      Ok(())
+    }
     @core.ImeRequest::SetAllowed(allowed) =>
       if allowed {
         if self.ime_allowed() {

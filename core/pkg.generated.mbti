@@ -160,6 +160,8 @@ pub impl Eq for ImePurpose
 pub impl Show for ImePurpose
 
 pub(all) enum ImeRequest {
+  Enable(ImeCapabilities)
+  Disable
   SetAllowed(Bool)
   SetPurpose(ImePurpose)
   SetCursorArea(@dpi.PhysicalPosition, @dpi.PhysicalSize)
