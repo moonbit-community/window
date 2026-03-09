@@ -532,7 +532,9 @@ impl ApplicationHandler for WindowFullscreenStateApp with can_create_surfaces(
   event_loop,
 ) {
   let window = event_loop.create_window(
-    @core.WindowAttributes::default().with_visible(false).with_fullscreen(true),
+    @core.WindowAttributes::default()
+    .with_visible(false)
+    .with_fullscreen(Some(@core.Fullscreen::Borderless)),
   )
   self.fullscreen_initial.val = window.is_fullscreen()
   window.set_fullscreen(false)

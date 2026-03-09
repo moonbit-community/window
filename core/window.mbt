@@ -29,6 +29,11 @@ pub(all) enum CursorIcon {
 } derive(Eq, Show)
 
 ///|
+pub(all) enum Fullscreen {
+  Borderless
+} derive(Eq, Show)
+
+///|
 pub(all) enum BadIcon {
   ByteCountNotDivisibleBy4(Int)
   DimensionsVsPixelCount(Int, Int, Int, Int)
@@ -160,7 +165,7 @@ pub struct WindowAttributes {
   priv mut cursor : CursorIcon
   priv mut decorations : Bool
   priv mut enabled_buttons : WindowButtons
-  priv mut fullscreen : Bool
+  priv mut fullscreen : Fullscreen?
   priv mut ime_purpose : ImePurpose
   priv mut max_surface_size : @dpi.PhysicalSize?
   priv mut maximized : Bool
@@ -186,7 +191,7 @@ pub fn WindowAttributes::default() -> WindowAttributes {
     cursor: CursorIcon::Default,
     decorations: true,
     enabled_buttons: WindowButtons::all(),
-    fullscreen: false,
+    fullscreen: None,
     ime_purpose: ImePurpose::Normal,
     maximized: false,
     min_surface_size: None,
@@ -315,7 +320,7 @@ pub fn WindowAttributes::with_enabled_buttons(
 ///|
 pub fn WindowAttributes::with_fullscreen(
   self : WindowAttributes,
-  fullscreen : Bool,
+  fullscreen : Fullscreen?,
 ) -> WindowAttributes {
   self.fullscreen = fullscreen
   self
@@ -466,7 +471,7 @@ pub fn WindowAttributes::enabled_buttons(
 }
 
 ///|
-pub fn WindowAttributes::fullscreen(self : WindowAttributes) -> Bool {
+pub fn WindowAttributes::fullscreen(self : WindowAttributes) -> Fullscreen? {
   self.fullscreen
 }
 

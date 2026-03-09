@@ -52,6 +52,12 @@ pub(all) enum ElementState {
 pub impl Eq for ElementState
 pub impl Show for ElementState
 
+pub(all) enum Fullscreen {
+  Borderless
+}
+pub impl Eq for Fullscreen
+pub impl Show for Fullscreen
+
 pub struct Icon {
   // private fields
 }
@@ -420,7 +426,7 @@ pub fn WindowAttributes::cursor(Self) -> CursorIcon
 pub fn WindowAttributes::decorations(Self) -> Bool
 pub fn WindowAttributes::default() -> Self
 pub fn WindowAttributes::enabled_buttons(Self) -> WindowButtons
-pub fn WindowAttributes::fullscreen(Self) -> Bool
+pub fn WindowAttributes::fullscreen(Self) -> Fullscreen?
 pub fn WindowAttributes::ime_purpose(Self) -> ImePurpose
 pub fn WindowAttributes::max_surface_size(Self) -> @dpi.PhysicalSize?
 pub fn WindowAttributes::maximized(Self) -> Bool
@@ -441,7 +447,7 @@ pub fn WindowAttributes::with_content_protected(Self, Bool) -> Self
 pub fn WindowAttributes::with_cursor(Self, CursorIcon) -> Self
 pub fn WindowAttributes::with_decorations(Self, Bool) -> Self
 pub fn WindowAttributes::with_enabled_buttons(Self, WindowButtons) -> Self
-pub fn WindowAttributes::with_fullscreen(Self, Bool) -> Self
+pub fn WindowAttributes::with_fullscreen(Self, Fullscreen?) -> Self
 pub fn WindowAttributes::with_ime_purpose(Self, ImePurpose) -> Self
 pub fn WindowAttributes::with_max_surface_size(Self, @dpi.PhysicalSize?) -> Self
 pub fn WindowAttributes::with_maximized(Self, Bool) -> Self

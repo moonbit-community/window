@@ -732,7 +732,7 @@ pub fn EventLoop::create_window(
   if attributes.maximized() {
     set_window_maximized(raw_id, true)
   }
-  if attributes.fullscreen() {
+  if attributes.fullscreen() is Some(_) {
     set_window_fullscreen(raw_id, true)
   }
   match attributes.min_surface_size() {

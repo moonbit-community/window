@@ -13,7 +13,7 @@ test "window attributes follow winit defaults" {
   assert_true(default_buttons.close())
   assert_true(default_buttons.minimize())
   assert_true(default_buttons.maximize())
-  assert_false(attrs.fullscreen())
+  assert_eq(attrs.fullscreen(), None)
   assert_eq(attrs.surface_size(), Some(@dpi.PhysicalSize::new(800, 600)))
   assert_eq(attrs.surface_resize_increments(), None)
   assert_eq(attrs.min_surface_size(), None)
@@ -49,7 +49,7 @@ test "window attributes builders update fields" {
     .with_decorations(false)
     .with_content_protected(true)
     .with_enabled_buttons(WindowButtons::none().with_minimize(true))
-    .with_fullscreen(true)
+    .with_fullscreen(Some(Fullscreen::Borderless))
     .with_window_level(WindowLevel::AlwaysOnTop)
     .with_theme(Some(Theme::Dark))
     .with_window_icon(Some(icon))
@@ -67,7 +67,7 @@ test "window attributes builders update fields" {
   assert_false(buttons.close())
   assert_true(buttons.minimize())
   assert_false(buttons.maximize())
-  assert_true(attrs.fullscreen())
+  assert_eq(attrs.fullscreen(), Some(Fullscreen::Borderless))
   assert_eq(attrs.surface_size(), Some(@dpi.PhysicalSize::new(1024, 768)))
   assert_eq(
     attrs.surface_resize_increments(),
