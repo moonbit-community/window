@@ -368,6 +368,7 @@ struct RequestSurfaceSizeApp {
 
 ///|
 struct MinSurfaceSizeApp {
+  min_surface_size : Ref[@dpi.PhysicalSize?]
   resized : Ref[@dpi.PhysicalSize?]
   surface_size : Ref[@dpi.PhysicalSize?]
   window : Ref[Window?]
@@ -375,6 +376,7 @@ struct MinSurfaceSizeApp {
 
 ///|
 struct MaxSurfaceSizeApp {
+  max_surface_size : Ref[@dpi.PhysicalSize?]
   resized : Ref[@dpi.PhysicalSize?]
   surface_size : Ref[@dpi.PhysicalSize?]
   window : Ref[Window?]
@@ -964,6 +966,7 @@ impl ApplicationHandler for MinSurfaceSizeApp with can_create_surfaces(
   )
   self.window.val = Some(window)
   window.set_min_surface_size(Some(@dpi.PhysicalSize::new(960, 720)))
+  self.min_surface_size.val = window.min_surface_size()
   window.request_surface_size(@dpi.PhysicalSize::new(640, 480))
 }
 
@@ -997,6 +1000,7 @@ impl ApplicationHandler for MaxSurfaceSizeApp with can_create_surfaces(
   )
   self.window.val = Some(window)
   window.set_max_surface_size(Some(@dpi.PhysicalSize::new(1024, 768)))
+  self.max_surface_size.val = window.max_surface_size()
   window.request_surface_size(@dpi.PhysicalSize::new(1400, 1050))
 }
 
@@ -1985,11 +1989,18 @@ test "window request surface size delivers resized event" {
 ///|
 test "window min surface size clamps resize requests" {
   let event_loop = EventLoop::new()
+  let min_surface_size = Ref::new(None)
   let resized = Ref::new(None)
   let surface_size = Ref::new(None)
   let window = Ref::new(None)
-  let app : MinSurfaceSizeApp = { resized, surface_size, window }
+  let app : MinSurfaceSizeApp = {
+    min_surface_size,
+    resized,
+    surface_size,
+    window,
+  }
   event_loop.run_app(app)
+  assert_eq(min_surface_size.val, Some(@dpi.PhysicalSize::new(960, 720)))
   assert_eq(resized.val, Some(@dpi.PhysicalSize::new(960, 720)))
   assert_eq(surface_size.val, Some(@dpi.PhysicalSize::new(960, 720)))
 }
@@ -1997,11 +2008,18 @@ test "window min surface size clamps resize requests" {
 ///|
 test "window max surface size clamps resize requests" {
   let event_loop = EventLoop::new()
+  let max_surface_size = Ref::new(None)
   let resized = Ref::new(None)
   let surface_size = Ref::new(None)
   let window = Ref::new(None)
-  let app : MaxSurfaceSizeApp = { resized, surface_size, window }
+  let app : MaxSurfaceSizeApp = {
+    max_surface_size,
+    resized,
+    surface_size,
+    window,
+  }
   event_loop.run_app(app)
+  assert_eq(max_surface_size.val, Some(@dpi.PhysicalSize::new(1024, 768)))
   assert_eq(resized.val, Some(@dpi.PhysicalSize::new(1024, 768)))
   assert_eq(surface_size.val, Some(@dpi.PhysicalSize::new(1024, 768)))
 }

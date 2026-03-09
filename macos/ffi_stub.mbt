@@ -373,6 +373,26 @@ fn window_y(_window_id : Int) -> Int {
 }
 
 ///|
+fn window_min_surface_width(_window_id : Int) -> Int {
+  0
+}
+
+///|
+fn window_min_surface_height(_window_id : Int) -> Int {
+  0
+}
+
+///|
+fn window_max_surface_width(_window_id : Int) -> Int {
+  0
+}
+
+///|
+fn window_max_surface_height(_window_id : Int) -> Int {
+  0
+}
+
+///|
 fn window_outer_width(_window_id : Int) -> Int {
   0
 }

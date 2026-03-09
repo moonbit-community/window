@@ -373,6 +373,26 @@ fn window_y(window_id : Int) -> Int {
 }
 
 ///|
+fn window_min_surface_width(window_id : Int) -> Int {
+  native_window_min_surface_width(window_id)
+}
+
+///|
+fn window_min_surface_height(window_id : Int) -> Int {
+  native_window_min_surface_height(window_id)
+}
+
+///|
+fn window_max_surface_width(window_id : Int) -> Int {
+  native_window_max_surface_width(window_id)
+}
+
+///|
+fn window_max_surface_height(window_id : Int) -> Int {
+  native_window_max_surface_height(window_id)
+}
+
+///|
 fn window_outer_width(window_id : Int) -> Int {
   native_window_outer_width(window_id)
 }
@@ -599,6 +619,18 @@ pub extern "C" fn native_window_width(window_id : Int) -> Int = "mbw_window_widt
 
 ///|
 pub extern "C" fn native_window_height(window_id : Int) -> Int = "mbw_window_height"
+
+///|
+extern "C" fn native_window_min_surface_width(window_id : Int) -> Int = "mbw_window_min_surface_width"
+
+///|
+extern "C" fn native_window_min_surface_height(window_id : Int) -> Int = "mbw_window_min_surface_height"
+
+///|
+extern "C" fn native_window_max_surface_width(window_id : Int) -> Int = "mbw_window_max_surface_width"
+
+///|
+extern "C" fn native_window_max_surface_height(window_id : Int) -> Int = "mbw_window_max_surface_height"
 
 ///|
 extern "C" fn native_window_outer_width(window_id : Int) -> Int = "mbw_window_outer_width"

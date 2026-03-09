@@ -96,6 +96,8 @@ pub fn Window::is_occluded(Self) -> Bool
 pub fn Window::is_resizable(Self) -> Bool
 pub fn Window::is_transparent(Self) -> Bool
 pub fn Window::is_visible(Self) -> Bool
+pub fn Window::max_surface_size(Self) -> @dpi.PhysicalSize?
+pub fn Window::min_surface_size(Self) -> @dpi.PhysicalSize?
 pub fn Window::outer_position(Self) -> @dpi.PhysicalPosition
 pub fn Window::outer_size(Self) -> @dpi.PhysicalSize
 pub fn Window::request_redraw(Self) -> Unit

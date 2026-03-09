@@ -102,6 +102,28 @@ pub fn Window::set_max_surface_size(
 }
 
 ///|
+pub fn Window::min_surface_size(self : Window) -> @dpi.PhysicalSize? {
+  let width = window_min_surface_width(self.id.into_raw())
+  let height = window_min_surface_height(self.id.into_raw())
+  if width > 0 && height > 0 {
+    Some(@dpi.PhysicalSize::new(width, height))
+  } else {
+    None
+  }
+}
+
+///|
+pub fn Window::max_surface_size(self : Window) -> @dpi.PhysicalSize? {
+  let width = window_max_surface_width(self.id.into_raw())
+  let height = window_max_surface_height(self.id.into_raw())
+  if width > 0 && height > 0 {
+    Some(@dpi.PhysicalSize::new(width, height))
+  } else {
+    None
+  }
+}
+
+///|
 pub fn Window::outer_position(self : Window) -> @dpi.PhysicalPosition {
   @dpi.PhysicalPosition::new(
     window_x(self.id.into_raw()),

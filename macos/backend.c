@@ -2795,6 +2795,26 @@ int mbw_window_height(int window_id) {
   return window ? window->height : 0;
 }
 
+int mbw_window_min_surface_width(int window_id) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  return window ? window->min_width : 0;
+}
+
+int mbw_window_min_surface_height(int window_id) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  return window ? window->min_height : 0;
+}
+
+int mbw_window_max_surface_width(int window_id) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  return window ? window->max_width : 0;
+}
+
+int mbw_window_max_surface_height(int window_id) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  return window ? window->max_height : 0;
+}
+
 int mbw_window_outer_width(int window_id) {
   mbw_window_t *window = mbw_find_window(window_id);
   if (!window) {
