@@ -14,8 +14,28 @@ fn runtime_now_ms() -> Int64 {
 }
 
 ///|
+fn window_theme(_window_id : Int) -> Int {
+  0
+}
+
+///|
 fn window_scale_factor(_window_id : Int) -> Double {
   1.0
+}
+
+///|
+fn take_moved(_window_id : Int) -> Bool {
+  false
+}
+
+///|
+fn pending_move_x(_window_id : Int) -> Int {
+  0
+}
+
+///|
+fn pending_move_y(_window_id : Int) -> Int {
+  0
 }
 
 ///|
@@ -51,6 +71,26 @@ fn pending_scale_width(_window_id : Int) -> Int {
 ///|
 fn pending_scale_height(_window_id : Int) -> Int {
   0
+}
+
+///|
+fn take_theme_changed(_window_id : Int) -> Bool {
+  false
+}
+
+///|
+fn pending_theme(_window_id : Int) -> Int {
+  0
+}
+
+///|
+fn take_occluded_changed(_window_id : Int) -> Bool {
+  false
+}
+
+///|
+fn pending_occluded(_window_id : Int) -> Bool {
+  false
 }
 
 ///|

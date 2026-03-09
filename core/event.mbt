@@ -33,10 +33,13 @@ pub(all) enum StartCause {
 
 ///|
 pub(all) enum WindowEvent {
+  SurfaceResized(@dpi.PhysicalSize)
+  Moved(@dpi.PhysicalPosition)
   CloseRequested
   Destroyed
   Focused(Bool)
-  SurfaceResized(@dpi.PhysicalSize)
   ScaleFactorChanged(Double, SurfaceSizeWriter)
+  ThemeChanged(Theme)
+  Occluded(Bool)
   RedrawRequested
 } derive(Show)

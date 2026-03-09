@@ -59,11 +59,14 @@ pub impl Eq for WindowAttributes
 pub impl Show for WindowAttributes
 
 pub(all) enum WindowEvent {
+  SurfaceResized(@dpi.PhysicalSize)
+  Moved(@dpi.PhysicalPosition)
   CloseRequested
   Destroyed
   Focused(Bool)
-  SurfaceResized(@dpi.PhysicalSize)
   ScaleFactorChanged(Double, SurfaceSizeWriter)
+  ThemeChanged(Theme)
+  Occluded(Bool)
   RedrawRequested
 }
 pub impl Show for WindowEvent

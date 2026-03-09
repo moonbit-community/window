@@ -8,6 +8,7 @@
 #include <unistd.h>
 
 #if defined(__APPLE__)
+#include <CoreGraphics/CGDirectDisplay.h>
 #include <objc/message.h>
 #include <objc/runtime.h>
 #endif
@@ -16,8 +17,16 @@ typedef struct mbw_window {
   int id;
   int width;
   int height;
+  int x;
+  int y;
   double scale_factor;
   double reported_scale_factor;
+  int reported_position_valid;
+  int reported_x;
+  int reported_y;
+  int pending_moved;
+  int pending_move_x;
+  int pending_move_y;
   int should_close;
   int allow_close;
   int pending_close_requested;
@@ -25,6 +34,14 @@ typedef struct mbw_window {
   int pending_focused_changed;
   int focused;
   int pending_focus_value;
+  int theme_kind;
+  int reported_theme_kind;
+  int pending_theme_changed;
+  int pending_theme_kind;
+  int occluded;
+  int reported_occluded;
+  int pending_occluded_changed;
+  int pending_occluded;
   int pending_scale_factor_changed;
   double pending_scale_factor;
   int pending_scale_width;
@@ -120,6 +137,10 @@ typedef struct {
 
 #define MBW_NSEVENT_TYPE_APPLICATION_DEFINED ((mbw_nsuint_t)15)
 #define MBW_PROXY_WAKE_EVENT_SUBTYPE ((short)0x4d42)
+#define MBW_THEME_UNKNOWN 0
+#define MBW_THEME_LIGHT 1
+#define MBW_THEME_DARK 2
+#define MBW_NSWINDOW_OCCLUSION_STATE_VISIBLE (1UL << 1)
 
 static bool g_bootstrap_done = false;
 static bool g_bootstrap_ok = false;
@@ -128,6 +149,9 @@ static Class g_window_delegate_class = Nil;
 
 static id mbw_make_nsstring(const char *utf8);
 static void mbw_update_window_state(mbw_window_t *window);
+static int mbw_window_theme_kind(mbw_window_t *window);
+static int mbw_window_occluded(mbw_window_t *window);
+static void mbw_window_position(mbw_window_t *window, int *x, int *y);
 
 static SEL mbw_sel(const char *name) {
   return sel_registerName(name);
@@ -395,6 +419,52 @@ static bool mbw_pump_app_events(id initial_until_date) {
   return saw_event;
 }
 
+static int mbw_window_theme_kind(mbw_window_t *window) {
+  if (!window || !window->window) {
+    return MBW_THEME_UNKNOWN;
+  }
+  id appearance =
+    ((id(*)(id, SEL))objc_msgSend)((id)window->window, mbw_sel("effectiveAppearance"));
+  if (!appearance) {
+    return MBW_THEME_UNKNOWN;
+  }
+  id name = ((id(*)(id, SEL))objc_msgSend)(appearance, mbw_sel("name"));
+  if (!name) {
+    return MBW_THEME_UNKNOWN;
+  }
+  const char *utf8 = ((const char *(*)(id, SEL))objc_msgSend)(name, mbw_sel("UTF8String"));
+  if (utf8 && strstr(utf8, "Dark")) {
+    return MBW_THEME_DARK;
+  }
+  return MBW_THEME_LIGHT;
+}
+
+static int mbw_window_occluded(mbw_window_t *window) {
+  if (!window || !window->window) {
+    return 0;
+  }
+  mbw_nsuint_t occlusion_state =
+    ((mbw_nsuint_t(*)(id, SEL))objc_msgSend)((id)window->window, mbw_sel("occlusionState"));
+  return (occlusion_state & MBW_NSWINDOW_OCCLUSION_STATE_VISIBLE) == 0 ? 1 : 0;
+}
+
+static void mbw_window_position(mbw_window_t *window, int *x, int *y) {
+  if (!x || !y) {
+    return;
+  }
+  *x = 0;
+  *y = 0;
+  if (!window || !window->window) {
+    return;
+  }
+  mbw_rect_t frame =
+    ((mbw_rect_t(*)(id, SEL))objc_msgSend)((id)window->window, mbw_sel("frame"));
+  double main_screen_height = CGDisplayBounds(CGMainDisplayID()).size.height;
+  double scale_factor = window->scale_factor > 0.0 ? window->scale_factor : 1.0;
+  *x = (int)(frame.origin.x * scale_factor + 0.5);
+  *y = (int)((main_screen_height - frame.size.height - frame.origin.y) * scale_factor + 0.5);
+}
+
 static void mbw_update_window_state(mbw_window_t *window) {
   if (!window || !window->window) {
     return;
@@ -412,6 +482,21 @@ static void mbw_update_window_state(mbw_window_t *window) {
   if (window->scale_factor <= 0.0) {
     window->scale_factor = 1.0;
   }
+  int next_theme_kind = mbw_window_theme_kind(window);
+  int next_occluded = mbw_window_occluded(window);
+  int next_x = 0;
+  int next_y = 0;
+  mbw_window_position(window, &next_x, &next_y);
+  if (!window->pending_theme_changed) {
+    window->theme_kind = next_theme_kind;
+  }
+  if (!window->pending_occluded_changed) {
+    window->occluded = next_occluded;
+  }
+  if (!window->pending_moved) {
+    window->x = next_x;
+    window->y = next_y;
+  }
 
   id content_view = window->content_view
     ? (id)window->content_view
@@ -426,14 +511,52 @@ static void mbw_update_window_state(mbw_window_t *window) {
     window->height = mbw_clamp_size(height);
   }
 
-  if (window->reported_scale_factor <= 0.0) {
-    window->reported_scale_factor = window->scale_factor;
-  } else if (window->scale_factor != window->reported_scale_factor) {
-    window->reported_scale_factor = window->scale_factor;
-    window->pending_scale_factor_changed = 1;
-    window->pending_scale_factor = window->scale_factor;
-    window->pending_scale_width = window->width;
-    window->pending_scale_height = window->height;
+  if (!window->pending_scale_factor_changed) {
+    if (window->reported_scale_factor <= 0.0) {
+      window->reported_scale_factor = window->scale_factor;
+    } else if (window->scale_factor != window->reported_scale_factor) {
+      window->reported_scale_factor = window->scale_factor;
+      window->pending_scale_factor_changed = 1;
+      window->pending_scale_factor = window->scale_factor;
+      window->pending_scale_width = window->width;
+      window->pending_scale_height = window->height;
+    }
+  }
+
+  if (!window->pending_moved) {
+    if (!window->reported_position_valid) {
+      window->reported_x = window->x;
+      window->reported_y = window->y;
+      window->reported_position_valid = 1;
+    } else if (window->x != window->reported_x || window->y != window->reported_y) {
+      window->reported_x = window->x;
+      window->reported_y = window->y;
+      window->pending_moved = 1;
+      window->pending_move_x = window->x;
+      window->pending_move_y = window->y;
+    }
+  }
+
+  if (!window->pending_theme_changed) {
+    if (window->reported_theme_kind == MBW_THEME_UNKNOWN) {
+      window->reported_theme_kind = window->theme_kind;
+    } else if (
+      window->theme_kind != MBW_THEME_UNKNOWN &&
+      window->theme_kind != window->reported_theme_kind) {
+      window->reported_theme_kind = window->theme_kind;
+      window->pending_theme_changed = 1;
+      window->pending_theme_kind = window->theme_kind;
+    }
+  }
+
+  if (!window->pending_occluded_changed) {
+    if (window->reported_occluded < 0) {
+      window->reported_occluded = window->occluded;
+    } else if (window->occluded != window->reported_occluded) {
+      window->reported_occluded = window->occluded;
+      window->pending_occluded_changed = 1;
+      window->pending_occluded = window->occluded;
+    }
   }
 
   if (window->width != window->reported_width || window->height != window->reported_height) {
@@ -575,8 +698,16 @@ int mbw_window_create_utf8(
   window->id = g_next_window_id++;
   window->width = mbw_clamp_size(width);
   window->height = mbw_clamp_size(height);
+  window->x = 0;
+  window->y = 0;
   window->scale_factor = 1.0;
   window->reported_scale_factor = 0.0;
+  window->reported_position_valid = 0;
+  window->reported_x = 0;
+  window->reported_y = 0;
+  window->pending_moved = 0;
+  window->pending_move_x = 0;
+  window->pending_move_y = 0;
   window->should_close = 0;
   window->allow_close = 0;
   window->pending_close_requested = 0;
@@ -584,6 +715,14 @@ int mbw_window_create_utf8(
   window->pending_focused_changed = 0;
   window->focused = 0;
   window->pending_focus_value = 0;
+  window->theme_kind = MBW_THEME_UNKNOWN;
+  window->reported_theme_kind = MBW_THEME_UNKNOWN;
+  window->pending_theme_changed = 0;
+  window->pending_theme_kind = MBW_THEME_UNKNOWN;
+  window->occluded = 0;
+  window->reported_occluded = -1;
+  window->pending_occluded_changed = 0;
+  window->pending_occluded = 0;
   window->pending_scale_factor_changed = 0;
   window->pending_scale_factor = 1.0;
   window->pending_scale_width = window->width;
@@ -683,6 +822,11 @@ int mbw_window_height(int window_id) {
   return window ? window->height : 0;
 }
 
+int mbw_window_theme(int window_id) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  return window ? window->theme_kind : MBW_THEME_UNKNOWN;
+}
+
 double mbw_window_scale_factor(int window_id) {
   mbw_window_t *window = mbw_find_window(window_id);
   return window ? window->scale_factor : 1.0;
@@ -700,6 +844,25 @@ bool mbw_window_take_close_requested(int window_id) {
   }
   window->pending_close_requested = 0;
   return true;
+}
+
+bool mbw_window_take_moved(int window_id) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  if (!window || !window->pending_moved) {
+    return false;
+  }
+  window->pending_moved = 0;
+  return true;
+}
+
+int mbw_window_pending_move_x(int window_id) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  return window ? window->pending_move_x : 0;
+}
+
+int mbw_window_pending_move_y(int window_id) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  return window ? window->pending_move_y : 0;
 }
 
 bool mbw_window_take_destroyed(int window_id) {
@@ -747,6 +910,34 @@ int mbw_window_pending_scale_width(int window_id) {
 int mbw_window_pending_scale_height(int window_id) {
   mbw_window_t *window = mbw_find_window(window_id);
   return window ? window->pending_scale_height : 0;
+}
+
+bool mbw_window_take_theme_changed(int window_id) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  if (!window || !window->pending_theme_changed) {
+    return false;
+  }
+  window->pending_theme_changed = 0;
+  return true;
+}
+
+int mbw_window_pending_theme(int window_id) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  return window ? window->pending_theme_kind : MBW_THEME_UNKNOWN;
+}
+
+bool mbw_window_take_occluded_changed(int window_id) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  if (!window || !window->pending_occluded_changed) {
+    return false;
+  }
+  window->pending_occluded_changed = 0;
+  return true;
+}
+
+bool mbw_window_pending_occluded(int window_id) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  return window ? window->pending_occluded != 0 : false;
 }
 
 bool mbw_window_take_surface_resized(int window_id) {
@@ -827,6 +1018,22 @@ void mbw_test_window_queue_focused(int window_id, bool focused) {
   window->pending_focused_changed = 1;
 }
 
+void mbw_test_window_queue_moved(int window_id, int x, int y) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  if (!window) {
+    return;
+  }
+  int actual_x = 0;
+  int actual_y = 0;
+  mbw_window_position(window, &actual_x, &actual_y);
+  window->pending_moved = 1;
+  window->pending_move_x = x;
+  window->pending_move_y = y;
+  window->reported_position_valid = 1;
+  window->reported_x = actual_x;
+  window->reported_y = actual_y;
+}
+
 void mbw_test_window_queue_scale_factor_changed(
   int window_id,
   double scale_factor,
@@ -843,6 +1050,33 @@ void mbw_test_window_queue_scale_factor_changed(
   window->reported_scale_factor = window->pending_scale_factor;
   window->pending_scale_width = mbw_clamp_size(width);
   window->pending_scale_height = mbw_clamp_size(height);
+}
+
+void mbw_test_window_queue_theme_changed(int window_id, int theme_kind) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  if (!window) {
+    return;
+  }
+  if (theme_kind != MBW_THEME_LIGHT && theme_kind != MBW_THEME_DARK) {
+    theme_kind = MBW_THEME_UNKNOWN;
+  }
+  int actual_theme = mbw_window_theme_kind(window);
+  window->theme_kind = theme_kind;
+  window->pending_theme_changed = 1;
+  window->pending_theme_kind = theme_kind;
+  window->reported_theme_kind = actual_theme;
+}
+
+void mbw_test_window_queue_occluded(int window_id, bool occluded) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  if (!window) {
+    return;
+  }
+  int actual_occluded = mbw_window_occluded(window);
+  window->occluded = occluded ? 1 : 0;
+  window->pending_occluded_changed = 1;
+  window->pending_occluded = window->occluded;
+  window->reported_occluded = actual_occluded;
 }
 
 void mbw_test_window_queue_destroyed(int window_id) {

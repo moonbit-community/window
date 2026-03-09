@@ -52,8 +52,17 @@ pub fn Window::set_resizable(self : Window, resizable : Bool) -> Unit {
 }
 
 ///|
-pub fn Window::theme(_self : Window) -> @core.Theme? {
-  None
+fn theme_from_native(theme : Int) -> @core.Theme? {
+  match theme {
+    1 => Some(@core.Theme::Light)
+    2 => Some(@core.Theme::Dark)
+    _ => None
+  }
+}
+
+///|
+pub fn Window::theme(self : Window) -> @core.Theme? {
+  theme_from_native(window_theme(self.id.into_raw()))
 }
 
 ///|
@@ -188,11 +197,41 @@ fn[A : ApplicationHandler] EventLoop::dispatch_window_events(
       polled = true
     }
     let window_id = @core.WindowId::from_raw(raw_id)
+    if take_moved(raw_id) {
+      app.window_event(
+        self,
+        window_id,
+        @core.WindowEvent::Moved(
+          @dpi.PhysicalPosition::new(
+            pending_move_x(raw_id),
+            pending_move_y(raw_id),
+          ),
+        ),
+      )
+    }
     if take_focused_changed(raw_id) {
       app.window_event(
         self,
         window_id,
         @core.WindowEvent::Focused(pending_focused(raw_id)),
+      )
+    }
+    if take_theme_changed(raw_id) {
+      match theme_from_native(pending_theme(raw_id)) {
+        Some(theme) =>
+          app.window_event(
+            self,
+            window_id,
+            @core.WindowEvent::ThemeChanged(theme),
+          )
+        None => ()
+      }
+    }
+    if take_occluded_changed(raw_id) {
+      app.window_event(
+        self,
+        window_id,
+        @core.WindowEvent::Occluded(pending_occluded(raw_id)),
       )
     }
     if take_scale_factor_changed(raw_id) {

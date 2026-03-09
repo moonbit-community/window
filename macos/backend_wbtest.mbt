@@ -15,12 +15,24 @@ extern "C" fn runtime_now_clear_for_test() -> Unit = "mbw_runtime_now_ms_clear_f
 extern "C" fn queue_focus_for_test(window_id : Int, focused : Bool) -> Unit = "mbw_test_window_queue_focused"
 
 ///|
+extern "C" fn queue_moved_for_test(window_id : Int, x : Int, y : Int) -> Unit = "mbw_test_window_queue_moved"
+
+///|
 extern "C" fn queue_scale_factor_changed_for_test(
   window_id : Int,
   scale_factor : Double,
   width : Int,
   height : Int,
 ) -> Unit = "mbw_test_window_queue_scale_factor_changed"
+
+///|
+extern "C" fn queue_theme_changed_for_test(
+  window_id : Int,
+  theme_kind : Int,
+) -> Unit = "mbw_test_window_queue_theme_changed"
+
+///|
+extern "C" fn queue_occluded_for_test(window_id : Int, occluded : Bool) -> Unit = "mbw_test_window_queue_occluded"
 
 ///|
 struct StartCauseApp {
@@ -103,6 +115,11 @@ struct FocusApp {
 }
 
 ///|
+struct MovedApp {
+  moved : Ref[@dpi.PhysicalPosition?]
+}
+
+///|
 impl ApplicationHandler for FocusApp with can_create_surfaces(_self, event_loop) {
   let window = event_loop.create_window(
     @core.WindowAttributes::default().with_visible(false),
@@ -120,6 +137,30 @@ impl ApplicationHandler for FocusApp with window_event(
   match event {
     @core.WindowEvent::Focused(focused) => {
       self.focused_values.push(focused)
+      event_loop.exit()
+    }
+    _ => ()
+  }
+}
+
+///|
+impl ApplicationHandler for MovedApp with can_create_surfaces(_self, event_loop) {
+  let window = event_loop.create_window(
+    @core.WindowAttributes::default().with_visible(false),
+  )
+  queue_moved_for_test(window.id().into_raw(), 320, 180)
+}
+
+///|
+impl ApplicationHandler for MovedApp with window_event(
+  self,
+  event_loop,
+  _id,
+  event,
+) {
+  match event {
+    @core.WindowEvent::Moved(position) => {
+      self.moved.val = Some(position)
       event_loop.exit()
     }
     _ => ()
@@ -157,6 +198,74 @@ impl ApplicationHandler for ScaleFactorApp with window_event(
     }
     @core.WindowEvent::SurfaceResized(size) => {
       self.resized.val = Some(size)
+      event_loop.exit()
+    }
+    _ => ()
+  }
+}
+
+///|
+struct ThemeApp {
+  window : Ref[Window?]
+  event_theme : Ref[@core.Theme?]
+  current_theme : Ref[@core.Theme?]
+}
+
+///|
+impl ApplicationHandler for ThemeApp with can_create_surfaces(self, event_loop) {
+  let window = event_loop.create_window(
+    @core.WindowAttributes::default().with_visible(false),
+  )
+  self.window.val = Some(window)
+  queue_theme_changed_for_test(window.id().into_raw(), 2)
+}
+
+///|
+impl ApplicationHandler for ThemeApp with window_event(
+  self,
+  event_loop,
+  _id,
+  event,
+) {
+  match event {
+    @core.WindowEvent::ThemeChanged(theme) => {
+      self.event_theme.val = Some(theme)
+      match self.window.val {
+        Some(window) => self.current_theme.val = window.theme()
+        None => ()
+      }
+      event_loop.exit()
+    }
+    _ => ()
+  }
+}
+
+///|
+struct OccludedApp {
+  occluded : Ref[Bool?]
+}
+
+///|
+impl ApplicationHandler for OccludedApp with can_create_surfaces(
+  _self,
+  event_loop,
+) {
+  let window = event_loop.create_window(
+    @core.WindowAttributes::default().with_visible(false),
+  )
+  queue_occluded_for_test(window.id().into_raw(), true)
+}
+
+///|
+impl ApplicationHandler for OccludedApp with window_event(
+  self,
+  event_loop,
+  _id,
+  event,
+) {
+  match event {
+    @core.WindowEvent::Occluded(occluded) => {
+      self.occluded.val = Some(occluded)
       event_loop.exit()
     }
     _ => ()
@@ -275,6 +384,14 @@ test "focused events are delivered" {
 }
 
 ///|
+test "moved events are delivered" {
+  let event_loop = EventLoop::new()
+  let moved = Ref::new(None)
+  event_loop.run_app({ moved, })
+  assert_eq(moved.val, Some(@dpi.PhysicalPosition::new(320, 180)))
+}
+
+///|
 test "scale factor changes can request a replacement surface size" {
   let event_loop = EventLoop::new()
   let seen_scale_factor = Ref::new(None)
@@ -282,6 +399,25 @@ test "scale factor changes can request a replacement surface size" {
   event_loop.run_app({ seen_scale_factor, resized })
   assert_eq(seen_scale_factor.val, Some(2.0))
   assert_eq(resized.val, Some(@dpi.PhysicalSize::new(1200, 900)))
+}
+
+///|
+test "theme changed events update the readable window theme" {
+  let event_loop = EventLoop::new()
+  let window = Ref::new(None)
+  let event_theme = Ref::new(None)
+  let current_theme = Ref::new(None)
+  event_loop.run_app({ window, event_theme, current_theme })
+  assert_eq(event_theme.val, Some(@core.Theme::Dark))
+  assert_eq(current_theme.val, Some(@core.Theme::Dark))
+}
+
+///|
+test "occluded events are delivered" {
+  let event_loop = EventLoop::new()
+  let occluded = Ref::new(None)
+  event_loop.run_app({ occluded, })
+  assert_eq(occluded.val, Some(true))
 }
 
 ///|

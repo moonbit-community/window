@@ -14,8 +14,28 @@ fn runtime_now_ms() -> Int64 {
 }
 
 ///|
+fn window_theme(window_id : Int) -> Int {
+  native_window_theme(window_id)
+}
+
+///|
 fn window_scale_factor(window_id : Int) -> Double {
   native_window_scale_factor(window_id)
+}
+
+///|
+fn take_moved(window_id : Int) -> Bool {
+  native_window_take_moved(window_id)
+}
+
+///|
+fn pending_move_x(window_id : Int) -> Int {
+  native_window_pending_move_x(window_id)
+}
+
+///|
+fn pending_move_y(window_id : Int) -> Int {
+  native_window_pending_move_y(window_id)
 }
 
 ///|
@@ -51,6 +71,26 @@ fn pending_scale_width(window_id : Int) -> Int {
 ///|
 fn pending_scale_height(window_id : Int) -> Int {
   native_window_pending_scale_height(window_id)
+}
+
+///|
+fn take_theme_changed(window_id : Int) -> Bool {
+  native_window_take_theme_changed(window_id)
+}
+
+///|
+fn pending_theme(window_id : Int) -> Int {
+  native_window_pending_theme(window_id)
+}
+
+///|
+fn take_occluded_changed(window_id : Int) -> Bool {
+  native_window_take_occluded_changed(window_id)
+}
+
+///|
+fn pending_occluded(window_id : Int) -> Bool {
+  native_window_pending_occluded(window_id)
 }
 
 ///|
@@ -138,6 +178,9 @@ pub extern "C" fn native_window_width(window_id : Int) -> Int = "mbw_window_widt
 pub extern "C" fn native_window_height(window_id : Int) -> Int = "mbw_window_height"
 
 ///|
+extern "C" fn native_window_theme(window_id : Int) -> Int = "mbw_window_theme"
+
+///|
 extern "C" fn native_window_scale_factor(window_id : Int) -> Double = "mbw_window_scale_factor"
 
 ///|
@@ -145,6 +188,15 @@ pub extern "C" fn native_window_should_close(window_id : Int) -> Bool = "mbw_win
 
 ///|
 pub extern "C" fn native_window_take_close_requested(window_id : Int) -> Bool = "mbw_window_take_close_requested"
+
+///|
+extern "C" fn native_window_take_moved(window_id : Int) -> Bool = "mbw_window_take_moved"
+
+///|
+extern "C" fn native_window_pending_move_x(window_id : Int) -> Int = "mbw_window_pending_move_x"
+
+///|
+extern "C" fn native_window_pending_move_y(window_id : Int) -> Int = "mbw_window_pending_move_y"
 
 ///|
 extern "C" fn native_window_take_destroyed(window_id : Int) -> Bool = "mbw_window_take_destroyed"
@@ -166,6 +218,18 @@ extern "C" fn native_window_pending_scale_width(window_id : Int) -> Int = "mbw_w
 
 ///|
 extern "C" fn native_window_pending_scale_height(window_id : Int) -> Int = "mbw_window_pending_scale_height"
+
+///|
+extern "C" fn native_window_take_theme_changed(window_id : Int) -> Bool = "mbw_window_take_theme_changed"
+
+///|
+extern "C" fn native_window_pending_theme(window_id : Int) -> Int = "mbw_window_pending_theme"
+
+///|
+extern "C" fn native_window_take_occluded_changed(window_id : Int) -> Bool = "mbw_window_take_occluded_changed"
+
+///|
+extern "C" fn native_window_pending_occluded(window_id : Int) -> Bool = "mbw_window_pending_occluded"
 
 ///|
 pub extern "C" fn native_window_take_surface_resized(window_id : Int) -> Bool = "mbw_window_take_surface_resized"
