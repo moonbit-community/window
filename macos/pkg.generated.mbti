@@ -87,6 +87,7 @@ pub fn Window::fullscreen(Self) -> @core.Fullscreen?
 pub fn Window::has_focus(Self) -> Bool
 pub fn Window::id(Self) -> @core.WindowId
 pub fn Window::ime_allowed(Self) -> Bool
+pub fn Window::ime_capabilities(Self) -> @core.ImeCapabilities?
 pub fn Window::ime_cursor_area_position(Self) -> @dpi.PhysicalPosition
 pub fn Window::ime_cursor_area_size(Self) -> @dpi.PhysicalSize
 pub fn Window::ime_purpose(Self) -> @core.ImePurpose
@@ -108,6 +109,7 @@ pub fn Window::outer_position(Self) -> @dpi.PhysicalPosition
 pub fn Window::outer_size(Self) -> @dpi.PhysicalSize
 pub fn Window::pre_present_notify(Self) -> Unit
 pub fn Window::primary_monitor(Self) -> @core.MonitorHandle?
+pub fn Window::request_ime_update(Self, @core.ImeRequest) -> Bool
 pub fn Window::request_redraw(Self) -> Unit
 pub fn Window::request_surface_size(Self, @dpi.PhysicalSize) -> Unit
 pub fn Window::request_user_attention(Self, @core.UserAttentionType?) -> Unit

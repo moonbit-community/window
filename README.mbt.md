@@ -32,7 +32,8 @@ native builds and focuses on `macos-arm64`.
   `request_user_attention`), visibility and
   capability flags (`set_visible`, `set_resizable`, `set_enabled_buttons`,
   `set_content_protected`), and IME control (`set_ime_purpose`,
-  `set_ime_allowed`, `set_ime_cursor_area`). Additional compatibility shims
+  `set_ime_allowed`, `set_ime_cursor_area`,
+  `request_ime_update`, `ime_capabilities`). Additional compatibility shims
   include `pre_present_notify`, `reset_dead_keys`, `drag_window`,
   `drag_resize_window`, and `show_window_menu`.
 - Monitor APIs are available on macOS via `EventLoop::{available_monitors,

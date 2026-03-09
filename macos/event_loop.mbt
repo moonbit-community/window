@@ -438,6 +438,32 @@ pub fn Window::ime_purpose(self : Window) -> @core.ImePurpose {
 }
 
 ///|
+pub fn Window::request_ime_update(
+  self : Window,
+  request : @core.ImeRequest,
+) -> Bool {
+  match request {
+    @core.ImeRequest::SetAllowed(allowed) => {
+      self.set_ime_allowed(allowed)
+      true
+    }
+    @core.ImeRequest::SetPurpose(purpose) => {
+      self.set_ime_purpose(purpose)
+      true
+    }
+    @core.ImeRequest::SetCursorArea(position, size) => {
+      self.set_ime_cursor_area(position, size)
+      true
+    }
+  }
+}
+
+///|
+pub fn Window::ime_capabilities(_self : Window) -> @core.ImeCapabilities? {
+  Some(@core.ImeCapabilities::new(true, true, false))
+}
+
+///|
 pub fn Window::scale_factor(self : Window) -> Double {
   window_scale_factor(self.id.into_raw())
 }

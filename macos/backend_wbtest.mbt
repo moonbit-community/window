@@ -539,8 +539,12 @@ struct ImeApp {
 struct ImeConfigurationApp {
   cursor_position : Ref[@dpi.PhysicalPosition?]
   cursor_size : Ref[@dpi.PhysicalSize?]
+  ime_capabilities : Ref[@core.ImeCapabilities?]
   ime_allowed : Ref[Bool]
   initial_purpose : Ref[@core.ImePurpose]
+  request_allowed_ok : Ref[Bool]
+  request_cursor_ok : Ref[Bool]
+  request_purpose_ok : Ref[Bool]
   updated_purpose : Ref[@core.ImePurpose]
 }
 
@@ -1591,9 +1595,20 @@ impl ApplicationHandler for ImeConfigurationApp with can_create_surfaces(
     .with_visible(false)
     .with_ime_purpose(@core.ImePurpose::Password),
   )
+  self.ime_capabilities.val = window.ime_capabilities()
   self.initial_purpose.val = window.ime_purpose()
-  window.set_ime_purpose(@core.ImePurpose::Terminal)
-  window.set_ime_allowed(false)
+  self.request_purpose_ok.val = window.request_ime_update(
+    @core.ImeRequest::SetPurpose(@core.ImePurpose::Terminal),
+  )
+  self.request_allowed_ok.val = window.request_ime_update(
+    @core.ImeRequest::SetAllowed(false),
+  )
+  self.request_cursor_ok.val = window.request_ime_update(
+    @core.ImeRequest::SetCursorArea(
+      @dpi.PhysicalPosition::new(48, 96),
+      @dpi.PhysicalSize::new(20, 32),
+    ),
+  )
   window.set_ime_cursor_area(
     @dpi.PhysicalPosition::new(48, 96),
     @dpi.PhysicalSize::new(20, 32),
@@ -2734,20 +2749,35 @@ test "ime preedit always includes enabled first" {
 ///|
 test "window ime configuration updates native state" {
   let event_loop = EventLoop::new()
+  let ime_capabilities = Ref::new(None)
   let initial_purpose = Ref::new(@core.ImePurpose::Normal)
   let updated_purpose = Ref::new(@core.ImePurpose::Normal)
   let ime_allowed = Ref::new(true)
+  let request_allowed_ok = Ref::new(false)
+  let request_purpose_ok = Ref::new(false)
+  let request_cursor_ok = Ref::new(false)
   let cursor_position = Ref::new(None)
   let cursor_size = Ref::new(None)
   let app : ImeConfigurationApp = {
     cursor_position,
     cursor_size,
+    ime_capabilities,
     ime_allowed,
     initial_purpose,
+    request_allowed_ok,
+    request_cursor_ok,
+    request_purpose_ok,
     updated_purpose,
   }
   event_loop.run_app(app)
+  assert_eq(
+    ime_capabilities.val,
+    Some(@core.ImeCapabilities::new(true, true, false)),
+  )
   assert_eq(initial_purpose.val, @core.ImePurpose::Password)
+  assert_true(request_allowed_ok.val)
+  assert_true(request_purpose_ok.val)
+  assert_true(request_cursor_ok.val)
   assert_eq(updated_purpose.val, @core.ImePurpose::Terminal)
   assert_false(ime_allowed.val)
   assert_eq(cursor_position.val, Some(@dpi.PhysicalPosition::new(48, 96)))

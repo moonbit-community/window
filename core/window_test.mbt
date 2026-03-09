@@ -123,6 +123,18 @@ test "window buttons builders work as expected" {
 }
 
 ///|
+test "ime capability and request models are constructible" {
+  let capabilities = ImeCapabilities::new(true, true, false)
+  assert_true(capabilities.hint_and_purpose())
+  assert_true(capabilities.cursor_area())
+  assert_false(capabilities.surrounding_text())
+  assert_eq(
+    ImeRequest::SetPurpose(ImePurpose::Terminal),
+    ImeRequest::SetPurpose(ImePurpose::Terminal),
+  )
+}
+
+///|
 test "icon validation follows winit rgba rules" {
   let bad_alignment = Icon::new(Bytes::make(3, (1 : Int).to_byte()), 1, 1)
   assert_eq(bad_alignment, Err(BadIcon::ByteCountNotDivisibleBy4(3)))

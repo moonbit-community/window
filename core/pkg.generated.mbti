@@ -114,6 +114,16 @@ pub(all) enum Ime {
 pub impl Eq for Ime
 pub impl Show for Ime
 
+pub struct ImeCapabilities {
+  // private fields
+}
+pub fn ImeCapabilities::cursor_area(Self) -> Bool
+pub fn ImeCapabilities::hint_and_purpose(Self) -> Bool
+pub fn ImeCapabilities::new(Bool, Bool, Bool) -> Self
+pub fn ImeCapabilities::surrounding_text(Self) -> Bool
+pub impl Eq for ImeCapabilities
+pub impl Show for ImeCapabilities
+
 pub struct ImeCursorRange {
   end : Int
   start : Int
@@ -131,6 +141,14 @@ pub(all) enum ImePurpose {
 }
 pub impl Eq for ImePurpose
 pub impl Show for ImePurpose
+
+pub(all) enum ImeRequest {
+  SetAllowed(Bool)
+  SetPurpose(ImePurpose)
+  SetCursorArea(@dpi.PhysicalPosition, @dpi.PhysicalSize)
+}
+pub impl Eq for ImeRequest
+pub impl Show for ImeRequest
 
 pub(all) enum Key {
   Named(NamedKey)

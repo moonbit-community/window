@@ -12,6 +12,44 @@ pub(all) enum ImePurpose {
 } derive(Eq, Show)
 
 ///|
+pub struct ImeCapabilities {
+  priv cursor_area : Bool
+  priv hint_and_purpose : Bool
+  priv surrounding_text : Bool
+} derive(Eq, Show)
+
+///|
+pub fn ImeCapabilities::new(
+  hint_and_purpose : Bool,
+  cursor_area : Bool,
+  surrounding_text : Bool,
+) -> ImeCapabilities {
+  { hint_and_purpose, cursor_area, surrounding_text }
+}
+
+///|
+pub fn ImeCapabilities::hint_and_purpose(self : ImeCapabilities) -> Bool {
+  self.hint_and_purpose
+}
+
+///|
+pub fn ImeCapabilities::cursor_area(self : ImeCapabilities) -> Bool {
+  self.cursor_area
+}
+
+///|
+pub fn ImeCapabilities::surrounding_text(self : ImeCapabilities) -> Bool {
+  self.surrounding_text
+}
+
+///|
+pub(all) enum ImeRequest {
+  SetAllowed(Bool)
+  SetPurpose(ImePurpose)
+  SetCursorArea(@dpi.PhysicalPosition, @dpi.PhysicalSize)
+} derive(Eq, Show)
+
+///|
 pub(all) enum WindowLevel {
   Normal
   AlwaysOnTop
