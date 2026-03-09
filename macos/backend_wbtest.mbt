@@ -124,6 +124,21 @@ extern "C" fn queue_ime_commit_for_test(
 ) -> Unit = "mbw_test_window_queue_ime_commit"
 
 ///|
+extern "C" fn ime_allowed_for_test(window_id : Int) -> Bool = "mbw_test_window_ime_allowed"
+
+///|
+extern "C" fn ime_cursor_area_x_for_test(window_id : Int) -> Int = "mbw_test_window_ime_cursor_area_x"
+
+///|
+extern "C" fn ime_cursor_area_y_for_test(window_id : Int) -> Int = "mbw_test_window_ime_cursor_area_y"
+
+///|
+extern "C" fn ime_cursor_area_width_for_test(window_id : Int) -> Int = "mbw_test_window_ime_cursor_area_width"
+
+///|
+extern "C" fn ime_cursor_area_height_for_test(window_id : Int) -> Int = "mbw_test_window_ime_cursor_area_height"
+
+///|
 struct StartCauseApp {
   causes : Array[@core.StartCause]
 }
@@ -299,6 +314,11 @@ struct KeyboardInputApp {
 struct ImeApp {
   events : Array[@core.Ime]
   scenario : Int
+}
+
+///|
+struct ImeConfigurationApp {
+  window_id : Ref[Int]
 }
 
 ///|
@@ -820,6 +840,23 @@ impl ApplicationHandler for ImeApp with window_event(
     }
     _ => ()
   }
+}
+
+///|
+impl ApplicationHandler for ImeConfigurationApp with can_create_surfaces(
+  self,
+  event_loop,
+) {
+  let window = event_loop.create_window(
+    @core.WindowAttributes::default().with_visible(false),
+  )
+  self.window_id.val = window.id().into_raw()
+  window.set_ime_allowed(false)
+  window.set_ime_cursor_area(
+    @dpi.PhysicalPosition::new(48, 96),
+    @dpi.PhysicalSize::new(20, 32),
+  )
+  event_loop.exit()
 }
 
 ///|
@@ -1430,6 +1467,20 @@ test "ime preedit always includes enabled first" {
     @core.Ime::Enabled,
     @core.Ime::Preedit("a", Some(@core.ImeCursorRange::new(0, 1))),
   ])
+}
+
+///|
+test "window ime configuration updates native state" {
+  let event_loop = EventLoop::new()
+  let window_id = Ref::new(0)
+  let app : ImeConfigurationApp = { window_id, }
+  event_loop.run_app(app)
+  let raw_id = window_id.val
+  assert_false(ime_allowed_for_test(raw_id))
+  assert_eq(ime_cursor_area_x_for_test(raw_id), 48)
+  assert_eq(ime_cursor_area_y_for_test(raw_id), 96)
+  assert_eq(ime_cursor_area_width_for_test(raw_id), 20)
+  assert_eq(ime_cursor_area_height_for_test(raw_id), 32)
 }
 
 ///|

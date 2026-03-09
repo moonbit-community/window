@@ -75,6 +75,26 @@ pub fn Window::set_outer_position(
 }
 
 ///|
+pub fn Window::set_ime_allowed(self : Window, allowed : Bool) -> Unit {
+  set_ime_allowed(self.id.into_raw(), allowed)
+}
+
+///|
+pub fn Window::set_ime_cursor_area(
+  self : Window,
+  position : @dpi.PhysicalPosition,
+  size : @dpi.PhysicalSize,
+) -> Unit {
+  set_ime_cursor_area(
+    self.id.into_raw(),
+    position.x(),
+    position.y(),
+    size.width(),
+    size.height(),
+  )
+}
+
+///|
 pub fn Window::scale_factor(self : Window) -> Double {
   window_scale_factor(self.id.into_raw())
 }

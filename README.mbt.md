@@ -15,7 +15,8 @@ native builds and focuses on `macos-arm64`.
   `ControlFlow::{Poll, Wait, WaitUntil}`
 - Runtime window control currently includes `surface_size`,
   `request_surface_size`, `set_min_surface_size`, `set_max_surface_size`,
-  `outer_position`, and `set_outer_position`
+  `outer_position`, `set_outer_position`, `set_ime_allowed`, and
+  `set_ime_cursor_area`
 - `WindowAttributes` now supports `with_position`,
   `with_min_surface_size`, and `with_max_surface_size`
 - Current keyboard support is macOS-first and now prefers native

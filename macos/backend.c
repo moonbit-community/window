@@ -91,6 +91,11 @@ typedef struct mbw_window {
   int ime_marked_active;
   int ime_cursor_start;
   int ime_cursor_end;
+  int ime_allowed;
+  int ime_cursor_area_x;
+  int ime_cursor_area_y;
+  int ime_cursor_area_width;
+  int ime_cursor_area_height;
   int visible;
   int resizable;
   mbw_input_event_t *queued_input_events;
@@ -916,7 +921,7 @@ static void mbw_content_view_queue_ime(
   int cursor_end
 ) {
   mbw_window_t *window = mbw_view_window(self);
-  if (!window) {
+  if (!window || !window->ime_allowed) {
     return;
   }
   uint8_t text[MBW_KEY_TEXT_CAP];
@@ -933,7 +938,7 @@ static void mbw_content_view_insert_text(
   (void)_cmd;
   (void)replacement_range;
   mbw_window_t *window = mbw_view_window(self);
-  if (!window) {
+  if (!window || !window->ime_allowed) {
     return;
   }
   window->ime_marked_active = 0;
@@ -965,7 +970,7 @@ static void mbw_content_view_set_marked_text(
   (void)_cmd;
   (void)replacement_range;
   mbw_window_t *window = mbw_view_window(self);
-  if (!window) {
+  if (!window || !window->ime_allowed) {
     return;
   }
   int cursor_start = -1;
@@ -1030,7 +1035,7 @@ static void mbw_content_view_unmark_text(id self, SEL _cmd) {
 static mbw_bool_t mbw_content_view_has_marked_text(id self, SEL _cmd) {
   (void)_cmd;
   mbw_window_t *window = mbw_view_window(self);
-  return window && window->ime_marked_active ? YES : NO;
+  return window && window->ime_allowed && window->ime_marked_active ? YES : NO;
 }
 
 static mbw_range_t mbw_content_view_marked_range(id self, SEL _cmd) {
@@ -1109,9 +1114,29 @@ static mbw_rect_t mbw_content_view_first_rect_for_character_range(
   };
   mbw_window_t *window = mbw_view_window(self);
   if (window && window->window) {
-    rect = ((mbw_rect_t(*)(id, SEL))objc_msgSend)(
+    double scale_factor = mbw_view_scale_factor(self, window);
+    if (scale_factor <= 0.0) {
+      scale_factor = 1.0;
+    }
+    mbw_rect_t view_rect = {
+      .origin = {
+        (double)window->ime_cursor_area_x / scale_factor,
+        (double)window->ime_cursor_area_y / scale_factor,
+      },
+      .size = {
+        (double)window->ime_cursor_area_width / scale_factor,
+        (double)window->ime_cursor_area_height / scale_factor,
+      },
+    };
+    mbw_rect_t window_rect = ((mbw_rect_t(*)(id, SEL, mbw_rect_t, id))objc_msgSend)(
+      self,
+      mbw_sel("convertRect:toView:"),
+      view_rect,
+      nil);
+    rect = ((mbw_rect_t(*)(id, SEL, mbw_rect_t))objc_msgSend)(
       (id)window->window,
-      mbw_sel("frame"));
+      mbw_sel("convertRectToScreen:"),
+      window_rect);
   }
   return rect;
 }
@@ -1163,7 +1188,7 @@ static void mbw_content_view_key_down(id self, SEL _cmd, id event) {
     text_ignoring_modifiers_len,
     text_without_modifiers,
     text_without_modifiers_len);
-  if ((modifiers & MBW_MODIFIERS_META) == 0) {
+  if (window->ime_allowed && (modifiers & MBW_MODIFIERS_META) == 0) {
     Class ns_array = objc_getClass("NSArray");
     if (ns_array) {
       id events = ((id(*)(id, SEL, id))objc_msgSend)(
@@ -2322,6 +2347,11 @@ int mbw_window_create_utf8(
   window->ime_marked_active = 0;
   window->ime_cursor_start = -1;
   window->ime_cursor_end = -1;
+  window->ime_allowed = 1;
+  window->ime_cursor_area_x = 0;
+  window->ime_cursor_area_y = 0;
+  window->ime_cursor_area_width = 1;
+  window->ime_cursor_area_height = 1;
   window->visible = visible ? 1 : 0;
   window->resizable = resizable ? 1 : 0;
   window->queued_input_events = NULL;
@@ -3161,6 +3191,31 @@ void mbw_test_window_queue_ime_disabled(int window_id) {
   mbw_window_queue_ime(window, MBW_IME_EVENT_DISABLED, NULL, 0, -1, -1);
 }
 
+bool mbw_test_window_ime_allowed(int window_id) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  return window ? window->ime_allowed != 0 : false;
+}
+
+int mbw_test_window_ime_cursor_area_x(int window_id) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  return window ? window->ime_cursor_area_x : 0;
+}
+
+int mbw_test_window_ime_cursor_area_y(int window_id) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  return window ? window->ime_cursor_area_y : 0;
+}
+
+int mbw_test_window_ime_cursor_area_width(int window_id) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  return window ? window->ime_cursor_area_width : 0;
+}
+
+int mbw_test_window_ime_cursor_area_height(int window_id) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  return window ? window->ime_cursor_area_height : 0;
+}
+
 void mbw_test_window_queue_destroyed(int window_id) {
   mbw_window_t *window = mbw_find_window(window_id);
   if (!window) {
@@ -3227,6 +3282,72 @@ void mbw_window_set_resizable(int window_id, bool resizable) {
     }
     ((void(*)(id, SEL, mbw_nsuint_t))objc_msgSend)(
       (id)window->window, mbw_sel("setStyleMask:"), style_mask);
+  }
+#endif
+}
+
+void mbw_window_set_ime_allowed(int window_id, bool allowed) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  if (!window) {
+    return;
+  }
+  int next_allowed = allowed ? 1 : 0;
+  if (window->ime_allowed == next_allowed) {
+    return;
+  }
+  window->ime_allowed = next_allowed;
+  if (!window->ime_allowed) {
+    if (window->ime_marked_active) {
+      mbw_window_queue_ime(window, MBW_IME_EVENT_DISABLED, NULL, 0, -1, -1);
+    }
+    window->ime_marked_active = 0;
+    window->ime_cursor_start = -1;
+    window->ime_cursor_end = -1;
+  }
+#if defined(__APPLE__)
+  if (window->content_view) {
+    id input_context = ((id(*)(id, SEL))objc_msgSend)(
+      (id)window->content_view,
+      mbw_sel("inputContext"));
+    if (input_context) {
+      ((void(*)(id, SEL))objc_msgSend)(
+        input_context,
+        mbw_sel("invalidateCharacterCoordinates"));
+      if (!window->ime_allowed) {
+        ((void(*)(id, SEL))objc_msgSend)(
+          input_context,
+          mbw_sel("discardMarkedText"));
+      }
+    }
+  }
+#endif
+}
+
+void mbw_window_set_ime_cursor_area(
+  int window_id,
+  int x,
+  int y,
+  int width,
+  int height
+) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  if (!window) {
+    return;
+  }
+  window->ime_cursor_area_x = x;
+  window->ime_cursor_area_y = y;
+  window->ime_cursor_area_width = mbw_clamp_size(width);
+  window->ime_cursor_area_height = mbw_clamp_size(height);
+#if defined(__APPLE__)
+  if (window->content_view) {
+    id input_context = ((id(*)(id, SEL))objc_msgSend)(
+      (id)window->content_view,
+      mbw_sel("inputContext"));
+    if (input_context) {
+      ((void(*)(id, SEL))objc_msgSend)(
+        input_context,
+        mbw_sel("invalidateCharacterCoordinates"));
+    }
   }
 #endif
 }

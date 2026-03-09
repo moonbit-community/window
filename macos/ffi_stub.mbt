@@ -239,6 +239,22 @@ fn set_window_position(_window_id : Int, _x : Int, _y : Int) -> Unit {
 }
 
 ///|
+fn set_ime_allowed(_window_id : Int, _allowed : Bool) -> Unit {
+  ()
+}
+
+///|
+fn set_ime_cursor_area(
+  _window_id : Int,
+  _x : Int,
+  _y : Int,
+  _width : Int,
+  _height : Int,
+) -> Unit {
+  ()
+}
+
+///|
 fn close_window(_window_id : Int) -> Unit {
   ()
 }

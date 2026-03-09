@@ -239,6 +239,22 @@ fn set_window_position(window_id : Int, x : Int, y : Int) -> Unit {
 }
 
 ///|
+fn set_ime_allowed(window_id : Int, allowed : Bool) -> Unit {
+  native_window_set_ime_allowed(window_id, allowed)
+}
+
+///|
+fn set_ime_cursor_area(
+  window_id : Int,
+  x : Int,
+  y : Int,
+  width : Int,
+  height : Int,
+) -> Unit {
+  native_window_set_ime_cursor_area(window_id, x, y, width, height)
+}
+
+///|
 fn close_window(window_id : Int) -> Unit {
   native_window_close(window_id)
 }
@@ -488,6 +504,21 @@ extern "C" fn native_window_set_position(
   x : Int,
   y : Int,
 ) -> Unit = "mbw_window_set_position"
+
+///|
+extern "C" fn native_window_set_ime_allowed(
+  window_id : Int,
+  allowed : Bool,
+) -> Unit = "mbw_window_set_ime_allowed"
+
+///|
+extern "C" fn native_window_set_ime_cursor_area(
+  window_id : Int,
+  x : Int,
+  y : Int,
+  width : Int,
+  height : Int,
+) -> Unit = "mbw_window_set_ime_cursor_area"
 
 ///|
 extern "C" fn native_window_close(window_id : Int) -> Unit = "mbw_window_close"
