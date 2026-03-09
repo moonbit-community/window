@@ -27,6 +27,30 @@ pub fn Window::surface_size(self : Window) -> @dpi.PhysicalSize {
 }
 
 ///|
+pub fn Window::request_surface_size(
+  self : Window,
+  size : @dpi.PhysicalSize,
+) -> Unit {
+  set_surface_size(self.id.into_raw(), size.width(), size.height())
+}
+
+///|
+pub fn Window::outer_position(self : Window) -> @dpi.PhysicalPosition {
+  @dpi.PhysicalPosition::new(
+    window_x(self.id.into_raw()),
+    window_y(self.id.into_raw()),
+  )
+}
+
+///|
+pub fn Window::set_outer_position(
+  self : Window,
+  position : @dpi.PhysicalPosition,
+) -> Unit {
+  set_window_position(self.id.into_raw(), position.x(), position.y())
+}
+
+///|
 pub fn Window::scale_factor(self : Window) -> Double {
   window_scale_factor(self.id.into_raw())
 }
@@ -496,12 +520,18 @@ fn EventLoop::wait_next_iteration(self : EventLoop) -> @core.StartCause {
       let _ = wait_for_events(-1)
       @core.StartCause::WaitCancelled(start_ms, None)
     }
-    @core.ControlFlow::WaitUntil(timeout_ms) => {
+    @core.ControlFlow::WaitUntil(requested_resume_ms) => {
       let start_ms = runtime_now_ms()
-      let requested_resume_ms = start_ms + timeout_ms.to_int64()
-      if timeout_ms <= 0 {
-        @core.StartCause::ResumeTimeReached(start_ms, start_ms)
-      } else if wait_for_events(timeout_ms) {
+      let remaining_ms = requested_resume_ms - start_ms
+      if remaining_ms <= 0L {
+        @core.StartCause::ResumeTimeReached(start_ms, requested_resume_ms)
+      } else if wait_for_events(
+          if remaining_ms > 2147483647L {
+            2147483647
+          } else {
+            remaining_ms.to_int()
+          },
+        ) {
         @core.StartCause::ResumeTimeReached(start_ms, requested_resume_ms)
       } else {
         @core.StartCause::WaitCancelled(start_ms, Some(requested_resume_ms))

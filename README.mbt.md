@@ -13,6 +13,8 @@ native builds and focuses on `macos-arm64`.
   `Occluded`, `RedrawRequested`
 - Event loop support: `run_app`, `EventLoopProxy::wake_up()`,
   `ControlFlow::{Poll, Wait, WaitUntil}`
+- Runtime window control currently includes `surface_size`,
+  `request_surface_size`, `outer_position`, and `set_outer_position`
 - Current keyboard support is macOS-first and now prefers native
   `NSEvent` text (`characters` / `charactersIgnoringModifiers`) for
   `logical_key` and `text`; `key_without_modifiers` uses Carbon
@@ -86,5 +88,5 @@ fn main {
 
 ## Notes
 
-- `ControlFlow::WaitUntil` currently takes a relative timeout in milliseconds
+- `ControlFlow::WaitUntil` takes an absolute monotonic timestamp (milliseconds)
 - `ApplicationHandler` currently receives a concrete `EventLoop`

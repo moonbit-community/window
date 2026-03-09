@@ -194,6 +194,21 @@ fn set_surface_size(window_id : Int, width : Int, height : Int) -> Unit {
 }
 
 ///|
+fn window_x(window_id : Int) -> Int {
+  native_window_x(window_id)
+}
+
+///|
+fn window_y(window_id : Int) -> Int {
+  native_window_y(window_id)
+}
+
+///|
+fn set_window_position(window_id : Int, x : Int, y : Int) -> Unit {
+  native_window_set_position(window_id, x, y)
+}
+
+///|
 fn close_window(window_id : Int) -> Unit {
   native_window_close(window_id)
 }
@@ -266,6 +281,12 @@ pub extern "C" fn native_window_width(window_id : Int) -> Int = "mbw_window_widt
 
 ///|
 pub extern "C" fn native_window_height(window_id : Int) -> Int = "mbw_window_height"
+
+///|
+extern "C" fn native_window_x(window_id : Int) -> Int = "mbw_window_x"
+
+///|
+extern "C" fn native_window_y(window_id : Int) -> Int = "mbw_window_y"
 
 ///|
 extern "C" fn native_window_theme(window_id : Int) -> Int = "mbw_window_theme"
@@ -402,6 +423,13 @@ extern "C" fn native_window_set_surface_size(
   width : Int,
   height : Int,
 ) -> Unit = "mbw_window_set_surface_size"
+
+///|
+extern "C" fn native_window_set_position(
+  window_id : Int,
+  x : Int,
+  y : Int,
+) -> Unit = "mbw_window_set_position"
 
 ///|
 extern "C" fn native_window_close(window_id : Int) -> Unit = "mbw_window_close"

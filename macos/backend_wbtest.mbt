@@ -127,7 +127,7 @@ impl ApplicationHandler for StartCauseApp with can_create_surfaces(
   runtime_now_set_for_test(100L)
   let attrs = @core.WindowAttributes::default().with_visible(false)
   let _ = event_loop.create_window(attrs)
-  event_loop.set_control_flow(@core.ControlFlow::WaitUntil(5))
+  event_loop.set_control_flow(@core.ControlFlow::WaitUntil(105L))
 }
 
 ///|
@@ -185,6 +185,20 @@ struct FocusApp {
 ///|
 struct MovedApp {
   moved : Ref[@dpi.PhysicalPosition?]
+}
+
+///|
+struct OuterPositionApp {
+  moved : Ref[@dpi.PhysicalPosition?]
+  outer_position : Ref[@dpi.PhysicalPosition?]
+  window : Ref[Window?]
+}
+
+///|
+struct RequestSurfaceSizeApp {
+  resized : Ref[@dpi.PhysicalSize?]
+  surface_size : Ref[@dpi.PhysicalSize?]
+  window : Ref[Window?]
 }
 
 ///|
@@ -274,6 +288,70 @@ impl ApplicationHandler for MovedApp with window_event(
   match event {
     @core.WindowEvent::Moved(position) => {
       self.moved.val = Some(position)
+      event_loop.exit()
+    }
+    _ => ()
+  }
+}
+
+///|
+impl ApplicationHandler for OuterPositionApp with can_create_surfaces(
+  self,
+  event_loop,
+) {
+  let window = event_loop.create_window(
+    @core.WindowAttributes::default().with_visible(false),
+  )
+  self.window.val = Some(window)
+  window.set_outer_position(@dpi.PhysicalPosition::new(320, 180))
+}
+
+///|
+impl ApplicationHandler for OuterPositionApp with window_event(
+  self,
+  event_loop,
+  _id,
+  event,
+) {
+  match event {
+    @core.WindowEvent::Moved(position) => {
+      self.moved.val = Some(position)
+      match self.window.val {
+        Some(window) => self.outer_position.val = Some(window.outer_position())
+        None => ()
+      }
+      event_loop.exit()
+    }
+    _ => ()
+  }
+}
+
+///|
+impl ApplicationHandler for RequestSurfaceSizeApp with can_create_surfaces(
+  self,
+  event_loop,
+) {
+  let window = event_loop.create_window(
+    @core.WindowAttributes::default().with_visible(false),
+  )
+  self.window.val = Some(window)
+  window.request_surface_size(@dpi.PhysicalSize::new(1200, 900))
+}
+
+///|
+impl ApplicationHandler for RequestSurfaceSizeApp with window_event(
+  self,
+  event_loop,
+  _id,
+  event,
+) {
+  match event {
+    @core.WindowEvent::SurfaceResized(size) => {
+      self.resized.val = Some(size)
+      match self.window.val {
+        Some(window) => self.surface_size.val = Some(window.surface_size())
+        None => ()
+      }
       event_loop.exit()
     }
     _ => ()
@@ -691,7 +769,7 @@ test "new events reports wait-until cancellation when proxy wakes" {
   let app = {
     causes: [],
     wake_requested: Ref::new(false),
-    control_flow: @core.ControlFlow::WaitUntil(20),
+    control_flow: @core.ControlFlow::WaitUntil(220L),
   }
   event_loop.run_app(app)
   runtime_now_clear_for_test()
@@ -736,6 +814,30 @@ test "moved events are delivered" {
   let app : MovedApp = { moved, }
   event_loop.run_app(app)
   assert_eq(moved.val, Some(@dpi.PhysicalPosition::new(320, 180)))
+}
+
+///|
+test "window outer position can be set and read" {
+  let event_loop = EventLoop::new()
+  let moved = Ref::new(None)
+  let outer_position = Ref::new(None)
+  let window = Ref::new(None)
+  let app : OuterPositionApp = { moved, outer_position, window }
+  event_loop.run_app(app)
+  assert_eq(moved.val, Some(@dpi.PhysicalPosition::new(320, 180)))
+  assert_eq(outer_position.val, Some(@dpi.PhysicalPosition::new(320, 180)))
+}
+
+///|
+test "window request surface size delivers resized event" {
+  let event_loop = EventLoop::new()
+  let resized = Ref::new(None)
+  let surface_size = Ref::new(None)
+  let window = Ref::new(None)
+  let app : RequestSurfaceSizeApp = { resized, surface_size, window }
+  event_loop.run_app(app)
+  assert_eq(resized.val, Some(@dpi.PhysicalSize::new(1200, 900)))
+  assert_eq(surface_size.val, Some(@dpi.PhysicalSize::new(1200, 900)))
 }
 
 ///|

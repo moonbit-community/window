@@ -2041,6 +2041,51 @@ int mbw_window_height(int window_id) {
   return window ? window->height : 0;
 }
 
+int mbw_window_x(int window_id) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  return window ? window->x : 0;
+}
+
+int mbw_window_y(int window_id) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  return window ? window->y : 0;
+}
+
+void mbw_window_set_position(int window_id, int x, int y) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  if (!window) {
+    return;
+  }
+
+  int target_x = x;
+  int target_y = y;
+#if defined(__APPLE__)
+  if (window->window) {
+    double scale_factor = window->scale_factor > 0.0 ? window->scale_factor : 1.0;
+    mbw_rect_t frame =
+      ((mbw_rect_t(*)(id, SEL))objc_msgSend)((id)window->window, mbw_sel("frame"));
+    double main_screen_height = CGDisplayBounds(CGMainDisplayID()).size.height;
+    mbw_point_t origin = {
+      .x = (double)x / scale_factor,
+      .y = main_screen_height - frame.size.height - ((double)y / scale_factor),
+    };
+    ((void(*)(id, SEL, mbw_point_t))objc_msgSend)(
+      (id)window->window,
+      mbw_sel("setFrameOrigin:"),
+      origin);
+    mbw_window_position(window, &target_x, &target_y);
+  }
+#endif
+  window->x = target_x;
+  window->y = target_y;
+  window->pending_moved = 1;
+  window->pending_move_x = target_x;
+  window->pending_move_y = target_y;
+  window->reported_position_valid = 1;
+  window->reported_x = target_x;
+  window->reported_y = target_y;
+}
+
 int mbw_window_theme(int window_id) {
   mbw_window_t *window = mbw_find_window(window_id);
   return window ? window->theme_kind : MBW_THEME_UNKNOWN;

@@ -74,8 +74,11 @@ pub struct Window {
   // private fields
 }
 pub fn Window::id(Self) -> @core.WindowId
+pub fn Window::outer_position(Self) -> @dpi.PhysicalPosition
 pub fn Window::request_redraw(Self) -> Unit
+pub fn Window::request_surface_size(Self, @dpi.PhysicalSize) -> Unit
 pub fn Window::scale_factor(Self) -> Double
+pub fn Window::set_outer_position(Self, @dpi.PhysicalPosition) -> Unit
 pub fn Window::set_resizable(Self, Bool) -> Unit
 pub fn Window::set_title(Self, String) -> Unit
 pub fn Window::set_visible(Self, Bool) -> Unit

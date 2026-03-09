@@ -194,6 +194,21 @@ fn set_surface_size(_window_id : Int, _width : Int, _height : Int) -> Unit {
 }
 
 ///|
+fn window_x(_window_id : Int) -> Int {
+  0
+}
+
+///|
+fn window_y(_window_id : Int) -> Int {
+  0
+}
+
+///|
+fn set_window_position(_window_id : Int, _x : Int, _y : Int) -> Unit {
+  ()
+}
+
+///|
 fn close_window(_window_id : Int) -> Unit {
   ()
 }

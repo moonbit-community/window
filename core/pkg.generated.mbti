@@ -20,9 +20,10 @@ pub impl Show for ButtonSource
 pub(all) enum ControlFlow {
   Poll
   Wait
-  WaitUntil(Int)
+  WaitUntil(Int64)
 }
-pub fn ControlFlow::wait_duration(Int) -> Self
+pub fn ControlFlow::wait_duration(Int64, Int) -> Self
+pub fn ControlFlow::wait_until(Int64) -> Self
 pub impl Eq for ControlFlow
 pub impl Show for ControlFlow
 

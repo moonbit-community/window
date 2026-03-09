@@ -19,7 +19,6 @@ This repository currently targets the smallest useful `macos-arm64` slice first:
 Known deltas against upstream `winit`:
 
 - Only the macOS backend is implemented.
-- The current `ControlFlow::WaitUntil` payload is interpreted as a relative timeout in milliseconds.
 - `ApplicationHandler` currently receives a concrete `EventLoop` instead of an `ActiveEventLoop` trait object.
 - `KeyboardInput` now prefers native AppKit text payloads for logical/text reconstruction and keeps the US scancode map only as fallback.
 - Full IME/preedit handling is not implemented yet.

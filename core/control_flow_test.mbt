@@ -1,7 +1,8 @@
 ///|
 test "control flow defaults and wait duration" {
   assert_eq(ControlFlow::Wait, ControlFlow::Wait)
-  assert_eq(ControlFlow::wait_duration(16), ControlFlow::WaitUntil(16))
+  assert_eq(ControlFlow::wait_duration(100L, 16), ControlFlow::WaitUntil(116L))
+  assert_eq(ControlFlow::wait_until(42L), ControlFlow::WaitUntil(42L))
 }
 
 ///|
