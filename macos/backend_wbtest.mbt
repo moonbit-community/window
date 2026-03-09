@@ -317,6 +317,11 @@ struct MovedApp {
 }
 
 ///|
+struct RedrawRequestApp {
+  redraw_requested : Ref[Bool]
+}
+
+///|
 struct OuterPositionApp {
   moved : Ref[@dpi.PhysicalPosition?]
   outer_position : Ref[@dpi.PhysicalPosition?]
@@ -676,6 +681,33 @@ impl ApplicationHandler for MovedApp with can_create_surfaces(_self, event_loop)
     @core.WindowAttributes::default().with_visible(false),
   )
   queue_moved_for_test(window.id().into_raw(), 320, 180)
+}
+
+///|
+impl ApplicationHandler for RedrawRequestApp with can_create_surfaces(
+  _self,
+  event_loop,
+) {
+  let window = event_loop.create_window(
+    @core.WindowAttributes::default().with_visible(false),
+  )
+  window.request_redraw()
+}
+
+///|
+impl ApplicationHandler for RedrawRequestApp with window_event(
+  self,
+  event_loop,
+  _id,
+  event,
+) {
+  match event {
+    @core.WindowEvent::RedrawRequested => {
+      self.redraw_requested.val = true
+      event_loop.exit()
+    }
+    _ => ()
+  }
 }
 
 ///|
@@ -1662,6 +1694,14 @@ test "window surface resize increments can be configured at create and runtime" 
   assert_eq(increments_initial.val, Some(@dpi.PhysicalSize::new(64, 48)))
   assert_eq(increments_after_disable.val, None)
   assert_eq(increments_after_enable.val, Some(@dpi.PhysicalSize::new(32, 24)))
+}
+
+///|
+test "window redraw requests are delivered" {
+  let event_loop = EventLoop::new()
+  let redraw_requested = Ref::new(false)
+  event_loop.run_app({ redraw_requested, })
+  assert_true(redraw_requested.val)
 }
 
 ///|
