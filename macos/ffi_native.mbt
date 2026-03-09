@@ -4,6 +4,11 @@ pub fn backend_available() -> Bool {
 }
 
 ///|
+fn reset_proxy_wake_state() -> Unit {
+  native_event_loop_reset_proxy()
+}
+
+///|
 fn sleep_millis(ms : Int) -> Unit {
   native_sleep_millis(ms)
 }
@@ -35,6 +40,15 @@ fn set_title(window_id : Int, title : String) -> Unit {
 
 ///|
 pub extern "C" fn native_backend_available() -> Bool = "mbw_backend_available"
+
+///|
+pub extern "C" fn native_event_loop_reset_proxy() -> Unit = "mbw_event_loop_reset_proxy"
+
+///|
+pub extern "C" fn native_event_loop_take_proxy_wake_up() -> Bool = "mbw_event_loop_take_proxy_wake_up"
+
+///|
+pub extern "C" fn native_event_loop_wake_up() -> Unit = "mbw_event_loop_wake_up"
 
 ///|
 pub extern "C" fn native_sleep_millis(ms : Int) -> Unit = "mbw_sleep_millis"

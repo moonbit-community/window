@@ -4,6 +4,11 @@ pub fn backend_available() -> Bool {
 }
 
 ///|
+fn reset_proxy_wake_state() -> Unit {
+  ()
+}
+
+///|
 fn sleep_millis(_ms : Int) -> Unit {
   ()
 }
@@ -27,6 +32,16 @@ fn set_title(_window_id : Int, _title : String) -> Unit {
 ///|
 fn native_poll_window(_window_id : Int) -> Unit {
   abort("macos backend requires the native target")
+}
+
+///|
+fn native_event_loop_take_proxy_wake_up() -> Bool {
+  false
+}
+
+///|
+fn native_event_loop_wake_up() -> Unit {
+  ()
 }
 
 ///|

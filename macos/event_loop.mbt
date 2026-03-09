@@ -4,6 +4,16 @@ pub struct Window {
 } derive(Eq, Show)
 
 ///|
+pub struct EventLoopProxy {
+  priv _unit : Unit
+} derive(Eq, Show)
+
+///|
+pub fn EventLoopProxy::wake_up(_self : EventLoopProxy) -> Unit {
+  native_event_loop_wake_up()
+}
+
+///|
 pub fn Window::id(self : Window) -> @core.WindowId {
   self.id
 }
@@ -53,6 +63,7 @@ pub fn EventLoop::new() -> EventLoop {
   guard backend_available() else {
     abort("macos backend is unavailable on this target")
   }
+  reset_proxy_wake_state()
   {
     control_flow_: @core.ControlFlow::Wait,
     exit_requested: false,
@@ -95,6 +106,11 @@ pub fn EventLoop::control_flow(self : EventLoop) -> @core.ControlFlow {
 }
 
 ///|
+pub fn EventLoop::create_proxy(_self : EventLoop) -> EventLoopProxy {
+  { _unit: () }
+}
+
+///|
 pub fn EventLoop::exit(self : EventLoop) -> Unit {
   self.exit_requested = true
 }
@@ -107,12 +123,18 @@ pub fn EventLoop::exiting(self : EventLoop) -> Bool {
 ///|
 pub(open) trait ApplicationHandler {
   can_create_surfaces(Self, EventLoop) -> Unit = _
+  proxy_wake_up(Self, EventLoop) -> Unit = _
   window_event(Self, EventLoop, @core.WindowId, @core.WindowEvent) -> Unit = _
   about_to_wait(Self, EventLoop) -> Unit = _
 }
 
 ///|
 impl ApplicationHandler with can_create_surfaces(_self, _event_loop) {
+  ()
+}
+
+///|
+impl ApplicationHandler with proxy_wake_up(_self, _event_loop) {
   ()
 }
 
@@ -164,6 +186,16 @@ fn[A : ApplicationHandler] EventLoop::dispatch_window_events(
 }
 
 ///|
+fn[A : ApplicationHandler] EventLoop::dispatch_proxy_wake_up(
+  self : EventLoop,
+  app : A,
+) -> Unit {
+  if native_event_loop_take_proxy_wake_up() {
+    app.proxy_wake_up(self)
+  }
+}
+
+///|
 fn EventLoop::wait_next_iteration(self : EventLoop) -> Unit {
   match self.control_flow_ {
     @core.ControlFlow::Poll => sleep_millis(1)
@@ -180,6 +212,7 @@ pub fn[A : ApplicationHandler] EventLoop::run_app(
   app.can_create_surfaces(self)
   while self.exit_requested == false {
     self.dispatch_window_events(app)
+    self.dispatch_proxy_wake_up(app)
     if self.exit_requested {
       break
     }

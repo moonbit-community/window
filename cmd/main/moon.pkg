@@ -5,5 +5,10 @@ import {
 
 options(
   "is-main": true,
+  link: {
+    "native": {
+      "cc-link-flags": "-framework AppKit -framework Foundation -framework CoreGraphics -lobjc",
+    },
+  },
   targets: { "main.mbt": [ "native" ], "main_stub.mbt": [ "not", "native" ] },
 )

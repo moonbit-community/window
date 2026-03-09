@@ -4,6 +4,11 @@ import {
 }
 
 options(
+  link: {
+    "native": {
+      "cc-link-flags": "-framework AppKit -framework Foundation -framework CoreGraphics -lobjc",
+    },
+  },
   targets: {
     "window.mbt": [ "native" ],
     "window_stub.mbt": [ "not", "native" ],

@@ -16,6 +16,7 @@ pub struct EventLoop {
   // private fields
 }
 pub fn EventLoop::control_flow(Self) -> @core.ControlFlow
+pub fn EventLoop::create_proxy(Self) -> EventLoopProxy
 pub fn EventLoop::create_window(Self, @core.WindowAttributes) -> Window
 pub fn EventLoop::exit(Self) -> Unit
 pub fn EventLoop::exiting(Self) -> Bool
@@ -23,6 +24,13 @@ pub fn EventLoop::new() -> Self
 pub fn[A : ApplicationHandler] EventLoop::run_app(Self, A) -> Unit
 pub fn EventLoop::set_control_flow(Self, @core.ControlFlow) -> Unit
 pub impl Show for EventLoop
+
+pub struct EventLoopProxy {
+  // private fields
+}
+pub fn EventLoopProxy::wake_up(Self) -> Unit
+pub impl Eq for EventLoopProxy
+pub impl Show for EventLoopProxy
 
 pub struct Window {
   // private fields
@@ -42,6 +50,7 @@ pub impl Show for Window
 // Traits
 pub(open) trait ApplicationHandler {
   can_create_surfaces(Self, EventLoop) -> Unit = _
+  proxy_wake_up(Self, EventLoop) -> Unit = _
   window_event(Self, EventLoop, @core.WindowId, @core.WindowEvent) -> Unit = _
   about_to_wait(Self, EventLoop) -> Unit = _
 }

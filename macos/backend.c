@@ -1,4 +1,5 @@
 #include <stdbool.h>
+#include <stdatomic.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
@@ -33,6 +34,7 @@ static mbw_window_t **g_windows = NULL;
 static size_t g_windows_len = 0;
 static size_t g_windows_cap = 0;
 static int g_next_window_id = 1;
+static atomic_int g_pending_proxy_wake_up = 0;
 
 static int mbw_clamp_size(int value) {
   return value <= 0 ? 1 : value;
@@ -200,6 +202,18 @@ bool mbw_backend_available(void) {
 #else
   return false;
 #endif
+}
+
+void mbw_event_loop_reset_proxy(void) {
+  atomic_store_explicit(&g_pending_proxy_wake_up, 0, memory_order_release);
+}
+
+bool mbw_event_loop_take_proxy_wake_up(void) {
+  return atomic_exchange_explicit(&g_pending_proxy_wake_up, 0, memory_order_acq_rel) != 0;
+}
+
+void mbw_event_loop_wake_up(void) {
+  atomic_store_explicit(&g_pending_proxy_wake_up, 1, memory_order_release);
 }
 
 void mbw_sleep_millis(int ms) {
