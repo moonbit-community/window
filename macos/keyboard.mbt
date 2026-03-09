@@ -395,6 +395,21 @@ fn key_from_native_text(text : String?) -> @core.Key? {
 }
 
 ///|
+fn dead_or_character_from_ignoring_text(
+  text : String?,
+  state : @core.ElementState,
+) -> @core.Key? {
+  match normalized_native_text(text) {
+    Some(text) =>
+      match state {
+        @core.ElementState::Pressed => Some(@core.Key::Dead(Some(text)))
+        @core.ElementState::Released => Some(@core.Key::Character(text))
+      }
+    None => None
+  }
+}
+
+///|
 fn key_without_modifiers_from_scancode(
   scancode : Int,
   physical_key : @core.PhysicalKey,
@@ -433,6 +448,7 @@ fn key_without_modifiers_from_scancode(
 fn logical_key_from_scancode(
   scancode : Int,
   physical_key : @core.PhysicalKey,
+  state : @core.ElementState,
   modifiers : @core.Modifiers,
   key_without_modifiers : @core.Key,
   text_with_all_modifiers : String?,
@@ -453,7 +469,10 @@ fn logical_key_from_scancode(
             match key_from_native_text(text_with_all_modifiers) {
               Some(key) => key
               None =>
-                match key_from_native_text(text_ignoring_modifiers) {
+                match
+                  dead_or_character_from_ignoring_text(
+                    text_ignoring_modifiers, state,
+                  ) {
                   Some(key) => key
                   None => {
                     let fallback_character = if modifiers.shift_key() {
@@ -480,7 +499,10 @@ fn logical_key_from_scancode(
         match key_from_native_text(text_with_all_modifiers) {
           Some(key) => key
           None =>
-            match key_from_native_text(text_ignoring_modifiers) {
+            match
+              dead_or_character_from_ignoring_text(
+                text_ignoring_modifiers, state,
+              ) {
               Some(key) => key
               None => @core.Key::Unidentified(@core.NativeKey::MacOS(code))
             }
@@ -496,7 +518,10 @@ fn logical_key_from_scancode(
         match key_from_native_text(text_with_all_modifiers) {
           Some(key) => key
           None =>
-            match key_from_native_text(text_ignoring_modifiers) {
+            match
+              dead_or_character_from_ignoring_text(
+                text_ignoring_modifiers, state,
+              ) {
               Some(key) => key
               None => key_without_modifiers
             }
@@ -535,7 +560,7 @@ fn create_key_event(
     scancode, physical_key, normalized_text_ignoring_modifiers,
   )
   let logical_key = logical_key_from_scancode(
-    scancode, physical_key, modifiers, key_without_modifiers, normalized_text_with_all_modifiers,
+    scancode, physical_key, state, modifiers, key_without_modifiers, normalized_text_with_all_modifiers,
     normalized_text_ignoring_modifiers,
   )
   let text = match state {

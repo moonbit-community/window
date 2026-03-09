@@ -205,6 +205,7 @@ pub(all) enum NamedKey {
 pub(all) enum Key {
   Named(NamedKey)
   Character(String)
+  Dead(String?)
   Unidentified(NativeKey)
 } derive(Eq, Show)
 

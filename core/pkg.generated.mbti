@@ -36,6 +36,7 @@ pub impl Show for ElementState
 pub(all) enum Key {
   Named(NamedKey)
   Character(String)
+  Dead(String?)
   Unidentified(NativeKey)
 }
 pub impl Eq for Key

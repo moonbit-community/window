@@ -964,6 +964,37 @@ test "keyboard input prefers native event text when provided" {
 }
 
 ///|
+test "keyboard input emits dead key when only ignoring-modifier text is present" {
+  let event_loop = EventLoop::new()
+  let captured = Ref::new(None)
+  let app : KeyboardInputApp = {
+    captured,
+    modifiers: 0,
+    repeat: false,
+    scancode: 0x32,
+    state: 1,
+    text_with_all_modifiers: None,
+    text_ignoring_modifiers: Some("`"),
+  }
+  event_loop.run_app(app)
+  assert_eq(
+    captured.val,
+    Some(
+      @core.KeyEvent::new(
+        @core.PhysicalKey::Code(@core.KeyCode::Backquote),
+        @core.Key::Dead(Some("`")),
+        @core.Key::Character("`"),
+        @core.KeyLocation::Standard,
+        @core.ElementState::Pressed,
+        false,
+        None,
+        None,
+      ),
+    ),
+  )
+}
+
+///|
 test "scale factor changes can request a replacement surface size" {
   let event_loop = EventLoop::new()
   let seen_scale_factor = Ref::new(None)

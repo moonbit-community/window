@@ -22,4 +22,5 @@ Known deltas against upstream `winit`:
 - The current `ControlFlow::WaitUntil` payload is interpreted as a relative timeout in milliseconds.
 - `ApplicationHandler` currently receives a concrete `EventLoop` instead of an `ActiveEventLoop` trait object.
 - `KeyboardInput` now prefers native AppKit text payloads for logical/text reconstruction and keeps the US scancode map only as fallback.
+- `key_without_modifiers` still does not use Carbon `UCKeyTranslate`, so some non-US layout edge cases may differ from upstream.
 - Full IME/preedit handling is not implemented yet.
