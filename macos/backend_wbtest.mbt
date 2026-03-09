@@ -195,6 +195,13 @@ struct OuterPositionApp {
 }
 
 ///|
+struct AttributesPositionApp {
+  moved : Ref[@dpi.PhysicalPosition?]
+  outer_position : Ref[@dpi.PhysicalPosition?]
+  window : Ref[Window?]
+}
+
+///|
 struct RequestSurfaceSizeApp {
   resized : Ref[@dpi.PhysicalSize?]
   surface_size : Ref[@dpi.PhysicalSize?]
@@ -329,6 +336,39 @@ impl ApplicationHandler for OuterPositionApp with can_create_surfaces(
 
 ///|
 impl ApplicationHandler for OuterPositionApp with window_event(
+  self,
+  event_loop,
+  _id,
+  event,
+) {
+  match event {
+    @core.WindowEvent::Moved(position) => {
+      self.moved.val = Some(position)
+      match self.window.val {
+        Some(window) => self.outer_position.val = Some(window.outer_position())
+        None => ()
+      }
+      event_loop.exit()
+    }
+    _ => ()
+  }
+}
+
+///|
+impl ApplicationHandler for AttributesPositionApp with can_create_surfaces(
+  self,
+  event_loop,
+) {
+  let window = event_loop.create_window(
+    @core.WindowAttributes::default()
+    .with_visible(false)
+    .with_position(Some(@dpi.PhysicalPosition::new(480, 260))),
+  )
+  self.window.val = Some(window)
+}
+
+///|
+impl ApplicationHandler for AttributesPositionApp with window_event(
   self,
   event_loop,
   _id,
@@ -947,6 +987,18 @@ test "window outer position can be set and read" {
   event_loop.run_app(app)
   assert_eq(moved.val, Some(@dpi.PhysicalPosition::new(320, 180)))
   assert_eq(outer_position.val, Some(@dpi.PhysicalPosition::new(320, 180)))
+}
+
+///|
+test "window attributes position applies at creation time" {
+  let event_loop = EventLoop::new()
+  let moved = Ref::new(None)
+  let outer_position = Ref::new(None)
+  let window = Ref::new(None)
+  let app : AttributesPositionApp = { moved, outer_position, window }
+  event_loop.run_app(app)
+  assert_eq(moved.val, Some(@dpi.PhysicalPosition::new(480, 260)))
+  assert_eq(outer_position.val, Some(@dpi.PhysicalPosition::new(480, 260)))
 }
 
 ///|

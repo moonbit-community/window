@@ -7,6 +7,7 @@ test "window attributes follow winit defaults" {
   assert_eq(attrs.surface_size(), Some(@dpi.PhysicalSize::new(800, 600)))
   assert_eq(attrs.min_surface_size(), None)
   assert_eq(attrs.max_surface_size(), None)
+  assert_eq(attrs.position(), None)
 }
 
 ///|
@@ -18,10 +19,12 @@ test "window attributes builders update fields" {
     .with_surface_size(@dpi.PhysicalSize::new(1024, 768))
     .with_min_surface_size(Some(@dpi.PhysicalSize::new(640, 480)))
     .with_max_surface_size(Some(@dpi.PhysicalSize::new(1920, 1080)))
+    .with_position(Some(@dpi.PhysicalPosition::new(320, 180)))
   assert_eq(attrs.title(), "hello")
   assert_false(attrs.visible())
   assert_false(attrs.resizable())
   assert_eq(attrs.surface_size(), Some(@dpi.PhysicalSize::new(1024, 768)))
   assert_eq(attrs.min_surface_size(), Some(@dpi.PhysicalSize::new(640, 480)))
   assert_eq(attrs.max_surface_size(), Some(@dpi.PhysicalSize::new(1920, 1080)))
+  assert_eq(attrs.position(), Some(@dpi.PhysicalPosition::new(320, 180)))
 }

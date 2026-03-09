@@ -368,6 +368,10 @@ pub fn EventLoop::create_window(
       set_max_surface_size(raw_id, max_size.width(), max_size.height())
     None => ()
   }
+  match attributes.position() {
+    Some(position) => set_window_position(raw_id, position.x(), position.y())
+    None => ()
+  }
   self.window_ids.push(raw_id)
   { id: @core.WindowId::from_raw(raw_id) }
 }

@@ -23,6 +23,7 @@ pub fn WindowId::into_raw(self : WindowId) -> Int {
 pub struct WindowAttributes {
   priv mut max_surface_size : @dpi.PhysicalSize?
   priv mut min_surface_size : @dpi.PhysicalSize?
+  priv mut position : @dpi.PhysicalPosition?
   priv mut surface_size : @dpi.PhysicalSize?
   priv mut resizable : Bool
   priv mut title : String
@@ -34,6 +35,7 @@ pub fn WindowAttributes::default() -> WindowAttributes {
   {
     min_surface_size: None,
     max_surface_size: None,
+    position: None,
     surface_size: Some(@dpi.PhysicalSize::new(800, 600)),
     resizable: true,
     title: "winit window",
@@ -65,6 +67,15 @@ pub fn WindowAttributes::with_max_surface_size(
   size : @dpi.PhysicalSize?,
 ) -> WindowAttributes {
   self.max_surface_size = size
+  self
+}
+
+///|
+pub fn WindowAttributes::with_position(
+  self : WindowAttributes,
+  position : @dpi.PhysicalPosition?,
+) -> WindowAttributes {
+  self.position = position
   self
 }
 
@@ -114,6 +125,13 @@ pub fn WindowAttributes::max_surface_size(
   self : WindowAttributes,
 ) -> @dpi.PhysicalSize? {
   self.max_surface_size
+}
+
+///|
+pub fn WindowAttributes::position(
+  self : WindowAttributes,
+) -> @dpi.PhysicalPosition? {
+  self.position
 }
 
 ///|
