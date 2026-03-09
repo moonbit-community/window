@@ -159,6 +159,16 @@ fn input_event_modifiers(window_id : Int) -> Int {
 }
 
 ///|
+fn input_event_scancode(window_id : Int) -> Int {
+  native_window_input_event_scancode(window_id)
+}
+
+///|
+fn input_event_repeat(window_id : Int) -> Bool {
+  native_window_input_event_repeat(window_id)
+}
+
+///|
 fn wait_for_events(timeout_ms : Int) -> Bool {
   native_event_loop_wait_millis(timeout_ms)
 }
@@ -340,6 +350,12 @@ extern "C" fn native_window_input_event_phase(window_id : Int) -> Int = "mbw_win
 
 ///|
 extern "C" fn native_window_input_event_modifiers(window_id : Int) -> Int = "mbw_window_input_event_modifiers"
+
+///|
+extern "C" fn native_window_input_event_scancode(window_id : Int) -> Int = "mbw_window_input_event_scancode"
+
+///|
+extern "C" fn native_window_input_event_repeat(window_id : Int) -> Bool = "mbw_window_input_event_repeat"
 
 ///|
 pub extern "C" fn native_window_take_surface_resized(window_id : Int) -> Bool = "mbw_window_take_surface_resized"

@@ -227,6 +227,24 @@ fn[A : ApplicationHandler] EventLoop::dispatch_input_events(
             modifiers_from_native(input_event_modifiers(raw_id)),
           ),
         )
+      7 =>
+        match element_state_from_native(input_event_state(raw_id)) {
+          Some(state) =>
+            app.window_event(
+              self,
+              window_id,
+              @core.WindowEvent::KeyboardInput(
+                create_key_event(
+                  input_event_scancode(raw_id),
+                  state,
+                  input_event_repeat(raw_id),
+                  modifiers_from_native(input_event_modifiers(raw_id)),
+                ),
+                false,
+              ),
+            )
+          None => ()
+        }
       _ => ()
     }
   }

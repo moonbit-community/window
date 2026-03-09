@@ -159,6 +159,16 @@ fn input_event_modifiers(_window_id : Int) -> Int {
 }
 
 ///|
+fn input_event_scancode(_window_id : Int) -> Int {
+  0
+}
+
+///|
+fn input_event_repeat(_window_id : Int) -> Bool {
+  false
+}
+
+///|
 fn wait_for_events(_timeout_ms : Int) -> Bool {
   false
 }

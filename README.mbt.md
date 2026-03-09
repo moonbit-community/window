@@ -7,12 +7,15 @@ native builds and focuses on `macos-arm64`.
 
 - Supported backend: macOS AppKit on the native target
 - Current event surface: `CloseRequested`, `Destroyed`, `Focused`,
-  `ModifiersChanged`, `Moved`, `PointerMoved`, `PointerEntered`,
-  `PointerLeft`, `PointerButton`, `MouseWheel`, `SurfaceResized`,
-  `ScaleFactorChanged`, `ThemeChanged`, `Occluded`,
-  `RedrawRequested`
+  `KeyboardInput`, `ModifiersChanged`, `Moved`, `PointerMoved`,
+  `PointerEntered`, `PointerLeft`, `PointerButton`, `MouseWheel`,
+  `SurfaceResized`, `ScaleFactorChanged`, `ThemeChanged`,
+  `Occluded`, `RedrawRequested`
 - Event loop support: `run_app`, `EventLoopProxy::wake_up()`,
   `ControlFlow::{Poll, Wait, WaitUntil}`
+- Current keyboard support is macOS-first and uses a fixed US scancode map
+  for `logical_key`, `text`, and `key_without_modifiers`. IME and layout-aware
+  translation are not implemented yet.
 - Other platforms are planned but not implemented yet
 
 ## Packages

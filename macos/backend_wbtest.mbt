@@ -80,6 +80,15 @@ extern "C" fn queue_modifiers_changed_for_test(
 ) -> Unit = "mbw_test_window_queue_modifiers_changed"
 
 ///|
+extern "C" fn queue_keyboard_input_for_test(
+  window_id : Int,
+  scancode : Int,
+  state : Int,
+  repeat : Bool,
+  modifiers : Int,
+) -> Unit = "mbw_test_window_queue_keyboard_input"
+
+///|
 struct StartCauseApp {
   causes : Array[@core.StartCause]
 }
@@ -196,6 +205,15 @@ struct ModifiersApp {
 ///|
 struct ResetModifiersApp {
   modifiers_events : Array[@core.Modifiers]
+}
+
+///|
+struct KeyboardInputApp {
+  captured : Ref[@core.KeyEvent?]
+  modifiers : Int
+  repeat : Bool
+  scancode : Int
+  state : Int
 }
 
 ///|
@@ -418,6 +436,39 @@ impl ApplicationHandler for ResetModifiersApp with window_event(
       if modifiers.is_empty() {
         event_loop.exit()
       }
+    }
+    _ => ()
+  }
+}
+
+///|
+impl ApplicationHandler for KeyboardInputApp with can_create_surfaces(
+  self,
+  event_loop,
+) {
+  let window = event_loop.create_window(
+    @core.WindowAttributes::default().with_visible(false),
+  )
+  queue_keyboard_input_for_test(
+    window.id().into_raw(),
+    self.scancode,
+    self.state,
+    self.repeat,
+    self.modifiers,
+  )
+}
+
+///|
+impl ApplicationHandler for KeyboardInputApp with window_event(
+  self,
+  event_loop,
+  _id,
+  event,
+) {
+  match event {
+    @core.WindowEvent::KeyboardInput(key_event, false) => {
+      self.captured.val = Some(key_event)
+      event_loop.exit()
     }
     _ => ()
   }
@@ -716,6 +767,122 @@ test "focus loss resets modifiers" {
     @core.Modifiers::new(true, true, false, false),
     @core.Modifiers::default(),
   ])
+}
+
+///|
+test "keyboard input reports character keys" {
+  let event_loop = EventLoop::new()
+  let captured = Ref::new(None)
+  let app : KeyboardInputApp = {
+    captured,
+    modifiers: 0,
+    repeat: false,
+    scancode: 0x00,
+    state: 1,
+  }
+  event_loop.run_app(app)
+  assert_eq(
+    captured.val,
+    Some(
+      @core.KeyEvent::new(
+        @core.PhysicalKey::Code(@core.KeyCode::KeyA),
+        @core.Key::Character("a"),
+        @core.Key::Character("a"),
+        @core.KeyLocation::Standard,
+        @core.ElementState::Pressed,
+        false,
+        Some("a"),
+        Some("a"),
+      ),
+    ),
+  )
+}
+
+///|
+test "keyboard input applies shift and repeat" {
+  let event_loop = EventLoop::new()
+  let captured = Ref::new(None)
+  let app : KeyboardInputApp = {
+    captured,
+    modifiers: 1,
+    repeat: true,
+    scancode: 0x00,
+    state: 1,
+  }
+  event_loop.run_app(app)
+  assert_eq(
+    captured.val,
+    Some(
+      @core.KeyEvent::new(
+        @core.PhysicalKey::Code(@core.KeyCode::KeyA),
+        @core.Key::Character("A"),
+        @core.Key::Character("a"),
+        @core.KeyLocation::Standard,
+        @core.ElementState::Pressed,
+        true,
+        Some("A"),
+        Some("A"),
+      ),
+    ),
+  )
+}
+
+///|
+test "keyboard input reports modifier keys with side information" {
+  let event_loop = EventLoop::new()
+  let captured = Ref::new(None)
+  let app : KeyboardInputApp = {
+    captured,
+    modifiers: 1,
+    repeat: false,
+    scancode: 0x38,
+    state: 1,
+  }
+  event_loop.run_app(app)
+  assert_eq(
+    captured.val,
+    Some(
+      @core.KeyEvent::new(
+        @core.PhysicalKey::Code(@core.KeyCode::ShiftLeft),
+        @core.Key::Named(@core.NamedKey::Shift),
+        @core.Key::Named(@core.NamedKey::Shift),
+        @core.KeyLocation::Left,
+        @core.ElementState::Pressed,
+        false,
+        None,
+        None,
+      ),
+    ),
+  )
+}
+
+///|
+test "keyboard input reports key release without text" {
+  let event_loop = EventLoop::new()
+  let captured = Ref::new(None)
+  let app : KeyboardInputApp = {
+    captured,
+    modifiers: 0,
+    repeat: false,
+    scancode: 0x24,
+    state: 2,
+  }
+  event_loop.run_app(app)
+  assert_eq(
+    captured.val,
+    Some(
+      @core.KeyEvent::new(
+        @core.PhysicalKey::Code(@core.KeyCode::Enter),
+        @core.Key::Named(@core.NamedKey::Enter),
+        @core.Key::Named(@core.NamedKey::Enter),
+        @core.KeyLocation::Standard,
+        @core.ElementState::Released,
+        false,
+        None,
+        None,
+      ),
+    ),
+  )
 }
 
 ///|

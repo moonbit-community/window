@@ -17,9 +17,11 @@ typedef struct mbw_input_event {
   int kind;
   double x;
   double y;
+  int scancode;
   int state;
   int button;
   int modifiers;
+  int repeat;
   int pointer_source;
   int pointer_kind;
   int scroll_delta_kind;
@@ -93,6 +95,7 @@ static int64_t g_now_ms_override_for_test = -1;
 #define MBW_INPUT_EVENT_POINTER_BUTTON 4
 #define MBW_INPUT_EVENT_MOUSE_WHEEL 5
 #define MBW_INPUT_EVENT_MODIFIERS_CHANGED 6
+#define MBW_INPUT_EVENT_KEYBOARD_INPUT 7
 
 #define MBW_ELEMENT_STATE_NONE 0
 #define MBW_ELEMENT_STATE_PRESSED 1
@@ -226,6 +229,14 @@ typedef struct {
 #define MBW_NSEVENT_MODIFIER_CONTROL (1UL << 18)
 #define MBW_NSEVENT_MODIFIER_OPTION (1UL << 19)
 #define MBW_NSEVENT_MODIFIER_COMMAND (1UL << 20)
+#define MBW_NX_DEVICELCTLKEYMASK 0x00000001UL
+#define MBW_NX_DEVICELSHIFTKEYMASK 0x00000002UL
+#define MBW_NX_DEVICERSHIFTKEYMASK 0x00000004UL
+#define MBW_NX_DEVICELCMDKEYMASK 0x00000008UL
+#define MBW_NX_DEVICERCMDKEYMASK 0x00000010UL
+#define MBW_NX_DEVICELALTKEYMASK 0x00000020UL
+#define MBW_NX_DEVICERALTKEYMASK 0x00000040UL
+#define MBW_NX_DEVICERCTLKEYMASK 0x00002000UL
 #define MBW_NSTRACKING_MOUSE_ENTERED_AND_EXITED (1UL << 0)
 #define MBW_NSTRACKING_MOUSE_MOVED (1UL << 1)
 #define MBW_NSTRACKING_ACTIVE_ALWAYS (1UL << 7)
@@ -249,11 +260,20 @@ static void mbw_view_refresh_tracking_area(id view);
 static void mbw_view_pointer_position(id view, id event, double *x, double *y);
 static int mbw_window_scroll_phase(id event);
 static int mbw_event_modifiers_state(id event);
+static mbw_nsuint_t mbw_event_modifier_device_flags(id event);
+static bool mbw_modifier_active_for_scancode(id event, int scancode);
 static void mbw_window_queue_pointer_moved(mbw_window_t *window, double x, double y);
 static void mbw_window_queue_pointer_entered(mbw_window_t *window, double x, double y);
 static void mbw_window_queue_pointer_left(mbw_window_t *window, double x, double y);
 static void mbw_window_queue_modifiers_changed(mbw_window_t *window, int modifiers);
 static void mbw_window_update_modifiers_from_event(mbw_window_t *window, id event);
+static void mbw_window_queue_keyboard_input(
+  mbw_window_t *window,
+  int scancode,
+  int state,
+  int modifiers,
+  int repeat
+);
 static void mbw_window_queue_pointer_button(
   mbw_window_t *window,
   int state,
@@ -445,6 +465,23 @@ static void mbw_window_queue_modifiers_changed(mbw_window_t *window, int modifie
   (void)mbw_push_input_event(window, &event);
 }
 
+static void mbw_window_queue_keyboard_input(
+  mbw_window_t *window,
+  int scancode,
+  int state,
+  int modifiers,
+  int repeat
+) {
+  mbw_input_event_t event = {
+    .kind = MBW_INPUT_EVENT_KEYBOARD_INPUT,
+    .scancode = scancode,
+    .state = state,
+    .modifiers = modifiers,
+    .repeat = repeat,
+  };
+  (void)mbw_push_input_event(window, &event);
+}
+
 static void mbw_window_queue_pointer_button(
   mbw_window_t *window,
   int state,
@@ -499,6 +536,47 @@ static int mbw_event_modifiers_state(id event) {
     modifiers |= MBW_MODIFIERS_META;
   }
   return modifiers;
+}
+
+static mbw_nsuint_t mbw_event_modifier_device_flags(id event) {
+  if (!event) {
+    return 0;
+  }
+  return ((mbw_nsuint_t(*)(id, SEL))objc_msgSend)(event, mbw_sel("modifierFlags"));
+}
+
+static bool mbw_modifier_active_for_scancode(id event, int scancode) {
+  mbw_nsuint_t flags = mbw_event_modifier_device_flags(event);
+  mbw_nsuint_t mask = 0;
+  switch (scancode) {
+    case 0x38:
+      mask = MBW_NX_DEVICELSHIFTKEYMASK;
+      break;
+    case 0x3C:
+      mask = MBW_NX_DEVICERSHIFTKEYMASK;
+      break;
+    case 0x3B:
+      mask = MBW_NX_DEVICELCTLKEYMASK;
+      break;
+    case 0x3E:
+      mask = MBW_NX_DEVICERCTLKEYMASK;
+      break;
+    case 0x3A:
+      mask = MBW_NX_DEVICELALTKEYMASK;
+      break;
+    case 0x3D:
+      mask = MBW_NX_DEVICERALTKEYMASK;
+      break;
+    case 0x37:
+      mask = MBW_NX_DEVICELCMDKEYMASK;
+      break;
+    case 0x36:
+      mask = MBW_NX_DEVICERCMDKEYMASK;
+      break;
+    default:
+      return false;
+  }
+  return (flags & mask) != 0;
 }
 
 static void mbw_window_update_modifiers_from_event(mbw_window_t *window, id event) {
@@ -569,6 +647,42 @@ static mbw_bool_t mbw_content_view_accepts_first_responder(id self, SEL _cmd) {
   (void)self;
   (void)_cmd;
   return YES;
+}
+
+static void mbw_content_view_key_down(id self, SEL _cmd, id event) {
+  (void)_cmd;
+  mbw_window_t *window = mbw_view_window(self);
+  if (!window || !event) {
+    return;
+  }
+  mbw_window_update_modifiers_from_event(window, event);
+  int modifiers = window->modifiers_state;
+  int scancode = (int)((mbw_nsinteger_t(*)(id, SEL))objc_msgSend)(
+    event, mbw_sel("keyCode"));
+  mbw_bool_t is_repeat = ((mbw_bool_t(*)(id, SEL))objc_msgSend)(event, mbw_sel("isARepeat"));
+  mbw_window_queue_keyboard_input(
+    window,
+    scancode,
+    MBW_ELEMENT_STATE_PRESSED,
+    modifiers,
+    is_repeat ? 1 : 0);
+}
+
+static void mbw_content_view_key_up(id self, SEL _cmd, id event) {
+  (void)_cmd;
+  mbw_window_t *window = mbw_view_window(self);
+  if (!window || !event) {
+    return;
+  }
+  mbw_window_update_modifiers_from_event(window, event);
+  int scancode = (int)((mbw_nsinteger_t(*)(id, SEL))objc_msgSend)(
+    event, mbw_sel("keyCode"));
+  mbw_window_queue_keyboard_input(
+    window,
+    scancode,
+    MBW_ELEMENT_STATE_RELEASED,
+    window->modifiers_state,
+    0);
 }
 
 static void mbw_content_view_mouse_motion(id self, id event) {
@@ -738,7 +852,32 @@ static void mbw_content_view_flags_changed(id self, SEL _cmd, id event) {
   if (!window || !event) {
     return;
   }
-  mbw_window_update_modifiers_from_event(window, event);
+  int scancode = (int)((mbw_nsinteger_t(*)(id, SEL))objc_msgSend)(
+    event, mbw_sel("keyCode"));
+  int previous_modifiers = window->modifiers_state;
+  int next_modifiers = mbw_event_modifiers_state(event);
+  if (
+    scancode == 0x38 ||
+    scancode == 0x3C ||
+    scancode == 0x3B ||
+    scancode == 0x3E ||
+    scancode == 0x3A ||
+    scancode == 0x3D ||
+    scancode == 0x37 ||
+    scancode == 0x36) {
+    mbw_window_queue_keyboard_input(
+      window,
+      scancode,
+      mbw_modifier_active_for_scancode(event, scancode)
+        ? MBW_ELEMENT_STATE_PRESSED
+        : MBW_ELEMENT_STATE_RELEASED,
+      next_modifiers,
+      0);
+  }
+  if (next_modifiers != previous_modifiers) {
+    window->modifiers_state = next_modifiers;
+    mbw_window_queue_modifiers_changed(window, next_modifiers);
+  }
 }
 
 static void mbw_window_delegate_did_resize(id self, SEL _cmd, id notification) {
@@ -918,6 +1057,16 @@ static Class mbw_get_content_view_class(void) {
     mbw_sel("viewDidMoveToWindow"),
     (IMP)mbw_content_view_view_did_move_to_window,
     "v@:");
+  class_addMethod(
+    view_class,
+    mbw_sel("keyDown:"),
+    (IMP)mbw_content_view_key_down,
+    "v@:@");
+  class_addMethod(
+    view_class,
+    mbw_sel("keyUp:"),
+    (IMP)mbw_content_view_key_up,
+    "v@:@");
   class_addMethod(
     view_class,
     mbw_sel("mouseDown:"),
@@ -1821,6 +1970,16 @@ int mbw_window_input_event_modifiers(int window_id) {
   return window ? window->current_input_event.modifiers : 0;
 }
 
+int mbw_window_input_event_scancode(int window_id) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  return window ? window->current_input_event.scancode : 0;
+}
+
+bool mbw_window_input_event_repeat(int window_id) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  return window ? window->current_input_event.repeat != 0 : false;
+}
+
 bool mbw_window_take_surface_resized(int window_id) {
   mbw_window_t *window = mbw_find_window(window_id);
   if (!window || !window->pending_surface_resized) {
@@ -2023,6 +2182,21 @@ void mbw_test_window_queue_modifiers_changed(int window_id, int modifiers) {
   }
   window->modifiers_state = modifiers;
   mbw_window_queue_modifiers_changed(window, modifiers);
+}
+
+void mbw_test_window_queue_keyboard_input(
+  int window_id,
+  int scancode,
+  int state,
+  bool repeat,
+  int modifiers
+) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  if (!window) {
+    return;
+  }
+  window->modifiers_state = modifiers;
+  mbw_window_queue_keyboard_input(window, scancode, state, modifiers, repeat ? 1 : 0);
 }
 
 void mbw_test_window_queue_destroyed(int window_id) {

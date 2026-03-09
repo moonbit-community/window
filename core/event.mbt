@@ -137,6 +137,7 @@ pub(all) enum WindowEvent {
   CloseRequested
   Destroyed
   Focused(Bool)
+  KeyboardInput(KeyEvent, Bool)
   ModifiersChanged(Modifiers)
   PointerMoved(@dpi.PhysicalPositionF64, Bool, PointerSource)
   PointerEntered(@dpi.PhysicalPositionF64, Bool, PointerKind)
