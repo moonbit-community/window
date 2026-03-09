@@ -50,6 +50,7 @@ pub fn native_window_width(Int) -> Int
 // Errors
 
 // Types and methods
+#alias(ActiveEventLoop)
 pub struct EventLoop {
   // private fields
 }

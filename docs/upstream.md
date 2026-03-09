@@ -19,5 +19,5 @@ This repository currently targets the smallest useful `macos-arm64` slice first:
 Known deltas against upstream `winit`:
 
 - Only the macOS backend is implemented.
-- `ApplicationHandler` currently receives a concrete `EventLoop` instead of an `ActiveEventLoop` trait object.
+- `ActiveEventLoop` is currently a type alias of `EventLoop` in this port.
 - `KeyboardInput` now prefers native AppKit text payloads for logical/text reconstruction and keeps the US scancode map only as fallback.

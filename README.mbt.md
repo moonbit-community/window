@@ -97,4 +97,5 @@ fn main {
 ## Notes
 
 - `ControlFlow::WaitUntil` takes an absolute monotonic timestamp (milliseconds)
-- `ApplicationHandler` currently receives a concrete `EventLoop`
+- `ApplicationHandler` methods receive `ActiveEventLoop` (currently an alias
+  of `EventLoop`)

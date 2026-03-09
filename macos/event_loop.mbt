@@ -433,6 +433,9 @@ pub struct EventLoop {
 } derive(Show)
 
 ///|
+pub type ActiveEventLoop = EventLoop
+
+///|
 pub fn EventLoop::new() -> EventLoop {
   guard backend_available() else {
     abort("macos backend is unavailable on this target")
@@ -512,11 +515,11 @@ pub fn EventLoop::exiting(self : EventLoop) -> Bool {
 
 ///|
 pub(open) trait ApplicationHandler {
-  new_events(Self, EventLoop, @core.StartCause) -> Unit = _
-  can_create_surfaces(Self, EventLoop) -> Unit = _
-  proxy_wake_up(Self, EventLoop) -> Unit = _
+  new_events(Self, ActiveEventLoop, @core.StartCause) -> Unit = _
+  can_create_surfaces(Self, ActiveEventLoop) -> Unit = _
+  proxy_wake_up(Self, ActiveEventLoop) -> Unit = _
   window_event(Self, EventLoop, @core.WindowId, @core.WindowEvent) -> Unit = _
-  about_to_wait(Self, EventLoop) -> Unit = _
+  about_to_wait(Self, ActiveEventLoop) -> Unit = _
 }
 
 ///|
