@@ -250,6 +250,12 @@ struct WindowDecorationsApp {
 }
 
 ///|
+struct WindowLevelApp {
+  level_after_update : Ref[@core.WindowLevel?]
+  level_initial : Ref[@core.WindowLevel?]
+}
+
+///|
 struct MovedApp {
   moved : Ref[@dpi.PhysicalPosition?]
 }
@@ -466,6 +472,22 @@ impl ApplicationHandler for WindowDecorationsApp with can_create_surfaces(
   self.decorated_after_enable.val = window.is_decorated()
   window.set_decorations(false)
   self.decorated_after_disable.val = window.is_decorated()
+  event_loop.exit()
+}
+
+///|
+impl ApplicationHandler for WindowLevelApp with can_create_surfaces(
+  self,
+  event_loop,
+) {
+  let window = event_loop.create_window(
+    @core.WindowAttributes::default()
+    .with_visible(false)
+    .with_window_level(@core.WindowLevel::AlwaysOnTop),
+  )
+  self.level_initial.val = Some(window.window_level())
+  window.set_window_level(@core.WindowLevel::AlwaysOnBottom)
+  self.level_after_update.val = Some(window.window_level())
   event_loop.exit()
 }
 
@@ -1260,6 +1282,17 @@ test "window decorations can be configured at create and runtime" {
   assert_false(decorated_initial.val)
   assert_true(decorated_after_enable.val)
   assert_false(decorated_after_disable.val)
+}
+
+///|
+test "window level can be configured at create and runtime" {
+  let event_loop = EventLoop::new()
+  let level_initial = Ref::new(None)
+  let level_after_update = Ref::new(None)
+  let app : WindowLevelApp = { level_after_update, level_initial }
+  event_loop.run_app(app)
+  assert_eq(level_initial.val, Some(@core.WindowLevel::AlwaysOnTop))
+  assert_eq(level_after_update.val, Some(@core.WindowLevel::AlwaysOnBottom))
 }
 
 ///|

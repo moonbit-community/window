@@ -96,8 +96,10 @@ pub fn Window::set_outer_position(Self, @dpi.PhysicalPosition) -> Unit
 pub fn Window::set_resizable(Self, Bool) -> Unit
 pub fn Window::set_title(Self, String) -> Unit
 pub fn Window::set_visible(Self, Bool) -> Unit
+pub fn Window::set_window_level(Self, @core.WindowLevel) -> Unit
 pub fn Window::surface_size(Self) -> @dpi.PhysicalSize
 pub fn Window::theme(Self) -> @core.Theme?
+pub fn Window::window_level(Self) -> @core.WindowLevel
 pub impl Eq for Window
 pub impl Show for Window
 

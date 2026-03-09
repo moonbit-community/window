@@ -17,11 +17,11 @@ native builds and focuses on `macos-arm64`.
   `request_surface_size`, `set_min_surface_size`, `set_max_surface_size`,
   `outer_position`, `set_outer_position`, `focus_window`, `has_focus`,
   `set_minimized`, `is_minimized`, `set_maximized`, `is_maximized`,
-  `set_decorations`, `is_decorated`, `set_ime_allowed`, and
-  `set_ime_cursor_area`
+  `set_decorations`, `is_decorated`, `set_window_level`, `window_level`,
+  `set_ime_allowed`, and `set_ime_cursor_area`
 - `WindowAttributes` now supports `with_position`,
   `with_min_surface_size`, `with_max_surface_size`, `with_ime_purpose`,
-  `with_active`, and `with_decorations`
+  `with_active`, `with_decorations`, and `with_window_level`
 - Current keyboard support is macOS-first and now prefers native
   `NSEvent` text (`characters` / `charactersIgnoringModifiers`) for
   `logical_key` and `text`; `key_without_modifiers` uses Carbon

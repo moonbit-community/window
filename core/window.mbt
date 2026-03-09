@@ -12,6 +12,13 @@ pub(all) enum ImePurpose {
 } derive(Eq, Show)
 
 ///|
+pub(all) enum WindowLevel {
+  Normal
+  AlwaysOnTop
+  AlwaysOnBottom
+} derive(Eq, Show)
+
+///|
 pub struct WindowId {
   priv raw : Int
 } derive(Eq, Show)
@@ -38,6 +45,7 @@ pub struct WindowAttributes {
   priv mut resizable : Bool
   priv mut title : String
   priv mut visible : Bool
+  priv mut window_level : WindowLevel
 } derive(Eq, Show)
 
 ///|
@@ -53,6 +61,7 @@ pub fn WindowAttributes::default() -> WindowAttributes {
     resizable: true,
     title: "winit window",
     visible: true,
+    window_level: WindowLevel::Normal,
   }
 }
 
@@ -116,6 +125,15 @@ pub fn WindowAttributes::with_decorations(
   decorations : Bool,
 ) -> WindowAttributes {
   self.decorations = decorations
+  self
+}
+
+///|
+pub fn WindowAttributes::with_window_level(
+  self : WindowAttributes,
+  level : WindowLevel,
+) -> WindowAttributes {
+  self.window_level = level
   self
 }
 
@@ -187,6 +205,11 @@ pub fn WindowAttributes::active(self : WindowAttributes) -> Bool {
 ///|
 pub fn WindowAttributes::decorations(self : WindowAttributes) -> Bool {
   self.decorations
+}
+
+///|
+pub fn WindowAttributes::window_level(self : WindowAttributes) -> WindowLevel {
+  self.window_level
 }
 
 ///|

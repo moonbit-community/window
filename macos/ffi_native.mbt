@@ -74,6 +74,11 @@ fn window_decorated(window_id : Int) -> Bool {
 }
 
 ///|
+fn window_level(window_id : Int) -> Int {
+  native_window_level(window_id)
+}
+
+///|
 fn take_scale_factor_changed(window_id : Int) -> Bool {
   native_window_take_scale_factor_changed(window_id)
 }
@@ -279,6 +284,11 @@ fn set_window_decorations(window_id : Int, decorated : Bool) -> Unit {
 }
 
 ///|
+fn set_window_level(window_id : Int, level : Int) -> Unit {
+  native_window_set_window_level(window_id, level)
+}
+
+///|
 fn set_ime_purpose(window_id : Int, purpose : Int) -> Unit {
   native_window_set_ime_purpose(window_id, purpose)
 }
@@ -426,6 +436,9 @@ extern "C" fn native_window_maximized(window_id : Int) -> Bool = "mbw_window_max
 
 ///|
 extern "C" fn native_window_decorated(window_id : Int) -> Bool = "mbw_window_decorated"
+
+///|
+extern "C" fn native_window_level(window_id : Int) -> Int = "mbw_window_level"
 
 ///|
 extern "C" fn native_window_take_scale_factor_changed(window_id : Int) -> Bool = "mbw_window_take_scale_factor_changed"
@@ -588,6 +601,12 @@ extern "C" fn native_window_set_decorations(
   window_id : Int,
   decorated : Bool,
 ) -> Unit = "mbw_window_set_decorations"
+
+///|
+extern "C" fn native_window_set_window_level(
+  window_id : Int,
+  level : Int,
+) -> Unit = "mbw_window_set_window_level"
 
 ///|
 extern "C" fn native_window_set_ime_purpose(

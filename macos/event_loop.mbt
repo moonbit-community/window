@@ -115,6 +115,19 @@ pub fn Window::is_decorated(self : Window) -> Bool {
 }
 
 ///|
+pub fn Window::set_window_level(
+  self : Window,
+  level : @core.WindowLevel,
+) -> Unit {
+  set_window_level(self.id.into_raw(), window_level_to_native(level))
+}
+
+///|
+pub fn Window::window_level(self : Window) -> @core.WindowLevel {
+  window_level_from_native(window_level(self.id.into_raw()))
+}
+
+///|
 pub fn Window::set_ime_purpose(
   self : Window,
   purpose : @core.ImePurpose,
@@ -265,6 +278,24 @@ fn ime_purpose_to_native(purpose : @core.ImePurpose) -> Int {
     @core.ImePurpose::Normal => 0
     @core.ImePurpose::Password => 1
     @core.ImePurpose::Terminal => 2
+  }
+}
+
+///|
+fn window_level_to_native(level : @core.WindowLevel) -> Int {
+  match level {
+    @core.WindowLevel::Normal => 0
+    @core.WindowLevel::AlwaysOnTop => 1
+    @core.WindowLevel::AlwaysOnBottom => 2
+  }
+}
+
+///|
+fn window_level_from_native(level : Int) -> @core.WindowLevel {
+  match level {
+    1 => @core.WindowLevel::AlwaysOnTop
+    2 => @core.WindowLevel::AlwaysOnBottom
+    _ => @core.WindowLevel::Normal
   }
 }
 
@@ -478,6 +509,7 @@ pub fn EventLoop::create_window(
   )
   guard raw_id > 0 else { abort("failed to create macos window") }
   set_ime_purpose(raw_id, ime_purpose_to_native(attributes.ime_purpose()))
+  set_window_level(raw_id, window_level_to_native(attributes.window_level()))
   match attributes.min_surface_size() {
     Some(min_size) =>
       set_min_surface_size(raw_id, min_size.width(), min_size.height())

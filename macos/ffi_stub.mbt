@@ -74,6 +74,11 @@ fn window_decorated(_window_id : Int) -> Bool {
 }
 
 ///|
+fn window_level(_window_id : Int) -> Int {
+  0
+}
+
+///|
 fn take_scale_factor_changed(_window_id : Int) -> Bool {
   false
 }
@@ -275,6 +280,11 @@ fn set_window_maximized(_window_id : Int, _maximized : Bool) -> Unit {
 
 ///|
 fn set_window_decorations(_window_id : Int, _decorated : Bool) -> Unit {
+  ()
+}
+
+///|
+fn set_window_level(_window_id : Int, _level : Int) -> Unit {
   ()
 }
 

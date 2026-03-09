@@ -11,6 +11,7 @@ test "window attributes follow winit defaults" {
   assert_eq(attrs.max_surface_size(), None)
   assert_eq(attrs.position(), None)
   assert_eq(attrs.ime_purpose(), ImePurpose::Normal)
+  assert_eq(attrs.window_level(), WindowLevel::Normal)
 }
 
 ///|
@@ -26,6 +27,7 @@ test "window attributes builders update fields" {
     .with_ime_purpose(ImePurpose::Password)
     .with_active(false)
     .with_decorations(false)
+    .with_window_level(WindowLevel::AlwaysOnTop)
   assert_eq(attrs.title(), "hello")
   assert_false(attrs.visible())
   assert_false(attrs.resizable())
@@ -36,4 +38,5 @@ test "window attributes builders update fields" {
   assert_eq(attrs.max_surface_size(), Some(@dpi.PhysicalSize::new(1920, 1080)))
   assert_eq(attrs.position(), Some(@dpi.PhysicalPosition::new(320, 180)))
   assert_eq(attrs.ime_purpose(), ImePurpose::Password)
+  assert_eq(attrs.window_level(), WindowLevel::AlwaysOnTop)
 }

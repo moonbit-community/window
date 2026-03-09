@@ -396,6 +396,7 @@ pub fn WindowAttributes::resizable(Self) -> Bool
 pub fn WindowAttributes::surface_size(Self) -> @dpi.PhysicalSize?
 pub fn WindowAttributes::title(Self) -> String
 pub fn WindowAttributes::visible(Self) -> Bool
+pub fn WindowAttributes::window_level(Self) -> WindowLevel
 pub fn WindowAttributes::with_active(Self, Bool) -> Self
 pub fn WindowAttributes::with_decorations(Self, Bool) -> Self
 pub fn WindowAttributes::with_ime_purpose(Self, ImePurpose) -> Self
@@ -406,6 +407,7 @@ pub fn WindowAttributes::with_resizable(Self, Bool) -> Self
 pub fn WindowAttributes::with_surface_size(Self, @dpi.PhysicalSize) -> Self
 pub fn WindowAttributes::with_title(Self, String) -> Self
 pub fn WindowAttributes::with_visible(Self, Bool) -> Self
+pub fn WindowAttributes::with_window_level(Self, WindowLevel) -> Self
 pub impl Eq for WindowAttributes
 pub impl Show for WindowAttributes
 
@@ -437,6 +439,14 @@ pub fn WindowId::from_raw(Int) -> Self
 pub fn WindowId::into_raw(Self) -> Int
 pub impl Eq for WindowId
 pub impl Show for WindowId
+
+pub(all) enum WindowLevel {
+  Normal
+  AlwaysOnTop
+  AlwaysOnBottom
+}
+pub impl Eq for WindowLevel
+pub impl Show for WindowLevel
 
 // Type aliases
 

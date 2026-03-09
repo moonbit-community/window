@@ -102,6 +102,7 @@ typedef struct mbw_window {
   int visible;
   int resizable;
   int decorated;
+  int window_level;
   mbw_input_event_t *queued_input_events;
   size_t queued_input_events_len;
   size_t queued_input_events_cap;
@@ -139,6 +140,10 @@ static int64_t g_now_ms_override_for_test = -1;
 #define MBW_IME_PURPOSE_NORMAL 0
 #define MBW_IME_PURPOSE_PASSWORD 1
 #define MBW_IME_PURPOSE_TERMINAL 2
+
+#define MBW_WINDOW_LEVEL_NORMAL 0
+#define MBW_WINDOW_LEVEL_ALWAYS_ON_TOP 1
+#define MBW_WINDOW_LEVEL_ALWAYS_ON_BOTTOM 2
 
 #define MBW_ELEMENT_STATE_NONE 0
 #define MBW_ELEMENT_STATE_PRESSED 1
@@ -323,6 +328,18 @@ static bool g_bootstrap_ok = false;
 static id g_ns_app = nil;
 static Class g_window_delegate_class = Nil;
 static Class g_content_view_class = Nil;
+
+static mbw_nsinteger_t mbw_native_window_level(int level) {
+  switch (level) {
+    case MBW_WINDOW_LEVEL_ALWAYS_ON_TOP:
+      return (mbw_nsinteger_t)CGWindowLevelForKey(kCGFloatingWindowLevelKey);
+    case MBW_WINDOW_LEVEL_ALWAYS_ON_BOTTOM:
+      return (mbw_nsinteger_t)(CGWindowLevelForKey(kCGNormalWindowLevelKey) - 1);
+    case MBW_WINDOW_LEVEL_NORMAL:
+    default:
+      return (mbw_nsinteger_t)CGWindowLevelForKey(kCGNormalWindowLevelKey);
+  }
+}
 
 static id mbw_make_nsstring(const char *utf8);
 static void mbw_update_window_state(mbw_window_t *window);
@@ -2376,6 +2393,7 @@ int mbw_window_create_utf8(
   window->visible = visible ? 1 : 0;
   window->resizable = resizable ? 1 : 0;
   window->decorated = decorated ? 1 : 0;
+  window->window_level = MBW_WINDOW_LEVEL_NORMAL;
   window->queued_input_events = NULL;
   window->queued_input_events_len = 0;
   window->queued_input_events_cap = 0;
@@ -2641,6 +2659,11 @@ bool mbw_window_maximized(int window_id) {
 bool mbw_window_decorated(int window_id) {
   mbw_window_t *window = mbw_find_window(window_id);
   return window ? window->decorated != 0 : false;
+}
+
+int mbw_window_level(int window_id) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  return window ? window->window_level : MBW_WINDOW_LEVEL_NORMAL;
 }
 
 bool mbw_window_take_scale_factor_changed(int window_id) {
@@ -3420,6 +3443,28 @@ void mbw_window_set_maximized(int window_id, bool maximized) {
         mbw_sel("zoom:"),
         nil);
     }
+  }
+#endif
+}
+
+void mbw_window_set_window_level(int window_id, int level) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  if (!window) {
+    return;
+  }
+  int next_level = MBW_WINDOW_LEVEL_NORMAL;
+  if (level == MBW_WINDOW_LEVEL_ALWAYS_ON_TOP) {
+    next_level = MBW_WINDOW_LEVEL_ALWAYS_ON_TOP;
+  } else if (level == MBW_WINDOW_LEVEL_ALWAYS_ON_BOTTOM) {
+    next_level = MBW_WINDOW_LEVEL_ALWAYS_ON_BOTTOM;
+  }
+  window->window_level = next_level;
+#if defined(__APPLE__)
+  if (window->window) {
+    ((void(*)(id, SEL, mbw_nsinteger_t))objc_msgSend)(
+      (id)window->window,
+      mbw_sel("setLevel:"),
+      mbw_native_window_level(next_level));
   }
 #endif
 }
