@@ -33,6 +33,22 @@ pub(all) enum ElementState {
 pub impl Eq for ElementState
 pub impl Show for ElementState
 
+pub struct Modifiers {
+  alt : Bool
+  control : Bool
+  meta : Bool
+  shift : Bool
+}
+pub fn Modifiers::alt_key(Self) -> Bool
+pub fn Modifiers::control_key(Self) -> Bool
+pub fn Modifiers::default() -> Self
+pub fn Modifiers::is_empty(Self) -> Bool
+pub fn Modifiers::meta_key(Self) -> Bool
+pub fn Modifiers::new(Bool, Bool, Bool, Bool) -> Self
+pub fn Modifiers::shift_key(Self) -> Bool
+pub impl Eq for Modifiers
+pub impl Show for Modifiers
+
 pub(all) enum MouseButton {
   Left
   Right
@@ -119,6 +135,7 @@ pub(all) enum WindowEvent {
   CloseRequested
   Destroyed
   Focused(Bool)
+  ModifiersChanged(Modifiers)
   PointerMoved(@dpi.PhysicalPositionF64, Bool, PointerSource)
   PointerEntered(@dpi.PhysicalPositionF64, Bool, PointerKind)
   PointerLeft(@dpi.PhysicalPositionF64?, Bool, PointerKind)

@@ -13,7 +13,7 @@ This repository currently targets the smallest useful `macos-arm64` slice first:
 - a macOS backend that can create a window, poll AppKit events, and run a minimal `run_app` loop
 - `ApplicationHandler::new_events` with `StartCause::{Init, Poll, WaitCancelled, ResumeTimeReached}`
 - `EventLoopProxy::wake_up()` wired into `WaitUntil` wake-ups
-- `WindowEvent::{CloseRequested, Destroyed, Focused, Moved, PointerMoved, PointerEntered, PointerLeft, PointerButton, MouseWheel, SurfaceResized, ScaleFactorChanged, ThemeChanged, Occluded, RedrawRequested}`
+- `WindowEvent::{CloseRequested, Destroyed, Focused, ModifiersChanged, Moved, PointerMoved, PointerEntered, PointerLeft, PointerButton, MouseWheel, SurfaceResized, ScaleFactorChanged, ThemeChanged, Occluded, RedrawRequested}`
 - hidden macOS windows remain alive, while close requests now come from an `NSWindowDelegate`
 
 Known deltas against upstream `winit`:

@@ -154,6 +154,11 @@ fn input_event_phase(_window_id : Int) -> Int {
 }
 
 ///|
+fn input_event_modifiers(_window_id : Int) -> Int {
+  0
+}
+
+///|
 fn wait_for_events(_timeout_ms : Int) -> Bool {
   false
 }

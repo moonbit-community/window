@@ -74,6 +74,12 @@ extern "C" fn queue_mouse_wheel_for_test(
 ) -> Unit = "mbw_test_window_queue_mouse_wheel"
 
 ///|
+extern "C" fn queue_modifiers_changed_for_test(
+  window_id : Int,
+  modifiers : Int,
+) -> Unit = "mbw_test_window_queue_modifiers_changed"
+
+///|
 struct StartCauseApp {
   causes : Array[@core.StartCause]
 }
@@ -180,6 +186,16 @@ struct PointerButtonApp {
 struct MouseWheelApp {
   delta : Ref[@core.MouseScrollDelta?]
   phase : Ref[@core.TouchPhase?]
+}
+
+///|
+struct ModifiersApp {
+  modifiers : Ref[@core.Modifiers?]
+}
+
+///|
+struct ResetModifiersApp {
+  modifiers_events : Array[@core.Modifiers]
 }
 
 ///|
@@ -345,6 +361,63 @@ impl ApplicationHandler for MouseWheelApp with window_event(
       self.delta.val = Some(delta)
       self.phase.val = Some(phase)
       event_loop.exit()
+    }
+    _ => ()
+  }
+}
+
+///|
+impl ApplicationHandler for ModifiersApp with can_create_surfaces(
+  _self,
+  event_loop,
+) {
+  let window = event_loop.create_window(
+    @core.WindowAttributes::default().with_visible(false),
+  )
+  queue_modifiers_changed_for_test(window.id().into_raw(), 13)
+}
+
+///|
+impl ApplicationHandler for ModifiersApp with window_event(
+  self,
+  event_loop,
+  _id,
+  event,
+) {
+  match event {
+    @core.WindowEvent::ModifiersChanged(modifiers) => {
+      self.modifiers.val = Some(modifiers)
+      event_loop.exit()
+    }
+    _ => ()
+  }
+}
+
+///|
+impl ApplicationHandler for ResetModifiersApp with can_create_surfaces(
+  _self,
+  event_loop,
+) {
+  let window = event_loop.create_window(
+    @core.WindowAttributes::default().with_visible(false),
+  )
+  queue_modifiers_changed_for_test(window.id().into_raw(), 3)
+  queue_focus_for_test(window.id().into_raw(), false)
+}
+
+///|
+impl ApplicationHandler for ResetModifiersApp with window_event(
+  self,
+  event_loop,
+  _id,
+  event,
+) {
+  match event {
+    @core.WindowEvent::ModifiersChanged(modifiers) => {
+      self.modifiers_events.push(modifiers)
+      if modifiers.is_empty() {
+        event_loop.exit()
+      }
     }
     _ => ()
   }
@@ -624,6 +697,25 @@ test "mouse wheel events deliver pixel deltas and phase" {
     ),
   )
   assert_eq(phase.val, Some(@core.TouchPhase::Moved))
+}
+
+///|
+test "modifiers changed events are delivered" {
+  let event_loop = EventLoop::new()
+  let modifiers = Ref::new(None)
+  event_loop.run_app({ modifiers, })
+  assert_eq(modifiers.val, Some(@core.Modifiers::new(true, false, true, true)))
+}
+
+///|
+test "focus loss resets modifiers" {
+  let event_loop = EventLoop::new()
+  let modifiers_events = []
+  event_loop.run_app({ modifiers_events, })
+  assert_eq(modifiers_events, [
+    @core.Modifiers::new(true, true, false, false),
+    @core.Modifiers::default(),
+  ])
 }
 
 ///|

@@ -19,6 +19,7 @@ typedef struct mbw_input_event {
   double y;
   int state;
   int button;
+  int modifiers;
   int pointer_source;
   int pointer_kind;
   int scroll_delta_kind;
@@ -64,6 +65,7 @@ typedef struct mbw_window {
   int pending_redraw_requested;
   int reported_width;
   int reported_height;
+  int modifiers_state;
   int visible;
   int resizable;
   mbw_input_event_t *queued_input_events;
@@ -90,6 +92,7 @@ static int64_t g_now_ms_override_for_test = -1;
 #define MBW_INPUT_EVENT_POINTER_LEFT 3
 #define MBW_INPUT_EVENT_POINTER_BUTTON 4
 #define MBW_INPUT_EVENT_MOUSE_WHEEL 5
+#define MBW_INPUT_EVENT_MODIFIERS_CHANGED 6
 
 #define MBW_ELEMENT_STATE_NONE 0
 #define MBW_ELEMENT_STATE_PRESSED 1
@@ -110,6 +113,11 @@ static int64_t g_now_ms_override_for_test = -1;
 #define MBW_TOUCH_PHASE_MOVED 2
 #define MBW_TOUCH_PHASE_ENDED 3
 #define MBW_TOUCH_PHASE_CANCELLED 4
+
+#define MBW_MODIFIERS_SHIFT 1
+#define MBW_MODIFIERS_CONTROL 2
+#define MBW_MODIFIERS_ALT 4
+#define MBW_MODIFIERS_META 8
 
 static int mbw_clamp_size(int value) {
   return value <= 0 ? 1 : value;
@@ -214,6 +222,10 @@ typedef struct {
 #define MBW_NSEVENT_PHASE_ENDED (1UL << 3)
 #define MBW_NSEVENT_PHASE_CANCELLED (1UL << 4)
 #define MBW_NSEVENT_PHASE_MAY_BEGIN (1UL << 5)
+#define MBW_NSEVENT_MODIFIER_SHIFT (1UL << 17)
+#define MBW_NSEVENT_MODIFIER_CONTROL (1UL << 18)
+#define MBW_NSEVENT_MODIFIER_OPTION (1UL << 19)
+#define MBW_NSEVENT_MODIFIER_COMMAND (1UL << 20)
 #define MBW_NSTRACKING_MOUSE_ENTERED_AND_EXITED (1UL << 0)
 #define MBW_NSTRACKING_MOUSE_MOVED (1UL << 1)
 #define MBW_NSTRACKING_ACTIVE_ALWAYS (1UL << 7)
@@ -236,9 +248,12 @@ static void mbw_view_set_tracking_area(id view, id tracking_area);
 static void mbw_view_refresh_tracking_area(id view);
 static void mbw_view_pointer_position(id view, id event, double *x, double *y);
 static int mbw_window_scroll_phase(id event);
+static int mbw_event_modifiers_state(id event);
 static void mbw_window_queue_pointer_moved(mbw_window_t *window, double x, double y);
 static void mbw_window_queue_pointer_entered(mbw_window_t *window, double x, double y);
 static void mbw_window_queue_pointer_left(mbw_window_t *window, double x, double y);
+static void mbw_window_queue_modifiers_changed(mbw_window_t *window, int modifiers);
+static void mbw_window_update_modifiers_from_event(mbw_window_t *window, id event);
 static void mbw_window_queue_pointer_button(
   mbw_window_t *window,
   int state,
@@ -422,6 +437,14 @@ static void mbw_window_queue_pointer_left(mbw_window_t *window, double x, double
   (void)mbw_push_input_event(window, &event);
 }
 
+static void mbw_window_queue_modifiers_changed(mbw_window_t *window, int modifiers) {
+  mbw_input_event_t event = {
+    .kind = MBW_INPUT_EVENT_MODIFIERS_CHANGED,
+    .modifiers = modifiers,
+  };
+  (void)mbw_push_input_event(window, &event);
+}
+
 static void mbw_window_queue_pointer_button(
   mbw_window_t *window,
   int state,
@@ -454,6 +477,40 @@ static void mbw_window_queue_mouse_wheel(
     .phase = phase,
   };
   (void)mbw_push_input_event(window, &event);
+}
+
+static int mbw_event_modifiers_state(id event) {
+  if (!event) {
+    return 0;
+  }
+  mbw_nsuint_t flags =
+    ((mbw_nsuint_t(*)(id, SEL))objc_msgSend)(event, mbw_sel("modifierFlags"));
+  int modifiers = 0;
+  if (flags & MBW_NSEVENT_MODIFIER_SHIFT) {
+    modifiers |= MBW_MODIFIERS_SHIFT;
+  }
+  if (flags & MBW_NSEVENT_MODIFIER_CONTROL) {
+    modifiers |= MBW_MODIFIERS_CONTROL;
+  }
+  if (flags & MBW_NSEVENT_MODIFIER_OPTION) {
+    modifiers |= MBW_MODIFIERS_ALT;
+  }
+  if (flags & MBW_NSEVENT_MODIFIER_COMMAND) {
+    modifiers |= MBW_MODIFIERS_META;
+  }
+  return modifiers;
+}
+
+static void mbw_window_update_modifiers_from_event(mbw_window_t *window, id event) {
+  if (!window || !event) {
+    return;
+  }
+  int next_modifiers = mbw_event_modifiers_state(event);
+  if (next_modifiers == window->modifiers_state) {
+    return;
+  }
+  window->modifiers_state = next_modifiers;
+  mbw_window_queue_modifiers_changed(window, next_modifiers);
 }
 
 static int mbw_window_scroll_phase(id event) {
@@ -519,6 +576,7 @@ static void mbw_content_view_mouse_motion(id self, id event) {
   if (!window || !event) {
     return;
   }
+  mbw_window_update_modifiers_from_event(window, event);
   mbw_point_t window_point =
     ((mbw_point_t(*)(id, SEL))objc_msgSend)(event, mbw_sel("locationInWindow"));
   mbw_point_t view_point =
@@ -555,6 +613,7 @@ static void mbw_content_view_mouse_click(id self, id event, int state) {
   if (!window || !event) {
     return;
   }
+  mbw_window_update_modifiers_from_event(window, event);
   double x = 0.0;
   double y = 0.0;
   mbw_view_pointer_position(self, event, &x, &y);
@@ -625,6 +684,7 @@ static void mbw_content_view_mouse_entered(id self, SEL _cmd, id event) {
   if (!window) {
     return;
   }
+  mbw_window_update_modifiers_from_event(window, event);
   double x = 0.0;
   double y = 0.0;
   mbw_view_pointer_position(self, event, &x, &y);
@@ -637,6 +697,7 @@ static void mbw_content_view_mouse_exited(id self, SEL _cmd, id event) {
   if (!window) {
     return;
   }
+  mbw_window_update_modifiers_from_event(window, event);
   double x = 0.0;
   double y = 0.0;
   mbw_view_pointer_position(self, event, &x, &y);
@@ -649,6 +710,7 @@ static void mbw_content_view_scroll_wheel(id self, SEL _cmd, id event) {
   if (!window || !event) {
     return;
   }
+  mbw_window_update_modifiers_from_event(window, event);
   mbw_content_view_mouse_motion(self, event);
 
   double delta_x = ((double(*)(id, SEL))objc_msgSend)(event, mbw_sel("scrollingDeltaX"));
@@ -668,6 +730,15 @@ static void mbw_content_view_scroll_wheel(id self, SEL _cmd, id event) {
     delta_x,
     delta_y,
     mbw_window_scroll_phase(event));
+}
+
+static void mbw_content_view_flags_changed(id self, SEL _cmd, id event) {
+  (void)_cmd;
+  mbw_window_t *window = mbw_view_window(self);
+  if (!window || !event) {
+    return;
+  }
+  mbw_window_update_modifiers_from_event(window, event);
 }
 
 static void mbw_window_delegate_did_resize(id self, SEL _cmd, id notification) {
@@ -724,6 +795,10 @@ static void mbw_window_delegate_did_resign_key(id self, SEL _cmd, id notificatio
   mbw_window_t *window = mbw_delegate_window(self);
   if (!window) {
     return;
+  }
+  if (window->modifiers_state != 0) {
+    window->modifiers_state = 0;
+    mbw_window_queue_modifiers_changed(window, 0);
   }
   window->focused = 0;
   window->pending_focus_value = 0;
@@ -907,6 +982,11 @@ static Class mbw_get_content_view_class(void) {
     view_class,
     mbw_sel("scrollWheel:"),
     (IMP)mbw_content_view_scroll_wheel,
+    "v@:@");
+  class_addMethod(
+    view_class,
+    mbw_sel("flagsChanged:"),
+    (IMP)mbw_content_view_flags_changed,
     "v@:@");
 
   objc_registerClassPair(view_class);
@@ -1416,6 +1496,7 @@ int mbw_window_create_utf8(
   window->pending_redraw_requested = 0;
   window->reported_width = window->width;
   window->reported_height = window->height;
+  window->modifiers_state = 0;
   window->visible = visible ? 1 : 0;
   window->resizable = resizable ? 1 : 0;
   window->queued_input_events = NULL;
@@ -1735,6 +1816,11 @@ int mbw_window_input_event_phase(int window_id) {
   return window ? window->current_input_event.phase : MBW_TOUCH_PHASE_NONE;
 }
 
+int mbw_window_input_event_modifiers(int window_id) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  return window ? window->current_input_event.modifiers : 0;
+}
+
 bool mbw_window_take_surface_resized(int window_id) {
   mbw_window_t *window = mbw_find_window(window_id);
   if (!window || !window->pending_surface_resized) {
@@ -1807,6 +1893,10 @@ void mbw_test_window_queue_focused(int window_id, bool focused) {
   mbw_window_t *window = mbw_find_window(window_id);
   if (!window) {
     return;
+  }
+  if (!focused && window->modifiers_state != 0) {
+    window->modifiers_state = 0;
+    mbw_window_queue_modifiers_changed(window, 0);
   }
   window->focused = focused ? 1 : 0;
   window->pending_focus_value = focused ? 1 : 0;
@@ -1924,6 +2014,15 @@ void mbw_test_window_queue_mouse_wheel(
     return;
   }
   mbw_window_queue_mouse_wheel(window, delta_kind, delta_x, delta_y, phase);
+}
+
+void mbw_test_window_queue_modifiers_changed(int window_id, int modifiers) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  if (!window) {
+    return;
+  }
+  window->modifiers_state = modifiers;
+  mbw_window_queue_modifiers_changed(window, modifiers);
 }
 
 void mbw_test_window_queue_destroyed(int window_id) {

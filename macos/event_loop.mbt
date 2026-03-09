@@ -134,6 +134,16 @@ fn touch_phase_from_native(phase : Int) -> @core.TouchPhase? {
 }
 
 ///|
+fn modifiers_from_native(modifiers : Int) -> @core.Modifiers {
+  @core.Modifiers::new(
+    (modifiers & 1) != 0,
+    (modifiers & 2) != 0,
+    (modifiers & 4) != 0,
+    (modifiers & 8) != 0,
+  )
+}
+
+///|
 fn[A : ApplicationHandler] EventLoop::dispatch_input_events(
   self : EventLoop,
   app : A,
@@ -209,6 +219,14 @@ fn[A : ApplicationHandler] EventLoop::dispatch_input_events(
             )
           _ => ()
         }
+      6 =>
+        app.window_event(
+          self,
+          window_id,
+          @core.WindowEvent::ModifiersChanged(
+            modifiers_from_native(input_event_modifiers(raw_id)),
+          ),
+        )
       _ => ()
     }
   }
