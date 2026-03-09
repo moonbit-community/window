@@ -69,6 +69,11 @@ fn window_resizable(window_id : Int) -> Bool {
 }
 
 ///|
+fn window_occluded(window_id : Int) -> Bool {
+  native_window_occluded(window_id)
+}
+
+///|
 fn window_minimized(window_id : Int) -> Bool {
   native_window_minimized(window_id)
 }
@@ -453,6 +458,9 @@ extern "C" fn native_window_visible(window_id : Int) -> Bool = "mbw_window_visib
 
 ///|
 extern "C" fn native_window_resizable(window_id : Int) -> Bool = "mbw_window_resizable"
+
+///|
+extern "C" fn native_window_occluded(window_id : Int) -> Bool = "mbw_window_is_occluded"
 
 ///|
 extern "C" fn native_window_minimized(window_id : Int) -> Bool = "mbw_window_minimized"

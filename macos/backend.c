@@ -2658,6 +2658,11 @@ bool mbw_window_resizable(int window_id) {
   return window ? window->resizable != 0 : false;
 }
 
+bool mbw_window_is_occluded(int window_id) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  return window ? window->occluded != 0 : false;
+}
+
 bool mbw_window_minimized(int window_id) {
   mbw_window_t *window = mbw_find_window(window_id);
   return window ? window->minimized != 0 : false;

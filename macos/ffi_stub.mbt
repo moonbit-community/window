@@ -69,6 +69,11 @@ fn window_resizable(_window_id : Int) -> Bool {
 }
 
 ///|
+fn window_occluded(_window_id : Int) -> Bool {
+  false
+}
+
+///|
 fn window_minimized(_window_id : Int) -> Bool {
   false
 }

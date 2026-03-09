@@ -487,6 +487,11 @@ pub fn Window::theme(self : Window) -> @core.Theme? {
 }
 
 ///|
+pub fn Window::is_occluded(self : Window) -> Bool {
+  window_occluded(self.id.into_raw())
+}
+
+///|
 pub struct EventLoop {
   priv mut control_flow_ : @core.ControlFlow
   priv mut exit_requested : Bool

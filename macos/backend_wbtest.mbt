@@ -1155,17 +1155,20 @@ impl ApplicationHandler for ThemeApp with window_event(
 
 ///|
 struct OccludedApp {
+  current_occluded : Ref[Bool?]
   occluded : Ref[Bool?]
+  window : Ref[Window?]
 }
 
 ///|
 impl ApplicationHandler for OccludedApp with can_create_surfaces(
-  _self,
+  self,
   event_loop,
 ) {
   let window = event_loop.create_window(
     @core.WindowAttributes::default().with_visible(false),
   )
+  self.window.val = Some(window)
   queue_occluded_for_test(window.id().into_raw(), true)
 }
 
@@ -1179,6 +1182,10 @@ impl ApplicationHandler for OccludedApp with window_event(
   match event {
     @core.WindowEvent::Occluded(occluded) => {
       self.occluded.val = Some(occluded)
+      match self.window.val {
+        Some(window) => self.current_occluded.val = Some(window.is_occluded())
+        None => ()
+      }
       event_loop.exit()
     }
     _ => ()
@@ -1853,9 +1860,12 @@ test "theme changed events update the readable window theme" {
 ///|
 test "occluded events are delivered" {
   let event_loop = EventLoop::new()
+  let window = Ref::new(None)
+  let current_occluded = Ref::new(None)
   let occluded = Ref::new(None)
-  event_loop.run_app({ occluded, })
+  event_loop.run_app({ window, current_occluded, occluded })
   assert_eq(occluded.val, Some(true))
+  assert_eq(current_occluded.val, Some(true))
 }
 
 ///|
