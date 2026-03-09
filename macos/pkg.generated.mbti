@@ -54,12 +54,14 @@ pub fn native_window_width(Int) -> Int
 pub struct EventLoop {
   // private fields
 }
+pub fn EventLoop::available_monitors(Self) -> Array[@core.MonitorHandle]
 pub fn EventLoop::control_flow(Self) -> @core.ControlFlow
 pub fn EventLoop::create_proxy(Self) -> EventLoopProxy
 pub fn EventLoop::create_window(Self, @core.WindowAttributes) -> Window
 pub fn EventLoop::exit(Self) -> Unit
 pub fn EventLoop::exiting(Self) -> Bool
 pub fn EventLoop::new() -> Self
+pub fn EventLoop::primary_monitor(Self) -> @core.MonitorHandle?
 pub fn[A : ApplicationHandler] EventLoop::run_app(Self, A) -> Unit
 pub fn EventLoop::set_control_flow(Self, @core.ControlFlow) -> Unit
 pub impl Show for EventLoop
@@ -74,6 +76,8 @@ pub impl Show for EventLoopProxy
 pub struct Window {
   // private fields
 }
+pub fn Window::available_monitors(Self) -> Array[@core.MonitorHandle]
+pub fn Window::current_monitor(Self) -> @core.MonitorHandle?
 pub fn Window::cursor(Self) -> @core.CursorIcon
 pub fn Window::drag_resize_window(Self, @core.ResizeDirection) -> Bool
 pub fn Window::drag_window(Self) -> Bool
@@ -103,6 +107,7 @@ pub fn Window::min_surface_size(Self) -> @dpi.PhysicalSize?
 pub fn Window::outer_position(Self) -> @dpi.PhysicalPosition
 pub fn Window::outer_size(Self) -> @dpi.PhysicalSize
 pub fn Window::pre_present_notify(Self) -> Unit
+pub fn Window::primary_monitor(Self) -> @core.MonitorHandle?
 pub fn Window::request_redraw(Self) -> Unit
 pub fn Window::request_surface_size(Self, @dpi.PhysicalSize) -> Unit
 pub fn Window::request_user_attention(Self, @core.UserAttentionType?) -> Unit

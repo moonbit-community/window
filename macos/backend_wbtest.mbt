@@ -555,6 +555,14 @@ struct WindowAuxiliaryApiApp {
 }
 
 ///|
+struct MonitorApiApp {
+  available_monitor_count : Ref[Int]
+  current_monitor : Ref[@core.MonitorHandle?]
+  primary_monitor_from_event_loop : Ref[@core.MonitorHandle?]
+  primary_monitor_from_window : Ref[@core.MonitorHandle?]
+}
+
+///|
 impl ApplicationHandler for FocusApp with can_create_surfaces(_self, event_loop) {
   let window = event_loop.create_window(
     @core.WindowAttributes::default().with_visible(false),
@@ -1626,6 +1634,22 @@ impl ApplicationHandler for WindowAuxiliaryApiApp with can_create_surfaces(
   window.request_user_attention(Some(@core.UserAttentionType::Informational))
   window.request_user_attention(Some(@core.UserAttentionType::Critical))
   window.request_user_attention(None)
+  event_loop.exit()
+}
+
+///|
+impl ApplicationHandler for MonitorApiApp with can_create_surfaces(
+  self,
+  event_loop,
+) {
+  let window = event_loop.create_window(
+    @core.WindowAttributes::default().with_visible(false),
+  )
+  let available_monitors = event_loop.available_monitors()
+  self.available_monitor_count.val = available_monitors.length()
+  self.primary_monitor_from_event_loop.val = event_loop.primary_monitor()
+  self.primary_monitor_from_window.val = window.primary_monitor()
+  self.current_monitor.val = window.current_monitor()
   event_loop.exit()
 }
 
@@ -2757,6 +2781,52 @@ test "window auxiliary api methods are available on macos" {
   assert_false(cursor_grab_confined.val)
   let _ = drag_window_started.val
   assert_false(drag_resize_started.val)
+}
+
+///|
+test "monitor api returns available primary and current monitor handles" {
+  let event_loop = EventLoop::new()
+  let available_monitor_count = Ref::new(0)
+  let primary_monitor_from_event_loop = Ref::new(None)
+  let primary_monitor_from_window = Ref::new(None)
+  let current_monitor = Ref::new(None)
+  let app : MonitorApiApp = {
+    available_monitor_count,
+    current_monitor,
+    primary_monitor_from_event_loop,
+    primary_monitor_from_window,
+  }
+  event_loop.run_app(app)
+  assert_true(available_monitor_count.val >= 0)
+  if available_monitor_count.val > 0 {
+    assert_true(primary_monitor_from_event_loop.val is Some(_))
+  }
+  match primary_monitor_from_event_loop.val {
+    Some(primary_from_loop) => {
+      assert_true(primary_from_loop.native_id() > (0 : Int).to_uint64())
+      assert_true(primary_from_loop.surface_size().width() > 0)
+      assert_true(primary_from_loop.surface_size().height() > 0)
+      assert_true(primary_from_loop.scale_factor() > 0.0)
+      match primary_monitor_from_window.val {
+        Some(primary_from_window) =>
+          assert_eq(
+            primary_from_window.native_id(),
+            primary_from_loop.native_id(),
+          )
+        None => ()
+      }
+    }
+    None => ()
+  }
+  match current_monitor.val {
+    Some(monitor) => {
+      assert_true(monitor.native_id() > (0 : Int).to_uint64())
+      assert_true(monitor.surface_size().width() > 0)
+      assert_true(monitor.surface_size().height() > 0)
+      assert_true(monitor.scale_factor() > 0.0)
+    }
+    None => ()
+  }
 }
 
 ///|

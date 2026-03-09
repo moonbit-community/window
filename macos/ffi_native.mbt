@@ -24,6 +24,56 @@ fn window_title(window_id : Int) -> Bytes {
 }
 
 ///|
+fn available_monitor_count() -> Int {
+  native_monitor_count()
+}
+
+///|
+fn monitor_id_at(index : Int) -> UInt64 {
+  native_monitor_id_at(index)
+}
+
+///|
+fn primary_monitor_id() -> UInt64 {
+  native_primary_monitor_id()
+}
+
+///|
+fn window_current_monitor_id(window_id : Int) -> UInt64 {
+  native_window_current_monitor_id(window_id)
+}
+
+///|
+fn monitor_name(monitor_id : UInt64) -> Bytes {
+  native_monitor_name_utf8(monitor_id)
+}
+
+///|
+fn monitor_position_x(monitor_id : UInt64) -> Int {
+  native_monitor_position_x(monitor_id)
+}
+
+///|
+fn monitor_position_y(monitor_id : UInt64) -> Int {
+  native_monitor_position_y(monitor_id)
+}
+
+///|
+fn monitor_width(monitor_id : UInt64) -> Int {
+  native_monitor_width(monitor_id)
+}
+
+///|
+fn monitor_height(monitor_id : UInt64) -> Int {
+  native_monitor_height(monitor_id)
+}
+
+///|
+fn monitor_scale_factor(monitor_id : UInt64) -> Double {
+  native_monitor_scale_factor(monitor_id)
+}
+
+///|
 fn window_scale_factor(window_id : Int) -> Double {
   native_window_scale_factor(window_id)
 }
@@ -733,6 +783,36 @@ extern "C" fn native_window_theme(window_id : Int) -> Int = "mbw_window_theme"
 
 ///|
 extern "C" fn native_window_title_utf8(window_id : Int) -> Bytes = "mbw_window_title_utf8"
+
+///|
+extern "C" fn native_monitor_count() -> Int = "mbw_monitor_count"
+
+///|
+extern "C" fn native_monitor_id_at(index : Int) -> UInt64 = "mbw_monitor_id_at"
+
+///|
+extern "C" fn native_primary_monitor_id() -> UInt64 = "mbw_primary_monitor_id"
+
+///|
+extern "C" fn native_window_current_monitor_id(window_id : Int) -> UInt64 = "mbw_window_current_monitor_id"
+
+///|
+extern "C" fn native_monitor_name_utf8(monitor_id : UInt64) -> Bytes = "mbw_monitor_name_utf8"
+
+///|
+extern "C" fn native_monitor_position_x(monitor_id : UInt64) -> Int = "mbw_monitor_position_x"
+
+///|
+extern "C" fn native_monitor_position_y(monitor_id : UInt64) -> Int = "mbw_monitor_position_y"
+
+///|
+extern "C" fn native_monitor_width(monitor_id : UInt64) -> Int = "mbw_monitor_width"
+
+///|
+extern "C" fn native_monitor_height(monitor_id : UInt64) -> Int = "mbw_monitor_height"
+
+///|
+extern "C" fn native_monitor_scale_factor(monitor_id : UInt64) -> Double = "mbw_monitor_scale_factor"
 
 ///|
 extern "C" fn native_window_scale_factor(window_id : Int) -> Double = "mbw_window_scale_factor"

@@ -35,6 +35,10 @@ native builds and focuses on `macos-arm64`.
   `set_ime_allowed`, `set_ime_cursor_area`). Additional compatibility shims
   include `pre_present_notify`, `reset_dead_keys`, `drag_window`,
   `drag_resize_window`, and `show_window_menu`.
+- Monitor APIs are available on macOS via `EventLoop::{available_monitors,
+  primary_monitor}` and `Window::{available_monitors, primary_monitor,
+  current_monitor}`; monitor handles include native id, name, position,
+  surface size, and scale factor.
 - `WindowAttributes` supports initial surface sizing/constraints and position,
   title/visibility/resizable, focus/active, fullscreen, theme, cursor/icon,
   blur/transparency/decorations/content protection, enabled buttons, window
@@ -54,7 +58,7 @@ native builds and focuses on `macos-arm64`.
 ## Packages
 
 - `@Milky2018/window/core` provides `ControlFlow`, `StartCause`,
-  `WindowAttributes`, `WindowEvent`, and `WindowId`
+  `WindowAttributes`, `WindowEvent`, `WindowId`, and `MonitorHandle`
 - `@Milky2018/window/macos` provides `EventLoop`, `Window`,
   `EventLoopProxy`, and `ApplicationHandler`
 - `@Milky2018/window/dpi` provides size and scale-factor types

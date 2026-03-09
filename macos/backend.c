@@ -549,6 +549,10 @@ static void mbw_dragging_info_position(
   double *y
 );
 static int mbw_window_gesture_phase(id event);
+static bool mbw_active_displays(CGDirectDisplayID **displays_out, uint32_t *count_out);
+static uint32_t mbw_display_id_from_screen(id screen);
+static id mbw_screen_for_display_id(uint32_t display_id);
+static moonbit_bytes_t mbw_make_bytes_from_slice(const uint8_t *src, int len);
 
 static SEL mbw_sel(const char *name) {
   return sel_registerName(name);
@@ -2639,6 +2643,107 @@ static id mbw_make_nsstring(const char *utf8) {
     (id)ns_string_class, mbw_sel("stringWithUTF8String:"), utf8);
 }
 
+static bool mbw_active_displays(CGDirectDisplayID **displays_out, uint32_t *count_out) {
+  if (displays_out) {
+    *displays_out = NULL;
+  }
+  if (count_out) {
+    *count_out = 0;
+  }
+  uint32_t expected_count = 0;
+  CGError error = CGGetActiveDisplayList(0, NULL, &expected_count);
+  if (error != kCGErrorSuccess || expected_count == 0) {
+    return false;
+  }
+  CGDirectDisplayID *displays =
+    (CGDirectDisplayID *)malloc(sizeof(CGDirectDisplayID) * (size_t)expected_count);
+  if (!displays) {
+    return false;
+  }
+  uint32_t actual_count = 0;
+  error = CGGetActiveDisplayList(expected_count, displays, &actual_count);
+  if (error != kCGErrorSuccess) {
+    free(displays);
+    return false;
+  }
+  if (displays_out) {
+    *displays_out = displays;
+  } else {
+    free(displays);
+  }
+  if (count_out) {
+    *count_out = actual_count;
+  }
+  return true;
+}
+
+static uint32_t mbw_display_id_from_screen(id screen) {
+  if (!screen) {
+    return 0;
+  }
+  id key = mbw_make_nsstring("NSScreenNumber");
+  if (!key) {
+    return 0;
+  }
+  id device_description = ((id(*)(id, SEL))objc_msgSend)(
+    screen,
+    mbw_sel("deviceDescription"));
+  if (!device_description) {
+    return 0;
+  }
+  id number = ((id(*)(id, SEL, id))objc_msgSend)(
+    device_description,
+    mbw_sel("objectForKey:"),
+    key);
+  if (!number) {
+    return 0;
+  }
+  if (((mbw_bool_t(*)(id, SEL, SEL))objc_msgSend)(
+        number,
+        mbw_sel("respondsToSelector:"),
+        mbw_sel("unsignedIntValue"))) {
+    return ((unsigned int(*)(id, SEL))objc_msgSend)(
+      number,
+      mbw_sel("unsignedIntValue"));
+  }
+  if (((mbw_bool_t(*)(id, SEL, SEL))objc_msgSend)(
+        number,
+        mbw_sel("respondsToSelector:"),
+        mbw_sel("unsignedLongLongValue"))) {
+    return (uint32_t)((unsigned long long(*)(id, SEL))objc_msgSend)(
+      number,
+      mbw_sel("unsignedLongLongValue"));
+  }
+  return 0;
+}
+
+static id mbw_screen_for_display_id(uint32_t display_id) {
+  if (display_id == 0) {
+    return nil;
+  }
+  Class ns_screen_class = objc_getClass("NSScreen");
+  if (!ns_screen_class) {
+    return nil;
+  }
+  id screens = ((id(*)(id, SEL))objc_msgSend)((id)ns_screen_class, mbw_sel("screens"));
+  if (!screens) {
+    return nil;
+  }
+  mbw_nsinteger_t count = ((mbw_nsinteger_t(*)(id, SEL))objc_msgSend)(
+    screens,
+    mbw_sel("count"));
+  for (mbw_nsinteger_t i = 0; i < count; ++i) {
+    id screen = ((id(*)(id, SEL, mbw_nsinteger_t))objc_msgSend)(
+      screens,
+      mbw_sel("objectAtIndex:"),
+      i);
+    if (mbw_display_id_from_screen(screen) == display_id) {
+      return screen;
+    }
+  }
+  return nil;
+}
+
 static bool mbw_bootstrap_app(void) {
   if (g_bootstrap_done) {
     return g_bootstrap_ok;
@@ -3777,6 +3882,171 @@ void mbw_window_set_position(int window_id, int x, int y) {
 int mbw_window_theme(int window_id) {
   mbw_window_t *window = mbw_find_window(window_id);
   return window ? window->theme_kind : MBW_THEME_UNKNOWN;
+}
+
+int mbw_monitor_count(void) {
+#if defined(__APPLE__)
+  CGDirectDisplayID *displays = NULL;
+  uint32_t count = 0;
+  bool ok = mbw_active_displays(&displays, &count);
+  if (displays) {
+    free(displays);
+  }
+  if (ok) {
+    return (int)count;
+  }
+  return CGMainDisplayID() != 0 ? 1 : 0;
+#else
+  return 0;
+#endif
+}
+
+uint64_t mbw_monitor_id_at(int index) {
+  if (index < 0) {
+    return 0;
+  }
+#if defined(__APPLE__)
+  CGDirectDisplayID *displays = NULL;
+  uint32_t count = 0;
+  if (!mbw_active_displays(&displays, &count)) {
+    if (index == 0 && CGMainDisplayID() != 0) {
+      return (uint64_t)CGMainDisplayID();
+    }
+    return 0;
+  }
+  uint64_t monitor_id = (uint32_t)index < count
+    ? (uint64_t)displays[index]
+    : 0;
+  free(displays);
+  return monitor_id;
+#else
+  return 0;
+#endif
+}
+
+uint64_t mbw_primary_monitor_id(void) {
+#if defined(__APPLE__)
+  return (uint64_t)CGMainDisplayID();
+#else
+  return 0;
+#endif
+}
+
+uint64_t mbw_window_current_monitor_id(int window_id) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  if (!window || !window->window) {
+    return 0;
+  }
+#if defined(__APPLE__)
+  id ns_window = (id)window->window;
+  id screen = ((id(*)(id, SEL))objc_msgSend)(ns_window, mbw_sel("screen"));
+  if (!screen) {
+    Class ns_screen_class = objc_getClass("NSScreen");
+    if (ns_screen_class) {
+      screen = ((id(*)(id, SEL))objc_msgSend)(
+        (id)ns_screen_class,
+        mbw_sel("mainScreen"));
+    }
+  }
+  return (uint64_t)mbw_display_id_from_screen(screen);
+#else
+  return 0;
+#endif
+}
+
+moonbit_bytes_t mbw_monitor_name_utf8(uint64_t monitor_id) {
+#if defined(__APPLE__)
+  id screen = mbw_screen_for_display_id((uint32_t)monitor_id);
+  if (screen) {
+    if (((mbw_bool_t(*)(id, SEL, SEL))objc_msgSend)(
+          screen,
+          mbw_sel("respondsToSelector:"),
+          mbw_sel("localizedName"))) {
+      id name = ((id(*)(id, SEL))objc_msgSend)(screen, mbw_sel("localizedName"));
+      if (name) {
+        const char *utf8 = ((const char *(*)(id, SEL))objc_msgSend)(
+          name,
+          mbw_sel("UTF8String"));
+        if (utf8) {
+          return mbw_make_bytes_from_slice((const uint8_t *)utf8, (int)strlen(utf8));
+        }
+      }
+    }
+  }
+#else
+  (void)monitor_id;
+#endif
+  return moonbit_make_bytes_raw(0);
+}
+
+int mbw_monitor_position_x(uint64_t monitor_id) {
+#if defined(__APPLE__)
+  CGRect bounds = CGDisplayBounds((CGDirectDisplayID)monitor_id);
+  double x = bounds.origin.x;
+  return (int)(x < 0.0 ? x - 0.5 : x + 0.5);
+#else
+  (void)monitor_id;
+  return 0;
+#endif
+}
+
+int mbw_monitor_position_y(uint64_t monitor_id) {
+#if defined(__APPLE__)
+  CGRect bounds = CGDisplayBounds((CGDirectDisplayID)monitor_id);
+  double y = bounds.origin.y;
+  return (int)(y < 0.0 ? y - 0.5 : y + 0.5);
+#else
+  (void)monitor_id;
+  return 0;
+#endif
+}
+
+int mbw_monitor_width(uint64_t monitor_id) {
+#if defined(__APPLE__)
+  size_t width = CGDisplayPixelsWide((CGDirectDisplayID)monitor_id);
+  if (width == 0) {
+    CGRect bounds = CGDisplayBounds((CGDirectDisplayID)monitor_id);
+    double fallback = bounds.size.width;
+    return (int)(fallback <= 1.0 ? 1.0 : fallback + 0.5);
+  }
+  return (int)width;
+#else
+  (void)monitor_id;
+  return 0;
+#endif
+}
+
+int mbw_monitor_height(uint64_t monitor_id) {
+#if defined(__APPLE__)
+  size_t height = CGDisplayPixelsHigh((CGDirectDisplayID)monitor_id);
+  if (height == 0) {
+    CGRect bounds = CGDisplayBounds((CGDirectDisplayID)monitor_id);
+    double fallback = bounds.size.height;
+    return (int)(fallback <= 1.0 ? 1.0 : fallback + 0.5);
+  }
+  return (int)height;
+#else
+  (void)monitor_id;
+  return 0;
+#endif
+}
+
+double mbw_monitor_scale_factor(uint64_t monitor_id) {
+#if defined(__APPLE__)
+  CGRect bounds = CGDisplayBounds((CGDirectDisplayID)monitor_id);
+  if (bounds.size.width <= 0.0) {
+    return 1.0;
+  }
+  double pixel_width = (double)CGDisplayPixelsWide((CGDirectDisplayID)monitor_id);
+  if (pixel_width <= 0.0) {
+    pixel_width = bounds.size.width;
+  }
+  double scale_factor = pixel_width / bounds.size.width;
+  return scale_factor > 0.0 ? scale_factor : 1.0;
+#else
+  (void)monitor_id;
+  return 1.0;
+#endif
 }
 
 double mbw_window_scale_factor(int window_id) {

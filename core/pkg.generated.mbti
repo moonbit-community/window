@@ -313,6 +313,18 @@ pub fn Modifiers::shift_key(Self) -> Bool
 pub impl Eq for Modifiers
 pub impl Show for Modifiers
 
+pub struct MonitorHandle {
+  // private fields
+}
+pub fn MonitorHandle::name(Self) -> String?
+pub fn MonitorHandle::native_id(Self) -> UInt64
+pub fn MonitorHandle::new(UInt64, String?, @dpi.PhysicalPosition, @dpi.PhysicalSize, Double) -> Self
+pub fn MonitorHandle::position(Self) -> @dpi.PhysicalPosition
+pub fn MonitorHandle::scale_factor(Self) -> Double
+pub fn MonitorHandle::surface_size(Self) -> @dpi.PhysicalSize
+pub impl Eq for MonitorHandle
+pub impl Show for MonitorHandle
+
 pub(all) enum MouseButton {
   Left
   Right

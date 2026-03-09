@@ -19,6 +19,35 @@ pub fn Window::id(self : Window) -> @core.WindowId {
 }
 
 ///|
+pub fn EventLoop::available_monitors(
+  _self : EventLoop,
+) -> Array[@core.MonitorHandle] {
+  monitors_from_native()
+}
+
+///|
+pub fn EventLoop::primary_monitor(_self : EventLoop) -> @core.MonitorHandle? {
+  monitor_from_native_id(primary_monitor_id())
+}
+
+///|
+pub fn Window::available_monitors(self : Window) -> Array[@core.MonitorHandle] {
+  let _ = self
+  monitors_from_native()
+}
+
+///|
+pub fn Window::primary_monitor(self : Window) -> @core.MonitorHandle? {
+  let _ = self
+  monitor_from_native_id(primary_monitor_id())
+}
+
+///|
+pub fn Window::current_monitor(self : Window) -> @core.MonitorHandle? {
+  monitor_from_native_id(window_current_monitor_id(self.id.into_raw()))
+}
+
+///|
 pub fn Window::surface_size(self : Window) -> @dpi.PhysicalSize {
   @dpi.PhysicalSize::new(
     native_window_width(self.id.into_raw()),
@@ -736,6 +765,54 @@ fn optional_text_from_native(bytes : Bytes) -> String? {
 ///|
 fn text_from_native(bytes : Bytes) -> String {
   @utf8.decode_lossy(bytes[:], ignore_bom=false)
+}
+
+///|
+fn monitor_from_native_id(monitor_id : UInt64) -> @core.MonitorHandle? {
+  if monitor_id == (0 : Int).to_uint64() {
+    None
+  } else {
+    let width = monitor_width(monitor_id)
+    let height = monitor_height(monitor_id)
+    Some(
+      @core.MonitorHandle::new(
+        monitor_id,
+        optional_text_from_native(monitor_name(monitor_id)),
+        @dpi.PhysicalPosition::new(
+          monitor_position_x(monitor_id),
+          monitor_position_y(monitor_id),
+        ),
+        @dpi.PhysicalSize::new(
+          if width > 0 {
+            width
+          } else {
+            1
+          },
+          if height > 0 {
+            height
+          } else {
+            1
+          },
+        ),
+        monitor_scale_factor(monitor_id),
+      ),
+    )
+  }
+}
+
+///|
+fn monitors_from_native() -> Array[@core.MonitorHandle] {
+  let monitors : Array[@core.MonitorHandle] = []
+  let count = available_monitor_count()
+  let mut index = 0
+  while index < count {
+    match monitor_from_native_id(monitor_id_at(index)) {
+      Some(monitor) => monitors.push(monitor)
+      None => ()
+    }
+    index = index + 1
+  }
+  monitors
 }
 
 ///|

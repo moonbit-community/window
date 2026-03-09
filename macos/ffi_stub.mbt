@@ -24,6 +24,56 @@ fn window_title(_window_id : Int) -> Bytes {
 }
 
 ///|
+fn available_monitor_count() -> Int {
+  0
+}
+
+///|
+fn monitor_id_at(_index : Int) -> UInt64 {
+  (0 : Int).to_uint64()
+}
+
+///|
+fn primary_monitor_id() -> UInt64 {
+  (0 : Int).to_uint64()
+}
+
+///|
+fn window_current_monitor_id(_window_id : Int) -> UInt64 {
+  (0 : Int).to_uint64()
+}
+
+///|
+fn monitor_name(_monitor_id : UInt64) -> Bytes {
+  Bytes::make(0, (0 : Int).to_byte())
+}
+
+///|
+fn monitor_position_x(_monitor_id : UInt64) -> Int {
+  0
+}
+
+///|
+fn monitor_position_y(_monitor_id : UInt64) -> Int {
+  0
+}
+
+///|
+fn monitor_width(_monitor_id : UInt64) -> Int {
+  0
+}
+
+///|
+fn monitor_height(_monitor_id : UInt64) -> Int {
+  0
+}
+
+///|
+fn monitor_scale_factor(_monitor_id : UInt64) -> Double {
+  1.0
+}
+
+///|
 fn window_scale_factor(_window_id : Int) -> Double {
   1.0
 }
