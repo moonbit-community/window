@@ -195,6 +195,11 @@ pub fn Window::set_cursor_visible(self : Window, visible : Bool) -> Unit {
 }
 
 ///|
+pub fn Window::set_cursor_hittest(self : Window, hittest : Bool) -> Unit {
+  set_window_cursor_hittest(self.id.into_raw(), hittest)
+}
+
+///|
 pub fn Window::is_decorated(self : Window) -> Bool {
   window_decorated(self.id.into_raw())
 }
@@ -220,6 +225,11 @@ pub fn Window::cursor(self : Window) -> @core.CursorIcon {
 ///|
 pub fn Window::is_cursor_visible(self : Window) -> Bool {
   window_cursor_visible(self.id.into_raw())
+}
+
+///|
+pub fn Window::is_cursor_hittest(self : Window) -> Bool {
+  window_cursor_hittest(self.id.into_raw())
 }
 
 ///|

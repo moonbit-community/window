@@ -113,6 +113,7 @@ typedef struct mbw_window {
   int has_icon;
   int cursor;
   int cursor_visible;
+  int cursor_hittest;
   int transparent;
   int window_level;
   mbw_input_event_t *queued_input_events;
@@ -2655,6 +2656,7 @@ int mbw_window_create_utf8(
   window->has_icon = 0;
   window->cursor = MBW_CURSOR_DEFAULT;
   window->cursor_visible = 1;
+  window->cursor_hittest = 1;
   window->transparent = 0;
   window->window_level = MBW_WINDOW_LEVEL_NORMAL;
   window->queued_input_events = NULL;
@@ -3023,6 +3025,11 @@ int mbw_window_cursor(int window_id) {
 bool mbw_window_cursor_visible(int window_id) {
   mbw_window_t *window = mbw_find_window(window_id);
   return window ? window->cursor_visible != 0 : true;
+}
+
+bool mbw_window_cursor_hittest(int window_id) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  return window ? window->cursor_hittest != 0 : true;
 }
 
 bool mbw_window_transparent(int window_id) {
@@ -4037,6 +4044,22 @@ void mbw_window_set_cursor_visible(int window_id, bool visible) {
     if (ns_cursor) {
       ((void(*)(id, SEL))objc_msgSend)(ns_cursor, mbw_sel("set"));
     }
+  }
+#endif
+}
+
+void mbw_window_set_cursor_hittest(int window_id, bool hittest) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  if (!window) {
+    return;
+  }
+  window->cursor_hittest = hittest ? 1 : 0;
+#if defined(__APPLE__)
+  if (window->window) {
+    ((void(*)(id, SEL, mbw_bool_t))objc_msgSend)(
+      (id)window->window,
+      mbw_sel("setIgnoresMouseEvents:"),
+      hittest ? NO : YES);
   }
 #endif
 }

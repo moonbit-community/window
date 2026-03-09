@@ -279,6 +279,9 @@ struct WindowCursorApp {
   cursor_after_first_update : Ref[@core.CursorIcon?]
   cursor_after_second_update : Ref[@core.CursorIcon?]
   cursor_initial : Ref[@core.CursorIcon?]
+  hittest_after_disable : Ref[Bool]
+  hittest_after_enable : Ref[Bool]
+  hittest_initial : Ref[Bool]
   visible_after_disable : Ref[Bool]
   visible_after_enable : Ref[Bool]
   visible_initial : Ref[Bool]
@@ -667,6 +670,7 @@ impl ApplicationHandler for WindowCursorApp with can_create_surfaces(
   )
   self.cursor_initial.val = Some(window.cursor())
   self.visible_initial.val = window.is_cursor_visible()
+  self.hittest_initial.val = window.is_cursor_hittest()
   window.set_cursor(@core.CursorIcon::ContextMenu)
   self.cursor_after_first_update.val = Some(window.cursor())
   window.set_cursor(@core.CursorIcon::RowResize)
@@ -675,6 +679,10 @@ impl ApplicationHandler for WindowCursorApp with can_create_surfaces(
   self.visible_after_disable.val = window.is_cursor_visible()
   window.set_cursor_visible(true)
   self.visible_after_enable.val = window.is_cursor_visible()
+  window.set_cursor_hittest(false)
+  self.hittest_after_disable.val = window.is_cursor_hittest()
+  window.set_cursor_hittest(true)
+  self.hittest_after_enable.val = window.is_cursor_hittest()
   event_loop.exit()
 }
 
@@ -1766,6 +1774,9 @@ test "window cursor can be configured at create and runtime" {
   let cursor_initial = Ref::new(None)
   let cursor_after_first_update = Ref::new(None)
   let cursor_after_second_update = Ref::new(None)
+  let hittest_initial = Ref::new(false)
+  let hittest_after_disable = Ref::new(true)
+  let hittest_after_enable = Ref::new(false)
   let visible_initial = Ref::new(false)
   let visible_after_disable = Ref::new(true)
   let visible_after_enable = Ref::new(false)
@@ -1773,6 +1784,9 @@ test "window cursor can be configured at create and runtime" {
     cursor_after_first_update,
     cursor_after_second_update,
     cursor_initial,
+    hittest_after_disable,
+    hittest_after_enable,
+    hittest_initial,
     visible_after_disable,
     visible_after_enable,
     visible_initial,
@@ -1784,6 +1798,9 @@ test "window cursor can be configured at create and runtime" {
   assert_true(visible_initial.val)
   assert_false(visible_after_disable.val)
   assert_true(visible_after_enable.val)
+  assert_true(hittest_initial.val)
+  assert_false(hittest_after_disable.val)
+  assert_true(hittest_after_enable.val)
 }
 
 ///|
