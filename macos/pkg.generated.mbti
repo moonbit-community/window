@@ -98,6 +98,7 @@ pub fn Window::set_min_surface_size(Self, @dpi.PhysicalSize?) -> Unit
 pub fn Window::set_minimized(Self, Bool) -> Unit
 pub fn Window::set_outer_position(Self, @dpi.PhysicalPosition) -> Unit
 pub fn Window::set_resizable(Self, Bool) -> Unit
+pub fn Window::set_theme(Self, @core.Theme?) -> Unit
 pub fn Window::set_title(Self, String) -> Unit
 pub fn Window::set_transparent(Self, Bool) -> Unit
 pub fn Window::set_visible(Self, Bool) -> Unit

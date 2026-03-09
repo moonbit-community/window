@@ -314,6 +314,11 @@ fn set_window_level(_window_id : Int, _level : Int) -> Unit {
 }
 
 ///|
+fn set_window_theme(_window_id : Int, _theme : Int) -> Unit {
+  ()
+}
+
+///|
 fn set_ime_purpose(_window_id : Int, _purpose : Int) -> Unit {
   ()
 }

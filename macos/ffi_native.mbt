@@ -314,6 +314,11 @@ fn set_window_level(window_id : Int, level : Int) -> Unit {
 }
 
 ///|
+fn set_window_theme(window_id : Int, theme : Int) -> Unit {
+  native_window_set_theme(window_id, theme)
+}
+
+///|
 fn set_ime_purpose(window_id : Int, purpose : Int) -> Unit {
   native_window_set_ime_purpose(window_id, purpose)
 }
@@ -650,6 +655,9 @@ extern "C" fn native_window_set_window_level(
   window_id : Int,
   level : Int,
 ) -> Unit = "mbw_window_set_window_level"
+
+///|
+extern "C" fn native_window_set_theme(window_id : Int, theme : Int) -> Unit = "mbw_window_set_theme"
 
 ///|
 extern "C" fn native_window_set_ime_purpose(

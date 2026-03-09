@@ -395,6 +395,7 @@ pub fn WindowAttributes::min_surface_size(Self) -> @dpi.PhysicalSize?
 pub fn WindowAttributes::position(Self) -> @dpi.PhysicalPosition?
 pub fn WindowAttributes::resizable(Self) -> Bool
 pub fn WindowAttributes::surface_size(Self) -> @dpi.PhysicalSize?
+pub fn WindowAttributes::theme(Self) -> Theme?
 pub fn WindowAttributes::title(Self) -> String
 pub fn WindowAttributes::transparent(Self) -> Bool
 pub fn WindowAttributes::visible(Self) -> Bool
@@ -408,6 +409,7 @@ pub fn WindowAttributes::with_min_surface_size(Self, @dpi.PhysicalSize?) -> Self
 pub fn WindowAttributes::with_position(Self, @dpi.PhysicalPosition?) -> Self
 pub fn WindowAttributes::with_resizable(Self, Bool) -> Self
 pub fn WindowAttributes::with_surface_size(Self, @dpi.PhysicalSize) -> Self
+pub fn WindowAttributes::with_theme(Self, Theme?) -> Self
 pub fn WindowAttributes::with_title(Self, String) -> Self
 pub fn WindowAttributes::with_transparent(Self, Bool) -> Self
 pub fn WindowAttributes::with_visible(Self, Bool) -> Self

@@ -1125,6 +1125,28 @@ struct ThemeApp {
 }
 
 ///|
+struct WindowThemePreferenceApp {
+  initial_theme : Ref[@core.Theme?]
+  changed_theme : Ref[@core.Theme?]
+}
+
+///|
+impl ApplicationHandler for WindowThemePreferenceApp with can_create_surfaces(
+  self,
+  event_loop,
+) {
+  let window = event_loop.create_window(
+    @core.WindowAttributes::default()
+    .with_visible(false)
+    .with_theme(Some(@core.Theme::Dark)),
+  )
+  self.initial_theme.val = window.theme()
+  window.set_theme(Some(@core.Theme::Light))
+  self.changed_theme.val = window.theme()
+  event_loop.exit()
+}
+
+///|
 impl ApplicationHandler for ThemeApp with can_create_surfaces(self, event_loop) {
   let window = event_loop.create_window(
     @core.WindowAttributes::default().with_visible(false),
@@ -1855,6 +1877,16 @@ test "theme changed events update the readable window theme" {
   event_loop.run_app({ window, event_theme, current_theme })
   assert_eq(event_theme.val, Some(@core.Theme::Dark))
   assert_eq(current_theme.val, Some(@core.Theme::Dark))
+}
+
+///|
+test "window theme can be configured at create and runtime" {
+  let event_loop = EventLoop::new()
+  let initial_theme = Ref::new(None)
+  let changed_theme = Ref::new(None)
+  event_loop.run_app({ initial_theme, changed_theme })
+  assert_eq(initial_theme.val, Some(@core.Theme::Dark))
+  assert_eq(changed_theme.val, Some(@core.Theme::Light))
 }
 
 ///|

@@ -43,6 +43,7 @@ pub struct WindowAttributes {
   priv mut min_surface_size : @dpi.PhysicalSize?
   priv mut position : @dpi.PhysicalPosition?
   priv mut surface_size : @dpi.PhysicalSize?
+  priv mut theme : Theme?
   priv mut transparent : Bool
   priv mut resizable : Bool
   priv mut title : String
@@ -61,6 +62,7 @@ pub fn WindowAttributes::default() -> WindowAttributes {
     max_surface_size: None,
     position: None,
     surface_size: Some(@dpi.PhysicalSize::new(800, 600)),
+    theme: None,
     transparent: false,
     resizable: true,
     title: "winit window",
@@ -138,6 +140,15 @@ pub fn WindowAttributes::with_window_level(
   level : WindowLevel,
 ) -> WindowAttributes {
   self.window_level = level
+  self
+}
+
+///|
+pub fn WindowAttributes::with_theme(
+  self : WindowAttributes,
+  theme : Theme?,
+) -> WindowAttributes {
+  self.theme = theme
   self
 }
 
@@ -232,6 +243,11 @@ pub fn WindowAttributes::decorations(self : WindowAttributes) -> Bool {
 ///|
 pub fn WindowAttributes::window_level(self : WindowAttributes) -> WindowLevel {
   self.window_level
+}
+
+///|
+pub fn WindowAttributes::theme(self : WindowAttributes) -> Theme? {
+  self.theme
 }
 
 ///|

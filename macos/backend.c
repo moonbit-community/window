@@ -3523,6 +3523,54 @@ void mbw_window_set_window_level(int window_id, int level) {
 #endif
 }
 
+void mbw_window_set_theme(int window_id, int theme) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  if (!window) {
+    return;
+  }
+
+  int next_theme = MBW_THEME_UNKNOWN;
+  if (theme == MBW_THEME_LIGHT) {
+    next_theme = MBW_THEME_LIGHT;
+  } else if (theme == MBW_THEME_DARK) {
+    next_theme = MBW_THEME_DARK;
+  }
+
+#if defined(__APPLE__)
+  if (window->window) {
+    id appearance = nil;
+    if (next_theme == MBW_THEME_LIGHT || next_theme == MBW_THEME_DARK) {
+      Class appearance_class = objc_getClass("NSAppearance");
+      if (appearance_class) {
+        const char *appearance_name = next_theme == MBW_THEME_DARK
+          ? "NSAppearanceNameDarkAqua"
+          : "NSAppearanceNameAqua";
+        id ns_appearance_name = mbw_make_nsstring(appearance_name);
+        if (ns_appearance_name) {
+          appearance = ((id(*)(id, SEL, id))objc_msgSend)(
+            (id)appearance_class,
+            mbw_sel("appearanceNamed:"),
+            ns_appearance_name);
+        }
+      }
+    }
+    ((void(*)(id, SEL, id))objc_msgSend)(
+      (id)window->window,
+      mbw_sel("setAppearance:"),
+      appearance);
+    int actual_theme = mbw_window_theme_kind(window);
+    if (actual_theme != MBW_THEME_UNKNOWN) {
+      next_theme = actual_theme;
+    }
+  }
+#endif
+
+  window->theme_kind = next_theme;
+  window->reported_theme_kind = next_theme;
+  window->pending_theme_changed = 0;
+  window->pending_theme_kind = next_theme;
+}
+
 void mbw_window_set_ime_purpose(int window_id, int purpose) {
   mbw_window_t *window = mbw_find_window(window_id);
   if (!window) {

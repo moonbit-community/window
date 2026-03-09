@@ -181,6 +181,11 @@ pub fn Window::set_title(self : Window, title : String) -> Unit {
 }
 
 ///|
+pub fn Window::set_theme(self : Window, theme : @core.Theme?) -> Unit {
+  set_window_theme(self.id.into_raw(), theme_to_native(theme))
+}
+
+///|
 pub fn Window::set_visible(self : Window, visible : Bool) -> Unit {
   native_set_visible(self.id.into_raw(), visible)
 }
@@ -206,6 +211,15 @@ fn theme_from_native(theme : Int) -> @core.Theme? {
     1 => Some(@core.Theme::Light)
     2 => Some(@core.Theme::Dark)
     _ => None
+  }
+}
+
+///|
+fn theme_to_native(theme : @core.Theme?) -> Int {
+  match theme {
+    Some(@core.Theme::Light) => 1
+    Some(@core.Theme::Dark) => 2
+    None => 0
   }
 }
 
@@ -533,6 +547,7 @@ pub fn EventLoop::create_window(
     attributes.title(),
   )
   guard raw_id > 0 else { abort("failed to create macos window") }
+  set_window_theme(raw_id, theme_to_native(attributes.theme()))
   set_ime_purpose(raw_id, ime_purpose_to_native(attributes.ime_purpose()))
   set_window_level(raw_id, window_level_to_native(attributes.window_level()))
   set_window_transparent(raw_id, attributes.transparent())
