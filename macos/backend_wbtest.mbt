@@ -1198,8 +1198,14 @@ impl ApplicationHandler for DragEventsApp with can_create_surfaces(
   let window = event_loop.create_window(
     @core.WindowAttributes::default().with_visible(false),
   )
-  let entered_path = @utf8.encode("/tmp/drag-entered.txt"[:], bom=false)
-  let dropped_path = @utf8.encode("/tmp/drag-dropped.txt"[:], bom=false)
+  let entered_path = @utf8.encode(
+    "/tmp/drag-entered-a.txt\n/tmp/drag-entered-b.txt"[:],
+    bom=false,
+  )
+  let dropped_path = @utf8.encode(
+    "/tmp/drag-dropped-a.txt\n/tmp/drag-dropped-b.txt"[:],
+    bom=false,
+  )
   let raw_id = window.id().into_raw()
   queue_drag_entered_for_test(
     raw_id,
@@ -2353,13 +2359,19 @@ test "drag events are delivered with paths and positions" {
     moved_position,
   }
   event_loop.run_app(app)
-  assert_eq(entered_paths.val, Some(["/tmp/drag-entered.txt"]))
+  assert_eq(
+    entered_paths.val,
+    Some(["/tmp/drag-entered-a.txt", "/tmp/drag-entered-b.txt"]),
+  )
   assert_eq(
     entered_position.val,
     Some(@dpi.PhysicalPositionF64::new(12.5, 24.0)),
   )
   assert_eq(moved_position.val, Some(@dpi.PhysicalPositionF64::new(32.0, 48.0)))
-  assert_eq(dropped_paths.val, Some(["/tmp/drag-dropped.txt"]))
+  assert_eq(
+    dropped_paths.val,
+    Some(["/tmp/drag-dropped-a.txt", "/tmp/drag-dropped-b.txt"]),
+  )
   assert_eq(
     dropped_position.val,
     Some(@dpi.PhysicalPositionF64::new(64.0, 96.0)),

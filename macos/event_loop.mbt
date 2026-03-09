@@ -740,12 +740,15 @@ fn text_from_native(bytes : Bytes) -> String {
 
 ///|
 fn drag_paths_from_native(bytes : Bytes) -> Array[String] {
-  let path = text_from_native(bytes)
-  if path == "" {
-    []
-  } else {
-    [path]
+  let text = text_from_native(bytes)
+  let paths : Array[String] = []
+  for path in text.split("\n"[:]) {
+    let value = path.to_string()
+    if value != "" {
+      paths.push(value)
+    }
   }
+  paths
 }
 
 ///|

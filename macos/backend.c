@@ -541,7 +541,7 @@ static void mbw_window_queue_touchpad_pressure(
   int stage
 );
 static int mbw_text_input_object_utf8(id text_input, uint8_t *dst, int dst_cap);
-static int mbw_dragging_first_file_path_utf8(id dragging_info, uint8_t *dst, int dst_cap);
+static int mbw_dragging_file_paths_utf8(id dragging_info, uint8_t *dst, int dst_cap);
 static void mbw_dragging_info_position(
   id view,
   id dragging_info,
@@ -625,7 +625,7 @@ static int mbw_text_input_object_utf8(id text_input, uint8_t *dst, int dst_cap) 
   return mbw_copy_nsstring_utf8(candidate, dst, dst_cap);
 }
 
-static int mbw_dragging_first_file_path_utf8(id dragging_info, uint8_t *dst, int dst_cap) {
+static int mbw_dragging_file_paths_utf8(id dragging_info, uint8_t *dst, int dst_cap) {
   if (!dragging_info) {
     return 0;
   }
@@ -652,11 +652,46 @@ static int mbw_dragging_first_file_path_utf8(id dragging_info, uint8_t *dst, int
   if (count <= 0) {
     return 0;
   }
-  id first_path = ((id(*)(id, SEL, mbw_nsinteger_t))objc_msgSend)(
-    paths,
-    mbw_sel("objectAtIndex:"),
-    (mbw_nsinteger_t)0);
-  return mbw_copy_nsstring_utf8(first_path, dst, dst_cap);
+  int written = 0;
+  for (mbw_nsinteger_t i = 0; i < count; ++i) {
+    id path = ((id(*)(id, SEL, mbw_nsinteger_t))objc_msgSend)(
+      paths,
+      mbw_sel("objectAtIndex:"),
+      i);
+    if (!path) {
+      continue;
+    }
+    const char *path_utf8 = ((const char *(*)(id, SEL))objc_msgSend)(
+      path,
+      mbw_sel("UTF8String"));
+    if (!path_utf8 || path_utf8[0] == '\0') {
+      continue;
+    }
+    size_t path_len = strlen(path_utf8);
+    if (path_len == 0) {
+      continue;
+    }
+    if (written > 0) {
+      if (written + 1 >= dst_cap) {
+        break;
+      }
+      dst[written++] = '\n';
+    }
+    size_t remaining = (size_t)(dst_cap - written - 1);
+    if (remaining == 0) {
+      break;
+    }
+    size_t copy_len = path_len < remaining ? path_len : remaining;
+    memcpy(dst + written, path_utf8, copy_len);
+    written += (int)copy_len;
+    if (copy_len < path_len) {
+      break;
+    }
+  }
+  if (written > 0) {
+    dst[written] = '\0';
+  }
+  return written;
 }
 
 static void mbw_dragging_info_position(
@@ -2065,7 +2100,7 @@ static mbw_nsuint_t mbw_content_view_dragging_entered(id self, SEL _cmd, id drag
     return MBW_NSDRAG_OPERATION_NONE;
   }
   uint8_t path[MBW_PATH_TEXT_CAP];
-  int path_len = mbw_dragging_first_file_path_utf8(
+  int path_len = mbw_dragging_file_paths_utf8(
     dragging_info,
     path,
     MBW_PATH_TEXT_CAP);
@@ -2086,7 +2121,7 @@ static mbw_nsuint_t mbw_content_view_dragging_updated(id self, SEL _cmd, id drag
     return MBW_NSDRAG_OPERATION_NONE;
   }
   uint8_t path[MBW_PATH_TEXT_CAP];
-  int path_len = mbw_dragging_first_file_path_utf8(
+  int path_len = mbw_dragging_file_paths_utf8(
     dragging_info,
     path,
     MBW_PATH_TEXT_CAP);
@@ -2113,7 +2148,7 @@ static mbw_bool_t mbw_content_view_perform_drag_operation(id self, SEL _cmd, id 
     return NO;
   }
   uint8_t path[MBW_PATH_TEXT_CAP];
-  int path_len = mbw_dragging_first_file_path_utf8(
+  int path_len = mbw_dragging_file_paths_utf8(
     dragging_info,
     path,
     MBW_PATH_TEXT_CAP);
