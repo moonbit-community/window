@@ -110,6 +110,7 @@ typedef struct mbw_window {
   int minimize_button_enabled;
   int maximize_button_enabled;
   int blur;
+  int cursor;
   int transparent;
   int window_level;
   mbw_input_event_t *queued_input_events;
@@ -154,6 +155,13 @@ static int64_t g_now_ms_override_for_test = -1;
 #define MBW_WINDOW_LEVEL_ALWAYS_ON_TOP 1
 #define MBW_WINDOW_LEVEL_ALWAYS_ON_BOTTOM 2
 
+#define MBW_CURSOR_DEFAULT 0
+#define MBW_CURSOR_POINTER 1
+#define MBW_CURSOR_TEXT 2
+#define MBW_CURSOR_CROSSHAIR 3
+#define MBW_CURSOR_MOVE 4
+#define MBW_CURSOR_NOT_ALLOWED 5
+
 #define MBW_ELEMENT_STATE_NONE 0
 #define MBW_ELEMENT_STATE_PRESSED 1
 #define MBW_ELEMENT_STATE_RELEASED 2
@@ -185,6 +193,7 @@ void mbw_window_set_enabled_buttons(
   bool minimize,
   bool maximize
 );
+void mbw_window_set_cursor(int window_id, int cursor);
 
 static int mbw_clamp_size(int value) {
   return value <= 0 ? 1 : value;
@@ -372,6 +381,8 @@ static mbw_window_t *mbw_view_window(id view);
 static id mbw_view_tracking_area(id view);
 static void mbw_view_set_tracking_area(id view, id tracking_area);
 static void mbw_view_refresh_tracking_area(id view);
+static id mbw_ns_cursor_for_kind(int cursor_kind);
+static void mbw_view_refresh_cursor(id view);
 static void mbw_view_pointer_position(id view, id event, double *x, double *y);
 static int mbw_window_scroll_phase(id event);
 static int mbw_event_modifiers_state(id event);
@@ -629,6 +640,59 @@ static void mbw_view_refresh_tracking_area(id view) {
   }
   ((void(*)(id, SEL, id))objc_msgSend)(view, mbw_sel("addTrackingArea:"), tracking_area);
   mbw_view_set_tracking_area(view, tracking_area);
+}
+
+static id mbw_ns_cursor_for_kind(int cursor_kind) {
+  Class ns_cursor_class = objc_getClass("NSCursor");
+  if (!ns_cursor_class) {
+    return nil;
+  }
+  const char *selector_name = "arrowCursor";
+  switch (cursor_kind) {
+    case MBW_CURSOR_POINTER:
+      selector_name = "pointingHandCursor";
+      break;
+    case MBW_CURSOR_TEXT:
+      selector_name = "IBeamCursor";
+      break;
+    case MBW_CURSOR_CROSSHAIR:
+      selector_name = "crosshairCursor";
+      break;
+    case MBW_CURSOR_MOVE:
+      selector_name = "openHandCursor";
+      break;
+    case MBW_CURSOR_NOT_ALLOWED:
+      selector_name = "operationNotAllowedCursor";
+      break;
+    case MBW_CURSOR_DEFAULT:
+    default:
+      selector_name = "arrowCursor";
+      break;
+  }
+  SEL selector = mbw_sel(selector_name);
+  if (!class_respondsToSelector(ns_cursor_class, selector)) {
+    selector = mbw_sel("arrowCursor");
+  }
+  return ((id(*)(id, SEL))objc_msgSend)((id)ns_cursor_class, selector);
+}
+
+static void mbw_view_refresh_cursor(id view) {
+  if (!view) {
+    return;
+  }
+  mbw_window_t *window = mbw_view_window(view);
+  if (!window) {
+    return;
+  }
+  id ns_window = window->window
+    ? (id)window->window
+    : mbw_msg_id(view, "window");
+  if (ns_window) {
+    ((void(*)(id, SEL, id))objc_msgSend)(
+      ns_window,
+      mbw_sel("invalidateCursorRectsForView:"),
+      view);
+  }
 }
 
 static double mbw_view_scale_factor(id view, mbw_window_t *window) {
@@ -946,6 +1010,28 @@ static void mbw_content_view_view_did_move_to_window(id self, SEL _cmd) {
       self);
   }
   mbw_view_refresh_tracking_area(self);
+  mbw_view_refresh_cursor(self);
+}
+
+static void mbw_content_view_reset_cursor_rects(id self, SEL _cmd) {
+  (void)_cmd;
+  if (!self) {
+    return;
+  }
+  mbw_window_t *window = mbw_view_window(self);
+  if (!window) {
+    return;
+  }
+  id cursor = mbw_ns_cursor_for_kind(window->cursor);
+  if (!cursor) {
+    return;
+  }
+  mbw_rect_t bounds = ((mbw_rect_t(*)(id, SEL))objc_msgSend)(self, mbw_sel("bounds"));
+  ((void(*)(id, SEL, mbw_rect_t, id))objc_msgSend)(
+    self,
+    mbw_sel("addCursorRect:cursor:"),
+    bounds,
+    cursor);
 }
 
 static mbw_bool_t mbw_content_view_is_flipped(id self, SEL _cmd) {
@@ -1763,6 +1849,11 @@ static Class mbw_get_content_view_class(void) {
     "v@:");
   class_addMethod(
     view_class,
+    mbw_sel("resetCursorRects"),
+    (IMP)mbw_content_view_reset_cursor_rects,
+    "v@:");
+  class_addMethod(
+    view_class,
     mbw_sel("keyDown:"),
     (IMP)mbw_content_view_key_down,
     "v@:@");
@@ -2427,6 +2518,7 @@ int mbw_window_create_utf8(
   window->minimize_button_enabled = 1;
   window->maximize_button_enabled = 1;
   window->blur = 0;
+  window->cursor = MBW_CURSOR_DEFAULT;
   window->transparent = 0;
   window->window_level = MBW_WINDOW_LEVEL_NORMAL;
   window->queued_input_events = NULL;
@@ -2749,6 +2841,11 @@ bool mbw_window_maximize_button_enabled(int window_id) {
 bool mbw_window_blur(int window_id) {
   mbw_window_t *window = mbw_find_window(window_id);
   return window ? window->blur != 0 : false;
+}
+
+int mbw_window_cursor(int window_id) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  return window ? window->cursor : MBW_CURSOR_DEFAULT;
 }
 
 bool mbw_window_transparent(int window_id) {
@@ -3717,6 +3814,28 @@ void mbw_window_set_blur(int window_id, bool blur) {
           mbw_sel("setBackgroundColor:"),
           background_color);
       }
+    }
+  }
+#endif
+}
+
+void mbw_window_set_cursor(int window_id, int cursor) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  if (!window) {
+    return;
+  }
+  int next_cursor = MBW_CURSOR_DEFAULT;
+  if (cursor >= MBW_CURSOR_DEFAULT && cursor <= MBW_CURSOR_NOT_ALLOWED) {
+    next_cursor = cursor;
+  }
+  window->cursor = next_cursor;
+#if defined(__APPLE__)
+  if (window->content_view) {
+    id content_view = (id)window->content_view;
+    mbw_view_refresh_cursor(content_view);
+    id ns_cursor = mbw_ns_cursor_for_kind(window->cursor);
+    if (ns_cursor) {
+      ((void(*)(id, SEL))objc_msgSend)(ns_cursor, mbw_sel("set"));
     }
   }
 #endif

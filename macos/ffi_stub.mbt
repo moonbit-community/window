@@ -119,6 +119,11 @@ fn window_blur(_window_id : Int) -> Bool {
 }
 
 ///|
+fn window_cursor(_window_id : Int) -> Int {
+  0
+}
+
+///|
 fn window_transparent(_window_id : Int) -> Bool {
   false
 }
@@ -399,6 +404,11 @@ fn set_window_enabled_buttons(
 
 ///|
 fn set_window_blur(_window_id : Int, _blur : Bool) -> Unit {
+  ()
+}
+
+///|
+fn set_window_cursor(_window_id : Int, _cursor : Int) -> Unit {
   ()
 }
 

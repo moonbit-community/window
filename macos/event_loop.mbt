@@ -165,6 +165,11 @@ pub fn Window::set_blur(self : Window, blur : Bool) -> Unit {
 }
 
 ///|
+pub fn Window::set_cursor(self : Window, cursor : @core.CursorIcon) -> Unit {
+  set_window_cursor(self.id.into_raw(), cursor_icon_to_native(cursor))
+}
+
+///|
 pub fn Window::is_decorated(self : Window) -> Bool {
   window_decorated(self.id.into_raw())
 }
@@ -180,6 +185,11 @@ pub fn Window::enabled_buttons(self : Window) -> @core.WindowButtons {
 ///|
 pub fn Window::is_blurred(self : Window) -> Bool {
   window_blur(self.id.into_raw())
+}
+
+///|
+pub fn Window::cursor(self : Window) -> @core.CursorIcon {
+  cursor_icon_from_native(window_cursor(self.id.into_raw()))
 }
 
 ///|
@@ -432,6 +442,30 @@ fn ime_purpose_from_native(purpose : Int) -> @core.ImePurpose {
 }
 
 ///|
+fn cursor_icon_to_native(cursor : @core.CursorIcon) -> Int {
+  match cursor {
+    @core.CursorIcon::Default => 0
+    @core.CursorIcon::Pointer => 1
+    @core.CursorIcon::Text => 2
+    @core.CursorIcon::Crosshair => 3
+    @core.CursorIcon::Move => 4
+    @core.CursorIcon::NotAllowed => 5
+  }
+}
+
+///|
+fn cursor_icon_from_native(cursor : Int) -> @core.CursorIcon {
+  match cursor {
+    1 => @core.CursorIcon::Pointer
+    2 => @core.CursorIcon::Text
+    3 => @core.CursorIcon::Crosshair
+    4 => @core.CursorIcon::Move
+    5 => @core.CursorIcon::NotAllowed
+    _ => @core.CursorIcon::Default
+  }
+}
+
+///|
 fn window_level_to_native(level : @core.WindowLevel) -> Int {
   match level {
     @core.WindowLevel::Normal => 0
@@ -666,6 +700,7 @@ pub fn EventLoop::create_window(
   set_window_theme(raw_id, theme_to_native(attributes.theme()))
   set_window_content_protected(raw_id, attributes.content_protected())
   set_window_blur(raw_id, attributes.blur())
+  set_window_cursor(raw_id, cursor_icon_to_native(attributes.cursor()))
   let enabled_buttons = attributes.enabled_buttons()
   set_window_enabled_buttons(
     raw_id,

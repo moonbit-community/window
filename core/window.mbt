@@ -19,6 +19,16 @@ pub(all) enum WindowLevel {
 } derive(Eq, Show)
 
 ///|
+pub(all) enum CursorIcon {
+  Default
+  Pointer
+  Text
+  Crosshair
+  Move
+  NotAllowed
+} derive(Eq, Show)
+
+///|
 pub struct WindowButtons {
   priv mut close : Bool
   priv mut maximize : Bool
@@ -97,6 +107,7 @@ pub struct WindowAttributes {
   priv mut active : Bool
   priv mut blur : Bool
   priv mut content_protected : Bool
+  priv mut cursor : CursorIcon
   priv mut decorations : Bool
   priv mut enabled_buttons : WindowButtons
   priv mut fullscreen : Bool
@@ -121,6 +132,7 @@ pub fn WindowAttributes::default() -> WindowAttributes {
     active: true,
     blur: false,
     content_protected: false,
+    cursor: CursorIcon::Default,
     decorations: true,
     enabled_buttons: WindowButtons::all(),
     fullscreen: false,
@@ -209,6 +221,15 @@ pub fn WindowAttributes::with_blur(
   blur : Bool,
 ) -> WindowAttributes {
   self.blur = blur
+  self
+}
+
+///|
+pub fn WindowAttributes::with_cursor(
+  self : WindowAttributes,
+  cursor : CursorIcon,
+) -> WindowAttributes {
+  self.cursor = cursor
   self
 }
 
@@ -359,6 +380,11 @@ pub fn WindowAttributes::active(self : WindowAttributes) -> Bool {
 ///|
 pub fn WindowAttributes::blur(self : WindowAttributes) -> Bool {
   self.blur
+}
+
+///|
+pub fn WindowAttributes::cursor(self : WindowAttributes) -> CursorIcon {
+  self.cursor
 }
 
 ///|

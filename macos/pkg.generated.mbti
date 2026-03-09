@@ -74,6 +74,7 @@ pub impl Show for EventLoopProxy
 pub struct Window {
   // private fields
 }
+pub fn Window::cursor(Self) -> @core.CursorIcon
 pub fn Window::enabled_buttons(Self) -> @core.WindowButtons
 pub fn Window::focus_window(Self) -> Unit
 pub fn Window::has_focus(Self) -> Bool
@@ -98,6 +99,7 @@ pub fn Window::request_surface_size(Self, @dpi.PhysicalSize) -> Unit
 pub fn Window::scale_factor(Self) -> Double
 pub fn Window::set_blur(Self, Bool) -> Unit
 pub fn Window::set_content_protected(Self, Bool) -> Unit
+pub fn Window::set_cursor(Self, @core.CursorIcon) -> Unit
 pub fn Window::set_decorations(Self, Bool) -> Unit
 pub fn Window::set_enabled_buttons(Self, @core.WindowButtons) -> Unit
 pub fn Window::set_fullscreen(Self, Bool) -> Unit

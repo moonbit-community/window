@@ -267,6 +267,12 @@ struct WindowBlurApp {
 }
 
 ///|
+struct WindowCursorApp {
+  cursor_after_update : Ref[@core.CursorIcon?]
+  cursor_initial : Ref[@core.CursorIcon?]
+}
+
+///|
 struct WindowVisibilityResizableApp {
   resizable_after_disable : Ref[Bool]
   resizable_after_enable : Ref[Bool]
@@ -601,6 +607,22 @@ impl ApplicationHandler for WindowBlurApp with can_create_surfaces(
   self.blur_after_disable.val = window.is_blurred()
   window.set_blur(true)
   self.blur_after_enable.val = window.is_blurred()
+  event_loop.exit()
+}
+
+///|
+impl ApplicationHandler for WindowCursorApp with can_create_surfaces(
+  self,
+  event_loop,
+) {
+  let window = event_loop.create_window(
+    @core.WindowAttributes::default()
+    .with_visible(false)
+    .with_cursor(@core.CursorIcon::Pointer),
+  )
+  self.cursor_initial.val = Some(window.cursor())
+  window.set_cursor(@core.CursorIcon::Text)
+  self.cursor_after_update.val = Some(window.cursor())
   event_loop.exit()
 }
 
@@ -1636,6 +1658,17 @@ test "window blur can be configured at create and runtime" {
   assert_true(blur_initial.val)
   assert_false(blur_after_disable.val)
   assert_true(blur_after_enable.val)
+}
+
+///|
+test "window cursor can be configured at create and runtime" {
+  let event_loop = EventLoop::new()
+  let cursor_initial = Ref::new(None)
+  let cursor_after_update = Ref::new(None)
+  let app : WindowCursorApp = { cursor_after_update, cursor_initial }
+  event_loop.run_app(app)
+  assert_eq(cursor_initial.val, Some(@core.CursorIcon::Pointer))
+  assert_eq(cursor_after_update.val, Some(@core.CursorIcon::Text))
 }
 
 ///|
