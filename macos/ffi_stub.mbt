@@ -299,6 +299,7 @@ fn create_window(
   _width : Int,
   _height : Int,
   _visible : Bool,
+  _active : Bool,
   _resizable : Bool,
   _title : String,
 ) -> Int {

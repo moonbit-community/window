@@ -299,6 +299,7 @@ fn create_window(
   width : Int,
   height : Int,
   visible : Bool,
+  active : Bool,
   resizable : Bool,
   title : String,
 ) -> Int {
@@ -307,6 +308,7 @@ fn create_window(
     width,
     height,
     visible,
+    active,
     resizable,
     title_bytes,
     title_bytes.length().to_uint64(),
@@ -349,6 +351,7 @@ pub extern "C" fn native_create_window(
   width : Int,
   height : Int,
   visible : Bool,
+  active : Bool,
   resizable : Bool,
   title : Bytes,
   title_len : UInt64,

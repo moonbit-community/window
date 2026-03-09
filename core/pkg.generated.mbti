@@ -385,6 +385,7 @@ pub impl Show for TouchPhase
 pub struct WindowAttributes {
   // private fields
 }
+pub fn WindowAttributes::active(Self) -> Bool
 pub fn WindowAttributes::default() -> Self
 pub fn WindowAttributes::ime_purpose(Self) -> ImePurpose
 pub fn WindowAttributes::max_surface_size(Self) -> @dpi.PhysicalSize?
@@ -394,6 +395,7 @@ pub fn WindowAttributes::resizable(Self) -> Bool
 pub fn WindowAttributes::surface_size(Self) -> @dpi.PhysicalSize?
 pub fn WindowAttributes::title(Self) -> String
 pub fn WindowAttributes::visible(Self) -> Bool
+pub fn WindowAttributes::with_active(Self, Bool) -> Self
 pub fn WindowAttributes::with_ime_purpose(Self, ImePurpose) -> Self
 pub fn WindowAttributes::with_max_surface_size(Self, @dpi.PhysicalSize?) -> Self
 pub fn WindowAttributes::with_min_surface_size(Self, @dpi.PhysicalSize?) -> Self

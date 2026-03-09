@@ -2309,6 +2309,7 @@ int mbw_window_create_utf8(
   int width,
   int height,
   bool visible,
+  bool active,
   bool resizable,
   const uint8_t *title,
   uint64_t title_len
@@ -2336,7 +2337,7 @@ int mbw_window_create_utf8(
   window->pending_close_requested = 0;
   window->pending_destroyed = 0;
   window->pending_focused_changed = 0;
-  window->focused = 0;
+  window->focused = (visible && active) ? 1 : 0;
   window->maximized = 0;
   window->minimized = 0;
   window->pending_focus_value = 0;
@@ -2445,8 +2446,13 @@ int mbw_window_create_utf8(
         }
         mbw_msg_void(ns_window, "center");
         if (visible) {
-          ((void(*)(id, SEL, id))objc_msgSend)(
-            ns_window, mbw_sel("makeKeyAndOrderFront:"), nil);
+          if (active) {
+            ((void(*)(id, SEL, id))objc_msgSend)(
+              ns_window, mbw_sel("makeKeyAndOrderFront:"), nil);
+          } else {
+            ((void(*)(id, SEL, id))objc_msgSend)(
+              ns_window, mbw_sel("orderFront:"), nil);
+          }
         } else {
           ((void(*)(id, SEL, id))objc_msgSend)(ns_window, mbw_sel("orderOut:"), nil);
         }

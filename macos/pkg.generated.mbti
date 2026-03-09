@@ -11,7 +11,7 @@ pub fn backend_available() -> Bool
 
 pub fn native_backend_available() -> Bool
 
-pub fn native_create_window(Int, Int, Bool, Bool, Bytes, UInt64) -> Int
+pub fn native_create_window(Int, Int, Bool, Bool, Bool, Bytes, UInt64) -> Int
 
 pub fn native_event_loop_peek_proxy_wake_up() -> Bool
 

@@ -229,6 +229,12 @@ struct FocusWindowApp {
 }
 
 ///|
+struct InactiveWindowApp {
+  has_focus : Ref[Bool?]
+  window : Ref[Window?]
+}
+
+///|
 struct WindowMinMaxStateApp {
   maximized_after_disable : Ref[Bool]
   maximized_after_enable : Ref[Bool]
@@ -394,6 +400,29 @@ impl ApplicationHandler for FocusWindowApp with window_event(
     }
     _ => ()
   }
+}
+
+///|
+impl ApplicationHandler for InactiveWindowApp with can_create_surfaces(
+  self,
+  event_loop,
+) {
+  let window = event_loop.create_window(
+    @core.WindowAttributes::default().with_active(false),
+  )
+  self.window.val = Some(window)
+}
+
+///|
+impl ApplicationHandler for InactiveWindowApp with about_to_wait(
+  self,
+  event_loop,
+) {
+  match self.window.val {
+    Some(window) => self.has_focus.val = Some(window.has_focus())
+    None => ()
+  }
+  event_loop.exit()
 }
 
 ///|
@@ -1159,6 +1188,16 @@ test "focus_window updates focus state and has_focus" {
   event_loop.run_app(app)
   assert_eq(focused_event.val, Some(true))
   assert_eq(has_focus.val, Some(true))
+}
+
+///|
+test "window attributes active=false keeps window unfocused" {
+  let event_loop = EventLoop::new()
+  let has_focus = Ref::new(None)
+  let window = Ref::new(None)
+  let app : InactiveWindowApp = { has_focus, window }
+  event_loop.run_app(app)
+  assert_eq(has_focus.val, Some(false))
 }
 
 ///|

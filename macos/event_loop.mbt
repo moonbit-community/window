@@ -458,6 +458,7 @@ pub fn EventLoop::create_window(
     size.width(),
     size.height(),
     attributes.visible(),
+    attributes.active(),
     attributes.resizable(),
     attributes.title(),
   )
