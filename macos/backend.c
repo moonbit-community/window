@@ -66,6 +66,8 @@ typedef struct mbw_window {
   int pending_destroyed;
   int pending_focused_changed;
   int focused;
+  int maximized;
+  int minimized;
   int pending_focus_value;
   int theme_kind;
   int reported_theme_kind;
@@ -2001,6 +2003,12 @@ static void mbw_update_window_state(mbw_window_t *window) {
   if (!window->pending_focused_changed) {
     window->focused = is_focused ? 1 : 0;
   }
+  mbw_bool_t is_miniaturized = ((mbw_bool_t(*)(id, SEL))objc_msgSend)(
+    (id)window->window, mbw_sel("isMiniaturized"));
+  window->minimized = is_miniaturized ? 1 : 0;
+  mbw_bool_t is_zoomed = ((mbw_bool_t(*)(id, SEL))objc_msgSend)(
+    (id)window->window, mbw_sel("isZoomed"));
+  window->maximized = is_zoomed ? 1 : 0;
 
   window->scale_factor = ((double(*)(id, SEL))objc_msgSend)(
     (id)window->window, mbw_sel("backingScaleFactor"));
@@ -2329,6 +2337,8 @@ int mbw_window_create_utf8(
   window->pending_destroyed = 0;
   window->pending_focused_changed = 0;
   window->focused = 0;
+  window->maximized = 0;
+  window->minimized = 0;
   window->pending_focus_value = 0;
   window->theme_kind = MBW_THEME_UNKNOWN;
   window->reported_theme_kind = MBW_THEME_UNKNOWN;
@@ -2604,6 +2614,16 @@ bool mbw_window_pending_focused(int window_id) {
 bool mbw_window_has_focus(int window_id) {
   mbw_window_t *window = mbw_find_window(window_id);
   return window ? window->focused != 0 : false;
+}
+
+bool mbw_window_minimized(int window_id) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  return window ? window->minimized != 0 : false;
+}
+
+bool mbw_window_maximized(int window_id) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  return window ? window->maximized != 0 : false;
 }
 
 bool mbw_window_take_scale_factor_changed(int window_id) {
@@ -3318,6 +3338,50 @@ void mbw_window_focus(int window_id) {
       (id)window->window,
       mbw_sel("makeKeyAndOrderFront:"),
       nil);
+  }
+#endif
+}
+
+void mbw_window_set_minimized(int window_id, bool minimized) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  if (!window) {
+    return;
+  }
+  window->minimized = minimized ? 1 : 0;
+#if defined(__APPLE__)
+  if (window->window) {
+    if (minimized) {
+      ((void(*)(id, SEL, id))objc_msgSend)(
+        (id)window->window,
+        mbw_sel("miniaturize:"),
+        nil);
+    } else {
+      ((void(*)(id, SEL, id))objc_msgSend)(
+        (id)window->window,
+        mbw_sel("deminiaturize:"),
+        nil);
+    }
+  }
+#endif
+}
+
+void mbw_window_set_maximized(int window_id, bool maximized) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  if (!window) {
+    return;
+  }
+  window->maximized = maximized ? 1 : 0;
+#if defined(__APPLE__)
+  if (window->window) {
+    mbw_bool_t is_zoomed = ((mbw_bool_t(*)(id, SEL))objc_msgSend)(
+      (id)window->window,
+      mbw_sel("isZoomed"));
+    if ((is_zoomed ? 1 : 0) != window->maximized) {
+      ((void(*)(id, SEL, id))objc_msgSend)(
+        (id)window->window,
+        mbw_sel("zoom:"),
+        nil);
+    }
   }
 #endif
 }

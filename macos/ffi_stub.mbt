@@ -59,6 +59,16 @@ fn window_has_focus(_window_id : Int) -> Bool {
 }
 
 ///|
+fn window_minimized(_window_id : Int) -> Bool {
+  false
+}
+
+///|
+fn window_maximized(_window_id : Int) -> Bool {
+  false
+}
+
+///|
 fn take_scale_factor_changed(_window_id : Int) -> Bool {
   false
 }
@@ -245,6 +255,16 @@ fn set_window_position(_window_id : Int, _x : Int, _y : Int) -> Unit {
 
 ///|
 fn focus_window(_window_id : Int) -> Unit {
+  ()
+}
+
+///|
+fn set_window_minimized(_window_id : Int, _minimized : Bool) -> Unit {
+  ()
+}
+
+///|
+fn set_window_maximized(_window_id : Int, _maximized : Bool) -> Unit {
   ()
 }
 

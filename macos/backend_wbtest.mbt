@@ -229,6 +229,14 @@ struct FocusWindowApp {
 }
 
 ///|
+struct WindowMinMaxStateApp {
+  maximized_after_disable : Ref[Bool]
+  maximized_after_enable : Ref[Bool]
+  minimized_after_disable : Ref[Bool]
+  minimized_after_enable : Ref[Bool]
+}
+
+///|
 struct MovedApp {
   moved : Ref[@dpi.PhysicalPosition?]
 }
@@ -386,6 +394,25 @@ impl ApplicationHandler for FocusWindowApp with window_event(
     }
     _ => ()
   }
+}
+
+///|
+impl ApplicationHandler for WindowMinMaxStateApp with can_create_surfaces(
+  self,
+  event_loop,
+) {
+  let window = event_loop.create_window(
+    @core.WindowAttributes::default().with_visible(false),
+  )
+  window.set_minimized(true)
+  self.minimized_after_enable.val = window.is_minimized()
+  window.set_minimized(false)
+  self.minimized_after_disable.val = window.is_minimized()
+  window.set_maximized(true)
+  self.maximized_after_enable.val = window.is_maximized()
+  window.set_maximized(false)
+  self.maximized_after_disable.val = window.is_maximized()
+  event_loop.exit()
 }
 
 ///|
@@ -1132,6 +1159,26 @@ test "focus_window updates focus state and has_focus" {
   event_loop.run_app(app)
   assert_eq(focused_event.val, Some(true))
   assert_eq(has_focus.val, Some(true))
+}
+
+///|
+test "window minimize and maximize state can be controlled" {
+  let event_loop = EventLoop::new()
+  let minimized_after_enable = Ref::new(false)
+  let minimized_after_disable = Ref::new(true)
+  let maximized_after_enable = Ref::new(false)
+  let maximized_after_disable = Ref::new(true)
+  let app : WindowMinMaxStateApp = {
+    maximized_after_disable,
+    maximized_after_enable,
+    minimized_after_disable,
+    minimized_after_enable,
+  }
+  event_loop.run_app(app)
+  assert_true(minimized_after_enable.val)
+  assert_false(minimized_after_disable.val)
+  assert_true(maximized_after_enable.val)
+  assert_false(maximized_after_disable.val)
 }
 
 ///|

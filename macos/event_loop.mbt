@@ -85,6 +85,26 @@ pub fn Window::has_focus(self : Window) -> Bool {
 }
 
 ///|
+pub fn Window::set_minimized(self : Window, minimized : Bool) -> Unit {
+  set_window_minimized(self.id.into_raw(), minimized)
+}
+
+///|
+pub fn Window::is_minimized(self : Window) -> Bool {
+  window_minimized(self.id.into_raw())
+}
+
+///|
+pub fn Window::set_maximized(self : Window, maximized : Bool) -> Unit {
+  set_window_maximized(self.id.into_raw(), maximized)
+}
+
+///|
+pub fn Window::is_maximized(self : Window) -> Bool {
+  window_maximized(self.id.into_raw())
+}
+
+///|
 pub fn Window::set_ime_purpose(
   self : Window,
   purpose : @core.ImePurpose,

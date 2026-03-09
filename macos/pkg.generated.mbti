@@ -76,6 +76,8 @@ pub struct Window {
 pub fn Window::focus_window(Self) -> Unit
 pub fn Window::has_focus(Self) -> Bool
 pub fn Window::id(Self) -> @core.WindowId
+pub fn Window::is_maximized(Self) -> Bool
+pub fn Window::is_minimized(Self) -> Bool
 pub fn Window::outer_position(Self) -> @dpi.PhysicalPosition
 pub fn Window::request_redraw(Self) -> Unit
 pub fn Window::request_surface_size(Self, @dpi.PhysicalSize) -> Unit
@@ -84,7 +86,9 @@ pub fn Window::set_ime_allowed(Self, Bool) -> Unit
 pub fn Window::set_ime_cursor_area(Self, @dpi.PhysicalPosition, @dpi.PhysicalSize) -> Unit
 pub fn Window::set_ime_purpose(Self, @core.ImePurpose) -> Unit
 pub fn Window::set_max_surface_size(Self, @dpi.PhysicalSize?) -> Unit
+pub fn Window::set_maximized(Self, Bool) -> Unit
 pub fn Window::set_min_surface_size(Self, @dpi.PhysicalSize?) -> Unit
+pub fn Window::set_minimized(Self, Bool) -> Unit
 pub fn Window::set_outer_position(Self, @dpi.PhysicalPosition) -> Unit
 pub fn Window::set_resizable(Self, Bool) -> Unit
 pub fn Window::set_title(Self, String) -> Unit

@@ -59,6 +59,16 @@ fn window_has_focus(window_id : Int) -> Bool {
 }
 
 ///|
+fn window_minimized(window_id : Int) -> Bool {
+  native_window_minimized(window_id)
+}
+
+///|
+fn window_maximized(window_id : Int) -> Bool {
+  native_window_maximized(window_id)
+}
+
+///|
 fn take_scale_factor_changed(window_id : Int) -> Bool {
   native_window_take_scale_factor_changed(window_id)
 }
@@ -249,6 +259,16 @@ fn focus_window(window_id : Int) -> Unit {
 }
 
 ///|
+fn set_window_minimized(window_id : Int, minimized : Bool) -> Unit {
+  native_window_set_minimized(window_id, minimized)
+}
+
+///|
+fn set_window_maximized(window_id : Int, maximized : Bool) -> Unit {
+  native_window_set_maximized(window_id, maximized)
+}
+
+///|
 fn set_ime_purpose(window_id : Int, purpose : Int) -> Unit {
   native_window_set_ime_purpose(window_id, purpose)
 }
@@ -381,6 +401,12 @@ extern "C" fn native_window_pending_focused(window_id : Int) -> Bool = "mbw_wind
 
 ///|
 extern "C" fn native_window_has_focus(window_id : Int) -> Bool = "mbw_window_has_focus"
+
+///|
+extern "C" fn native_window_minimized(window_id : Int) -> Bool = "mbw_window_minimized"
+
+///|
+extern "C" fn native_window_maximized(window_id : Int) -> Bool = "mbw_window_maximized"
 
 ///|
 extern "C" fn native_window_take_scale_factor_changed(window_id : Int) -> Bool = "mbw_window_take_scale_factor_changed"
@@ -525,6 +551,18 @@ extern "C" fn native_window_set_position(
 
 ///|
 extern "C" fn native_window_focus(window_id : Int) -> Unit = "mbw_window_focus"
+
+///|
+extern "C" fn native_window_set_minimized(
+  window_id : Int,
+  minimized : Bool,
+) -> Unit = "mbw_window_set_minimized"
+
+///|
+extern "C" fn native_window_set_maximized(
+  window_id : Int,
+  maximized : Bool,
+) -> Unit = "mbw_window_set_maximized"
 
 ///|
 extern "C" fn native_window_set_ime_purpose(
