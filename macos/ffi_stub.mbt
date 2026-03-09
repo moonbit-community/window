@@ -124,6 +124,16 @@ fn pending_scale_height(_window_id : Int) -> Int {
 }
 
 ///|
+fn window_resize_increment_width(_window_id : Int) -> Int {
+  0
+}
+
+///|
+fn window_resize_increment_height(_window_id : Int) -> Int {
+  0
+}
+
+///|
 fn take_theme_changed(_window_id : Int) -> Bool {
   false
 }
@@ -260,6 +270,15 @@ fn wait_for_events(_timeout_ms : Int) -> Bool {
 
 ///|
 fn set_surface_size(_window_id : Int, _width : Int, _height : Int) -> Unit {
+  ()
+}
+
+///|
+fn set_surface_resize_increments(
+  _window_id : Int,
+  _width : Int,
+  _height : Int,
+) -> Unit {
   ()
 }
 

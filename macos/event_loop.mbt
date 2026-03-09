@@ -35,6 +35,33 @@ pub fn Window::request_surface_size(
 }
 
 ///|
+pub fn Window::set_surface_resize_increments(
+  self : Window,
+  size : @dpi.PhysicalSize?,
+) -> Unit {
+  match size {
+    Some(size) =>
+      set_surface_resize_increments(
+        self.id.into_raw(),
+        size.width(),
+        size.height(),
+      )
+    None => set_surface_resize_increments(self.id.into_raw(), 0, 0)
+  }
+}
+
+///|
+pub fn Window::surface_resize_increments(self : Window) -> @dpi.PhysicalSize? {
+  let width = window_resize_increment_width(self.id.into_raw())
+  let height = window_resize_increment_height(self.id.into_raw())
+  if width > 0 && height > 0 {
+    Some(@dpi.PhysicalSize::new(width, height))
+  } else {
+    None
+  }
+}
+
+///|
 pub fn Window::set_min_surface_size(
   self : Window,
   size : @dpi.PhysicalSize?,
@@ -562,6 +589,15 @@ pub fn EventLoop::create_window(
   guard raw_id > 0 else { abort("failed to create macos window") }
   set_window_theme(raw_id, theme_to_native(attributes.theme()))
   set_window_content_protected(raw_id, attributes.content_protected())
+  match attributes.surface_resize_increments() {
+    Some(increments) =>
+      set_surface_resize_increments(
+        raw_id,
+        increments.width(),
+        increments.height(),
+      )
+    None => ()
+  }
   set_ime_purpose(raw_id, ime_purpose_to_native(attributes.ime_purpose()))
   set_window_level(raw_id, window_level_to_native(attributes.window_level()))
   set_window_transparent(raw_id, attributes.transparent())

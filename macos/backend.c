@@ -89,6 +89,8 @@ typedef struct mbw_window {
   int min_height;
   int max_width;
   int max_height;
+  int resize_increment_width;
+  int resize_increment_height;
   int modifiers_state;
   int ime_marked_active;
   int ime_cursor_start;
@@ -2384,6 +2386,8 @@ int mbw_window_create_utf8(
   window->min_height = 1;
   window->max_width = 0;
   window->max_height = 0;
+  window->resize_increment_width = 0;
+  window->resize_increment_height = 0;
   window->modifiers_state = 0;
   window->ime_marked_active = 0;
   window->ime_cursor_start = -1;
@@ -2534,6 +2538,16 @@ int mbw_window_width(int window_id) {
 int mbw_window_height(int window_id) {
   mbw_window_t *window = mbw_find_window(window_id);
   return window ? window->height : 0;
+}
+
+int mbw_window_resize_increment_width(int window_id) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  return window ? window->resize_increment_width : 0;
+}
+
+int mbw_window_resize_increment_height(int window_id) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  return window ? window->resize_increment_height : 0;
 }
 
 int mbw_window_x(int window_id) {
@@ -2949,6 +2963,36 @@ void mbw_window_set_surface_size(int window_id, int width, int height) {
     };
     ((void(*)(id, SEL, mbw_size_t))objc_msgSend)(
       (id)window->window, mbw_sel("setContentSize:"), logical_size);
+  }
+#endif
+}
+
+void mbw_window_set_surface_resize_increments(int window_id, int width, int height) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  if (!window) {
+    return;
+  }
+
+  if (width <= 0 || height <= 0) {
+    window->resize_increment_width = 0;
+    window->resize_increment_height = 0;
+  } else {
+    window->resize_increment_width = mbw_clamp_size(width);
+    window->resize_increment_height = mbw_clamp_size(height);
+  }
+#if defined(__APPLE__)
+  if (window->window) {
+    double scale_factor = window->scale_factor > 0.0 ? window->scale_factor : 1.0;
+    mbw_size_t increments = {
+      .width = window->resize_increment_width > 0
+        ? (double)window->resize_increment_width / scale_factor
+        : 1.0,
+      .height = window->resize_increment_height > 0
+        ? (double)window->resize_increment_height / scale_factor
+        : 1.0,
+    };
+    ((void(*)(id, SEL, mbw_size_t))objc_msgSend)(
+      (id)window->window, mbw_sel("setResizeIncrements:"), increments);
   }
 #endif
 }

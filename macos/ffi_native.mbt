@@ -124,6 +124,16 @@ fn pending_scale_height(window_id : Int) -> Int {
 }
 
 ///|
+fn window_resize_increment_width(window_id : Int) -> Int {
+  native_window_resize_increment_width(window_id)
+}
+
+///|
+fn window_resize_increment_height(window_id : Int) -> Int {
+  native_window_resize_increment_height(window_id)
+}
+
+///|
 fn take_theme_changed(window_id : Int) -> Bool {
   native_window_take_theme_changed(window_id)
 }
@@ -261,6 +271,15 @@ fn wait_for_events(timeout_ms : Int) -> Bool {
 ///|
 fn set_surface_size(window_id : Int, width : Int, height : Int) -> Unit {
   native_window_set_surface_size(window_id, width, height)
+}
+
+///|
+fn set_surface_resize_increments(
+  window_id : Int,
+  width : Int,
+  height : Int,
+) -> Unit {
+  native_window_set_surface_resize_increments(window_id, width, height)
 }
 
 ///|
@@ -431,6 +450,12 @@ pub extern "C" fn native_window_width(window_id : Int) -> Int = "mbw_window_widt
 
 ///|
 pub extern "C" fn native_window_height(window_id : Int) -> Int = "mbw_window_height"
+
+///|
+extern "C" fn native_window_resize_increment_width(window_id : Int) -> Int = "mbw_window_resize_increment_width"
+
+///|
+extern "C" fn native_window_resize_increment_height(window_id : Int) -> Int = "mbw_window_resize_increment_height"
 
 ///|
 extern "C" fn native_window_x(window_id : Int) -> Int = "mbw_window_x"
@@ -617,6 +642,13 @@ extern "C" fn native_window_set_surface_size(
   width : Int,
   height : Int,
 ) -> Unit = "mbw_window_set_surface_size"
+
+///|
+extern "C" fn native_window_set_surface_resize_increments(
+  window_id : Int,
+  width : Int,
+  height : Int,
+) -> Unit = "mbw_window_set_surface_resize_increments"
 
 ///|
 extern "C" fn native_window_set_min_surface_size(

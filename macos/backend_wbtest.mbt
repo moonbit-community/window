@@ -285,6 +285,13 @@ struct WindowContentProtectedApp {
 }
 
 ///|
+struct SurfaceResizeIncrementsApp {
+  increments_after_disable : Ref[@dpi.PhysicalSize?]
+  increments_after_enable : Ref[@dpi.PhysicalSize?]
+  increments_initial : Ref[@dpi.PhysicalSize?]
+}
+
+///|
 struct MovedApp {
   moved : Ref[@dpi.PhysicalPosition?]
 }
@@ -584,6 +591,24 @@ impl ApplicationHandler for WindowContentProtectedApp with can_create_surfaces(
   self.protected_after_disable.val = window.is_content_protected()
   window.set_content_protected(true)
   self.protected_after_enable.val = window.is_content_protected()
+  event_loop.exit()
+}
+
+///|
+impl ApplicationHandler for SurfaceResizeIncrementsApp with can_create_surfaces(
+  self,
+  event_loop,
+) {
+  let window = event_loop.create_window(
+    @core.WindowAttributes::default()
+    .with_visible(false)
+    .with_surface_resize_increments(Some(@dpi.PhysicalSize::new(64, 48))),
+  )
+  self.increments_initial.val = window.surface_resize_increments()
+  window.set_surface_resize_increments(None)
+  self.increments_after_disable.val = window.surface_resize_increments()
+  window.set_surface_resize_increments(Some(@dpi.PhysicalSize::new(32, 24)))
+  self.increments_after_enable.val = window.surface_resize_increments()
   event_loop.exit()
 }
 
@@ -1487,6 +1512,23 @@ test "window content protection can be configured at create and runtime" {
   assert_true(protected_initial.val)
   assert_false(protected_after_disable.val)
   assert_true(protected_after_enable.val)
+}
+
+///|
+test "window surface resize increments can be configured at create and runtime" {
+  let event_loop = EventLoop::new()
+  let increments_initial = Ref::new(None)
+  let increments_after_disable = Ref::new(Some(@dpi.PhysicalSize::new(1, 1)))
+  let increments_after_enable = Ref::new(None)
+  let app : SurfaceResizeIncrementsApp = {
+    increments_after_disable,
+    increments_after_enable,
+    increments_initial,
+  }
+  event_loop.run_app(app)
+  assert_eq(increments_initial.val, Some(@dpi.PhysicalSize::new(64, 48)))
+  assert_eq(increments_after_disable.val, None)
+  assert_eq(increments_after_enable.val, Some(@dpi.PhysicalSize::new(32, 24)))
 }
 
 ///|
