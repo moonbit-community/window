@@ -2754,6 +2754,36 @@ int mbw_window_level(int window_id) {
   return window ? window->window_level : MBW_WINDOW_LEVEL_NORMAL;
 }
 
+bool mbw_window_ime_allowed(int window_id) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  return window ? window->ime_allowed != 0 : false;
+}
+
+int mbw_window_ime_purpose(int window_id) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  return window ? window->ime_purpose : MBW_IME_PURPOSE_NORMAL;
+}
+
+int mbw_window_ime_cursor_area_x(int window_id) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  return window ? window->ime_cursor_area_x : 0;
+}
+
+int mbw_window_ime_cursor_area_y(int window_id) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  return window ? window->ime_cursor_area_y : 0;
+}
+
+int mbw_window_ime_cursor_area_width(int window_id) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  return window ? window->ime_cursor_area_width : 1;
+}
+
+int mbw_window_ime_cursor_area_height(int window_id) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  return window ? window->ime_cursor_area_height : 1;
+}
+
 bool mbw_window_take_scale_factor_changed(int window_id) {
   mbw_window_t *window = mbw_find_window(window_id);
   if (!window || !window->pending_scale_factor_changed) {

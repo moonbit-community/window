@@ -127,24 +127,6 @@ extern "C" fn queue_ime_commit_for_test(
 ) -> Unit = "mbw_test_window_queue_ime_commit"
 
 ///|
-extern "C" fn ime_allowed_for_test(window_id : Int) -> Bool = "mbw_test_window_ime_allowed"
-
-///|
-extern "C" fn ime_cursor_area_x_for_test(window_id : Int) -> Int = "mbw_test_window_ime_cursor_area_x"
-
-///|
-extern "C" fn ime_cursor_area_y_for_test(window_id : Int) -> Int = "mbw_test_window_ime_cursor_area_y"
-
-///|
-extern "C" fn ime_cursor_area_width_for_test(window_id : Int) -> Int = "mbw_test_window_ime_cursor_area_width"
-
-///|
-extern "C" fn ime_cursor_area_height_for_test(window_id : Int) -> Int = "mbw_test_window_ime_cursor_area_height"
-
-///|
-extern "C" fn ime_purpose_for_test(window_id : Int) -> Int = "mbw_test_window_ime_purpose"
-
-///|
 struct StartCauseApp {
   causes : Array[@core.StartCause]
 }
@@ -416,8 +398,11 @@ struct ImeApp {
 
 ///|
 struct ImeConfigurationApp {
-  initial_purpose : Ref[Int]
-  window_id : Ref[Int]
+  cursor_position : Ref[@dpi.PhysicalPosition?]
+  cursor_size : Ref[@dpi.PhysicalSize?]
+  ime_allowed : Ref[Bool]
+  initial_purpose : Ref[@core.ImePurpose]
+  updated_purpose : Ref[@core.ImePurpose]
 }
 
 ///|
@@ -1209,14 +1194,17 @@ impl ApplicationHandler for ImeConfigurationApp with can_create_surfaces(
     .with_visible(false)
     .with_ime_purpose(@core.ImePurpose::Password),
   )
-  self.window_id.val = window.id().into_raw()
-  self.initial_purpose.val = ime_purpose_for_test(window.id().into_raw())
+  self.initial_purpose.val = window.ime_purpose()
   window.set_ime_purpose(@core.ImePurpose::Terminal)
   window.set_ime_allowed(false)
   window.set_ime_cursor_area(
     @dpi.PhysicalPosition::new(48, 96),
     @dpi.PhysicalSize::new(20, 32),
   )
+  self.updated_purpose.val = window.ime_purpose()
+  self.ime_allowed.val = window.ime_allowed()
+  self.cursor_position.val = Some(window.ime_cursor_area_position())
+  self.cursor_size.val = Some(window.ime_cursor_area_size())
   event_loop.exit()
 }
 
@@ -2101,18 +2089,24 @@ test "ime preedit always includes enabled first" {
 ///|
 test "window ime configuration updates native state" {
   let event_loop = EventLoop::new()
-  let initial_purpose = Ref::new(0)
-  let window_id = Ref::new(0)
-  let app : ImeConfigurationApp = { initial_purpose, window_id }
+  let initial_purpose = Ref::new(@core.ImePurpose::Normal)
+  let updated_purpose = Ref::new(@core.ImePurpose::Normal)
+  let ime_allowed = Ref::new(true)
+  let cursor_position = Ref::new(None)
+  let cursor_size = Ref::new(None)
+  let app : ImeConfigurationApp = {
+    cursor_position,
+    cursor_size,
+    ime_allowed,
+    initial_purpose,
+    updated_purpose,
+  }
   event_loop.run_app(app)
-  let raw_id = window_id.val
-  assert_eq(initial_purpose.val, 1)
-  assert_eq(ime_purpose_for_test(raw_id), 2)
-  assert_false(ime_allowed_for_test(raw_id))
-  assert_eq(ime_cursor_area_x_for_test(raw_id), 48)
-  assert_eq(ime_cursor_area_y_for_test(raw_id), 96)
-  assert_eq(ime_cursor_area_width_for_test(raw_id), 20)
-  assert_eq(ime_cursor_area_height_for_test(raw_id), 32)
+  assert_eq(initial_purpose.val, @core.ImePurpose::Password)
+  assert_eq(updated_purpose.val, @core.ImePurpose::Terminal)
+  assert_false(ime_allowed.val)
+  assert_eq(cursor_position.val, Some(@dpi.PhysicalPosition::new(48, 96)))
+  assert_eq(cursor_size.val, Some(@dpi.PhysicalSize::new(20, 32)))
 }
 
 ///|

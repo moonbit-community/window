@@ -124,6 +124,36 @@ fn window_level(_window_id : Int) -> Int {
 }
 
 ///|
+fn window_ime_allowed(_window_id : Int) -> Bool {
+  false
+}
+
+///|
+fn window_ime_purpose(_window_id : Int) -> Int {
+  0
+}
+
+///|
+fn window_ime_cursor_area_x(_window_id : Int) -> Int {
+  0
+}
+
+///|
+fn window_ime_cursor_area_y(_window_id : Int) -> Int {
+  0
+}
+
+///|
+fn window_ime_cursor_area_width(_window_id : Int) -> Int {
+  1
+}
+
+///|
+fn window_ime_cursor_area_height(_window_id : Int) -> Int {
+  1
+}
+
+///|
 fn take_scale_factor_changed(_window_id : Int) -> Bool {
   false
 }

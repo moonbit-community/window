@@ -209,6 +209,11 @@ pub fn Window::set_ime_allowed(self : Window, allowed : Bool) -> Unit {
 }
 
 ///|
+pub fn Window::ime_allowed(self : Window) -> Bool {
+  window_ime_allowed(self.id.into_raw())
+}
+
+///|
 pub fn Window::set_ime_cursor_area(
   self : Window,
   position : @dpi.PhysicalPosition,
@@ -221,6 +226,27 @@ pub fn Window::set_ime_cursor_area(
     size.width(),
     size.height(),
   )
+}
+
+///|
+pub fn Window::ime_cursor_area_position(self : Window) -> @dpi.PhysicalPosition {
+  @dpi.PhysicalPosition::new(
+    window_ime_cursor_area_x(self.id.into_raw()),
+    window_ime_cursor_area_y(self.id.into_raw()),
+  )
+}
+
+///|
+pub fn Window::ime_cursor_area_size(self : Window) -> @dpi.PhysicalSize {
+  @dpi.PhysicalSize::new(
+    window_ime_cursor_area_width(self.id.into_raw()),
+    window_ime_cursor_area_height(self.id.into_raw()),
+  )
+}
+
+///|
+pub fn Window::ime_purpose(self : Window) -> @core.ImePurpose {
+  ime_purpose_from_native(window_ime_purpose(self.id.into_raw()))
 }
 
 ///|
@@ -383,6 +409,15 @@ fn ime_purpose_to_native(purpose : @core.ImePurpose) -> Int {
     @core.ImePurpose::Normal => 0
     @core.ImePurpose::Password => 1
     @core.ImePurpose::Terminal => 2
+  }
+}
+
+///|
+fn ime_purpose_from_native(purpose : Int) -> @core.ImePurpose {
+  match purpose {
+    1 => @core.ImePurpose::Password
+    2 => @core.ImePurpose::Terminal
+    _ => @core.ImePurpose::Normal
   }
 }
 

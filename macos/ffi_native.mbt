@@ -124,6 +124,36 @@ fn window_level(window_id : Int) -> Int {
 }
 
 ///|
+fn window_ime_allowed(window_id : Int) -> Bool {
+  native_window_ime_allowed(window_id)
+}
+
+///|
+fn window_ime_purpose(window_id : Int) -> Int {
+  native_window_ime_purpose(window_id)
+}
+
+///|
+fn window_ime_cursor_area_x(window_id : Int) -> Int {
+  native_window_ime_cursor_area_x(window_id)
+}
+
+///|
+fn window_ime_cursor_area_y(window_id : Int) -> Int {
+  native_window_ime_cursor_area_y(window_id)
+}
+
+///|
+fn window_ime_cursor_area_width(window_id : Int) -> Int {
+  native_window_ime_cursor_area_width(window_id)
+}
+
+///|
+fn window_ime_cursor_area_height(window_id : Int) -> Int {
+  native_window_ime_cursor_area_height(window_id)
+}
+
+///|
 fn take_scale_factor_changed(window_id : Int) -> Bool {
   native_window_take_scale_factor_changed(window_id)
 }
@@ -569,6 +599,24 @@ extern "C" fn native_window_transparent(window_id : Int) -> Bool = "mbw_window_t
 
 ///|
 extern "C" fn native_window_level(window_id : Int) -> Int = "mbw_window_level"
+
+///|
+extern "C" fn native_window_ime_allowed(window_id : Int) -> Bool = "mbw_window_ime_allowed"
+
+///|
+extern "C" fn native_window_ime_purpose(window_id : Int) -> Int = "mbw_window_ime_purpose"
+
+///|
+extern "C" fn native_window_ime_cursor_area_x(window_id : Int) -> Int = "mbw_window_ime_cursor_area_x"
+
+///|
+extern "C" fn native_window_ime_cursor_area_y(window_id : Int) -> Int = "mbw_window_ime_cursor_area_y"
+
+///|
+extern "C" fn native_window_ime_cursor_area_width(window_id : Int) -> Int = "mbw_window_ime_cursor_area_width"
+
+///|
+extern "C" fn native_window_ime_cursor_area_height(window_id : Int) -> Int = "mbw_window_ime_cursor_area_height"
 
 ///|
 extern "C" fn native_window_take_scale_factor_changed(window_id : Int) -> Bool = "mbw_window_take_scale_factor_changed"
