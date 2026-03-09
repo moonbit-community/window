@@ -27,6 +27,14 @@ pub fn Window::surface_size(self : Window) -> @dpi.PhysicalSize {
 }
 
 ///|
+pub fn Window::outer_size(self : Window) -> @dpi.PhysicalSize {
+  @dpi.PhysicalSize::new(
+    window_outer_width(self.id.into_raw()),
+    window_outer_height(self.id.into_raw()),
+  )
+}
+
+///|
 pub fn Window::request_surface_size(
   self : Window,
   size : @dpi.PhysicalSize,

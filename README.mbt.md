@@ -13,8 +13,8 @@ native builds and focuses on `macos-arm64`.
   `Occluded`, `RedrawRequested`
 - Event loop support: `run_app`, `EventLoopProxy::wake_up()`,
   `ControlFlow::{Poll, Wait, WaitUntil}`
-- Runtime window control currently includes surface sizing and constraints
-  (`surface_size`, `request_surface_size`, `set_min_surface_size`,
+- Runtime window control currently includes surface and frame sizing
+  (`surface_size`, `outer_size`, `request_surface_size`, `set_min_surface_size`,
   `set_max_surface_size`, `set_surface_resize_increments`), position and focus
   (`outer_position`, `set_outer_position`, `focus_window`, `has_focus`),
   state (`set_minimized`, `is_minimized`, `set_maximized`, `is_maximized`,

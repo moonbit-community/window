@@ -368,6 +368,16 @@ fn window_y(window_id : Int) -> Int {
 }
 
 ///|
+fn window_outer_width(window_id : Int) -> Int {
+  native_window_outer_width(window_id)
+}
+
+///|
+fn window_outer_height(window_id : Int) -> Int {
+  native_window_outer_height(window_id)
+}
+
+///|
 fn set_window_position(window_id : Int, x : Int, y : Int) -> Unit {
   native_window_set_position(window_id, x, y)
 }
@@ -569,6 +579,12 @@ pub extern "C" fn native_window_width(window_id : Int) -> Int = "mbw_window_widt
 
 ///|
 pub extern "C" fn native_window_height(window_id : Int) -> Int = "mbw_window_height"
+
+///|
+extern "C" fn native_window_outer_width(window_id : Int) -> Int = "mbw_window_outer_width"
+
+///|
+extern "C" fn native_window_outer_height(window_id : Int) -> Int = "mbw_window_outer_height"
 
 ///|
 extern "C" fn native_window_resize_increment_width(window_id : Int) -> Int = "mbw_window_resize_increment_width"

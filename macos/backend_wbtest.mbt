@@ -343,6 +343,12 @@ struct OuterPositionApp {
 }
 
 ///|
+struct OuterSizeApp {
+  outer_size : Ref[@dpi.PhysicalSize?]
+  surface_size : Ref[@dpi.PhysicalSize?]
+}
+
+///|
 struct AttributesPositionApp {
   moved : Ref[@dpi.PhysicalPosition?]
   outer_position : Ref[@dpi.PhysicalPosition?]
@@ -856,6 +862,21 @@ impl ApplicationHandler for OuterPositionApp with window_event(
     }
     _ => ()
   }
+}
+
+///|
+impl ApplicationHandler for OuterSizeApp with can_create_surfaces(
+  self,
+  event_loop,
+) {
+  let window = event_loop.create_window(
+    @core.WindowAttributes::default()
+    .with_visible(false)
+    .with_surface_size(@dpi.PhysicalSize::new(640, 480)),
+  )
+  self.surface_size.val = Some(window.surface_size())
+  self.outer_size.val = Some(window.outer_size())
+  event_loop.exit()
 }
 
 ///|
@@ -1895,6 +1916,22 @@ test "window outer position can be set and read" {
   event_loop.run_app(app)
   assert_eq(moved.val, Some(@dpi.PhysicalPosition::new(320, 180)))
   assert_eq(outer_position.val, Some(@dpi.PhysicalPosition::new(320, 180)))
+}
+
+///|
+test "window outer size reports frame dimensions" {
+  let event_loop = EventLoop::new()
+  let outer_size = Ref::new(None)
+  let surface_size = Ref::new(None)
+  let app : OuterSizeApp = { outer_size, surface_size }
+  event_loop.run_app(app)
+  match (surface_size.val, outer_size.val) {
+    (Some(surface), Some(outer)) => {
+      assert_true(outer.width() >= surface.width())
+      assert_true(outer.height() >= surface.height())
+    }
+    _ => abort("expected outer and surface sizes")
+  }
 }
 
 ///|
