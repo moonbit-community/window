@@ -1,0 +1,9 @@
+import {
+  "username/window/core",
+  "username/window/macos",
+}
+
+options(
+  "is-main": true,
+  targets: { "main.mbt": [ "native" ], "main_stub.mbt": [ "not", "native" ] },
+)

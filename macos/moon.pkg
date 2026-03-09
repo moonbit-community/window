@@ -1,0 +1,20 @@
+import {
+  "moonbitlang/core/encoding/utf8",
+  "username/window/core" @core,
+  "username/window/dpi" @dpi,
+}
+
+options(
+  link: {
+    "native": {
+      "cc-link-flags": "-framework AppKit -framework Foundation -framework CoreGraphics -lobjc",
+      "stub-cc-link-flags": "-framework AppKit -framework Foundation -framework CoreGraphics -lobjc",
+    },
+  },
+  "native-stub": [ "backend.c" ],
+  targets: {
+    "backend_test.mbt": [ "native" ],
+    "ffi_native.mbt": [ "native" ],
+    "ffi_stub.mbt": [ "not", "native" ],
+  },
+)

@@ -1,0 +1,7 @@
+import {
+  "username/window/dpi" @dpi,
+}
+
+options(
+  targets: { },
+)

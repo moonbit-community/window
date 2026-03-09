@@ -1,0 +1,12 @@
+import {
+  "username/window/core",
+  "username/window/macos",
+}
+
+options(
+  targets: {
+    "window.mbt": [ "native" ],
+    "window_stub.mbt": [ "not", "native" ],
+    "window_test.mbt": [ "native" ],
+  },
+)

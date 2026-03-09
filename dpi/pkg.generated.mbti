@@ -1,0 +1,51 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "username/window/dpi"
+
+// Values
+pub fn validate_scale_factor(Double) -> Bool
+
+// Errors
+
+// Types and methods
+pub struct LogicalPosition {
+  x : Double
+  y : Double
+}
+pub fn LogicalPosition::new(Double, Double) -> Self
+pub impl Eq for LogicalPosition
+pub impl Show for LogicalPosition
+
+pub struct LogicalSize {
+  width : Double
+  height : Double
+}
+pub fn LogicalSize::height(Self) -> Double
+pub fn LogicalSize::new(Double, Double) -> Self
+pub fn LogicalSize::to_physical(Self, Double) -> PhysicalSize
+pub fn LogicalSize::width(Self) -> Double
+pub impl Eq for LogicalSize
+pub impl Show for LogicalSize
+
+pub struct PhysicalPosition {
+  x : Int
+  y : Int
+}
+pub fn PhysicalPosition::new(Int, Int) -> Self
+pub impl Eq for PhysicalPosition
+pub impl Show for PhysicalPosition
+
+pub struct PhysicalSize {
+  width : Int
+  height : Int
+}
+pub fn PhysicalSize::height(Self) -> Int
+pub fn PhysicalSize::new(Int, Int) -> Self
+pub fn PhysicalSize::to_logical(Self, Double) -> LogicalSize
+pub fn PhysicalSize::width(Self) -> Int
+pub impl Eq for PhysicalSize
+pub impl Show for PhysicalSize
+
+// Type aliases
+
+// Traits
+

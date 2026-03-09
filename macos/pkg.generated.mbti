@@ -1,0 +1,48 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "username/window/macos"
+
+import {
+  "username/window/core",
+  "username/window/dpi",
+}
+
+// Values
+pub fn backend_available() -> Bool
+
+// Errors
+
+// Types and methods
+pub struct EventLoop {
+  // private fields
+}
+pub fn EventLoop::control_flow(Self) -> @core.ControlFlow
+pub fn EventLoop::create_window(Self, @core.WindowAttributes) -> Window
+pub fn EventLoop::exit(Self) -> Unit
+pub fn EventLoop::exiting(Self) -> Bool
+pub fn EventLoop::new() -> Self
+pub fn[A : ApplicationHandler] EventLoop::run_app(Self, A) -> Unit
+pub fn EventLoop::set_control_flow(Self, @core.ControlFlow) -> Unit
+pub impl Show for EventLoop
+
+pub struct Window {
+  // private fields
+}
+pub fn Window::id(Self) -> @core.WindowId
+pub fn Window::request_redraw(Self) -> Unit
+pub fn Window::set_resizable(Self, Bool) -> Unit
+pub fn Window::set_title(Self, String) -> Unit
+pub fn Window::set_visible(Self, Bool) -> Unit
+pub fn Window::surface_size(Self) -> @dpi.PhysicalSize
+pub fn Window::theme(Self) -> @core.Theme?
+pub impl Eq for Window
+pub impl Show for Window
+
+// Type aliases
+
+// Traits
+pub(open) trait ApplicationHandler {
+  can_create_surfaces(Self, EventLoop) -> Unit = _
+  window_event(Self, EventLoop, @core.WindowId, @core.WindowEvent) -> Unit = _
+  about_to_wait(Self, EventLoop) -> Unit = _
+}
+

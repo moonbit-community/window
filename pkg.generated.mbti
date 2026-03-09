@@ -1,0 +1,21 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "username/window"
+
+import {
+  "username/window/core",
+  "username/window/macos",
+}
+
+// Values
+pub fn create_event_loop() -> @macos.EventLoop
+
+pub fn default_control_flow() -> @core.ControlFlow
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits
+

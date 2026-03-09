@@ -1,0 +1,63 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "username/window/core"
+
+import {
+  "username/window/dpi",
+}
+
+// Values
+
+// Errors
+
+// Types and methods
+pub(all) enum ControlFlow {
+  Poll
+  Wait
+  WaitUntil(Int)
+}
+pub fn ControlFlow::wait_duration(Int) -> Self
+pub impl Eq for ControlFlow
+pub impl Show for ControlFlow
+
+pub(all) enum Theme {
+  Light
+  Dark
+}
+pub impl Eq for Theme
+pub impl Show for Theme
+
+pub struct WindowAttributes {
+  // private fields
+}
+pub fn WindowAttributes::default() -> Self
+pub fn WindowAttributes::resizable(Self) -> Bool
+pub fn WindowAttributes::surface_size(Self) -> @dpi.PhysicalSize?
+pub fn WindowAttributes::title(Self) -> String
+pub fn WindowAttributes::visible(Self) -> Bool
+pub fn WindowAttributes::with_resizable(Self, Bool) -> Self
+pub fn WindowAttributes::with_surface_size(Self, @dpi.PhysicalSize) -> Self
+pub fn WindowAttributes::with_title(Self, String) -> Self
+pub fn WindowAttributes::with_visible(Self, Bool) -> Self
+pub impl Eq for WindowAttributes
+pub impl Show for WindowAttributes
+
+pub(all) enum WindowEvent {
+  CloseRequested
+  SurfaceResized(@dpi.PhysicalSize)
+  RedrawRequested
+}
+pub impl Eq for WindowEvent
+pub impl Show for WindowEvent
+
+pub struct WindowId {
+  // private fields
+}
+pub fn WindowId::from_raw(Int) -> Self
+pub fn WindowId::into_raw(Self) -> Int
+pub impl Eq for WindowId
+pub impl Show for WindowId
+
+// Type aliases
+
+// Traits
+

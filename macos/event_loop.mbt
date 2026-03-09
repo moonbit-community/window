@@ -1,0 +1,192 @@
+///|
+pub struct Window {
+  priv id : @core.WindowId
+} derive(Eq, Show)
+
+///|
+pub fn Window::id(self : Window) -> @core.WindowId {
+  self.id
+}
+
+///|
+pub fn Window::surface_size(self : Window) -> @dpi.PhysicalSize {
+  @dpi.PhysicalSize::new(
+    native_window_width(self.id.into_raw()),
+    native_window_height(self.id.into_raw()),
+  )
+}
+
+///|
+pub fn Window::request_redraw(self : Window) -> Unit {
+  native_window_request_redraw(self.id.into_raw())
+}
+
+///|
+pub fn Window::set_title(self : Window, title : String) -> Unit {
+  set_title(self.id.into_raw(), title)
+}
+
+///|
+pub fn Window::set_visible(self : Window, visible : Bool) -> Unit {
+  native_set_visible(self.id.into_raw(), visible)
+}
+
+///|
+pub fn Window::set_resizable(self : Window, resizable : Bool) -> Unit {
+  native_set_resizable(self.id.into_raw(), resizable)
+}
+
+///|
+pub fn Window::theme(_self : Window) -> @core.Theme? {
+  None
+}
+
+///|
+pub struct EventLoop {
+  priv mut control_flow_ : @core.ControlFlow
+  priv mut exit_requested : Bool
+  priv mut window_ids : Array[Int]
+} derive(Show)
+
+///|
+pub fn EventLoop::new() -> EventLoop {
+  guard backend_available() else {
+    abort("macos backend is unavailable on this target")
+  }
+  {
+    control_flow_: @core.ControlFlow::Wait,
+    exit_requested: false,
+    window_ids: [],
+  }
+}
+
+///|
+pub fn EventLoop::create_window(
+  self : EventLoop,
+  attributes : @core.WindowAttributes,
+) -> Window {
+  let size = match attributes.surface_size() {
+    Some(size) => size
+    None => @dpi.PhysicalSize::new(800, 600)
+  }
+  let raw_id = create_window(
+    size.width(),
+    size.height(),
+    attributes.visible(),
+    attributes.resizable(),
+    attributes.title(),
+  )
+  guard raw_id > 0 else { abort("failed to create macos window") }
+  self.window_ids.push(raw_id)
+  { id: @core.WindowId::from_raw(raw_id) }
+}
+
+///|
+pub fn EventLoop::set_control_flow(
+  self : EventLoop,
+  control_flow : @core.ControlFlow,
+) -> Unit {
+  self.control_flow_ = control_flow
+}
+
+///|
+pub fn EventLoop::control_flow(self : EventLoop) -> @core.ControlFlow {
+  self.control_flow_
+}
+
+///|
+pub fn EventLoop::exit(self : EventLoop) -> Unit {
+  self.exit_requested = true
+}
+
+///|
+pub fn EventLoop::exiting(self : EventLoop) -> Bool {
+  self.exit_requested
+}
+
+///|
+pub(open) trait ApplicationHandler {
+  can_create_surfaces(Self, EventLoop) -> Unit = _
+  window_event(Self, EventLoop, @core.WindowId, @core.WindowEvent) -> Unit = _
+  about_to_wait(Self, EventLoop) -> Unit = _
+}
+
+///|
+impl ApplicationHandler with can_create_surfaces(_self, _event_loop) {
+  ()
+}
+
+///|
+impl ApplicationHandler with window_event(_self, _event_loop, _id, _event) {
+  ()
+}
+
+///|
+impl ApplicationHandler with about_to_wait(_self, _event_loop) {
+  ()
+}
+
+///|
+fn EventLoop::has_open_windows(self : EventLoop) -> Bool {
+  for raw_id in self.window_ids {
+    if native_window_should_close(raw_id) == false {
+      return true
+    }
+  }
+  false
+}
+
+///|
+fn[A : ApplicationHandler] EventLoop::dispatch_window_events(
+  self : EventLoop,
+  app : A,
+) -> Unit {
+  for raw_id in self.window_ids {
+    native_poll_window(raw_id)
+    let window_id = @core.WindowId::from_raw(raw_id)
+    if native_window_take_surface_resized(raw_id) {
+      let size = @dpi.PhysicalSize::new(
+        native_window_width(raw_id),
+        native_window_height(raw_id),
+      )
+      app.window_event(self, window_id, @core.WindowEvent::SurfaceResized(size))
+    }
+    if native_window_take_redraw_requested(raw_id) {
+      app.window_event(self, window_id, @core.WindowEvent::RedrawRequested)
+    }
+    if native_window_take_close_requested(raw_id) {
+      app.window_event(self, window_id, @core.WindowEvent::CloseRequested)
+    }
+    if self.exit_requested {
+      return
+    }
+  }
+}
+
+///|
+fn EventLoop::wait_next_iteration(self : EventLoop) -> Unit {
+  match self.control_flow_ {
+    @core.ControlFlow::Poll => sleep_millis(1)
+    @core.ControlFlow::Wait => sleep_millis(16)
+    @core.ControlFlow::WaitUntil(timeout_ms) => sleep_millis(timeout_ms)
+  }
+}
+
+///|
+pub fn[A : ApplicationHandler] EventLoop::run_app(
+  self : EventLoop,
+  app : A,
+) -> Unit {
+  app.can_create_surfaces(self)
+  while self.exit_requested == false {
+    self.dispatch_window_events(app)
+    if self.exit_requested {
+      break
+    }
+    app.about_to_wait(self)
+    if self.exit_requested || self.has_open_windows() == false {
+      break
+    }
+    self.wait_next_iteration()
+  }
+}
