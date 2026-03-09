@@ -124,6 +124,11 @@ fn window_cursor(window_id : Int) -> Int {
 }
 
 ///|
+fn window_cursor_visible(window_id : Int) -> Bool {
+  native_window_cursor_visible(window_id)
+}
+
+///|
 fn window_transparent(window_id : Int) -> Bool {
   native_window_transparent(window_id)
 }
@@ -413,6 +418,11 @@ fn set_window_cursor(window_id : Int, cursor : Int) -> Unit {
 }
 
 ///|
+fn set_window_cursor_visible(window_id : Int, visible : Bool) -> Unit {
+  native_window_set_cursor_visible(window_id, visible)
+}
+
+///|
 fn set_window_transparent(window_id : Int, transparent : Bool) -> Unit {
   native_window_set_transparent(window_id, transparent)
 }
@@ -645,6 +655,9 @@ extern "C" fn native_window_blur(window_id : Int) -> Bool = "mbw_window_blur"
 extern "C" fn native_window_cursor(window_id : Int) -> Int = "mbw_window_cursor"
 
 ///|
+extern "C" fn native_window_cursor_visible(window_id : Int) -> Bool = "mbw_window_cursor_visible"
+
+///|
 extern "C" fn native_window_transparent(window_id : Int) -> Bool = "mbw_window_transparent"
 
 ///|
@@ -856,6 +869,12 @@ extern "C" fn native_window_set_blur(window_id : Int, blur : Bool) -> Unit = "mb
 
 ///|
 extern "C" fn native_window_set_cursor(window_id : Int, cursor : Int) -> Unit = "mbw_window_set_cursor"
+
+///|
+extern "C" fn native_window_set_cursor_visible(
+  window_id : Int,
+  visible : Bool,
+) -> Unit = "mbw_window_set_cursor_visible"
 
 ///|
 extern "C" fn native_window_set_transparent(

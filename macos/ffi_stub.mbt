@@ -124,6 +124,11 @@ fn window_cursor(_window_id : Int) -> Int {
 }
 
 ///|
+fn window_cursor_visible(_window_id : Int) -> Bool {
+  true
+}
+
+///|
 fn window_transparent(_window_id : Int) -> Bool {
   false
 }
@@ -409,6 +414,11 @@ fn set_window_blur(_window_id : Int, _blur : Bool) -> Unit {
 
 ///|
 fn set_window_cursor(_window_id : Int, _cursor : Int) -> Unit {
+  ()
+}
+
+///|
+fn set_window_cursor_visible(_window_id : Int, _visible : Bool) -> Unit {
   ()
 }
 

@@ -19,7 +19,8 @@ native builds and focuses on `macos-arm64`.
   (`outer_position`, `set_outer_position`, `focus_window`, `has_focus`),
   state (`set_minimized`, `is_minimized`, `set_maximized`, `is_maximized`,
   `set_fullscreen`, `fullscreen`, `is_fullscreen`), appearance (`set_title`,
-  `set_theme`, `set_window_icon`, `set_cursor`, `set_blur`,
+  `set_theme`, `set_window_icon`, `set_cursor`, `set_cursor_visible`,
+  `is_cursor_visible`, `set_blur`,
   `set_transparent`, `set_decorations`, `set_window_level`), visibility and
   capability flags (`set_visible`, `set_resizable`, `set_enabled_buttons`,
   `set_content_protected`), and IME control (`set_ime_purpose`,

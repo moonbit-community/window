@@ -86,6 +86,7 @@ pub fn Window::ime_cursor_area_size(Self) -> @dpi.PhysicalSize
 pub fn Window::ime_purpose(Self) -> @core.ImePurpose
 pub fn Window::is_blurred(Self) -> Bool
 pub fn Window::is_content_protected(Self) -> Bool
+pub fn Window::is_cursor_visible(Self) -> Bool
 pub fn Window::is_decorated(Self) -> Bool
 pub fn Window::is_fullscreen(Self) -> Bool
 pub fn Window::is_maximized(Self) -> Bool
@@ -101,6 +102,7 @@ pub fn Window::scale_factor(Self) -> Double
 pub fn Window::set_blur(Self, Bool) -> Unit
 pub fn Window::set_content_protected(Self, Bool) -> Unit
 pub fn Window::set_cursor(Self, @core.CursorIcon) -> Unit
+pub fn Window::set_cursor_visible(Self, Bool) -> Unit
 pub fn Window::set_decorations(Self, Bool) -> Unit
 pub fn Window::set_enabled_buttons(Self, @core.WindowButtons) -> Unit
 pub fn Window::set_fullscreen(Self, @core.Fullscreen?) -> Unit

@@ -112,6 +112,7 @@ typedef struct mbw_window {
   int blur;
   int has_icon;
   int cursor;
+  int cursor_visible;
   int transparent;
   int window_level;
   mbw_input_event_t *queued_input_events;
@@ -412,6 +413,7 @@ static id mbw_view_tracking_area(id view);
 static void mbw_view_set_tracking_area(id view, id tracking_area);
 static void mbw_view_refresh_tracking_area(id view);
 static id mbw_ns_cursor_for_kind(int cursor_kind);
+static id mbw_ns_cursor_for_window(mbw_window_t *window);
 static void mbw_view_refresh_cursor(id view);
 static void mbw_view_pointer_position(id view, id event, double *x, double *y);
 static int mbw_window_scroll_phase(id event);
@@ -790,6 +792,24 @@ static id mbw_ns_cursor_for_kind(int cursor_kind) {
   return ((id(*)(id, SEL))objc_msgSend)((id)ns_cursor_class, selector);
 }
 
+static id mbw_ns_cursor_for_window(mbw_window_t *window) {
+  if (!window) {
+    return nil;
+  }
+  if (window->cursor_visible) {
+    return mbw_ns_cursor_for_kind(window->cursor);
+  }
+  Class ns_cursor_class = objc_getClass("NSCursor");
+  if (!ns_cursor_class) {
+    return mbw_ns_cursor_for_kind(window->cursor);
+  }
+  SEL invisible_selector = mbw_sel("invisibleCursor");
+  if (!class_respondsToSelector(ns_cursor_class, invisible_selector)) {
+    return mbw_ns_cursor_for_kind(window->cursor);
+  }
+  return ((id(*)(id, SEL))objc_msgSend)((id)ns_cursor_class, invisible_selector);
+}
+
 static void mbw_view_refresh_cursor(id view) {
   if (!view) {
     return;
@@ -1136,7 +1156,7 @@ static void mbw_content_view_reset_cursor_rects(id self, SEL _cmd) {
   if (!window) {
     return;
   }
-  id cursor = mbw_ns_cursor_for_kind(window->cursor);
+  id cursor = mbw_ns_cursor_for_window(window);
   if (!cursor) {
     return;
   }
@@ -2634,6 +2654,7 @@ int mbw_window_create_utf8(
   window->blur = 0;
   window->has_icon = 0;
   window->cursor = MBW_CURSOR_DEFAULT;
+  window->cursor_visible = 1;
   window->transparent = 0;
   window->window_level = MBW_WINDOW_LEVEL_NORMAL;
   window->queued_input_events = NULL;
@@ -2961,6 +2982,11 @@ bool mbw_window_blur(int window_id) {
 int mbw_window_cursor(int window_id) {
   mbw_window_t *window = mbw_find_window(window_id);
   return window ? window->cursor : MBW_CURSOR_DEFAULT;
+}
+
+bool mbw_window_cursor_visible(int window_id) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  return window ? window->cursor_visible != 0 : true;
 }
 
 bool mbw_window_transparent(int window_id) {
@@ -3953,7 +3979,25 @@ void mbw_window_set_cursor(int window_id, int cursor) {
   if (window->content_view) {
     id content_view = (id)window->content_view;
     mbw_view_refresh_cursor(content_view);
-    id ns_cursor = mbw_ns_cursor_for_kind(window->cursor);
+    id ns_cursor = mbw_ns_cursor_for_window(window);
+    if (ns_cursor) {
+      ((void(*)(id, SEL))objc_msgSend)(ns_cursor, mbw_sel("set"));
+    }
+  }
+#endif
+}
+
+void mbw_window_set_cursor_visible(int window_id, bool visible) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  if (!window) {
+    return;
+  }
+  window->cursor_visible = visible ? 1 : 0;
+#if defined(__APPLE__)
+  if (window->content_view) {
+    id content_view = (id)window->content_view;
+    mbw_view_refresh_cursor(content_view);
+    id ns_cursor = mbw_ns_cursor_for_window(window);
     if (ns_cursor) {
       ((void(*)(id, SEL))objc_msgSend)(ns_cursor, mbw_sel("set"));
     }

@@ -182,6 +182,11 @@ pub fn Window::set_cursor(self : Window, cursor : @core.CursorIcon) -> Unit {
 }
 
 ///|
+pub fn Window::set_cursor_visible(self : Window, visible : Bool) -> Unit {
+  set_window_cursor_visible(self.id.into_raw(), visible)
+}
+
+///|
 pub fn Window::is_decorated(self : Window) -> Bool {
   window_decorated(self.id.into_raw())
 }
@@ -202,6 +207,11 @@ pub fn Window::is_blurred(self : Window) -> Bool {
 ///|
 pub fn Window::cursor(self : Window) -> @core.CursorIcon {
   cursor_icon_from_native(window_cursor(self.id.into_raw()))
+}
+
+///|
+pub fn Window::is_cursor_visible(self : Window) -> Bool {
+  window_cursor_visible(self.id.into_raw())
 }
 
 ///|
