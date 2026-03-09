@@ -127,8 +127,18 @@ pub fn Window::set_maximized(self : Window, maximized : Bool) -> Unit {
 }
 
 ///|
+pub fn Window::set_fullscreen(self : Window, fullscreen : Bool) -> Unit {
+  set_window_fullscreen(self.id.into_raw(), fullscreen)
+}
+
+///|
 pub fn Window::is_maximized(self : Window) -> Bool {
   window_maximized(self.id.into_raw())
+}
+
+///|
+pub fn Window::is_fullscreen(self : Window) -> Bool {
+  window_fullscreen(self.id.into_raw())
 }
 
 ///|
@@ -631,6 +641,9 @@ pub fn EventLoop::create_window(
   set_window_transparent(raw_id, attributes.transparent())
   if attributes.maximized() {
     set_window_maximized(raw_id, true)
+  }
+  if attributes.fullscreen() {
+    set_window_fullscreen(raw_id, true)
   }
   match attributes.min_surface_size() {
     Some(min_size) =>

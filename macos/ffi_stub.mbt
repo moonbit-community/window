@@ -89,6 +89,11 @@ fn window_maximized(_window_id : Int) -> Bool {
 }
 
 ///|
+fn window_fullscreen(_window_id : Int) -> Bool {
+  false
+}
+
+///|
 fn window_decorated(_window_id : Int) -> Bool {
   false
 }
@@ -334,6 +339,11 @@ fn set_window_minimized(_window_id : Int, _minimized : Bool) -> Unit {
 
 ///|
 fn set_window_maximized(_window_id : Int, _maximized : Bool) -> Unit {
+  ()
+}
+
+///|
+fn set_window_fullscreen(_window_id : Int, _fullscreen : Bool) -> Unit {
   ()
 }
 

@@ -89,6 +89,11 @@ fn window_maximized(window_id : Int) -> Bool {
 }
 
 ///|
+fn window_fullscreen(window_id : Int) -> Bool {
+  native_window_fullscreen(window_id)
+}
+
+///|
 fn window_decorated(window_id : Int) -> Bool {
   native_window_decorated(window_id)
 }
@@ -338,6 +343,11 @@ fn set_window_maximized(window_id : Int, maximized : Bool) -> Unit {
 }
 
 ///|
+fn set_window_fullscreen(window_id : Int, fullscreen : Bool) -> Unit {
+  native_window_set_fullscreen(window_id, fullscreen)
+}
+
+///|
 fn set_window_decorations(window_id : Int, decorated : Bool) -> Unit {
   native_window_set_decorations(window_id, decorated)
 }
@@ -540,6 +550,9 @@ extern "C" fn native_window_minimized(window_id : Int) -> Bool = "mbw_window_min
 extern "C" fn native_window_maximized(window_id : Int) -> Bool = "mbw_window_maximized"
 
 ///|
+extern "C" fn native_window_fullscreen(window_id : Int) -> Bool = "mbw_window_fullscreen"
+
+///|
 extern "C" fn native_window_decorated(window_id : Int) -> Bool = "mbw_window_decorated"
 
 ///|
@@ -719,6 +732,12 @@ extern "C" fn native_window_set_maximized(
   window_id : Int,
   maximized : Bool,
 ) -> Unit = "mbw_window_set_maximized"
+
+///|
+extern "C" fn native_window_set_fullscreen(
+  window_id : Int,
+  fullscreen : Bool,
+) -> Unit = "mbw_window_set_fullscreen"
 
 ///|
 extern "C" fn native_window_set_decorations(

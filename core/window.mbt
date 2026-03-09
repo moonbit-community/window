@@ -98,6 +98,7 @@ pub struct WindowAttributes {
   priv mut content_protected : Bool
   priv mut decorations : Bool
   priv mut enabled_buttons : WindowButtons
+  priv mut fullscreen : Bool
   priv mut ime_purpose : ImePurpose
   priv mut max_surface_size : @dpi.PhysicalSize?
   priv mut maximized : Bool
@@ -120,6 +121,7 @@ pub fn WindowAttributes::default() -> WindowAttributes {
     content_protected: false,
     decorations: true,
     enabled_buttons: WindowButtons::all(),
+    fullscreen: false,
     ime_purpose: ImePurpose::Normal,
     maximized: false,
     min_surface_size: None,
@@ -223,6 +225,15 @@ pub fn WindowAttributes::with_enabled_buttons(
   buttons : WindowButtons,
 ) -> WindowAttributes {
   self.enabled_buttons = buttons
+  self
+}
+
+///|
+pub fn WindowAttributes::with_fullscreen(
+  self : WindowAttributes,
+  fullscreen : Bool,
+) -> WindowAttributes {
+  self.fullscreen = fullscreen
   self
 }
 
@@ -349,6 +360,11 @@ pub fn WindowAttributes::enabled_buttons(
   self : WindowAttributes,
 ) -> WindowButtons {
   self.enabled_buttons
+}
+
+///|
+pub fn WindowAttributes::fullscreen(self : WindowAttributes) -> Bool {
+  self.fullscreen
 }
 
 ///|

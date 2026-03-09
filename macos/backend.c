@@ -68,6 +68,7 @@ typedef struct mbw_window {
   int focused;
   int maximized;
   int minimized;
+  int fullscreen;
   int pending_focus_value;
   int theme_kind;
   int reported_theme_kind;
@@ -312,6 +313,7 @@ typedef struct {
 #define MBW_THEME_UNKNOWN 0
 #define MBW_THEME_LIGHT 1
 #define MBW_THEME_DARK 2
+#define MBW_NSWINDOW_STYLE_MASK_FULLSCREEN (1UL << 14)
 #define MBW_NSWINDOW_OCCLUSION_STATE_VISIBLE (1UL << 1)
 #define MBW_NSEVENT_PHASE_BEGAN (1UL << 0)
 #define MBW_NSEVENT_PHASE_CHANGED (1UL << 2)
@@ -2046,6 +2048,10 @@ static void mbw_update_window_state(mbw_window_t *window) {
   mbw_bool_t is_zoomed = ((mbw_bool_t(*)(id, SEL))objc_msgSend)(
     (id)window->window, mbw_sel("isZoomed"));
   window->maximized = is_zoomed ? 1 : 0;
+  mbw_nsuint_t style_mask = ((mbw_nsuint_t(*)(id, SEL))objc_msgSend)(
+    (id)window->window, mbw_sel("styleMask"));
+  window->fullscreen =
+    (style_mask & MBW_NSWINDOW_STYLE_MASK_FULLSCREEN) != 0 ? 1 : 0;
 
   window->scale_factor = ((double(*)(id, SEL))objc_msgSend)(
     (id)window->window, mbw_sel("backingScaleFactor"));
@@ -2378,6 +2384,7 @@ int mbw_window_create_utf8(
   window->focused = (visible && active) ? 1 : 0;
   window->maximized = 0;
   window->minimized = 0;
+  window->fullscreen = 0;
   window->pending_focus_value = 0;
   window->theme_kind = MBW_THEME_UNKNOWN;
   window->reported_theme_kind = MBW_THEME_UNKNOWN;
@@ -2710,6 +2717,11 @@ bool mbw_window_minimized(int window_id) {
 bool mbw_window_maximized(int window_id) {
   mbw_window_t *window = mbw_find_window(window_id);
   return window ? window->maximized != 0 : false;
+}
+
+bool mbw_window_fullscreen(int window_id) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  return window ? window->fullscreen != 0 : false;
 }
 
 bool mbw_window_decorated(int window_id) {
@@ -3608,6 +3620,29 @@ void mbw_window_set_maximized(int window_id, bool maximized) {
       ((void(*)(id, SEL, id))objc_msgSend)(
         (id)window->window,
         mbw_sel("zoom:"),
+        nil);
+    }
+  }
+#endif
+}
+
+void mbw_window_set_fullscreen(int window_id, bool fullscreen) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  if (!window) {
+    return;
+  }
+  int target = fullscreen ? 1 : 0;
+  window->fullscreen = target;
+#if defined(__APPLE__)
+  if (window->window) {
+    mbw_nsuint_t style_mask = ((mbw_nsuint_t(*)(id, SEL))objc_msgSend)(
+      (id)window->window,
+      mbw_sel("styleMask"));
+    int actual = (style_mask & MBW_NSWINDOW_STYLE_MASK_FULLSCREEN) != 0 ? 1 : 0;
+    if (actual != target) {
+      ((void(*)(id, SEL, id))objc_msgSend)(
+        (id)window->window,
+        mbw_sel("toggleFullScreen:"),
         nil);
     }
   }

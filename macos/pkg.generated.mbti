@@ -80,6 +80,7 @@ pub fn Window::has_focus(Self) -> Bool
 pub fn Window::id(Self) -> @core.WindowId
 pub fn Window::is_content_protected(Self) -> Bool
 pub fn Window::is_decorated(Self) -> Bool
+pub fn Window::is_fullscreen(Self) -> Bool
 pub fn Window::is_maximized(Self) -> Bool
 pub fn Window::is_minimized(Self) -> Bool
 pub fn Window::is_occluded(Self) -> Bool
@@ -93,6 +94,7 @@ pub fn Window::scale_factor(Self) -> Double
 pub fn Window::set_content_protected(Self, Bool) -> Unit
 pub fn Window::set_decorations(Self, Bool) -> Unit
 pub fn Window::set_enabled_buttons(Self, @core.WindowButtons) -> Unit
+pub fn Window::set_fullscreen(Self, Bool) -> Unit
 pub fn Window::set_ime_allowed(Self, Bool) -> Unit
 pub fn Window::set_ime_cursor_area(Self, @dpi.PhysicalPosition, @dpi.PhysicalSize) -> Unit
 pub fn Window::set_ime_purpose(Self, @core.ImePurpose) -> Unit

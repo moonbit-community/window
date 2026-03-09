@@ -246,6 +246,13 @@ struct WindowMinMaxStateApp {
 }
 
 ///|
+struct WindowFullscreenStateApp {
+  fullscreen_after_disable : Ref[Bool]
+  fullscreen_after_enable : Ref[Bool]
+  fullscreen_initial : Ref[Bool]
+}
+
+///|
 struct WindowDecorationsApp {
   decorated_after_disable : Ref[Bool]
   decorated_after_enable : Ref[Bool]
@@ -503,6 +510,22 @@ impl ApplicationHandler for WindowMinMaxStateApp with can_create_surfaces(
   self.maximized_after_enable.val = window.is_maximized()
   window.set_maximized(false)
   self.maximized_after_disable.val = window.is_maximized()
+  event_loop.exit()
+}
+
+///|
+impl ApplicationHandler for WindowFullscreenStateApp with can_create_surfaces(
+  self,
+  event_loop,
+) {
+  let window = event_loop.create_window(
+    @core.WindowAttributes::default().with_visible(false).with_fullscreen(true),
+  )
+  self.fullscreen_initial.val = window.is_fullscreen()
+  window.set_fullscreen(false)
+  self.fullscreen_after_disable.val = window.is_fullscreen()
+  window.set_fullscreen(true)
+  self.fullscreen_after_enable.val = window.is_fullscreen()
   event_loop.exit()
 }
 
@@ -1482,6 +1505,23 @@ test "window minimize and maximize state can be controlled" {
   assert_false(minimized_after_disable.val)
   assert_true(maximized_after_enable.val)
   assert_false(maximized_after_disable.val)
+}
+
+///|
+test "window fullscreen state can be controlled" {
+  let event_loop = EventLoop::new()
+  let fullscreen_initial = Ref::new(false)
+  let fullscreen_after_disable = Ref::new(true)
+  let fullscreen_after_enable = Ref::new(false)
+  let app : WindowFullscreenStateApp = {
+    fullscreen_after_disable,
+    fullscreen_after_enable,
+    fullscreen_initial,
+  }
+  event_loop.run_app(app)
+  assert_true(fullscreen_initial.val)
+  assert_false(fullscreen_after_disable.val)
+  assert_true(fullscreen_after_enable.val)
 }
 
 ///|
