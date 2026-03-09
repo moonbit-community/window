@@ -34,6 +34,14 @@ pub fn ControlFlow::wait_until(Int64) -> Self
 pub impl Eq for ControlFlow
 pub impl Show for ControlFlow
 
+pub(all) enum CursorGrabMode {
+  None
+  Locked
+  Confined
+}
+pub impl Eq for CursorGrabMode
+pub impl Show for CursorGrabMode
+
 pub(all) enum CursorIcon {
   Default
   ContextMenu
@@ -420,6 +428,19 @@ pub(all) enum PointerSource {
 pub impl Eq for PointerSource
 pub impl Show for PointerSource
 
+pub(all) enum ResizeDirection {
+  East
+  North
+  NorthEast
+  NorthWest
+  South
+  SouthEast
+  SouthWest
+  West
+}
+pub impl Eq for ResizeDirection
+pub impl Show for ResizeDirection
+
 pub(all) enum StartCause {
   Init
   Poll
@@ -452,6 +473,13 @@ pub(all) enum TouchPhase {
 }
 pub impl Eq for TouchPhase
 pub impl Show for TouchPhase
+
+pub(all) enum UserAttentionType {
+  Critical
+  Informational
+}
+pub impl Eq for UserAttentionType
+pub impl Show for UserAttentionType
 
 pub struct WindowAttributes {
   // private fields
@@ -523,6 +551,10 @@ pub(all) enum WindowEvent {
   Moved(@dpi.PhysicalPosition)
   CloseRequested
   Destroyed
+  DragEntered(Array[String], @dpi.PhysicalPositionF64)
+  DragMoved(@dpi.PhysicalPositionF64)
+  DragDropped(Array[String], @dpi.PhysicalPositionF64)
+  DragLeft(@dpi.PhysicalPositionF64?)
   Focused(Bool)
   Ime(Ime)
   KeyboardInput(KeyEvent, Bool)
@@ -531,6 +563,11 @@ pub(all) enum WindowEvent {
   PointerEntered(@dpi.PhysicalPositionF64, Bool, PointerKind)
   PointerLeft(@dpi.PhysicalPositionF64?, Bool, PointerKind)
   PointerButton(ElementState, @dpi.PhysicalPositionF64, Bool, ButtonSource)
+  PinchGesture(Double, TouchPhase)
+  PanGesture(@dpi.PhysicalPositionF64, TouchPhase)
+  DoubleTapGesture
+  RotationGesture(Double, TouchPhase)
+  TouchpadPressure(Double, Int)
   MouseWheel(MouseScrollDelta, TouchPhase)
   ScaleFactorChanged(Double, SurfaceSizeWriter)
   ThemeChanged(Theme)

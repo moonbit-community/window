@@ -77,6 +77,73 @@ extern "C" fn queue_mouse_wheel_for_test(
 ) -> Unit = "mbw_test_window_queue_mouse_wheel"
 
 ///|
+#borrow(path)
+extern "C" fn queue_drag_entered_for_test(
+  window_id : Int,
+  path : Bytes,
+  path_len : Int,
+  x : Double,
+  y : Double,
+) -> Unit = "mbw_test_window_queue_drag_entered"
+
+///|
+extern "C" fn queue_drag_moved_for_test(
+  window_id : Int,
+  x : Double,
+  y : Double,
+) -> Unit = "mbw_test_window_queue_drag_moved"
+
+///|
+#borrow(path)
+extern "C" fn queue_drag_dropped_for_test(
+  window_id : Int,
+  path : Bytes,
+  path_len : Int,
+  x : Double,
+  y : Double,
+) -> Unit = "mbw_test_window_queue_drag_dropped"
+
+///|
+extern "C" fn queue_drag_left_for_test(
+  window_id : Int,
+  has_position : Bool,
+  x : Double,
+  y : Double,
+) -> Unit = "mbw_test_window_queue_drag_left"
+
+///|
+extern "C" fn queue_pinch_gesture_for_test(
+  window_id : Int,
+  delta : Double,
+  phase : Int,
+) -> Unit = "mbw_test_window_queue_pinch_gesture"
+
+///|
+extern "C" fn queue_pan_gesture_for_test(
+  window_id : Int,
+  delta_x : Double,
+  delta_y : Double,
+  phase : Int,
+) -> Unit = "mbw_test_window_queue_pan_gesture"
+
+///|
+extern "C" fn queue_double_tap_gesture_for_test(window_id : Int) -> Unit = "mbw_test_window_queue_double_tap_gesture"
+
+///|
+extern "C" fn queue_rotation_gesture_for_test(
+  window_id : Int,
+  delta : Double,
+  phase : Int,
+) -> Unit = "mbw_test_window_queue_rotation_gesture"
+
+///|
+extern "C" fn queue_touchpad_pressure_for_test(
+  window_id : Int,
+  pressure : Double,
+  stage : Int,
+) -> Unit = "mbw_test_window_queue_touchpad_pressure"
+
+///|
 extern "C" fn queue_modifiers_changed_for_test(
   window_id : Int,
   modifiers : Int,
@@ -395,6 +462,21 @@ struct PointerMovedApp {
 }
 
 ///|
+struct DragEventsApp {
+  dropped_paths : Ref[Array[String]?]
+  dropped_position : Ref[@dpi.PhysicalPositionF64?]
+  entered_paths : Ref[Array[String]?]
+  entered_position : Ref[@dpi.PhysicalPositionF64?]
+  left_position : Ref[@dpi.PhysicalPositionF64?]
+  moved_position : Ref[@dpi.PhysicalPositionF64?]
+}
+
+///|
+struct DragLeftWithoutPositionApp {
+  left_position : Ref[@dpi.PhysicalPositionF64?]
+}
+
+///|
 struct PointerBoundaryApp {
   entered : Ref[@dpi.PhysicalPositionF64?]
   left : Ref[@dpi.PhysicalPositionF64?]
@@ -411,6 +493,19 @@ struct PointerButtonApp {
 struct MouseWheelApp {
   delta : Ref[@core.MouseScrollDelta?]
   phase : Ref[@core.TouchPhase?]
+}
+
+///|
+struct GestureEventsApp {
+  double_tap_seen : Ref[Bool]
+  pan_delta : Ref[@dpi.PhysicalPositionF64?]
+  pan_phase : Ref[@core.TouchPhase?]
+  pinch_delta : Ref[Double?]
+  pinch_phase : Ref[@core.TouchPhase?]
+  pressure : Ref[Double?]
+  pressure_stage : Ref[Int?]
+  rotation_delta : Ref[Double?]
+  rotation_phase : Ref[@core.TouchPhase?]
 }
 
 ///|
@@ -447,6 +542,16 @@ struct ImeConfigurationApp {
   ime_allowed : Ref[Bool]
   initial_purpose : Ref[@core.ImePurpose]
   updated_purpose : Ref[@core.ImePurpose]
+}
+
+///|
+struct WindowAuxiliaryApiApp {
+  cursor_grab_confined : Ref[Bool]
+  drag_resize_started : Ref[Bool]
+  drag_window_started : Ref[Bool]
+  safe_area : Ref[@dpi.PhysicalInsets?]
+  title_after_update : Ref[String?]
+  title_initial : Ref[String?]
 }
 
 ///|
@@ -1086,6 +1191,88 @@ impl ApplicationHandler for PointerMovedApp with window_event(
 }
 
 ///|
+impl ApplicationHandler for DragEventsApp with can_create_surfaces(
+  _self,
+  event_loop,
+) {
+  let window = event_loop.create_window(
+    @core.WindowAttributes::default().with_visible(false),
+  )
+  let entered_path = @utf8.encode("/tmp/drag-entered.txt"[:], bom=false)
+  let dropped_path = @utf8.encode("/tmp/drag-dropped.txt"[:], bom=false)
+  let raw_id = window.id().into_raw()
+  queue_drag_entered_for_test(
+    raw_id,
+    entered_path,
+    entered_path.length(),
+    12.5,
+    24.0,
+  )
+  queue_drag_moved_for_test(raw_id, 32.0, 48.0)
+  queue_drag_dropped_for_test(
+    raw_id,
+    dropped_path,
+    dropped_path.length(),
+    64.0,
+    96.0,
+  )
+  queue_drag_left_for_test(raw_id, true, 80.0, 120.0)
+}
+
+///|
+impl ApplicationHandler for DragEventsApp with window_event(
+  self,
+  event_loop,
+  _id,
+  event,
+) {
+  match event {
+    @core.WindowEvent::DragEntered(paths, position) => {
+      self.entered_paths.val = Some(paths)
+      self.entered_position.val = Some(position)
+    }
+    @core.WindowEvent::DragMoved(position) =>
+      self.moved_position.val = Some(position)
+    @core.WindowEvent::DragDropped(paths, position) => {
+      self.dropped_paths.val = Some(paths)
+      self.dropped_position.val = Some(position)
+    }
+    @core.WindowEvent::DragLeft(Some(position)) => {
+      self.left_position.val = Some(position)
+      event_loop.exit()
+    }
+    _ => ()
+  }
+}
+
+///|
+impl ApplicationHandler for DragLeftWithoutPositionApp with can_create_surfaces(
+  _self,
+  event_loop,
+) {
+  let window = event_loop.create_window(
+    @core.WindowAttributes::default().with_visible(false),
+  )
+  queue_drag_left_for_test(window.id().into_raw(), false, 0.0, 0.0)
+}
+
+///|
+impl ApplicationHandler for DragLeftWithoutPositionApp with window_event(
+  self,
+  event_loop,
+  _id,
+  event,
+) {
+  match event {
+    @core.WindowEvent::DragLeft(position) => {
+      self.left_position.val = position
+      event_loop.exit()
+    }
+    _ => ()
+  }
+}
+
+///|
 impl ApplicationHandler for PointerBoundaryApp with can_create_surfaces(
   _self,
   event_loop,
@@ -1172,6 +1359,52 @@ impl ApplicationHandler for MouseWheelApp with window_event(
     @core.WindowEvent::MouseWheel(delta, phase) => {
       self.delta.val = Some(delta)
       self.phase.val = Some(phase)
+      event_loop.exit()
+    }
+    _ => ()
+  }
+}
+
+///|
+impl ApplicationHandler for GestureEventsApp with can_create_surfaces(
+  _self,
+  event_loop,
+) {
+  let window = event_loop.create_window(
+    @core.WindowAttributes::default().with_visible(false),
+  )
+  let raw_id = window.id().into_raw()
+  queue_pinch_gesture_for_test(raw_id, 0.75, 1)
+  queue_pan_gesture_for_test(raw_id, -18.0, 6.5, 2)
+  queue_double_tap_gesture_for_test(raw_id)
+  queue_rotation_gesture_for_test(raw_id, 22.5, 3)
+  queue_touchpad_pressure_for_test(raw_id, 0.42, 2)
+}
+
+///|
+impl ApplicationHandler for GestureEventsApp with window_event(
+  self,
+  event_loop,
+  _id,
+  event,
+) {
+  match event {
+    @core.WindowEvent::PinchGesture(delta, phase) => {
+      self.pinch_delta.val = Some(delta)
+      self.pinch_phase.val = Some(phase)
+    }
+    @core.WindowEvent::PanGesture(delta, phase) => {
+      self.pan_delta.val = Some(delta)
+      self.pan_phase.val = Some(phase)
+    }
+    @core.WindowEvent::DoubleTapGesture => self.double_tap_seen.val = true
+    @core.WindowEvent::RotationGesture(delta, phase) => {
+      self.rotation_delta.val = Some(delta)
+      self.rotation_phase.val = Some(phase)
+    }
+    @core.WindowEvent::TouchpadPressure(pressure, stage) => {
+      self.pressure.val = Some(pressure)
+      self.pressure_stage.val = Some(stage)
       event_loop.exit()
     }
     _ => ()
@@ -1355,6 +1588,38 @@ impl ApplicationHandler for ImeConfigurationApp with can_create_surfaces(
   self.ime_allowed.val = window.ime_allowed()
   self.cursor_position.val = Some(window.ime_cursor_area_position())
   self.cursor_size.val = Some(window.ime_cursor_area_size())
+  event_loop.exit()
+}
+
+///|
+impl ApplicationHandler for WindowAuxiliaryApiApp with can_create_surfaces(
+  self,
+  event_loop,
+) {
+  let window = event_loop.create_window(
+    @core.WindowAttributes::default().with_visible(false),
+  )
+  self.title_initial.val = Some(window.title())
+  window.set_title("window advanced api")
+  self.title_after_update.val = Some(window.title())
+  self.safe_area.val = Some(window.safe_area())
+
+  window.pre_present_notify()
+  window.reset_dead_keys()
+  let _ = window.set_cursor_position(@dpi.PhysicalPosition::new(24, 24))
+  let _ = window.set_cursor_grab(@core.CursorGrabMode::Locked)
+  let _ = window.set_cursor_grab(@core.CursorGrabMode::None)
+  self.cursor_grab_confined.val = window.set_cursor_grab(
+    @core.CursorGrabMode::Confined,
+  )
+  self.drag_window_started.val = window.drag_window()
+  self.drag_resize_started.val = window.drag_resize_window(
+    @core.ResizeDirection::SouthEast,
+  )
+  window.show_window_menu(@dpi.PhysicalPosition::new(8, 8))
+  window.request_user_attention(Some(@core.UserAttentionType::Informational))
+  window.request_user_attention(Some(@core.UserAttentionType::Critical))
+  window.request_user_attention(None)
   event_loop.exit()
 }
 
@@ -2071,6 +2336,82 @@ test "pointer button events report state position and button" {
 }
 
 ///|
+test "drag events are delivered with paths and positions" {
+  let event_loop = EventLoop::new()
+  let entered_paths = Ref::new(None)
+  let entered_position = Ref::new(None)
+  let moved_position = Ref::new(None)
+  let dropped_paths = Ref::new(None)
+  let dropped_position = Ref::new(None)
+  let left_position = Ref::new(None)
+  let app : DragEventsApp = {
+    dropped_paths,
+    dropped_position,
+    entered_paths,
+    entered_position,
+    left_position,
+    moved_position,
+  }
+  event_loop.run_app(app)
+  assert_eq(entered_paths.val, Some(["/tmp/drag-entered.txt"]))
+  assert_eq(
+    entered_position.val,
+    Some(@dpi.PhysicalPositionF64::new(12.5, 24.0)),
+  )
+  assert_eq(moved_position.val, Some(@dpi.PhysicalPositionF64::new(32.0, 48.0)))
+  assert_eq(dropped_paths.val, Some(["/tmp/drag-dropped.txt"]))
+  assert_eq(
+    dropped_position.val,
+    Some(@dpi.PhysicalPositionF64::new(64.0, 96.0)),
+  )
+  assert_eq(left_position.val, Some(@dpi.PhysicalPositionF64::new(80.0, 120.0)))
+}
+
+///|
+test "drag left can omit pointer position" {
+  let event_loop = EventLoop::new()
+  let left_position = Ref::new(Some(@dpi.PhysicalPositionF64::new(1.0, 1.0)))
+  let app : DragLeftWithoutPositionApp = { left_position, }
+  event_loop.run_app(app)
+  assert_eq(left_position.val, None)
+}
+
+///|
+test "gesture events are delivered" {
+  let event_loop = EventLoop::new()
+  let double_tap_seen = Ref::new(false)
+  let pan_delta = Ref::new(None)
+  let pan_phase = Ref::new(None)
+  let pinch_delta = Ref::new(None)
+  let pinch_phase = Ref::new(None)
+  let pressure = Ref::new(None)
+  let pressure_stage = Ref::new(None)
+  let rotation_delta = Ref::new(None)
+  let rotation_phase = Ref::new(None)
+  let app : GestureEventsApp = {
+    double_tap_seen,
+    pan_delta,
+    pan_phase,
+    pinch_delta,
+    pinch_phase,
+    pressure,
+    pressure_stage,
+    rotation_delta,
+    rotation_phase,
+  }
+  event_loop.run_app(app)
+  assert_eq(pinch_delta.val, Some(0.75))
+  assert_eq(pinch_phase.val, Some(@core.TouchPhase::Started))
+  assert_eq(pan_delta.val, Some(@dpi.PhysicalPositionF64::new(-18.0, 6.5)))
+  assert_eq(pan_phase.val, Some(@core.TouchPhase::Moved))
+  assert_true(double_tap_seen.val)
+  assert_eq(rotation_delta.val, Some(22.5))
+  assert_eq(rotation_phase.val, Some(@core.TouchPhase::Ended))
+  assert_eq(pressure.val, Some(0.42))
+  assert_eq(pressure_stage.val, Some(2))
+}
+
+///|
 test "mouse wheel events deliver pixel deltas and phase" {
   let event_loop = EventLoop::new()
   let delta = Ref::new(None)
@@ -2370,6 +2711,40 @@ test "window ime configuration updates native state" {
   assert_false(ime_allowed.val)
   assert_eq(cursor_position.val, Some(@dpi.PhysicalPosition::new(48, 96)))
   assert_eq(cursor_size.val, Some(@dpi.PhysicalSize::new(20, 32)))
+}
+
+///|
+test "window auxiliary api methods are available on macos" {
+  let event_loop = EventLoop::new()
+  let title_initial = Ref::new(None)
+  let title_after_update = Ref::new(None)
+  let safe_area = Ref::new(None)
+  let cursor_grab_confined = Ref::new(true)
+  let drag_window_started = Ref::new(true)
+  let drag_resize_started = Ref::new(true)
+  let app : WindowAuxiliaryApiApp = {
+    cursor_grab_confined,
+    drag_resize_started,
+    drag_window_started,
+    safe_area,
+    title_after_update,
+    title_initial,
+  }
+  event_loop.run_app(app)
+  assert_eq(title_initial.val, Some("winit window"))
+  assert_eq(title_after_update.val, Some("window advanced api"))
+  match safe_area.val {
+    Some(insets) => {
+      assert_true(insets.top() >= 0)
+      assert_true(insets.left() >= 0)
+      assert_true(insets.bottom() >= 0)
+      assert_true(insets.right() >= 0)
+    }
+    None => abort("expected safe area to be captured")
+  }
+  assert_false(cursor_grab_confined.val)
+  let _ = drag_window_started.val
+  assert_false(drag_resize_started.val)
 }
 
 ///|

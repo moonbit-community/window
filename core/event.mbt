@@ -165,6 +165,10 @@ pub(all) enum WindowEvent {
   Moved(@dpi.PhysicalPosition)
   CloseRequested
   Destroyed
+  DragEntered(Array[String], @dpi.PhysicalPositionF64)
+  DragMoved(@dpi.PhysicalPositionF64)
+  DragDropped(Array[String], @dpi.PhysicalPositionF64)
+  DragLeft(@dpi.PhysicalPositionF64?)
   Focused(Bool)
   Ime(Ime)
   KeyboardInput(KeyEvent, Bool)
@@ -173,6 +177,11 @@ pub(all) enum WindowEvent {
   PointerEntered(@dpi.PhysicalPositionF64, Bool, PointerKind)
   PointerLeft(@dpi.PhysicalPositionF64?, Bool, PointerKind)
   PointerButton(ElementState, @dpi.PhysicalPositionF64, Bool, ButtonSource)
+  PinchGesture(Double, TouchPhase)
+  PanGesture(@dpi.PhysicalPositionF64, TouchPhase)
+  DoubleTapGesture
+  RotationGesture(Double, TouchPhase)
+  TouchpadPressure(Double, Int)
   MouseWheel(MouseScrollDelta, TouchPhase)
   ScaleFactorChanged(Double, SurfaceSizeWriter)
   ThemeChanged(Theme)

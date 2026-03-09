@@ -17,6 +17,7 @@
 #endif
 
 #define MBW_KEY_TEXT_CAP 64
+#define MBW_PATH_TEXT_CAP 1024
 
 typedef struct mbw_input_event {
   int kind;
@@ -44,6 +45,8 @@ typedef struct mbw_input_event {
   uint8_t ime_text[MBW_KEY_TEXT_CAP];
   int ime_cursor_start;
   int ime_cursor_end;
+  int path_len;
+  uint8_t path[MBW_PATH_TEXT_CAP];
 } mbw_input_event_t;
 
 typedef struct mbw_window {
@@ -143,6 +146,15 @@ static int64_t g_now_ms_override_for_test = -1;
 #define MBW_INPUT_EVENT_MODIFIERS_CHANGED 6
 #define MBW_INPUT_EVENT_KEYBOARD_INPUT 7
 #define MBW_INPUT_EVENT_IME 8
+#define MBW_INPUT_EVENT_DRAG_ENTERED 9
+#define MBW_INPUT_EVENT_DRAG_MOVED 10
+#define MBW_INPUT_EVENT_DRAG_DROPPED 11
+#define MBW_INPUT_EVENT_DRAG_LEFT 12
+#define MBW_INPUT_EVENT_PINCH_GESTURE 13
+#define MBW_INPUT_EVENT_PAN_GESTURE 14
+#define MBW_INPUT_EVENT_DOUBLE_TAP_GESTURE 15
+#define MBW_INPUT_EVENT_ROTATION_GESTURE 16
+#define MBW_INPUT_EVENT_TOUCHPAD_PRESSURE 17
 
 #define MBW_IME_EVENT_NONE 0
 #define MBW_IME_EVENT_ENABLED 1
@@ -193,6 +205,14 @@ static int64_t g_now_ms_override_for_test = -1;
 #define MBW_CURSOR_MOVE 32
 #define MBW_CURSOR_NOT_ALLOWED 33
 #define MBW_CURSOR_MAX MBW_CURSOR_NOT_ALLOWED
+
+#define MBW_CURSOR_GRAB_NONE 0
+#define MBW_CURSOR_GRAB_LOCKED 1
+#define MBW_CURSOR_GRAB_CONFINED 2
+
+#define MBW_USER_ATTENTION_NONE 0
+#define MBW_USER_ATTENTION_CRITICAL 1
+#define MBW_USER_ATTENTION_INFORMATIONAL 2
 
 #define MBW_ELEMENT_STATE_NONE 0
 #define MBW_ELEMENT_STATE_PRESSED 1
@@ -385,6 +405,10 @@ typedef struct {
 #define MBW_NSWINDOW_BUTTON_MAXIMIZE ((mbw_nsinteger_t)2)
 #define MBW_NSWINDOW_SHARING_NONE ((mbw_nsuint_t)0)
 #define MBW_NSWINDOW_SHARING_READ_ONLY ((mbw_nsuint_t)1)
+#define MBW_NS_REQUEST_USER_ATTENTION_CRITICAL ((mbw_nsinteger_t)0)
+#define MBW_NS_REQUEST_USER_ATTENTION_INFORMATIONAL ((mbw_nsinteger_t)10)
+#define MBW_NSDRAG_OPERATION_NONE ((mbw_nsuint_t)0)
+#define MBW_NSDRAG_OPERATION_COPY ((mbw_nsuint_t)1)
 
 static bool g_bootstrap_done = false;
 static bool g_bootstrap_ok = false;
@@ -417,6 +441,13 @@ static id mbw_ns_cursor_for_kind(int cursor_kind);
 static id mbw_ns_cursor_for_window(mbw_window_t *window);
 static void mbw_view_refresh_cursor(id view);
 static void mbw_view_pointer_position(id view, id event, double *x, double *y);
+static void mbw_view_pointer_position_from_view_point(
+  id view,
+  mbw_window_t *window,
+  mbw_point_t view_point,
+  double *x,
+  double *y
+);
 static int mbw_window_scroll_phase(id event);
 static int mbw_event_modifiers_state(id event);
 static mbw_nsuint_t mbw_event_modifier_device_flags(id event);
@@ -461,7 +492,62 @@ static void mbw_window_queue_mouse_wheel(
   double delta_y,
   int phase
 );
+static void mbw_window_queue_drag_entered(
+  mbw_window_t *window,
+  const uint8_t *path,
+  int path_len,
+  double x,
+  double y
+);
+static void mbw_window_queue_drag_moved(
+  mbw_window_t *window,
+  double x,
+  double y
+);
+static void mbw_window_queue_drag_dropped(
+  mbw_window_t *window,
+  const uint8_t *path,
+  int path_len,
+  double x,
+  double y
+);
+static void mbw_window_queue_drag_left(
+  mbw_window_t *window,
+  int has_position,
+  double x,
+  double y
+);
+static void mbw_window_queue_pinch_gesture(
+  mbw_window_t *window,
+  double delta,
+  int phase
+);
+static void mbw_window_queue_pan_gesture(
+  mbw_window_t *window,
+  double delta_x,
+  double delta_y,
+  int phase
+);
+static void mbw_window_queue_double_tap_gesture(mbw_window_t *window);
+static void mbw_window_queue_rotation_gesture(
+  mbw_window_t *window,
+  double delta,
+  int phase
+);
+static void mbw_window_queue_touchpad_pressure(
+  mbw_window_t *window,
+  double pressure,
+  int stage
+);
 static int mbw_text_input_object_utf8(id text_input, uint8_t *dst, int dst_cap);
+static int mbw_dragging_first_file_path_utf8(id dragging_info, uint8_t *dst, int dst_cap);
+static void mbw_dragging_info_position(
+  id view,
+  id dragging_info,
+  double *x,
+  double *y
+);
+static int mbw_window_gesture_phase(id event);
 
 static SEL mbw_sel(const char *name) {
   return sel_registerName(name);
@@ -536,6 +622,71 @@ static int mbw_text_input_object_utf8(id text_input, uint8_t *dst, int dst_cap) 
     candidate = ((id(*)(id, SEL))objc_msgSend)(candidate, mbw_sel("string"));
   }
   return mbw_copy_nsstring_utf8(candidate, dst, dst_cap);
+}
+
+static int mbw_dragging_first_file_path_utf8(id dragging_info, uint8_t *dst, int dst_cap) {
+  if (!dragging_info) {
+    return 0;
+  }
+  id pasteboard = ((id(*)(id, SEL))objc_msgSend)(
+    dragging_info,
+    mbw_sel("draggingPasteboard"));
+  if (!pasteboard) {
+    return 0;
+  }
+  id filenames_type = mbw_make_nsstring("NSFilenamesPboardType");
+  if (!filenames_type) {
+    return 0;
+  }
+  id paths = ((id(*)(id, SEL, id))objc_msgSend)(
+    pasteboard,
+    mbw_sel("propertyListForType:"),
+    filenames_type);
+  if (!paths) {
+    return 0;
+  }
+  mbw_nsinteger_t count = ((mbw_nsinteger_t(*)(id, SEL))objc_msgSend)(
+    paths,
+    mbw_sel("count"));
+  if (count <= 0) {
+    return 0;
+  }
+  id first_path = ((id(*)(id, SEL, mbw_nsinteger_t))objc_msgSend)(
+    paths,
+    mbw_sel("objectAtIndex:"),
+    (mbw_nsinteger_t)0);
+  return mbw_copy_nsstring_utf8(first_path, dst, dst_cap);
+}
+
+static void mbw_dragging_info_position(
+  id view,
+  id dragging_info,
+  double *x,
+  double *y
+) {
+  if (x) {
+    *x = 0.0;
+  }
+  if (y) {
+    *y = 0.0;
+  }
+  if (!view || !dragging_info) {
+    return;
+  }
+  mbw_point_t window_point = ((mbw_point_t(*)(id, SEL))objc_msgSend)(
+    dragging_info,
+    mbw_sel("draggingLocation"));
+  mbw_point_t view_point = ((mbw_point_t(*)(id, SEL, mbw_point_t, id))objc_msgSend)(
+    view,
+    mbw_sel("convertPoint:fromView:"),
+    window_point,
+    nil);
+  mbw_view_pointer_position_from_view_point(
+    view,
+    mbw_view_window(view),
+    view_point,
+    x,
+    y);
 }
 
 static int mbw_modifierless_char_from_scancode(
@@ -1026,6 +1177,129 @@ static void mbw_window_queue_mouse_wheel(
   (void)mbw_push_input_event(window, &event);
 }
 
+static void mbw_window_queue_drag_entered(
+  mbw_window_t *window,
+  const uint8_t *path,
+  int path_len,
+  double x,
+  double y
+) {
+  mbw_input_event_t event = {
+    .kind = MBW_INPUT_EVENT_DRAG_ENTERED,
+    .x = x,
+    .y = y,
+    .path_len = 0,
+  };
+  event.path_len = mbw_copy_utf8_slice(path, path_len, event.path, MBW_PATH_TEXT_CAP);
+  (void)mbw_push_input_event(window, &event);
+}
+
+static void mbw_window_queue_drag_moved(
+  mbw_window_t *window,
+  double x,
+  double y
+) {
+  mbw_input_event_t event = {
+    .kind = MBW_INPUT_EVENT_DRAG_MOVED,
+    .x = x,
+    .y = y,
+  };
+  (void)mbw_push_input_event(window, &event);
+}
+
+static void mbw_window_queue_drag_dropped(
+  mbw_window_t *window,
+  const uint8_t *path,
+  int path_len,
+  double x,
+  double y
+) {
+  mbw_input_event_t event = {
+    .kind = MBW_INPUT_EVENT_DRAG_DROPPED,
+    .x = x,
+    .y = y,
+    .path_len = 0,
+  };
+  event.path_len = mbw_copy_utf8_slice(path, path_len, event.path, MBW_PATH_TEXT_CAP);
+  (void)mbw_push_input_event(window, &event);
+}
+
+static void mbw_window_queue_drag_left(
+  mbw_window_t *window,
+  int has_position,
+  double x,
+  double y
+) {
+  mbw_input_event_t event = {
+    .kind = MBW_INPUT_EVENT_DRAG_LEFT,
+    .state = has_position ? 1 : 0,
+    .x = x,
+    .y = y,
+  };
+  (void)mbw_push_input_event(window, &event);
+}
+
+static void mbw_window_queue_pinch_gesture(
+  mbw_window_t *window,
+  double delta,
+  int phase
+) {
+  mbw_input_event_t event = {
+    .kind = MBW_INPUT_EVENT_PINCH_GESTURE,
+    .delta_x = delta,
+    .phase = phase,
+  };
+  (void)mbw_push_input_event(window, &event);
+}
+
+static void mbw_window_queue_pan_gesture(
+  mbw_window_t *window,
+  double delta_x,
+  double delta_y,
+  int phase
+) {
+  mbw_input_event_t event = {
+    .kind = MBW_INPUT_EVENT_PAN_GESTURE,
+    .delta_x = delta_x,
+    .delta_y = delta_y,
+    .phase = phase,
+  };
+  (void)mbw_push_input_event(window, &event);
+}
+
+static void mbw_window_queue_double_tap_gesture(mbw_window_t *window) {
+  mbw_input_event_t event = {
+    .kind = MBW_INPUT_EVENT_DOUBLE_TAP_GESTURE,
+  };
+  (void)mbw_push_input_event(window, &event);
+}
+
+static void mbw_window_queue_rotation_gesture(
+  mbw_window_t *window,
+  double delta,
+  int phase
+) {
+  mbw_input_event_t event = {
+    .kind = MBW_INPUT_EVENT_ROTATION_GESTURE,
+    .delta_x = delta,
+    .phase = phase,
+  };
+  (void)mbw_push_input_event(window, &event);
+}
+
+static void mbw_window_queue_touchpad_pressure(
+  mbw_window_t *window,
+  double pressure,
+  int stage
+) {
+  mbw_input_event_t event = {
+    .kind = MBW_INPUT_EVENT_TOUCHPAD_PRESSURE,
+    .delta_x = pressure,
+    .state = stage,
+  };
+  (void)mbw_push_input_event(window, &event);
+}
+
 static int mbw_event_modifiers_state(id event) {
   if (!event) {
     return 0;
@@ -1128,6 +1402,28 @@ static int mbw_window_scroll_phase(id event) {
   return MBW_TOUCH_PHASE_MOVED;
 }
 
+static int mbw_window_gesture_phase(id event) {
+  if (!event) {
+    return MBW_TOUCH_PHASE_NONE;
+  }
+  mbw_nsuint_t phase = ((mbw_nsuint_t(*)(id, SEL))objc_msgSend)(
+    event,
+    mbw_sel("phase"));
+  if (phase & MBW_NSEVENT_PHASE_BEGAN) {
+    return MBW_TOUCH_PHASE_STARTED;
+  }
+  if (phase & MBW_NSEVENT_PHASE_CHANGED) {
+    return MBW_TOUCH_PHASE_MOVED;
+  }
+  if (phase & MBW_NSEVENT_PHASE_CANCELLED) {
+    return MBW_TOUCH_PHASE_CANCELLED;
+  }
+  if (phase & MBW_NSEVENT_PHASE_ENDED) {
+    return MBW_TOUCH_PHASE_ENDED;
+  }
+  return MBW_TOUCH_PHASE_NONE;
+}
+
 static void mbw_content_view_view_did_move_to_window(id self, SEL _cmd) {
   (void)_cmd;
   if (!self) {
@@ -1143,6 +1439,22 @@ static void mbw_content_view_view_did_move_to_window(id self, SEL _cmd) {
       ns_window,
       mbw_sel("makeFirstResponder:"),
       self);
+  }
+  Class ns_array_class = objc_getClass("NSArray");
+  if (ns_array_class) {
+    id dragged_type = mbw_make_nsstring("NSFilenamesPboardType");
+    if (dragged_type) {
+      id dragged_types = ((id(*)(id, SEL, id))objc_msgSend)(
+        (id)ns_array_class,
+        mbw_sel("arrayWithObject:"),
+        dragged_type);
+      if (dragged_types) {
+        (void)((id(*)(id, SEL, id))objc_msgSend)(
+          self,
+          mbw_sel("registerForDraggedTypes:"),
+          dragged_types);
+      }
+    }
   }
   mbw_view_refresh_tracking_area(self);
   mbw_view_refresh_cursor(self);
@@ -1745,6 +2057,162 @@ static void mbw_content_view_flags_changed(id self, SEL _cmd, id event) {
   }
 }
 
+static mbw_nsuint_t mbw_content_view_dragging_entered(id self, SEL _cmd, id dragging_info) {
+  (void)_cmd;
+  mbw_window_t *window = mbw_view_window(self);
+  if (!window || !dragging_info) {
+    return MBW_NSDRAG_OPERATION_NONE;
+  }
+  uint8_t path[MBW_PATH_TEXT_CAP];
+  int path_len = mbw_dragging_first_file_path_utf8(
+    dragging_info,
+    path,
+    MBW_PATH_TEXT_CAP);
+  if (path_len <= 0) {
+    return MBW_NSDRAG_OPERATION_NONE;
+  }
+  double x = 0.0;
+  double y = 0.0;
+  mbw_dragging_info_position(self, dragging_info, &x, &y);
+  mbw_window_queue_drag_entered(window, path, path_len, x, y);
+  return MBW_NSDRAG_OPERATION_COPY;
+}
+
+static mbw_nsuint_t mbw_content_view_dragging_updated(id self, SEL _cmd, id dragging_info) {
+  (void)_cmd;
+  mbw_window_t *window = mbw_view_window(self);
+  if (!window || !dragging_info) {
+    return MBW_NSDRAG_OPERATION_NONE;
+  }
+  uint8_t path[MBW_PATH_TEXT_CAP];
+  int path_len = mbw_dragging_first_file_path_utf8(
+    dragging_info,
+    path,
+    MBW_PATH_TEXT_CAP);
+  if (path_len <= 0) {
+    return MBW_NSDRAG_OPERATION_NONE;
+  }
+  double x = 0.0;
+  double y = 0.0;
+  mbw_dragging_info_position(self, dragging_info, &x, &y);
+  mbw_window_queue_drag_moved(window, x, y);
+  return MBW_NSDRAG_OPERATION_COPY;
+}
+
+static mbw_bool_t mbw_content_view_wants_periodic_dragging_updates(id self, SEL _cmd) {
+  (void)self;
+  (void)_cmd;
+  return YES;
+}
+
+static mbw_bool_t mbw_content_view_perform_drag_operation(id self, SEL _cmd, id dragging_info) {
+  (void)_cmd;
+  mbw_window_t *window = mbw_view_window(self);
+  if (!window || !dragging_info) {
+    return NO;
+  }
+  uint8_t path[MBW_PATH_TEXT_CAP];
+  int path_len = mbw_dragging_first_file_path_utf8(
+    dragging_info,
+    path,
+    MBW_PATH_TEXT_CAP);
+  if (path_len <= 0) {
+    return NO;
+  }
+  double x = 0.0;
+  double y = 0.0;
+  mbw_dragging_info_position(self, dragging_info, &x, &y);
+  mbw_window_queue_drag_dropped(window, path, path_len, x, y);
+  return YES;
+}
+
+static void mbw_content_view_dragging_exited(id self, SEL _cmd, id dragging_info) {
+  (void)_cmd;
+  mbw_window_t *window = mbw_view_window(self);
+  if (!window) {
+    return;
+  }
+  if (dragging_info) {
+    double x = 0.0;
+    double y = 0.0;
+    mbw_dragging_info_position(self, dragging_info, &x, &y);
+    mbw_window_queue_drag_left(window, 1, x, y);
+  } else {
+    mbw_window_queue_drag_left(window, 0, 0.0, 0.0);
+  }
+}
+
+static void mbw_content_view_magnify_with_event(id self, SEL _cmd, id event) {
+  (void)_cmd;
+  mbw_window_t *window = mbw_view_window(self);
+  if (!window || !event) {
+    return;
+  }
+  int phase = mbw_window_gesture_phase(event);
+  if (phase == MBW_TOUCH_PHASE_NONE) {
+    return;
+  }
+  mbw_window_update_modifiers_from_event(window, event);
+  mbw_content_view_mouse_motion(self, event);
+  double delta = ((double(*)(id, SEL))objc_msgSend)(event, mbw_sel("magnification"));
+  mbw_window_queue_pinch_gesture(window, delta, phase);
+}
+
+static void mbw_content_view_smart_magnify_with_event(id self, SEL _cmd, id event) {
+  (void)_cmd;
+  mbw_window_t *window = mbw_view_window(self);
+  if (!window || !event) {
+    return;
+  }
+  mbw_window_update_modifiers_from_event(window, event);
+  mbw_content_view_mouse_motion(self, event);
+  mbw_window_queue_double_tap_gesture(window);
+}
+
+static void mbw_content_view_rotate_with_event(id self, SEL _cmd, id event) {
+  (void)_cmd;
+  mbw_window_t *window = mbw_view_window(self);
+  if (!window || !event) {
+    return;
+  }
+  int phase = mbw_window_gesture_phase(event);
+  if (phase == MBW_TOUCH_PHASE_NONE) {
+    return;
+  }
+  mbw_window_update_modifiers_from_event(window, event);
+  mbw_content_view_mouse_motion(self, event);
+  double delta = ((double(*)(id, SEL))objc_msgSend)(event, mbw_sel("rotation"));
+  mbw_window_queue_rotation_gesture(window, delta, phase);
+}
+
+static void mbw_content_view_swipe_with_event(id self, SEL _cmd, id event) {
+  (void)_cmd;
+  mbw_window_t *window = mbw_view_window(self);
+  if (!window || !event) {
+    return;
+  }
+  int phase = mbw_window_gesture_phase(event);
+  if (phase == MBW_TOUCH_PHASE_NONE) {
+    phase = MBW_TOUCH_PHASE_MOVED;
+  }
+  mbw_window_update_modifiers_from_event(window, event);
+  mbw_content_view_mouse_motion(self, event);
+  double delta_x = ((double(*)(id, SEL))objc_msgSend)(event, mbw_sel("deltaX"));
+  double delta_y = ((double(*)(id, SEL))objc_msgSend)(event, mbw_sel("deltaY"));
+  mbw_window_queue_pan_gesture(window, delta_x, delta_y, phase);
+}
+
+static void mbw_content_view_pressure_change_with_event(id self, SEL _cmd, id event) {
+  (void)_cmd;
+  mbw_window_t *window = mbw_view_window(self);
+  if (!window || !event) {
+    return;
+  }
+  double pressure = ((double(*)(id, SEL))objc_msgSend)(event, mbw_sel("pressure"));
+  int stage = (int)((mbw_nsinteger_t(*)(id, SEL))objc_msgSend)(event, mbw_sel("stage"));
+  mbw_window_queue_touchpad_pressure(window, pressure, stage);
+}
+
 static void mbw_window_delegate_did_resize(id self, SEL _cmd, id notification) {
   (void)_cmd;
   (void)notification;
@@ -2066,6 +2534,56 @@ static Class mbw_get_content_view_class(void) {
     view_class,
     mbw_sel("flagsChanged:"),
     (IMP)mbw_content_view_flags_changed,
+    "v@:@");
+  class_addMethod(
+    view_class,
+    mbw_sel("draggingEntered:"),
+    (IMP)mbw_content_view_dragging_entered,
+    "Q@:@");
+  class_addMethod(
+    view_class,
+    mbw_sel("draggingUpdated:"),
+    (IMP)mbw_content_view_dragging_updated,
+    "Q@:@");
+  class_addMethod(
+    view_class,
+    mbw_sel("wantsPeriodicDraggingUpdates"),
+    (IMP)mbw_content_view_wants_periodic_dragging_updates,
+    "c@:");
+  class_addMethod(
+    view_class,
+    mbw_sel("performDragOperation:"),
+    (IMP)mbw_content_view_perform_drag_operation,
+    "c@:@");
+  class_addMethod(
+    view_class,
+    mbw_sel("draggingExited:"),
+    (IMP)mbw_content_view_dragging_exited,
+    "v@:@");
+  class_addMethod(
+    view_class,
+    mbw_sel("magnifyWithEvent:"),
+    (IMP)mbw_content_view_magnify_with_event,
+    "v@:@");
+  class_addMethod(
+    view_class,
+    mbw_sel("smartMagnifyWithEvent:"),
+    (IMP)mbw_content_view_smart_magnify_with_event,
+    "v@:@");
+  class_addMethod(
+    view_class,
+    mbw_sel("rotateWithEvent:"),
+    (IMP)mbw_content_view_rotate_with_event,
+    "v@:@");
+  class_addMethod(
+    view_class,
+    mbw_sel("swipeWithEvent:"),
+    (IMP)mbw_content_view_swipe_with_event,
+    "v@:@");
+  class_addMethod(
+    view_class,
+    mbw_sel("pressureChangeWithEvent:"),
+    (IMP)mbw_content_view_pressure_change_with_event,
     "v@:@");
 
   objc_registerClassPair(view_class);
@@ -2456,6 +2974,129 @@ static void mbw_window_queue_ime(
     text_len,
     event.ime_text,
     MBW_KEY_TEXT_CAP);
+  (void)mbw_push_input_event(window, &event);
+}
+
+static void mbw_window_queue_drag_entered(
+  mbw_window_t *window,
+  const uint8_t *path,
+  int path_len,
+  double x,
+  double y
+) {
+  mbw_input_event_t event = {
+    .kind = MBW_INPUT_EVENT_DRAG_ENTERED,
+    .x = x,
+    .y = y,
+    .path_len = 0,
+  };
+  event.path_len = mbw_copy_utf8_slice(path, path_len, event.path, MBW_PATH_TEXT_CAP);
+  (void)mbw_push_input_event(window, &event);
+}
+
+static void mbw_window_queue_drag_moved(
+  mbw_window_t *window,
+  double x,
+  double y
+) {
+  mbw_input_event_t event = {
+    .kind = MBW_INPUT_EVENT_DRAG_MOVED,
+    .x = x,
+    .y = y,
+  };
+  (void)mbw_push_input_event(window, &event);
+}
+
+static void mbw_window_queue_drag_dropped(
+  mbw_window_t *window,
+  const uint8_t *path,
+  int path_len,
+  double x,
+  double y
+) {
+  mbw_input_event_t event = {
+    .kind = MBW_INPUT_EVENT_DRAG_DROPPED,
+    .x = x,
+    .y = y,
+    .path_len = 0,
+  };
+  event.path_len = mbw_copy_utf8_slice(path, path_len, event.path, MBW_PATH_TEXT_CAP);
+  (void)mbw_push_input_event(window, &event);
+}
+
+static void mbw_window_queue_drag_left(
+  mbw_window_t *window,
+  int has_position,
+  double x,
+  double y
+) {
+  mbw_input_event_t event = {
+    .kind = MBW_INPUT_EVENT_DRAG_LEFT,
+    .state = has_position ? 1 : 0,
+    .x = x,
+    .y = y,
+  };
+  (void)mbw_push_input_event(window, &event);
+}
+
+static void mbw_window_queue_pinch_gesture(
+  mbw_window_t *window,
+  double delta,
+  int phase
+) {
+  mbw_input_event_t event = {
+    .kind = MBW_INPUT_EVENT_PINCH_GESTURE,
+    .delta_x = delta,
+    .phase = phase,
+  };
+  (void)mbw_push_input_event(window, &event);
+}
+
+static void mbw_window_queue_pan_gesture(
+  mbw_window_t *window,
+  double delta_x,
+  double delta_y,
+  int phase
+) {
+  mbw_input_event_t event = {
+    .kind = MBW_INPUT_EVENT_PAN_GESTURE,
+    .delta_x = delta_x,
+    .delta_y = delta_y,
+    .phase = phase,
+  };
+  (void)mbw_push_input_event(window, &event);
+}
+
+static void mbw_window_queue_double_tap_gesture(mbw_window_t *window) {
+  mbw_input_event_t event = {
+    .kind = MBW_INPUT_EVENT_DOUBLE_TAP_GESTURE,
+  };
+  (void)mbw_push_input_event(window, &event);
+}
+
+static void mbw_window_queue_rotation_gesture(
+  mbw_window_t *window,
+  double delta,
+  int phase
+) {
+  mbw_input_event_t event = {
+    .kind = MBW_INPUT_EVENT_ROTATION_GESTURE,
+    .delta_x = delta,
+    .phase = phase,
+  };
+  (void)mbw_push_input_event(window, &event);
+}
+
+static void mbw_window_queue_touchpad_pressure(
+  mbw_window_t *window,
+  double pressure,
+  int stage
+) {
+  mbw_input_event_t event = {
+    .kind = MBW_INPUT_EVENT_TOUCHPAD_PRESSURE,
+    .delta_x = pressure,
+    .state = stage,
+  };
   (void)mbw_push_input_event(window, &event);
 }
 #endif
@@ -2899,6 +3540,148 @@ int mbw_window_surface_y(int window_id) {
   return y;
 }
 
+int mbw_window_safe_area_top(int window_id) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  if (!window) {
+    return 0;
+  }
+  int inset_top = 0;
+#if defined(__APPLE__)
+  if (window->window) {
+    id ns_window = (id)window->window;
+    mbw_rect_t frame =
+      ((mbw_rect_t(*)(id, SEL))objc_msgSend)(ns_window, mbw_sel("frame"));
+    mbw_rect_t content_rect =
+      ((mbw_rect_t(*)(id, SEL, mbw_rect_t))objc_msgSend)(
+        ns_window,
+        mbw_sel("contentRectForFrameRect:"),
+        frame);
+    mbw_rect_t window_rect =
+      ((mbw_rect_t(*)(id, SEL, mbw_rect_t))objc_msgSend)(
+        ns_window,
+        mbw_sel("convertRectFromScreen:"),
+        content_rect);
+    mbw_rect_t layout_rect =
+      ((mbw_rect_t(*)(id, SEL))objc_msgSend)(ns_window, mbw_sel("contentLayoutRect"));
+    double logical = (window_rect.size.height + window_rect.origin.y) -
+      (layout_rect.size.height + layout_rect.origin.y);
+    if (logical < 0.0) {
+      logical = 0.0;
+    }
+    double scale_factor = window->scale_factor > 0.0 ? window->scale_factor : 1.0;
+    double scaled = logical * scale_factor;
+    inset_top = (int)(scaled + 0.5);
+  }
+#endif
+  return inset_top;
+}
+
+int mbw_window_safe_area_left(int window_id) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  if (!window) {
+    return 0;
+  }
+  int inset_left = 0;
+#if defined(__APPLE__)
+  if (window->window) {
+    id ns_window = (id)window->window;
+    mbw_rect_t frame =
+      ((mbw_rect_t(*)(id, SEL))objc_msgSend)(ns_window, mbw_sel("frame"));
+    mbw_rect_t content_rect =
+      ((mbw_rect_t(*)(id, SEL, mbw_rect_t))objc_msgSend)(
+        ns_window,
+        mbw_sel("contentRectForFrameRect:"),
+        frame);
+    mbw_rect_t window_rect =
+      ((mbw_rect_t(*)(id, SEL, mbw_rect_t))objc_msgSend)(
+        ns_window,
+        mbw_sel("convertRectFromScreen:"),
+        content_rect);
+    mbw_rect_t layout_rect =
+      ((mbw_rect_t(*)(id, SEL))objc_msgSend)(ns_window, mbw_sel("contentLayoutRect"));
+    double logical = layout_rect.origin.x - window_rect.origin.x;
+    if (logical < 0.0) {
+      logical = 0.0;
+    }
+    double scale_factor = window->scale_factor > 0.0 ? window->scale_factor : 1.0;
+    double scaled = logical * scale_factor;
+    inset_left = (int)(scaled + 0.5);
+  }
+#endif
+  return inset_left;
+}
+
+int mbw_window_safe_area_bottom(int window_id) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  if (!window) {
+    return 0;
+  }
+  int inset_bottom = 0;
+#if defined(__APPLE__)
+  if (window->window) {
+    id ns_window = (id)window->window;
+    mbw_rect_t frame =
+      ((mbw_rect_t(*)(id, SEL))objc_msgSend)(ns_window, mbw_sel("frame"));
+    mbw_rect_t content_rect =
+      ((mbw_rect_t(*)(id, SEL, mbw_rect_t))objc_msgSend)(
+        ns_window,
+        mbw_sel("contentRectForFrameRect:"),
+        frame);
+    mbw_rect_t window_rect =
+      ((mbw_rect_t(*)(id, SEL, mbw_rect_t))objc_msgSend)(
+        ns_window,
+        mbw_sel("convertRectFromScreen:"),
+        content_rect);
+    mbw_rect_t layout_rect =
+      ((mbw_rect_t(*)(id, SEL))objc_msgSend)(ns_window, mbw_sel("contentLayoutRect"));
+    double logical = layout_rect.origin.y - window_rect.origin.y;
+    if (logical < 0.0) {
+      logical = 0.0;
+    }
+    double scale_factor = window->scale_factor > 0.0 ? window->scale_factor : 1.0;
+    double scaled = logical * scale_factor;
+    inset_bottom = (int)(scaled + 0.5);
+  }
+#endif
+  return inset_bottom;
+}
+
+int mbw_window_safe_area_right(int window_id) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  if (!window) {
+    return 0;
+  }
+  int inset_right = 0;
+#if defined(__APPLE__)
+  if (window->window) {
+    id ns_window = (id)window->window;
+    mbw_rect_t frame =
+      ((mbw_rect_t(*)(id, SEL))objc_msgSend)(ns_window, mbw_sel("frame"));
+    mbw_rect_t content_rect =
+      ((mbw_rect_t(*)(id, SEL, mbw_rect_t))objc_msgSend)(
+        ns_window,
+        mbw_sel("contentRectForFrameRect:"),
+        frame);
+    mbw_rect_t window_rect =
+      ((mbw_rect_t(*)(id, SEL, mbw_rect_t))objc_msgSend)(
+        ns_window,
+        mbw_sel("convertRectFromScreen:"),
+        content_rect);
+    mbw_rect_t layout_rect =
+      ((mbw_rect_t(*)(id, SEL))objc_msgSend)(ns_window, mbw_sel("contentLayoutRect"));
+    double logical = (window_rect.size.width + window_rect.origin.x) -
+      (layout_rect.size.width + layout_rect.origin.x);
+    if (logical < 0.0) {
+      logical = 0.0;
+    }
+    double scale_factor = window->scale_factor > 0.0 ? window->scale_factor : 1.0;
+    double scaled = logical * scale_factor;
+    inset_right = (int)(scaled + 0.5);
+  }
+#endif
+  return inset_right;
+}
+
 int mbw_window_resize_increment_width(int window_id) {
   mbw_window_t *window = mbw_find_window(window_id);
   return window ? window->resize_increment_width : 0;
@@ -3220,6 +4003,25 @@ static moonbit_bytes_t mbw_make_bytes_from_slice(const uint8_t *src, int len) {
   return out;
 }
 
+moonbit_bytes_t mbw_window_title_utf8(int window_id) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  if (!window) {
+    return moonbit_make_bytes_raw(0);
+  }
+#if defined(__APPLE__)
+  if (window->window) {
+    id title = ((id(*)(id, SEL))objc_msgSend)((id)window->window, mbw_sel("title"));
+    if (title) {
+      const char *utf8 = ((const char *(*)(id, SEL))objc_msgSend)(title, mbw_sel("UTF8String"));
+      if (utf8) {
+        return mbw_make_bytes_from_slice((const uint8_t *)utf8, (int)strlen(utf8));
+      }
+    }
+  }
+#endif
+  return moonbit_make_bytes_raw(0);
+}
+
 int mbw_window_input_event_kind(int window_id) {
   mbw_window_t *window = mbw_find_window(window_id);
   return window ? window->current_input_event.kind : MBW_INPUT_EVENT_NONE;
@@ -3333,6 +4135,16 @@ moonbit_bytes_t mbw_window_input_event_ime_text(int window_id) {
   return mbw_make_bytes_from_slice(
     window->current_input_event.ime_text,
     window->current_input_event.ime_text_len);
+}
+
+moonbit_bytes_t mbw_window_input_event_path(int window_id) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  if (!window) {
+    return moonbit_make_bytes_raw(0);
+  }
+  return mbw_make_bytes_from_slice(
+    window->current_input_event.path,
+    window->current_input_event.path_len);
 }
 
 int mbw_window_input_event_ime_cursor_start(int window_id) {
@@ -3663,6 +4475,104 @@ void mbw_test_window_queue_mouse_wheel(
   mbw_window_queue_mouse_wheel(window, delta_kind, delta_x, delta_y, phase);
 }
 
+void mbw_test_window_queue_drag_entered(
+  int window_id,
+  const uint8_t *path,
+  int path_len,
+  double x,
+  double y
+) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  if (!window) {
+    return;
+  }
+  mbw_window_queue_drag_entered(window, path, path_len, x, y);
+}
+
+void mbw_test_window_queue_drag_moved(int window_id, double x, double y) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  if (!window) {
+    return;
+  }
+  mbw_window_queue_drag_moved(window, x, y);
+}
+
+void mbw_test_window_queue_drag_dropped(
+  int window_id,
+  const uint8_t *path,
+  int path_len,
+  double x,
+  double y
+) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  if (!window) {
+    return;
+  }
+  mbw_window_queue_drag_dropped(window, path, path_len, x, y);
+}
+
+void mbw_test_window_queue_drag_left(
+  int window_id,
+  bool has_position,
+  double x,
+  double y
+) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  if (!window) {
+    return;
+  }
+  mbw_window_queue_drag_left(window, has_position ? 1 : 0, x, y);
+}
+
+void mbw_test_window_queue_pinch_gesture(int window_id, double delta, int phase) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  if (!window) {
+    return;
+  }
+  mbw_window_queue_pinch_gesture(window, delta, phase);
+}
+
+void mbw_test_window_queue_pan_gesture(
+  int window_id,
+  double delta_x,
+  double delta_y,
+  int phase
+) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  if (!window) {
+    return;
+  }
+  mbw_window_queue_pan_gesture(window, delta_x, delta_y, phase);
+}
+
+void mbw_test_window_queue_double_tap_gesture(int window_id) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  if (!window) {
+    return;
+  }
+  mbw_window_queue_double_tap_gesture(window);
+}
+
+void mbw_test_window_queue_rotation_gesture(int window_id, double delta, int phase) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  if (!window) {
+    return;
+  }
+  mbw_window_queue_rotation_gesture(window, delta, phase);
+}
+
+void mbw_test_window_queue_touchpad_pressure(
+  int window_id,
+  double pressure,
+  int stage
+) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  if (!window) {
+    return;
+  }
+  mbw_window_queue_touchpad_pressure(window, pressure, stage);
+}
+
 void mbw_test_window_queue_modifiers_changed(int window_id, int modifiers) {
   mbw_window_t *window = mbw_find_window(window_id);
   if (!window) {
@@ -3809,6 +4719,33 @@ void mbw_window_set_title_utf8(int window_id, const uint8_t *title, uint64_t tit
 #else
   (void)title;
   (void)title_len;
+#endif
+}
+
+void mbw_window_request_user_attention(int window_id, int request_type) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  if (!window || request_type == MBW_USER_ATTENTION_NONE) {
+    return;
+  }
+#if defined(__APPLE__)
+  if (window->window) {
+    id app = g_ns_app;
+    if (!app) {
+      Class app_class = objc_getClass("NSApplication");
+      if (app_class) {
+        app = ((id(*)(id, SEL))objc_msgSend)((id)app_class, mbw_sel("sharedApplication"));
+      }
+    }
+    if (app) {
+      mbw_nsinteger_t ns_request_type = request_type == MBW_USER_ATTENTION_CRITICAL
+        ? MBW_NS_REQUEST_USER_ATTENTION_CRITICAL
+        : MBW_NS_REQUEST_USER_ATTENTION_INFORMATIONAL;
+      ((mbw_nsinteger_t(*)(id, SEL, mbw_nsinteger_t))objc_msgSend)(
+        app,
+        mbw_sel("requestUserAttention:"),
+        ns_request_type);
+    }
+  }
 #endif
 }
 
@@ -4130,6 +5067,99 @@ void mbw_window_set_cursor_hittest(int window_id, bool hittest) {
       hittest ? NO : YES);
   }
 #endif
+}
+
+bool mbw_window_set_cursor_position(int window_id, int x, int y) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  if (!window || !window->window) {
+    return false;
+  }
+#if defined(__APPLE__)
+  double scale_factor = window->scale_factor > 0.0 ? window->scale_factor : 1.0;
+  mbw_rect_t frame =
+    ((mbw_rect_t(*)(id, SEL))objc_msgSend)((id)window->window, mbw_sel("frame"));
+  mbw_rect_t content_rect =
+    ((mbw_rect_t(*)(id, SEL, mbw_rect_t))objc_msgSend)(
+      (id)window->window,
+      mbw_sel("contentRectForFrameRect:"),
+      frame);
+  mbw_point_t cursor = {
+    .x = content_rect.origin.x + ((double)x / scale_factor),
+    .y = content_rect.origin.y + content_rect.size.height - ((double)y / scale_factor),
+  };
+  CGPoint point = CGPointMake(cursor.x, cursor.y);
+  CGError warp_error = CGWarpMouseCursorPosition(point);
+  if (warp_error != kCGErrorSuccess) {
+    return false;
+  }
+  CGError associate_error = CGAssociateMouseAndMouseCursorPosition(true);
+  return associate_error == kCGErrorSuccess;
+#else
+  (void)x;
+  (void)y;
+  return false;
+#endif
+}
+
+bool mbw_window_set_cursor_grab(int window_id, int mode) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  if (!window || !window->window) {
+    return false;
+  }
+  if (mode == MBW_CURSOR_GRAB_CONFINED) {
+    return false;
+  }
+#if defined(__APPLE__)
+  bool associate_mouse_cursor = mode == MBW_CURSOR_GRAB_LOCKED ? false : true;
+  CGError error = CGAssociateMouseAndMouseCursorPosition(associate_mouse_cursor);
+  return error == kCGErrorSuccess;
+#else
+  return false;
+#endif
+}
+
+bool mbw_window_drag_window(int window_id) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  if (!window || !window->window) {
+    return false;
+  }
+#if defined(__APPLE__)
+  id app = g_ns_app;
+  if (!app) {
+    Class app_class = objc_getClass("NSApplication");
+    if (app_class) {
+      app = ((id(*)(id, SEL))objc_msgSend)((id)app_class, mbw_sel("sharedApplication"));
+    }
+  }
+  if (!app) {
+    return false;
+  }
+  id current_event = ((id(*)(id, SEL))objc_msgSend)(app, mbw_sel("currentEvent"));
+  if (!current_event) {
+    return false;
+  }
+  ((void(*)(id, SEL, id))objc_msgSend)(
+    (id)window->window,
+    mbw_sel("performWindowDragWithEvent:"),
+    current_event);
+  return true;
+#else
+  return false;
+#endif
+}
+
+bool mbw_window_drag_resize_window(int window_id, int direction) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  (void)window;
+  (void)direction;
+  return false;
+}
+
+void mbw_window_show_window_menu(int window_id, int x, int y) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  (void)window;
+  (void)x;
+  (void)y;
 }
 
 void mbw_window_set_window_level(int window_id, int level) {

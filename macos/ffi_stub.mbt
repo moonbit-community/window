@@ -19,6 +19,11 @@ fn window_theme(_window_id : Int) -> Int {
 }
 
 ///|
+fn window_title(_window_id : Int) -> Bytes {
+  Bytes::make(0, (0 : Int).to_byte())
+}
+
+///|
 fn window_scale_factor(_window_id : Int) -> Double {
   1.0
 }
@@ -324,6 +329,11 @@ fn input_event_ime_text(_window_id : Int) -> Bytes {
 }
 
 ///|
+fn input_event_path(_window_id : Int) -> Bytes {
+  Bytes::make(0, (0 : Int).to_byte())
+}
+
+///|
 fn input_event_ime_cursor_start(_window_id : Int) -> Int {
   -1
 }
@@ -413,6 +423,26 @@ fn window_surface_y(_window_id : Int) -> Int {
 }
 
 ///|
+fn window_safe_area_top(_window_id : Int) -> Int {
+  0
+}
+
+///|
+fn window_safe_area_left(_window_id : Int) -> Int {
+  0
+}
+
+///|
+fn window_safe_area_bottom(_window_id : Int) -> Int {
+  0
+}
+
+///|
+fn window_safe_area_right(_window_id : Int) -> Int {
+  0
+}
+
+///|
 fn set_window_position(_window_id : Int, _x : Int, _y : Int) -> Unit {
   ()
 }
@@ -469,6 +499,31 @@ fn set_window_cursor_visible(_window_id : Int, _visible : Bool) -> Unit {
 
 ///|
 fn set_window_cursor_hittest(_window_id : Int, _hittest : Bool) -> Unit {
+  ()
+}
+
+///|
+fn set_cursor_position(_window_id : Int, _x : Int, _y : Int) -> Bool {
+  false
+}
+
+///|
+fn set_cursor_grab(_window_id : Int, _mode : Int) -> Bool {
+  false
+}
+
+///|
+fn drag_window(_window_id : Int) -> Bool {
+  false
+}
+
+///|
+fn drag_resize_window(_window_id : Int, _direction : Int) -> Bool {
+  false
+}
+
+///|
+fn show_window_menu(_window_id : Int, _x : Int, _y : Int) -> Unit {
   ()
 }
 
@@ -542,6 +597,11 @@ fn create_window(
 ///|
 fn set_title(_window_id : Int, _title : String) -> Unit {
   abort("macos backend requires the native target")
+}
+
+///|
+fn request_user_attention(_window_id : Int, _request_type : Int) -> Unit {
+  ()
 }
 
 ///|

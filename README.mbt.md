@@ -7,26 +7,34 @@ native builds and focuses on `macos-arm64`.
 
 - Supported backend: macOS AppKit on the native target
 - Current event surface: `CloseRequested`, `Destroyed`, `Focused`,
-  `Ime`, `KeyboardInput`, `ModifiersChanged`, `Moved`, `PointerMoved`,
-  `PointerEntered`, `PointerLeft`, `PointerButton`, `MouseWheel`,
+  `Ime`, `KeyboardInput`, `ModifiersChanged`, `Moved`,
+  `DragEntered`, `DragMoved`, `DragDropped`, `DragLeft`,
+  `PointerMoved`, `PointerEntered`, `PointerLeft`, `PointerButton`,
+  `MouseWheel`, `PinchGesture`, `PanGesture`, `DoubleTapGesture`,
+  `RotationGesture`, `TouchpadPressure`,
   `SurfaceResized`, `ScaleFactorChanged`, `ThemeChanged`,
   `Occluded`, `RedrawRequested`
 - Event loop support: `run_app`, `EventLoopProxy::wake_up()`,
   `ControlFlow::{Poll, Wait, WaitUntil}`
 - Runtime window control currently includes surface and frame sizing
-  (`surface_size`, `outer_size`, `surface_position`, `request_surface_size`,
+  (`surface_size`, `outer_size`, `surface_position`, `safe_area`,
+  `request_surface_size`,
   `set_min_surface_size`, `min_surface_size`, `set_max_surface_size`,
   `max_surface_size`,
   `set_surface_resize_increments`), position and focus (`outer_position`,
   `set_outer_position`, `focus_window`, `has_focus`),
   state (`set_minimized`, `is_minimized`, `set_maximized`, `is_maximized`,
   `set_fullscreen`, `fullscreen`, `is_fullscreen`), appearance (`set_title`,
-  `set_theme`, `set_window_icon`, `set_cursor`, `set_cursor_visible`,
+  `title`, `set_theme`, `set_window_icon`, `set_cursor`,
+  `set_cursor_position`, `set_cursor_grab`, `set_cursor_visible`,
   `is_cursor_visible`, `set_cursor_hittest`, `is_cursor_hittest`, `set_blur`,
-  `set_transparent`, `set_decorations`, `set_window_level`), visibility and
+  `set_transparent`, `set_decorations`, `set_window_level`,
+  `request_user_attention`), visibility and
   capability flags (`set_visible`, `set_resizable`, `set_enabled_buttons`,
   `set_content_protected`), and IME control (`set_ime_purpose`,
-  `set_ime_allowed`, `set_ime_cursor_area`).
+  `set_ime_allowed`, `set_ime_cursor_area`). Additional compatibility shims
+  include `pre_present_notify`, `reset_dead_keys`, `drag_window`,
+  `drag_resize_window`, and `show_window_menu`.
 - `WindowAttributes` supports initial surface sizing/constraints and position,
   title/visibility/resizable, focus/active, fullscreen, theme, cursor/icon,
   blur/transparency/decorations/content protection, enabled buttons, window

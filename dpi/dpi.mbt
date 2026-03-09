@@ -135,3 +135,41 @@ pub fn PhysicalPositionF64::x(self : PhysicalPositionF64) -> Double {
 pub fn PhysicalPositionF64::y(self : PhysicalPositionF64) -> Double {
   self.y
 }
+
+///|
+pub struct PhysicalInsets {
+  top : Int
+  left : Int
+  bottom : Int
+  right : Int
+} derive(Eq, Show)
+
+///|
+pub fn PhysicalInsets::new(
+  top : Int,
+  left : Int,
+  bottom : Int,
+  right : Int,
+) -> PhysicalInsets {
+  { top, left, bottom, right }
+}
+
+///|
+pub fn PhysicalInsets::top(self : PhysicalInsets) -> Int {
+  self.top
+}
+
+///|
+pub fn PhysicalInsets::left(self : PhysicalInsets) -> Int {
+  self.left
+}
+
+///|
+pub fn PhysicalInsets::bottom(self : PhysicalInsets) -> Int {
+  self.bottom
+}
+
+///|
+pub fn PhysicalInsets::right(self : PhysicalInsets) -> Int {
+  self.right
+}

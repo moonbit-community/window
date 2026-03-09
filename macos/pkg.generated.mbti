@@ -75,6 +75,8 @@ pub struct Window {
   // private fields
 }
 pub fn Window::cursor(Self) -> @core.CursorIcon
+pub fn Window::drag_resize_window(Self, @core.ResizeDirection) -> Bool
+pub fn Window::drag_window(Self) -> Bool
 pub fn Window::enabled_buttons(Self) -> @core.WindowButtons
 pub fn Window::focus_window(Self) -> Unit
 pub fn Window::fullscreen(Self) -> @core.Fullscreen?
@@ -100,13 +102,19 @@ pub fn Window::max_surface_size(Self) -> @dpi.PhysicalSize?
 pub fn Window::min_surface_size(Self) -> @dpi.PhysicalSize?
 pub fn Window::outer_position(Self) -> @dpi.PhysicalPosition
 pub fn Window::outer_size(Self) -> @dpi.PhysicalSize
+pub fn Window::pre_present_notify(Self) -> Unit
 pub fn Window::request_redraw(Self) -> Unit
 pub fn Window::request_surface_size(Self, @dpi.PhysicalSize) -> Unit
+pub fn Window::request_user_attention(Self, @core.UserAttentionType?) -> Unit
+pub fn Window::reset_dead_keys(Self) -> Unit
+pub fn Window::safe_area(Self) -> @dpi.PhysicalInsets
 pub fn Window::scale_factor(Self) -> Double
 pub fn Window::set_blur(Self, Bool) -> Unit
 pub fn Window::set_content_protected(Self, Bool) -> Unit
 pub fn Window::set_cursor(Self, @core.CursorIcon) -> Unit
+pub fn Window::set_cursor_grab(Self, @core.CursorGrabMode) -> Bool
 pub fn Window::set_cursor_hittest(Self, Bool) -> Unit
+pub fn Window::set_cursor_position(Self, @dpi.PhysicalPosition) -> Bool
 pub fn Window::set_cursor_visible(Self, Bool) -> Unit
 pub fn Window::set_decorations(Self, Bool) -> Unit
 pub fn Window::set_enabled_buttons(Self, @core.WindowButtons) -> Unit
@@ -127,10 +135,12 @@ pub fn Window::set_transparent(Self, Bool) -> Unit
 pub fn Window::set_visible(Self, Bool) -> Unit
 pub fn Window::set_window_icon(Self, @core.Icon?) -> Unit
 pub fn Window::set_window_level(Self, @core.WindowLevel) -> Unit
+pub fn Window::show_window_menu(Self, @dpi.PhysicalPosition) -> Unit
 pub fn Window::surface_position(Self) -> @dpi.PhysicalPosition
 pub fn Window::surface_resize_increments(Self) -> @dpi.PhysicalSize?
 pub fn Window::surface_size(Self) -> @dpi.PhysicalSize
 pub fn Window::theme(Self) -> @core.Theme?
+pub fn Window::title(Self) -> String
 pub fn Window::window_level(Self) -> @core.WindowLevel
 pub impl Eq for Window
 pub impl Show for Window

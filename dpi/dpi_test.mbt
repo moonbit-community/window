@@ -16,3 +16,12 @@ test "physical size converts to logical size" {
   let physical = PhysicalSize::new(1280, 720)
   assert_eq(physical.to_logical(2.0), LogicalSize::new(640.0, 360.0))
 }
+
+///|
+test "physical insets constructor and accessors" {
+  let insets = PhysicalInsets::new(10, 20, 30, 40)
+  assert_eq(insets.top(), 10)
+  assert_eq(insets.left(), 20)
+  assert_eq(insets.bottom(), 30)
+  assert_eq(insets.right(), 40)
+}

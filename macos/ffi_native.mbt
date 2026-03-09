@@ -19,6 +19,11 @@ fn window_theme(window_id : Int) -> Int {
 }
 
 ///|
+fn window_title(window_id : Int) -> Bytes {
+  native_window_title_utf8(window_id)
+}
+
+///|
 fn window_scale_factor(window_id : Int) -> Double {
   native_window_scale_factor(window_id)
 }
@@ -324,6 +329,11 @@ fn input_event_ime_text(window_id : Int) -> Bytes {
 }
 
 ///|
+fn input_event_path(window_id : Int) -> Bytes {
+  native_window_input_event_path(window_id)
+}
+
+///|
 fn input_event_ime_cursor_start(window_id : Int) -> Int {
   native_window_input_event_ime_cursor_start(window_id)
 }
@@ -413,6 +423,26 @@ fn window_surface_y(window_id : Int) -> Int {
 }
 
 ///|
+fn window_safe_area_top(window_id : Int) -> Int {
+  native_window_safe_area_top(window_id)
+}
+
+///|
+fn window_safe_area_left(window_id : Int) -> Int {
+  native_window_safe_area_left(window_id)
+}
+
+///|
+fn window_safe_area_bottom(window_id : Int) -> Int {
+  native_window_safe_area_bottom(window_id)
+}
+
+///|
+fn window_safe_area_right(window_id : Int) -> Int {
+  native_window_safe_area_right(window_id)
+}
+
+///|
 fn set_window_position(window_id : Int, x : Int, y : Int) -> Unit {
   native_window_set_position(window_id, x, y)
 }
@@ -470,6 +500,31 @@ fn set_window_cursor_visible(window_id : Int, visible : Bool) -> Unit {
 ///|
 fn set_window_cursor_hittest(window_id : Int, hittest : Bool) -> Unit {
   native_window_set_cursor_hittest(window_id, hittest)
+}
+
+///|
+fn set_cursor_position(window_id : Int, x : Int, y : Int) -> Bool {
+  native_window_set_cursor_position(window_id, x, y)
+}
+
+///|
+fn set_cursor_grab(window_id : Int, mode : Int) -> Bool {
+  native_window_set_cursor_grab(window_id, mode)
+}
+
+///|
+fn drag_window(window_id : Int) -> Bool {
+  native_window_drag_window(window_id)
+}
+
+///|
+fn drag_resize_window(window_id : Int, direction : Int) -> Bool {
+  native_window_drag_resize_window(window_id, direction)
+}
+
+///|
+fn show_window_menu(window_id : Int, x : Int, y : Int) -> Unit {
+  native_window_show_window_menu(window_id, x, y)
 }
 
 ///|
@@ -575,6 +630,11 @@ fn set_title(window_id : Int, title : String) -> Unit {
 }
 
 ///|
+fn request_user_attention(window_id : Int, request_type : Int) -> Unit {
+  native_window_request_user_attention(window_id, request_type)
+}
+
+///|
 pub extern "C" fn native_backend_available() -> Bool = "mbw_backend_available"
 
 ///|
@@ -645,6 +705,18 @@ extern "C" fn native_window_surface_x(window_id : Int) -> Int = "mbw_window_surf
 extern "C" fn native_window_surface_y(window_id : Int) -> Int = "mbw_window_surface_y"
 
 ///|
+extern "C" fn native_window_safe_area_top(window_id : Int) -> Int = "mbw_window_safe_area_top"
+
+///|
+extern "C" fn native_window_safe_area_left(window_id : Int) -> Int = "mbw_window_safe_area_left"
+
+///|
+extern "C" fn native_window_safe_area_bottom(window_id : Int) -> Int = "mbw_window_safe_area_bottom"
+
+///|
+extern "C" fn native_window_safe_area_right(window_id : Int) -> Int = "mbw_window_safe_area_right"
+
+///|
 extern "C" fn native_window_resize_increment_width(window_id : Int) -> Int = "mbw_window_resize_increment_width"
 
 ///|
@@ -658,6 +730,9 @@ extern "C" fn native_window_y(window_id : Int) -> Int = "mbw_window_y"
 
 ///|
 extern "C" fn native_window_theme(window_id : Int) -> Int = "mbw_window_theme"
+
+///|
+extern "C" fn native_window_title_utf8(window_id : Int) -> Bytes = "mbw_window_title_utf8"
 
 ///|
 extern "C" fn native_window_scale_factor(window_id : Int) -> Double = "mbw_window_scale_factor"
@@ -855,6 +930,9 @@ extern "C" fn native_window_input_event_ime_kind(window_id : Int) -> Int = "mbw_
 extern "C" fn native_window_input_event_ime_text(window_id : Int) -> Bytes = "mbw_window_input_event_ime_text"
 
 ///|
+extern "C" fn native_window_input_event_path(window_id : Int) -> Bytes = "mbw_window_input_event_path"
+
+///|
 extern "C" fn native_window_input_event_ime_cursor_start(
   window_id : Int,
 ) -> Int = "mbw_window_input_event_ime_cursor_start"
@@ -960,6 +1038,35 @@ extern "C" fn native_window_set_cursor_hittest(
 ) -> Unit = "mbw_window_set_cursor_hittest"
 
 ///|
+extern "C" fn native_window_set_cursor_position(
+  window_id : Int,
+  x : Int,
+  y : Int,
+) -> Bool = "mbw_window_set_cursor_position"
+
+///|
+extern "C" fn native_window_set_cursor_grab(
+  window_id : Int,
+  mode : Int,
+) -> Bool = "mbw_window_set_cursor_grab"
+
+///|
+extern "C" fn native_window_drag_window(window_id : Int) -> Bool = "mbw_window_drag_window"
+
+///|
+extern "C" fn native_window_drag_resize_window(
+  window_id : Int,
+  direction : Int,
+) -> Bool = "mbw_window_drag_resize_window"
+
+///|
+extern "C" fn native_window_show_window_menu(
+  window_id : Int,
+  x : Int,
+  y : Int,
+) -> Unit = "mbw_window_show_window_menu"
+
+///|
 extern "C" fn native_window_set_transparent(
   window_id : Int,
   transparent : Bool,
@@ -1021,6 +1128,12 @@ pub extern "C" fn native_set_title(
   title : Bytes,
   title_len : UInt64,
 ) -> Unit = "mbw_window_set_title_utf8"
+
+///|
+extern "C" fn native_window_request_user_attention(
+  window_id : Int,
+  request_type : Int,
+) -> Unit = "mbw_window_request_user_attention"
 
 ///|
 pub extern "C" fn native_set_visible(window_id : Int, visible : Bool) -> Unit = "mbw_window_set_visible"

@@ -19,6 +19,31 @@ pub(all) enum WindowLevel {
 } derive(Eq, Show)
 
 ///|
+pub(all) enum CursorGrabMode {
+  None
+  Locked
+  Confined
+} derive(Eq, Show)
+
+///|
+pub(all) enum ResizeDirection {
+  East
+  North
+  NorthEast
+  NorthWest
+  South
+  SouthEast
+  SouthWest
+  West
+} derive(Eq, Show)
+
+///|
+pub(all) enum UserAttentionType {
+  Critical
+  Informational
+} derive(Eq, Show)
+
+///|
 pub(all) enum CursorIcon {
   Default
   ContextMenu

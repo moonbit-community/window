@@ -43,6 +43,16 @@ pub fn Window::surface_position(self : Window) -> @dpi.PhysicalPosition {
 }
 
 ///|
+pub fn Window::safe_area(self : Window) -> @dpi.PhysicalInsets {
+  @dpi.PhysicalInsets::new(
+    window_safe_area_top(self.id.into_raw()),
+    window_safe_area_left(self.id.into_raw()),
+    window_safe_area_bottom(self.id.into_raw()),
+    window_safe_area_right(self.id.into_raw()),
+  )
+}
+
+///|
 pub fn Window::request_surface_size(
   self : Window,
   size : @dpi.PhysicalSize,
@@ -230,6 +240,43 @@ pub fn Window::set_cursor_hittest(self : Window, hittest : Bool) -> Unit {
 }
 
 ///|
+pub fn Window::set_cursor_position(
+  self : Window,
+  position : @dpi.PhysicalPosition,
+) -> Bool {
+  set_cursor_position(self.id.into_raw(), position.x(), position.y())
+}
+
+///|
+pub fn Window::set_cursor_grab(
+  self : Window,
+  mode : @core.CursorGrabMode,
+) -> Bool {
+  set_cursor_grab(self.id.into_raw(), cursor_grab_mode_to_native(mode))
+}
+
+///|
+pub fn Window::drag_window(self : Window) -> Bool {
+  drag_window(self.id.into_raw())
+}
+
+///|
+pub fn Window::drag_resize_window(
+  self : Window,
+  direction : @core.ResizeDirection,
+) -> Bool {
+  drag_resize_window(self.id.into_raw(), resize_direction_to_native(direction))
+}
+
+///|
+pub fn Window::show_window_menu(
+  self : Window,
+  position : @dpi.PhysicalPosition,
+) -> Unit {
+  show_window_menu(self.id.into_raw(), position.x(), position.y())
+}
+
+///|
 pub fn Window::is_decorated(self : Window) -> Bool {
   window_decorated(self.id.into_raw())
 }
@@ -350,8 +397,23 @@ pub fn Window::request_redraw(self : Window) -> Unit {
 }
 
 ///|
+pub fn Window::pre_present_notify(_self : Window) -> Unit {
+  ()
+}
+
+///|
+pub fn Window::reset_dead_keys(_self : Window) -> Unit {
+  ()
+}
+
+///|
 pub fn Window::set_title(self : Window, title : String) -> Unit {
   set_title(self.id.into_raw(), title)
+}
+
+///|
+pub fn Window::title(self : Window) -> String {
+  text_from_native(window_title(self.id.into_raw()))
 }
 
 ///|
@@ -398,6 +460,17 @@ pub fn Window::is_resizable(self : Window) -> Bool {
 ///|
 pub fn Window::is_content_protected(self : Window) -> Bool {
   window_content_protected(self.id.into_raw())
+}
+
+///|
+pub fn Window::request_user_attention(
+  self : Window,
+  request_type : @core.UserAttentionType?,
+) -> Unit {
+  request_user_attention(
+    self.id.into_raw(),
+    user_attention_type_to_native(request_type),
+  )
 }
 
 ///|
@@ -618,6 +691,40 @@ fn window_level_from_native(level : Int) -> @core.WindowLevel {
 }
 
 ///|
+fn cursor_grab_mode_to_native(mode : @core.CursorGrabMode) -> Int {
+  match mode {
+    @core.CursorGrabMode::None => 0
+    @core.CursorGrabMode::Locked => 1
+    @core.CursorGrabMode::Confined => 2
+  }
+}
+
+///|
+fn resize_direction_to_native(direction : @core.ResizeDirection) -> Int {
+  match direction {
+    @core.ResizeDirection::East => 0
+    @core.ResizeDirection::North => 1
+    @core.ResizeDirection::NorthEast => 2
+    @core.ResizeDirection::NorthWest => 3
+    @core.ResizeDirection::South => 4
+    @core.ResizeDirection::SouthEast => 5
+    @core.ResizeDirection::SouthWest => 6
+    @core.ResizeDirection::West => 7
+  }
+}
+
+///|
+fn user_attention_type_to_native(
+  request_type : @core.UserAttentionType?,
+) -> Int {
+  match request_type {
+    None => 0
+    Some(@core.UserAttentionType::Critical) => 1
+    Some(@core.UserAttentionType::Informational) => 2
+  }
+}
+
+///|
 fn optional_text_from_native(bytes : Bytes) -> String? {
   if bytes.length() == 0 {
     None
@@ -629,6 +736,16 @@ fn optional_text_from_native(bytes : Bytes) -> String? {
 ///|
 fn text_from_native(bytes : Bytes) -> String {
   @utf8.decode_lossy(bytes[:], ignore_bom=false)
+}
+
+///|
+fn drag_paths_from_native(bytes : Bytes) -> Array[String] {
+  let path = text_from_native(bytes)
+  if path == "" {
+    []
+  } else {
+    [path]
+  }
 }
 
 ///|
@@ -774,6 +891,95 @@ fn[A : ApplicationHandler] EventLoop::dispatch_input_events(
             app.window_event(self, window_id, @core.WindowEvent::Ime(ime))
           None => ()
         }
+      9 =>
+        app.window_event(
+          self,
+          window_id,
+          @core.WindowEvent::DragEntered(
+            drag_paths_from_native(input_event_path(raw_id)),
+            position,
+          ),
+        )
+      10 =>
+        app.window_event(
+          self,
+          window_id,
+          @core.WindowEvent::DragMoved(position),
+        )
+      11 =>
+        app.window_event(
+          self,
+          window_id,
+          @core.WindowEvent::DragDropped(
+            drag_paths_from_native(input_event_path(raw_id)),
+            position,
+          ),
+        )
+      12 =>
+        app.window_event(
+          self,
+          window_id,
+          @core.WindowEvent::DragLeft(
+            if input_event_state(raw_id) != 0 {
+              Some(position)
+            } else {
+              None
+            },
+          ),
+        )
+      13 =>
+        match touch_phase_from_native(input_event_phase(raw_id)) {
+          Some(phase) =>
+            app.window_event(
+              self,
+              window_id,
+              @core.WindowEvent::PinchGesture(
+                input_event_scroll_delta_x(raw_id),
+                phase,
+              ),
+            )
+          None => ()
+        }
+      14 =>
+        match touch_phase_from_native(input_event_phase(raw_id)) {
+          Some(phase) =>
+            app.window_event(
+              self,
+              window_id,
+              @core.WindowEvent::PanGesture(
+                @dpi.PhysicalPositionF64::new(
+                  input_event_scroll_delta_x(raw_id),
+                  input_event_scroll_delta_y(raw_id),
+                ),
+                phase,
+              ),
+            )
+          None => ()
+        }
+      15 =>
+        app.window_event(self, window_id, @core.WindowEvent::DoubleTapGesture)
+      16 =>
+        match touch_phase_from_native(input_event_phase(raw_id)) {
+          Some(phase) =>
+            app.window_event(
+              self,
+              window_id,
+              @core.WindowEvent::RotationGesture(
+                input_event_scroll_delta_x(raw_id),
+                phase,
+              ),
+            )
+          None => ()
+        }
+      17 =>
+        app.window_event(
+          self,
+          window_id,
+          @core.WindowEvent::TouchpadPressure(
+            input_event_scroll_delta_x(raw_id),
+            input_event_state(raw_id),
+          ),
+        )
       _ => ()
     }
   }

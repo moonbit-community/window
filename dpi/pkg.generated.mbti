@@ -28,6 +28,20 @@ pub fn LogicalSize::width(Self) -> Double
 pub impl Eq for LogicalSize
 pub impl Show for LogicalSize
 
+pub struct PhysicalInsets {
+  top : Int
+  left : Int
+  bottom : Int
+  right : Int
+}
+pub fn PhysicalInsets::bottom(Self) -> Int
+pub fn PhysicalInsets::left(Self) -> Int
+pub fn PhysicalInsets::new(Int, Int, Int, Int) -> Self
+pub fn PhysicalInsets::right(Self) -> Int
+pub fn PhysicalInsets::top(Self) -> Int
+pub impl Eq for PhysicalInsets
+pub impl Show for PhysicalInsets
+
 pub struct PhysicalPosition {
   x : Int
   y : Int
