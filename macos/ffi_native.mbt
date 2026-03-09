@@ -179,6 +179,11 @@ fn input_event_text_ignoring_modifiers(window_id : Int) -> Bytes {
 }
 
 ///|
+fn input_event_text_without_modifiers(window_id : Int) -> Bytes {
+  native_window_input_event_text_without_modifiers(window_id)
+}
+
+///|
 fn wait_for_events(timeout_ms : Int) -> Bool {
   native_event_loop_wait_millis(timeout_ms)
 }
@@ -376,6 +381,11 @@ extern "C" fn native_window_input_event_text_with_all_modifiers(
 extern "C" fn native_window_input_event_text_ignoring_modifiers(
   window_id : Int,
 ) -> Bytes = "mbw_window_input_event_text_ignoring_modifiers"
+
+///|
+extern "C" fn native_window_input_event_text_without_modifiers(
+  window_id : Int,
+) -> Bytes = "mbw_window_input_event_text_without_modifiers"
 
 ///|
 pub extern "C" fn native_window_take_surface_resized(window_id : Int) -> Bool = "mbw_window_take_surface_resized"

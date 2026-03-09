@@ -179,6 +179,11 @@ fn input_event_text_ignoring_modifiers(_window_id : Int) -> Bytes {
 }
 
 ///|
+fn input_event_text_without_modifiers(_window_id : Int) -> Bytes {
+  Bytes::make(0, (0 : Int).to_byte())
+}
+
+///|
 fn wait_for_events(_timeout_ms : Int) -> Bool {
   false
 }

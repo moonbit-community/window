@@ -254,6 +254,9 @@ fn[A : ApplicationHandler] EventLoop::dispatch_input_events(
                   optional_text_from_native(
                     input_event_text_ignoring_modifiers(raw_id),
                   ),
+                  optional_text_from_native(
+                    input_event_text_without_modifiers(raw_id),
+                  ),
                 ),
                 false,
               ),

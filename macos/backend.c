@@ -11,6 +11,7 @@
 
 #if defined(__APPLE__)
 #include <CoreGraphics/CGDirectDisplay.h>
+#include <Carbon/Carbon.h>
 #include <objc/message.h>
 #include <objc/runtime.h>
 #endif
@@ -36,6 +37,8 @@ typedef struct mbw_input_event {
   uint8_t text_with_all_modifiers[MBW_KEY_TEXT_CAP];
   int text_ignoring_modifiers_len;
   uint8_t text_ignoring_modifiers[MBW_KEY_TEXT_CAP];
+  int text_without_modifiers_len;
+  uint8_t text_without_modifiers[MBW_KEY_TEXT_CAP];
 } mbw_input_event_t;
 
 typedef struct mbw_window {
@@ -285,7 +288,9 @@ static void mbw_window_queue_keyboard_input(
   const uint8_t *text_with_all_modifiers,
   int text_with_all_modifiers_len,
   const uint8_t *text_ignoring_modifiers,
-  int text_ignoring_modifiers_len
+  int text_ignoring_modifiers_len,
+  const uint8_t *text_without_modifiers,
+  int text_without_modifiers_len
 );
 static void mbw_window_queue_pointer_button(
   mbw_window_t *window,
@@ -361,6 +366,81 @@ static int mbw_event_nsstring_utf8(
   }
   id string = ((id(*)(id, SEL))objc_msgSend)(event, mbw_sel(selector_name));
   return mbw_copy_nsstring_utf8(string, dst, dst_cap);
+}
+
+static int mbw_modifierless_char_from_scancode(
+  int scancode,
+  uint8_t *dst,
+  int dst_cap
+) {
+  if (scancode < 0 || !dst || dst_cap <= 1) {
+    return 0;
+  }
+
+  TISInputSourceRef input_source = TISCopyCurrentKeyboardLayoutInputSource();
+  if (!input_source) {
+    return 0;
+  }
+
+  CFDataRef layout_data = TISGetInputSourceProperty(
+    input_source,
+    kTISPropertyUnicodeKeyLayoutData);
+  if (!layout_data) {
+    CFRelease(input_source);
+    return 0;
+  }
+
+  const UCKeyboardLayout *layout =
+    (const UCKeyboardLayout *)CFDataGetBytePtr(layout_data);
+  if (!layout) {
+    CFRelease(input_source);
+    return 0;
+  }
+
+  UInt32 dead_keys = 0;
+  UniChar chars[8];
+  UniCharCount char_count = 0;
+  OSStatus status = UCKeyTranslate(
+    layout,
+    (UInt16)scancode,
+    kUCKeyActionDisplay,
+    0,
+    (UInt32)LMGetKbdType(),
+    kUCKeyTranslateNoDeadKeysMask,
+    &dead_keys,
+    (UniCharCount)(sizeof(chars) / sizeof(chars[0])),
+    &char_count,
+    chars);
+  CFRelease(input_source);
+  if (status != noErr || char_count == 0) {
+    return 0;
+  }
+
+  CFStringRef string = CFStringCreateWithCharacters(
+    kCFAllocatorDefault,
+    chars,
+    (CFIndex)char_count);
+  if (!string) {
+    return 0;
+  }
+
+  CFIndex bytes_used = 0;
+  Boolean ok = CFStringGetBytes(
+    string,
+    CFRangeMake(0, CFStringGetLength(string)),
+    kCFStringEncodingUTF8,
+    '?',
+    false,
+    dst,
+    (CFIndex)(dst_cap - 1),
+    &bytes_used);
+  CFRelease(string);
+  if (!ok || bytes_used <= 0) {
+    return 0;
+  }
+
+  dst[bytes_used] = '\0';
+  return (int)bytes_used;
 }
 
 static mbw_window_t *mbw_delegate_window(id delegate) {
@@ -532,7 +612,9 @@ static void mbw_window_queue_keyboard_input(
   const uint8_t *text_with_all_modifiers,
   int text_with_all_modifiers_len,
   const uint8_t *text_ignoring_modifiers,
-  int text_ignoring_modifiers_len
+  int text_ignoring_modifiers_len,
+  const uint8_t *text_without_modifiers,
+  int text_without_modifiers_len
 ) {
   mbw_input_event_t event = {
     .kind = MBW_INPUT_EVENT_KEYBOARD_INPUT,
@@ -542,6 +624,7 @@ static void mbw_window_queue_keyboard_input(
     .repeat = repeat,
     .text_with_all_modifiers_len = 0,
     .text_ignoring_modifiers_len = 0,
+    .text_without_modifiers_len = 0,
   };
   event.text_with_all_modifiers_len = mbw_copy_utf8_slice(
     text_with_all_modifiers,
@@ -552,6 +635,11 @@ static void mbw_window_queue_keyboard_input(
     text_ignoring_modifiers,
     text_ignoring_modifiers_len,
     event.text_ignoring_modifiers,
+    MBW_KEY_TEXT_CAP);
+  event.text_without_modifiers_len = mbw_copy_utf8_slice(
+    text_without_modifiers,
+    text_without_modifiers_len,
+    event.text_without_modifiers,
     MBW_KEY_TEXT_CAP);
   (void)mbw_push_input_event(window, &event);
 }
@@ -736,6 +824,7 @@ static void mbw_content_view_key_down(id self, SEL _cmd, id event) {
   mbw_bool_t is_repeat = ((mbw_bool_t(*)(id, SEL))objc_msgSend)(event, mbw_sel("isARepeat"));
   uint8_t text_with_all_modifiers[MBW_KEY_TEXT_CAP];
   uint8_t text_ignoring_modifiers[MBW_KEY_TEXT_CAP];
+  uint8_t text_without_modifiers[MBW_KEY_TEXT_CAP];
   int text_with_all_modifiers_len = mbw_event_nsstring_utf8(
     event,
     "characters",
@@ -746,6 +835,17 @@ static void mbw_content_view_key_down(id self, SEL _cmd, id event) {
     "charactersIgnoringModifiers",
     text_ignoring_modifiers,
     MBW_KEY_TEXT_CAP);
+  int text_without_modifiers_len = mbw_modifierless_char_from_scancode(
+    scancode,
+    text_without_modifiers,
+    MBW_KEY_TEXT_CAP);
+  if (text_without_modifiers_len <= 0) {
+    text_without_modifiers_len = mbw_copy_utf8_slice(
+      text_ignoring_modifiers,
+      text_ignoring_modifiers_len,
+      text_without_modifiers,
+      MBW_KEY_TEXT_CAP);
+  }
   mbw_window_queue_keyboard_input(
     window,
     scancode,
@@ -755,7 +855,9 @@ static void mbw_content_view_key_down(id self, SEL _cmd, id event) {
     text_with_all_modifiers,
     text_with_all_modifiers_len,
     text_ignoring_modifiers,
-    text_ignoring_modifiers_len);
+    text_ignoring_modifiers_len,
+    text_without_modifiers,
+    text_without_modifiers_len);
 }
 
 static void mbw_content_view_key_up(id self, SEL _cmd, id event) {
@@ -769,6 +871,7 @@ static void mbw_content_view_key_up(id self, SEL _cmd, id event) {
     event, mbw_sel("keyCode"));
   uint8_t text_with_all_modifiers[MBW_KEY_TEXT_CAP];
   uint8_t text_ignoring_modifiers[MBW_KEY_TEXT_CAP];
+  uint8_t text_without_modifiers[MBW_KEY_TEXT_CAP];
   int text_with_all_modifiers_len = mbw_event_nsstring_utf8(
     event,
     "characters",
@@ -779,6 +882,17 @@ static void mbw_content_view_key_up(id self, SEL _cmd, id event) {
     "charactersIgnoringModifiers",
     text_ignoring_modifiers,
     MBW_KEY_TEXT_CAP);
+  int text_without_modifiers_len = mbw_modifierless_char_from_scancode(
+    scancode,
+    text_without_modifiers,
+    MBW_KEY_TEXT_CAP);
+  if (text_without_modifiers_len <= 0) {
+    text_without_modifiers_len = mbw_copy_utf8_slice(
+      text_ignoring_modifiers,
+      text_ignoring_modifiers_len,
+      text_without_modifiers,
+      MBW_KEY_TEXT_CAP);
+  }
   mbw_window_queue_keyboard_input(
     window,
     scancode,
@@ -788,7 +902,9 @@ static void mbw_content_view_key_up(id self, SEL _cmd, id event) {
     text_with_all_modifiers,
     text_with_all_modifiers_len,
     text_ignoring_modifiers,
-    text_ignoring_modifiers_len);
+    text_ignoring_modifiers_len,
+    text_without_modifiers,
+    text_without_modifiers_len);
 }
 
 static void mbw_content_view_mouse_motion(id self, id event) {
@@ -964,6 +1080,7 @@ static void mbw_content_view_flags_changed(id self, SEL _cmd, id event) {
   int next_modifiers = mbw_event_modifiers_state(event);
   uint8_t text_with_all_modifiers[MBW_KEY_TEXT_CAP];
   uint8_t text_ignoring_modifiers[MBW_KEY_TEXT_CAP];
+  uint8_t text_without_modifiers[MBW_KEY_TEXT_CAP];
   int text_with_all_modifiers_len = mbw_event_nsstring_utf8(
     event,
     "characters",
@@ -974,6 +1091,17 @@ static void mbw_content_view_flags_changed(id self, SEL _cmd, id event) {
     "charactersIgnoringModifiers",
     text_ignoring_modifiers,
     MBW_KEY_TEXT_CAP);
+  int text_without_modifiers_len = mbw_modifierless_char_from_scancode(
+    scancode,
+    text_without_modifiers,
+    MBW_KEY_TEXT_CAP);
+  if (text_without_modifiers_len <= 0) {
+    text_without_modifiers_len = mbw_copy_utf8_slice(
+      text_ignoring_modifiers,
+      text_ignoring_modifiers_len,
+      text_without_modifiers,
+      MBW_KEY_TEXT_CAP);
+  }
   if (
     scancode == 0x38 ||
     scancode == 0x3C ||
@@ -994,7 +1122,9 @@ static void mbw_content_view_flags_changed(id self, SEL _cmd, id event) {
       text_with_all_modifiers,
       text_with_all_modifiers_len,
       text_ignoring_modifiers,
-      text_ignoring_modifiers_len);
+      text_ignoring_modifiers_len,
+      text_without_modifiers,
+      text_without_modifiers_len);
   }
   if (next_modifiers != previous_modifiers) {
     window->modifiers_state = next_modifiers;
@@ -2147,6 +2277,16 @@ moonbit_bytes_t mbw_window_input_event_text_ignoring_modifiers(int window_id) {
     window->current_input_event.text_ignoring_modifiers_len);
 }
 
+moonbit_bytes_t mbw_window_input_event_text_without_modifiers(int window_id) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  if (!window) {
+    return moonbit_make_bytes_raw(0);
+  }
+  return mbw_make_bytes_from_slice(
+    window->current_input_event.text_without_modifiers,
+    window->current_input_event.text_without_modifiers_len);
+}
+
 bool mbw_window_take_surface_resized(int window_id) {
   mbw_window_t *window = mbw_find_window(window_id);
   if (!window || !window->pending_surface_resized) {
@@ -2372,6 +2512,8 @@ void mbw_test_window_queue_keyboard_input(
     NULL,
     0,
     NULL,
+    0,
+    NULL,
     0);
 }
 
@@ -2399,6 +2541,8 @@ void mbw_test_window_queue_keyboard_input_with_text(
     repeat ? 1 : 0,
     text_with_all_modifiers,
     text_with_all_modifiers_len,
+    text_ignoring_modifiers,
+    text_ignoring_modifiers_len,
     text_ignoring_modifiers,
     text_ignoring_modifiers_len);
 }

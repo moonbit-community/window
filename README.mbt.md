@@ -15,9 +15,9 @@ native builds and focuses on `macos-arm64`.
   `ControlFlow::{Poll, Wait, WaitUntil}`
 - Current keyboard support is macOS-first and now prefers native
   `NSEvent` text (`characters` / `charactersIgnoringModifiers`) for
-  `logical_key`, `text`, and `key_without_modifiers`, with scancode mapping as
-  fallback. Dead keys are surfaced as `Key::Dead` when applicable. IME is not
-  implemented yet.
+  `logical_key` and `text`; `key_without_modifiers` uses Carbon
+  `UCKeyTranslate` and falls back to scancode mapping when needed. Dead keys
+  are surfaced as `Key::Dead` when applicable. IME is not implemented yet.
 - `Cmd + keyUp` is forwarded to the key window in the event pump so key
   release events are not dropped while Command is held.
 - Other platforms are planned but not implemented yet

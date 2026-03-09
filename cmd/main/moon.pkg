@@ -7,7 +7,7 @@ options(
   "is-main": true,
   link: {
     "native": {
-      "cc-link-flags": "-framework AppKit -framework Foundation -framework CoreGraphics -lobjc",
+      "cc-link-flags": "-framework AppKit -framework Foundation -framework CoreGraphics -framework Carbon -lobjc",
     },
   },
   targets: { "main.mbt": [ "native" ], "main_stub.mbt": [ "not", "native" ] },

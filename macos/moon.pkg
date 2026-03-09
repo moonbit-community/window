@@ -7,8 +7,8 @@ import {
 options(
   link: {
     "native": {
-      "cc-link-flags": "-framework AppKit -framework Foundation -framework CoreGraphics -lobjc",
-      "stub-cc-link-flags": "-framework AppKit -framework Foundation -framework CoreGraphics -lobjc",
+      "cc-link-flags": "-framework AppKit -framework Foundation -framework CoreGraphics -framework Carbon -lobjc",
+      "stub-cc-link-flags": "-framework AppKit -framework Foundation -framework CoreGraphics -framework Carbon -lobjc",
     },
   },
   "native-stub": [ "backend.c" ],

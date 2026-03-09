@@ -395,7 +395,7 @@ fn key_from_native_text(text : String?) -> @core.Key? {
 }
 
 ///|
-fn dead_or_character_from_ignoring_text(
+fn dead_or_character_from_native_text(
   text : String?,
   state : @core.ElementState,
 ) -> @core.Key? {
@@ -413,7 +413,7 @@ fn dead_or_character_from_ignoring_text(
 fn key_without_modifiers_from_scancode(
   scancode : Int,
   physical_key : @core.PhysicalKey,
-  text_ignoring_modifiers : String?,
+  text_without_modifiers : String?,
 ) -> @core.Key {
   match physical_key {
     @core.PhysicalKey::Code(@core.KeyCode::Space) => @core.Key::Character(" ")
@@ -421,7 +421,7 @@ fn key_without_modifiers_from_scancode(
       match named_key_from_code(code) {
         Some(named) => @core.Key::Named(named)
         None =>
-          match key_from_native_text(text_ignoring_modifiers) {
+          match key_from_native_text(text_without_modifiers) {
             Some(key) => key
             None =>
               match key_without_modifiers_char(scancode) {
@@ -432,12 +432,12 @@ fn key_without_modifiers_from_scancode(
           }
       }
     @core.PhysicalKey::Unidentified(@core.NativeKeyCode::MacOS(code)) =>
-      match key_from_native_text(text_ignoring_modifiers) {
+      match key_from_native_text(text_without_modifiers) {
         Some(key) => key
         None => @core.Key::Unidentified(@core.NativeKey::MacOS(code))
       }
     @core.PhysicalKey::Unidentified(_) =>
-      match key_from_native_text(text_ignoring_modifiers) {
+      match key_from_native_text(text_without_modifiers) {
         Some(key) => key
         None => @core.Key::Unidentified(@core.NativeKey::Unidentified)
       }
@@ -453,6 +453,7 @@ fn logical_key_from_scancode(
   key_without_modifiers : @core.Key,
   text_with_all_modifiers : String?,
   text_ignoring_modifiers : String?,
+  text_without_modifiers : String?,
 ) -> @core.Key {
   match physical_key {
     @core.PhysicalKey::Code(@core.KeyCode::Space) => @core.Key::Character(" ")
@@ -470,8 +471,8 @@ fn logical_key_from_scancode(
               Some(key) => key
               None =>
                 match
-                  dead_or_character_from_ignoring_text(
-                    text_ignoring_modifiers, state,
+                  dead_or_character_from_native_text(
+                    text_without_modifiers, state,
                   ) {
                   Some(key) => key
                   None => {
@@ -500,9 +501,7 @@ fn logical_key_from_scancode(
           Some(key) => key
           None =>
             match
-              dead_or_character_from_ignoring_text(
-                text_ignoring_modifiers, state,
-              ) {
+              dead_or_character_from_native_text(text_without_modifiers, state) {
               Some(key) => key
               None => @core.Key::Unidentified(@core.NativeKey::MacOS(code))
             }
@@ -519,9 +518,7 @@ fn logical_key_from_scancode(
           Some(key) => key
           None =>
             match
-              dead_or_character_from_ignoring_text(
-                text_ignoring_modifiers, state,
-              ) {
+              dead_or_character_from_native_text(text_without_modifiers, state) {
               Some(key) => key
               None => key_without_modifiers
             }
@@ -548,6 +545,7 @@ fn create_key_event(
   modifiers : @core.Modifiers,
   text_with_all_modifiers : String?,
   text_ignoring_modifiers : String?,
+  text_without_modifiers : String?,
 ) -> @core.KeyEvent {
   let normalized_text_with_all_modifiers = normalized_native_text(
     text_with_all_modifiers,
@@ -555,13 +553,16 @@ fn create_key_event(
   let normalized_text_ignoring_modifiers = normalized_native_text(
     text_ignoring_modifiers,
   )
+  let normalized_text_without_modifiers = normalized_native_text(
+    text_without_modifiers,
+  )
   let physical_key = physical_key_from_scancode(scancode)
   let key_without_modifiers = key_without_modifiers_from_scancode(
-    scancode, physical_key, normalized_text_ignoring_modifiers,
+    scancode, physical_key, normalized_text_without_modifiers,
   )
   let logical_key = logical_key_from_scancode(
     scancode, physical_key, state, modifiers, key_without_modifiers, normalized_text_with_all_modifiers,
-    normalized_text_ignoring_modifiers,
+    normalized_text_ignoring_modifiers, normalized_text_without_modifiers,
   )
   let text = match state {
     @core.ElementState::Pressed => key_text(logical_key)
