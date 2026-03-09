@@ -262,6 +262,26 @@ fn window_ime_cursor_area_height(window_id : Int) -> Int {
 }
 
 ///|
+fn window_has_ime_surrounding_text(window_id : Int) -> Bool {
+  native_window_has_ime_surrounding_text(window_id)
+}
+
+///|
+fn window_ime_surrounding_text(window_id : Int) -> Bytes {
+  native_window_ime_surrounding_text(window_id)
+}
+
+///|
+fn window_ime_surrounding_cursor(window_id : Int) -> Int {
+  native_window_ime_surrounding_cursor(window_id)
+}
+
+///|
+fn window_ime_surrounding_anchor(window_id : Int) -> Int {
+  native_window_ime_surrounding_anchor(window_id)
+}
+
+///|
 fn take_scale_factor_changed(window_id : Int) -> Bool {
   native_window_take_scale_factor_changed(window_id)
 }
@@ -679,6 +699,28 @@ fn set_ime_cursor_area(
 }
 
 ///|
+fn set_ime_surrounding_text(
+  window_id : Int,
+  text : String,
+  cursor : Int,
+  anchor : Int,
+) -> Unit {
+  let text_bytes = @utf8.encode(text[:], bom=false)
+  native_window_set_ime_surrounding_text(
+    window_id,
+    text_bytes,
+    text_bytes.length(),
+    cursor,
+    anchor,
+  )
+}
+
+///|
+fn clear_ime_surrounding_text(window_id : Int) -> Unit {
+  native_window_clear_ime_surrounding_text(window_id)
+}
+
+///|
 fn close_window(window_id : Int) -> Unit {
   native_window_close(window_id)
 }
@@ -979,6 +1021,18 @@ extern "C" fn native_window_ime_cursor_area_width(window_id : Int) -> Int = "mbw
 extern "C" fn native_window_ime_cursor_area_height(window_id : Int) -> Int = "mbw_window_ime_cursor_area_height"
 
 ///|
+extern "C" fn native_window_has_ime_surrounding_text(window_id : Int) -> Bool = "mbw_window_has_ime_surrounding_text"
+
+///|
+extern "C" fn native_window_ime_surrounding_text(window_id : Int) -> Bytes = "mbw_window_ime_surrounding_text_utf8"
+
+///|
+extern "C" fn native_window_ime_surrounding_cursor(window_id : Int) -> Int = "mbw_window_ime_surrounding_cursor"
+
+///|
+extern "C" fn native_window_ime_surrounding_anchor(window_id : Int) -> Int = "mbw_window_ime_surrounding_anchor"
+
+///|
 extern "C" fn native_window_take_scale_factor_changed(window_id : Int) -> Bool = "mbw_window_take_scale_factor_changed"
 
 ///|
@@ -1262,6 +1316,19 @@ extern "C" fn native_window_set_ime_cursor_area(
   width : Int,
   height : Int,
 ) -> Unit = "mbw_window_set_ime_cursor_area"
+
+///|
+#borrow(text)
+extern "C" fn native_window_set_ime_surrounding_text(
+  window_id : Int,
+  text : Bytes,
+  text_len : Int,
+  cursor : Int,
+  anchor : Int,
+) -> Unit = "mbw_window_set_ime_surrounding_text_utf8"
+
+///|
+extern "C" fn native_window_clear_ime_surrounding_text(window_id : Int) -> Unit = "mbw_window_clear_ime_surrounding_text"
 
 ///|
 extern "C" fn native_window_close(window_id : Int) -> Unit = "mbw_window_close"

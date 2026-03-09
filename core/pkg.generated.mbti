@@ -138,6 +138,14 @@ pub(all) enum ImePurpose {
   Normal
   Password
   Terminal
+  Number
+  Phone
+  Url
+  Email
+  Pin
+  Date
+  Time
+  DateTime
 }
 pub impl Eq for ImePurpose
 pub impl Show for ImePurpose
@@ -146,9 +154,28 @@ pub(all) enum ImeRequest {
   SetAllowed(Bool)
   SetPurpose(ImePurpose)
   SetCursorArea(@dpi.PhysicalPosition, @dpi.PhysicalSize)
+  SetSurroundingText(ImeSurroundingText?)
 }
 pub impl Eq for ImeRequest
 pub impl Show for ImeRequest
+
+pub struct ImeSurroundingText {
+  // private fields
+}
+pub fn ImeSurroundingText::anchor(Self) -> Int
+pub fn ImeSurroundingText::cursor(Self) -> Int
+pub fn ImeSurroundingText::new(String, Int, Int) -> Result[Self, ImeSurroundingTextError]
+pub fn ImeSurroundingText::text(Self) -> String
+pub impl Eq for ImeSurroundingText
+pub impl Show for ImeSurroundingText
+
+pub(all) enum ImeSurroundingTextError {
+  TextTooLong(Int)
+  CursorOutOfRange(Int, Int)
+  AnchorOutOfRange(Int, Int)
+}
+pub impl Eq for ImeSurroundingTextError
+pub impl Show for ImeSurroundingTextError
 
 pub(all) enum Key {
   Named(NamedKey)

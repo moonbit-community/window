@@ -417,6 +417,23 @@ pub fn Window::set_ime_cursor_area(
 }
 
 ///|
+pub fn Window::set_ime_surrounding_text(
+  self : Window,
+  surrounding_text : @core.ImeSurroundingText?,
+) -> Unit {
+  match surrounding_text {
+    Some(surrounding_text) =>
+      set_ime_surrounding_text(
+        self.id.into_raw(),
+        surrounding_text.text(),
+        surrounding_text.cursor(),
+        surrounding_text.anchor(),
+      )
+    None => clear_ime_surrounding_text(self.id.into_raw())
+  }
+}
+
+///|
 pub fn Window::ime_cursor_area_position(self : Window) -> @dpi.PhysicalPosition {
   @dpi.PhysicalPosition::new(
     window_ime_cursor_area_x(self.id.into_raw()),
@@ -430,6 +447,21 @@ pub fn Window::ime_cursor_area_size(self : Window) -> @dpi.PhysicalSize {
     window_ime_cursor_area_width(self.id.into_raw()),
     window_ime_cursor_area_height(self.id.into_raw()),
   )
+}
+
+///|
+pub fn Window::ime_surrounding_text(self : Window) -> @core.ImeSurroundingText? {
+  let raw_id = self.id.into_raw()
+  if window_has_ime_surrounding_text(raw_id) == false {
+    return None
+  }
+  let text = text_from_native(window_ime_surrounding_text(raw_id))
+  let cursor = window_ime_surrounding_cursor(raw_id)
+  let anchor = window_ime_surrounding_anchor(raw_id)
+  match @core.ImeSurroundingText::new(text, cursor, anchor) {
+    Ok(surrounding_text) => Some(surrounding_text)
+    Err(_) => None
+  }
 }
 
 ///|
@@ -455,12 +487,16 @@ pub fn Window::request_ime_update(
       self.set_ime_cursor_area(position, size)
       true
     }
+    @core.ImeRequest::SetSurroundingText(surrounding_text) => {
+      self.set_ime_surrounding_text(surrounding_text)
+      true
+    }
   }
 }
 
 ///|
 pub fn Window::ime_capabilities(_self : Window) -> @core.ImeCapabilities? {
-  Some(@core.ImeCapabilities::new(true, true, false))
+  Some(@core.ImeCapabilities::new(true, true, true))
 }
 
 ///|
@@ -657,6 +693,14 @@ fn ime_purpose_to_native(purpose : @core.ImePurpose) -> Int {
     @core.ImePurpose::Normal => 0
     @core.ImePurpose::Password => 1
     @core.ImePurpose::Terminal => 2
+    @core.ImePurpose::Number => 3
+    @core.ImePurpose::Phone => 4
+    @core.ImePurpose::Url => 5
+    @core.ImePurpose::Email => 6
+    @core.ImePurpose::Pin => 7
+    @core.ImePurpose::Date => 8
+    @core.ImePurpose::Time => 9
+    @core.ImePurpose::DateTime => 10
   }
 }
 
@@ -665,6 +709,14 @@ fn ime_purpose_from_native(purpose : Int) -> @core.ImePurpose {
   match purpose {
     1 => @core.ImePurpose::Password
     2 => @core.ImePurpose::Terminal
+    3 => @core.ImePurpose::Number
+    4 => @core.ImePurpose::Phone
+    5 => @core.ImePurpose::Url
+    6 => @core.ImePurpose::Email
+    7 => @core.ImePurpose::Pin
+    8 => @core.ImePurpose::Date
+    9 => @core.ImePurpose::Time
+    10 => @core.ImePurpose::DateTime
     _ => @core.ImePurpose::Normal
   }
 }

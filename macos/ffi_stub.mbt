@@ -262,6 +262,26 @@ fn window_ime_cursor_area_height(_window_id : Int) -> Int {
 }
 
 ///|
+fn window_has_ime_surrounding_text(_window_id : Int) -> Bool {
+  false
+}
+
+///|
+fn window_ime_surrounding_text(_window_id : Int) -> Bytes {
+  Bytes::make(0, (0 : Int).to_byte())
+}
+
+///|
+fn window_ime_surrounding_cursor(_window_id : Int) -> Int {
+  0
+}
+
+///|
+fn window_ime_surrounding_anchor(_window_id : Int) -> Int {
+  0
+}
+
+///|
 fn take_scale_factor_changed(_window_id : Int) -> Bool {
   false
 }
@@ -656,6 +676,21 @@ fn set_ime_cursor_area(
   _width : Int,
   _height : Int,
 ) -> Unit {
+  ()
+}
+
+///|
+fn set_ime_surrounding_text(
+  _window_id : Int,
+  _text : String,
+  _cursor : Int,
+  _anchor : Int,
+) -> Unit {
+  ()
+}
+
+///|
+fn clear_ime_surrounding_text(_window_id : Int) -> Unit {
   ()
 }
 

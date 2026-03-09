@@ -545,6 +545,9 @@ struct ImeConfigurationApp {
   request_allowed_ok : Ref[Bool]
   request_cursor_ok : Ref[Bool]
   request_purpose_ok : Ref[Bool]
+  request_surrounding_ok : Ref[Bool]
+  surrounding_text_after_clear : Ref[@core.ImeSurroundingText?]
+  surrounding_text_after_request : Ref[@core.ImeSurroundingText?]
   updated_purpose : Ref[@core.ImePurpose]
 }
 
@@ -1597,9 +1600,21 @@ impl ApplicationHandler for ImeConfigurationApp with can_create_surfaces(
   )
   self.ime_capabilities.val = window.ime_capabilities()
   self.initial_purpose.val = window.ime_purpose()
+  let surrounding_text = match
+    @core.ImeSurroundingText::new("hello world", 5, 0) {
+    Ok(value) => value
+    Err(_) => abort("expected surrounding text to be valid")
+  }
   self.request_purpose_ok.val = window.request_ime_update(
-    @core.ImeRequest::SetPurpose(@core.ImePurpose::Terminal),
+    @core.ImeRequest::SetPurpose(@core.ImePurpose::DateTime),
   )
+  self.request_surrounding_ok.val = window.request_ime_update(
+    @core.ImeRequest::SetSurroundingText(Some(surrounding_text)),
+  )
+  self.surrounding_text_after_request.val = window.ime_surrounding_text()
+  self.request_surrounding_ok.val = self.request_surrounding_ok.val &&
+    window.request_ime_update(@core.ImeRequest::SetSurroundingText(None))
+  self.surrounding_text_after_clear.val = window.ime_surrounding_text()
   self.request_allowed_ok.val = window.request_ime_update(
     @core.ImeRequest::SetAllowed(false),
   )
@@ -2756,6 +2771,9 @@ test "window ime configuration updates native state" {
   let request_allowed_ok = Ref::new(false)
   let request_purpose_ok = Ref::new(false)
   let request_cursor_ok = Ref::new(false)
+  let request_surrounding_ok = Ref::new(false)
+  let surrounding_text_after_request = Ref::new(None)
+  let surrounding_text_after_clear = Ref::new(None)
   let cursor_position = Ref::new(None)
   let cursor_size = Ref::new(None)
   let app : ImeConfigurationApp = {
@@ -2767,18 +2785,32 @@ test "window ime configuration updates native state" {
     request_allowed_ok,
     request_cursor_ok,
     request_purpose_ok,
+    request_surrounding_ok,
+    surrounding_text_after_clear,
+    surrounding_text_after_request,
     updated_purpose,
   }
   event_loop.run_app(app)
   assert_eq(
     ime_capabilities.val,
-    Some(@core.ImeCapabilities::new(true, true, false)),
+    Some(@core.ImeCapabilities::new(true, true, true)),
   )
   assert_eq(initial_purpose.val, @core.ImePurpose::Password)
   assert_true(request_allowed_ok.val)
   assert_true(request_purpose_ok.val)
   assert_true(request_cursor_ok.val)
-  assert_eq(updated_purpose.val, @core.ImePurpose::Terminal)
+  assert_true(request_surrounding_ok.val)
+  assert_eq(
+    surrounding_text_after_request.val,
+    Some(
+      match @core.ImeSurroundingText::new("hello world", 5, 0) {
+        Ok(value) => value
+        Err(_) => abort("expected surrounding text to be valid")
+      },
+    ),
+  )
+  assert_eq(surrounding_text_after_clear.val, None)
+  assert_eq(updated_purpose.val, @core.ImePurpose::DateTime)
   assert_false(ime_allowed.val)
   assert_eq(cursor_position.val, Some(@dpi.PhysicalPosition::new(48, 96)))
   assert_eq(cursor_size.val, Some(@dpi.PhysicalSize::new(20, 32)))

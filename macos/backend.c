@@ -105,6 +105,11 @@ typedef struct mbw_window {
   int ime_cursor_area_y;
   int ime_cursor_area_width;
   int ime_cursor_area_height;
+  int ime_has_surrounding_text;
+  int ime_surrounding_text_len;
+  uint8_t ime_surrounding_text[4001];
+  int ime_surrounding_cursor;
+  int ime_surrounding_anchor;
   int visible;
   int resizable;
   int content_protected;
@@ -166,6 +171,15 @@ static int64_t g_now_ms_override_for_test = -1;
 #define MBW_IME_PURPOSE_NORMAL 0
 #define MBW_IME_PURPOSE_PASSWORD 1
 #define MBW_IME_PURPOSE_TERMINAL 2
+#define MBW_IME_PURPOSE_NUMBER 3
+#define MBW_IME_PURPOSE_PHONE 4
+#define MBW_IME_PURPOSE_URL 5
+#define MBW_IME_PURPOSE_EMAIL 6
+#define MBW_IME_PURPOSE_PIN 7
+#define MBW_IME_PURPOSE_DATE 8
+#define MBW_IME_PURPOSE_TIME 9
+#define MBW_IME_PURPOSE_DATETIME 10
+#define MBW_IME_SURROUNDING_TEXT_CAP 4000
 
 #define MBW_WINDOW_LEVEL_NORMAL 0
 #define MBW_WINDOW_LEVEL_ALWAYS_ON_TOP 1
@@ -3427,6 +3441,11 @@ int mbw_window_create_utf8(
   window->ime_cursor_area_y = 0;
   window->ime_cursor_area_width = 1;
   window->ime_cursor_area_height = 1;
+  window->ime_has_surrounding_text = 0;
+  window->ime_surrounding_text_len = 0;
+  window->ime_surrounding_text[0] = '\0';
+  window->ime_surrounding_cursor = 0;
+  window->ime_surrounding_anchor = 0;
   window->visible = visible ? 1 : 0;
   window->resizable = resizable ? 1 : 0;
   window->content_protected = 0;
@@ -4441,6 +4460,31 @@ int mbw_window_ime_cursor_area_width(int window_id) {
 int mbw_window_ime_cursor_area_height(int window_id) {
   mbw_window_t *window = mbw_find_window(window_id);
   return window ? window->ime_cursor_area_height : 1;
+}
+
+bool mbw_window_has_ime_surrounding_text(int window_id) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  return window ? window->ime_has_surrounding_text != 0 : false;
+}
+
+moonbit_bytes_t mbw_window_ime_surrounding_text_utf8(int window_id) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  if (!window || !window->ime_has_surrounding_text || window->ime_surrounding_text_len <= 0) {
+    return mbw_make_bytes_from_slice(NULL, 0);
+  }
+  return mbw_make_bytes_from_slice(
+    window->ime_surrounding_text,
+    window->ime_surrounding_text_len);
+}
+
+int mbw_window_ime_surrounding_cursor(int window_id) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  return window ? window->ime_surrounding_cursor : 0;
+}
+
+int mbw_window_ime_surrounding_anchor(int window_id) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  return window ? window->ime_surrounding_anchor : 0;
 }
 
 bool mbw_window_take_scale_factor_changed(int window_id) {
@@ -5886,6 +5930,22 @@ void mbw_window_set_ime_purpose(int window_id, int purpose) {
     next_purpose = MBW_IME_PURPOSE_PASSWORD;
   } else if (purpose == MBW_IME_PURPOSE_TERMINAL) {
     next_purpose = MBW_IME_PURPOSE_TERMINAL;
+  } else if (purpose == MBW_IME_PURPOSE_NUMBER) {
+    next_purpose = MBW_IME_PURPOSE_NUMBER;
+  } else if (purpose == MBW_IME_PURPOSE_PHONE) {
+    next_purpose = MBW_IME_PURPOSE_PHONE;
+  } else if (purpose == MBW_IME_PURPOSE_URL) {
+    next_purpose = MBW_IME_PURPOSE_URL;
+  } else if (purpose == MBW_IME_PURPOSE_EMAIL) {
+    next_purpose = MBW_IME_PURPOSE_EMAIL;
+  } else if (purpose == MBW_IME_PURPOSE_PIN) {
+    next_purpose = MBW_IME_PURPOSE_PIN;
+  } else if (purpose == MBW_IME_PURPOSE_DATE) {
+    next_purpose = MBW_IME_PURPOSE_DATE;
+  } else if (purpose == MBW_IME_PURPOSE_TIME) {
+    next_purpose = MBW_IME_PURPOSE_TIME;
+  } else if (purpose == MBW_IME_PURPOSE_DATETIME) {
+    next_purpose = MBW_IME_PURPOSE_DATETIME;
   }
   window->ime_purpose = next_purpose;
 }
@@ -5907,6 +5967,11 @@ void mbw_window_set_ime_allowed(int window_id, bool allowed) {
     window->ime_marked_active = 0;
     window->ime_cursor_start = -1;
     window->ime_cursor_end = -1;
+    window->ime_has_surrounding_text = 0;
+    window->ime_surrounding_text_len = 0;
+    window->ime_surrounding_text[0] = '\0';
+    window->ime_surrounding_cursor = 0;
+    window->ime_surrounding_anchor = 0;
   }
 #if defined(__APPLE__)
   if (window->content_view) {
@@ -5922,6 +5987,75 @@ void mbw_window_set_ime_allowed(int window_id, bool allowed) {
           input_context,
           mbw_sel("discardMarkedText"));
       }
+    }
+  }
+#endif
+}
+
+void mbw_window_set_ime_surrounding_text_utf8(
+  int window_id,
+  const uint8_t *text,
+  int text_len,
+  int cursor,
+  int anchor
+) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  if (!window) {
+    return;
+  }
+  int source_len = text_len < 0 ? 0 : text_len;
+  int copied_len = mbw_copy_utf8_slice(
+    text,
+    source_len,
+    window->ime_surrounding_text,
+    MBW_IME_SURROUNDING_TEXT_CAP + 1);
+  if (cursor < 0) {
+    cursor = 0;
+  } else if (cursor > copied_len) {
+    cursor = copied_len;
+  }
+  if (anchor < 0) {
+    anchor = 0;
+  } else if (anchor > copied_len) {
+    anchor = copied_len;
+  }
+  window->ime_has_surrounding_text = 1;
+  window->ime_surrounding_text_len = copied_len;
+  window->ime_surrounding_cursor = cursor;
+  window->ime_surrounding_anchor = anchor;
+#if defined(__APPLE__)
+  if (window->content_view) {
+    id input_context = ((id(*)(id, SEL))objc_msgSend)(
+      (id)window->content_view,
+      mbw_sel("inputContext"));
+    if (input_context) {
+      ((void(*)(id, SEL))objc_msgSend)(
+        input_context,
+        mbw_sel("invalidateCharacterCoordinates"));
+    }
+  }
+#endif
+}
+
+void mbw_window_clear_ime_surrounding_text(int window_id) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  if (!window) {
+    return;
+  }
+  window->ime_has_surrounding_text = 0;
+  window->ime_surrounding_text_len = 0;
+  window->ime_surrounding_text[0] = '\0';
+  window->ime_surrounding_cursor = 0;
+  window->ime_surrounding_anchor = 0;
+#if defined(__APPLE__)
+  if (window->content_view) {
+    id input_context = ((id(*)(id, SEL))objc_msgSend)(
+      (id)window->content_view,
+      mbw_sel("inputContext"));
+    if (input_context) {
+      ((void(*)(id, SEL))objc_msgSend)(
+        input_context,
+        mbw_sel("invalidateCharacterCoordinates"));
     }
   }
 #endif

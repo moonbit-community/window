@@ -9,7 +9,63 @@ pub(all) enum ImePurpose {
   Normal
   Password
   Terminal
+  Number
+  Phone
+  Url
+  Email
+  Pin
+  Date
+  Time
+  DateTime
 } derive(Eq, Show)
+
+///|
+pub(all) enum ImeSurroundingTextError {
+  TextTooLong(Int)
+  CursorOutOfRange(Int, Int)
+  AnchorOutOfRange(Int, Int)
+} derive(Eq, Show)
+
+///|
+pub struct ImeSurroundingText {
+  priv anchor : Int
+  priv cursor : Int
+  priv text : String
+} derive(Eq, Show)
+
+///|
+pub fn ImeSurroundingText::new(
+  text : String,
+  cursor : Int,
+  anchor : Int,
+) -> Result[ImeSurroundingText, ImeSurroundingTextError] {
+  let byte_len = text.length()
+  if byte_len > 4000 {
+    return Err(ImeSurroundingTextError::TextTooLong(byte_len))
+  }
+  if cursor < 0 || cursor > byte_len {
+    return Err(ImeSurroundingTextError::CursorOutOfRange(cursor, byte_len))
+  }
+  if anchor < 0 || anchor > byte_len {
+    return Err(ImeSurroundingTextError::AnchorOutOfRange(anchor, byte_len))
+  }
+  Ok({ text, cursor, anchor })
+}
+
+///|
+pub fn ImeSurroundingText::text(self : ImeSurroundingText) -> String {
+  self.text
+}
+
+///|
+pub fn ImeSurroundingText::cursor(self : ImeSurroundingText) -> Int {
+  self.cursor
+}
+
+///|
+pub fn ImeSurroundingText::anchor(self : ImeSurroundingText) -> Int {
+  self.anchor
+}
 
 ///|
 pub struct ImeCapabilities {
@@ -47,6 +103,7 @@ pub(all) enum ImeRequest {
   SetAllowed(Bool)
   SetPurpose(ImePurpose)
   SetCursorArea(@dpi.PhysicalPosition, @dpi.PhysicalSize)
+  SetSurroundingText(ImeSurroundingText?)
 } derive(Eq, Show)
 
 ///|

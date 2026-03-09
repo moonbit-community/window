@@ -91,6 +91,7 @@ pub fn Window::ime_capabilities(Self) -> @core.ImeCapabilities?
 pub fn Window::ime_cursor_area_position(Self) -> @dpi.PhysicalPosition
 pub fn Window::ime_cursor_area_size(Self) -> @dpi.PhysicalSize
 pub fn Window::ime_purpose(Self) -> @core.ImePurpose
+pub fn Window::ime_surrounding_text(Self) -> @core.ImeSurroundingText?
 pub fn Window::is_blurred(Self) -> Bool
 pub fn Window::is_content_protected(Self) -> Bool
 pub fn Window::is_cursor_hittest(Self) -> Bool
@@ -129,6 +130,7 @@ pub fn Window::set_fullscreen(Self, @core.Fullscreen?) -> Unit
 pub fn Window::set_ime_allowed(Self, Bool) -> Unit
 pub fn Window::set_ime_cursor_area(Self, @dpi.PhysicalPosition, @dpi.PhysicalSize) -> Unit
 pub fn Window::set_ime_purpose(Self, @core.ImePurpose) -> Unit
+pub fn Window::set_ime_surrounding_text(Self, @core.ImeSurroundingText?) -> Unit
 pub fn Window::set_max_surface_size(Self, @dpi.PhysicalSize?) -> Unit
 pub fn Window::set_maximized(Self, Bool) -> Unit
 pub fn Window::set_min_surface_size(Self, @dpi.PhysicalSize?) -> Unit

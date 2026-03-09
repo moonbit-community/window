@@ -128,9 +128,28 @@ test "ime capability and request models are constructible" {
   assert_true(capabilities.hint_and_purpose())
   assert_true(capabilities.cursor_area())
   assert_false(capabilities.surrounding_text())
+  let surrounding = match ImeSurroundingText::new("editor", 3, 1) {
+    Ok(value) => value
+    Err(_) => abort("expected surrounding text to be valid")
+  }
+  assert_eq(surrounding.text(), "editor")
+  assert_eq(surrounding.cursor(), 3)
+  assert_eq(surrounding.anchor(), 1)
   assert_eq(
-    ImeRequest::SetPurpose(ImePurpose::Terminal),
-    ImeRequest::SetPurpose(ImePurpose::Terminal),
+    ImeRequest::SetPurpose(ImePurpose::DateTime),
+    ImeRequest::SetPurpose(ImePurpose::DateTime),
+  )
+  assert_eq(
+    ImeRequest::SetSurroundingText(Some(surrounding)),
+    ImeRequest::SetSurroundingText(Some(surrounding)),
+  )
+  assert_eq(
+    ImeSurroundingText::new("abc", -1, 0),
+    Err(ImeSurroundingTextError::CursorOutOfRange(-1, 3)),
+  )
+  assert_eq(
+    ImeSurroundingText::new("abc", 1, 8),
+    Err(ImeSurroundingTextError::AnchorOutOfRange(8, 3)),
   )
 }
 
