@@ -82,6 +82,7 @@ static char *mbw_copy_utf8(const uint8_t *bytes, uint64_t len) {
 #if defined(__APPLE__)
 typedef signed char mbw_bool_t;
 typedef double mbw_cgfloat_t;
+typedef long mbw_nsinteger_t;
 typedef unsigned long mbw_nsuint_t;
 
 typedef struct {
@@ -107,10 +108,16 @@ typedef struct {
 #define NO ((mbw_bool_t)0)
 #endif
 
+#define MBW_NSEVENT_TYPE_APPLICATION_DEFINED ((mbw_nsuint_t)15)
+#define MBW_PROXY_WAKE_EVENT_SUBTYPE ((short)0x4d42)
+
 static bool g_bootstrap_done = false;
 static bool g_bootstrap_ok = false;
 static id g_ns_app = nil;
 static Class g_window_delegate_class = Nil;
+
+static id mbw_make_nsstring(const char *utf8);
+static void mbw_update_window_state(mbw_window_t *window);
 
 static SEL mbw_sel(const char *name) {
   return sel_registerName(name);
@@ -122,6 +129,10 @@ static id mbw_msg_id(id obj, const char *sel_name) {
 
 static void mbw_msg_void(id obj, const char *sel_name) {
   ((void(*)(id, SEL))objc_msgSend)(obj, mbw_sel(sel_name));
+}
+
+static id mbw_default_runloop_mode(void) {
+  return mbw_make_nsstring("NSDefaultRunLoopMode");
 }
 
 static mbw_window_t *mbw_delegate_window(id delegate) {
@@ -232,6 +243,94 @@ static bool mbw_bootstrap_app(void) {
   return true;
 }
 
+static void mbw_update_all_windows(void) {
+  for (size_t i = 0; i < g_windows_len; ++i) {
+    if (g_windows[i]) {
+      mbw_update_window_state(g_windows[i]);
+    }
+  }
+}
+
+static bool mbw_is_proxy_wake_event(id event) {
+  if (!event) {
+    return false;
+  }
+  mbw_nsuint_t event_type =
+    ((mbw_nsuint_t(*)(id, SEL))objc_msgSend)(event, mbw_sel("type"));
+  if (event_type != MBW_NSEVENT_TYPE_APPLICATION_DEFINED) {
+    return false;
+  }
+  short subtype = ((short(*)(id, SEL))objc_msgSend)(event, mbw_sel("subtype"));
+  return subtype == MBW_PROXY_WAKE_EVENT_SUBTYPE;
+}
+
+static void mbw_post_proxy_wake_event(void) {
+  if (!g_ns_app) {
+    return;
+  }
+
+  Class event_class = objc_getClass("NSEvent");
+  if (!event_class) {
+    return;
+  }
+
+  mbw_point_t location = {0.0, 0.0};
+  id wake_event =
+    ((id(*)(id, SEL, mbw_nsuint_t, mbw_point_t, mbw_nsuint_t, double, mbw_nsinteger_t, id, short, mbw_nsinteger_t, mbw_nsinteger_t))objc_msgSend)(
+      (id)event_class,
+      mbw_sel("otherEventWithType:location:modifierFlags:timestamp:windowNumber:context:subtype:data1:data2:"),
+      MBW_NSEVENT_TYPE_APPLICATION_DEFINED,
+      location,
+      0UL,
+      0.0,
+      0L,
+      nil,
+      MBW_PROXY_WAKE_EVENT_SUBTYPE,
+      0L,
+      0L);
+  if (wake_event) {
+    ((void(*)(id, SEL, id, mbw_bool_t))objc_msgSend)(
+      g_ns_app,
+      mbw_sel("postEvent:atStart:"),
+      wake_event,
+      NO);
+  }
+}
+
+static bool mbw_pump_app_events(id initial_until_date) {
+  if (!mbw_bootstrap_app() || !g_ns_app) {
+    return false;
+  }
+
+  id date_class = (id)objc_getClass("NSDate");
+  id distant_past = date_class ? mbw_msg_id(date_class, "distantPast") : nil;
+  id runloop_mode = mbw_default_runloop_mode();
+  bool saw_event = false;
+
+  while (true) {
+    id until_date = saw_event ? distant_past : initial_until_date;
+    id event =
+      ((id(*)(id, SEL, mbw_nsuint_t, id, id, mbw_bool_t))objc_msgSend)(
+        g_ns_app,
+        mbw_sel("nextEventMatchingMask:untilDate:inMode:dequeue:"),
+        (mbw_nsuint_t)~(mbw_nsuint_t)0,
+        until_date,
+        runloop_mode,
+        YES);
+    if (!event) {
+      break;
+    }
+    saw_event = true;
+    if (!mbw_is_proxy_wake_event(event)) {
+      ((void(*)(id, SEL, id))objc_msgSend)(g_ns_app, mbw_sel("sendEvent:"), event);
+    }
+  }
+
+  mbw_msg_void(g_ns_app, "updateWindows");
+  mbw_update_all_windows();
+  return saw_event;
+}
+
 static void mbw_update_window_state(mbw_window_t *window) {
   if (!window || !window->window) {
     return;
@@ -290,6 +389,9 @@ bool mbw_event_loop_take_proxy_wake_up(void) {
 
 void mbw_event_loop_wake_up(void) {
   atomic_store_explicit(&g_pending_proxy_wake_up, 1, memory_order_release);
+#if defined(__APPLE__)
+  mbw_post_proxy_wake_event();
+#endif
 }
 
 static int64_t mbw_now_ms(void) {
@@ -326,6 +428,58 @@ void mbw_sleep_millis(int ms) {
     return;
   }
   usleep((useconds_t)ms * 1000U);
+}
+
+bool mbw_event_loop_wait_millis(int timeout_ms) {
+  if (mbw_event_loop_peek_proxy_wake_up()) {
+    return false;
+  }
+
+  if (g_now_ms_override_for_test >= 0) {
+    if (timeout_ms < 0) {
+      g_now_ms_override_for_test += 1;
+      return false;
+    }
+    g_now_ms_override_for_test += (int64_t)timeout_ms;
+    return true;
+  }
+
+#if defined(__APPLE__)
+  if (!mbw_bootstrap_app() || !g_ns_app) {
+    if (timeout_ms < 0) {
+      usleep(1000U);
+      return false;
+    }
+    if (timeout_ms > 0) {
+      usleep((useconds_t)timeout_ms * 1000U);
+    }
+    return true;
+  }
+
+  Class date_class = objc_getClass("NSDate");
+  id until_date = nil;
+  if (date_class) {
+    if (timeout_ms < 0) {
+      until_date = mbw_msg_id((id)date_class, "distantFuture");
+    } else {
+      until_date =
+        ((id(*)(id, SEL, double))objc_msgSend)(
+          (id)date_class,
+          mbw_sel("dateWithTimeIntervalSinceNow:"),
+          (double)timeout_ms / 1000.0);
+    }
+  }
+  return !mbw_pump_app_events(until_date);
+#else
+  if (timeout_ms < 0) {
+    usleep(1000U);
+    return false;
+  }
+  if (timeout_ms > 0) {
+    usleep((useconds_t)timeout_ms * 1000U);
+  }
+  return true;
+#endif
 }
 
 int mbw_window_create_utf8(
@@ -425,28 +579,10 @@ void mbw_window_poll(int window_id) {
     return;
   }
 #if defined(__APPLE__)
-  if (!mbw_bootstrap_app() || !g_ns_app) {
-    return;
-  }
-  id date_class = (id)objc_getClass("NSDate");
-  id distant_past = date_class ? mbw_msg_id(date_class, "distantPast") : nil;
-  id runloop_mode = mbw_make_nsstring("kCFRunLoopDefaultMode");
-  while (true) {
-    id event =
-      ((id(*)(id, SEL, mbw_nsuint_t, id, id, mbw_bool_t))objc_msgSend)(
-        g_ns_app,
-        mbw_sel("nextEventMatchingMask:untilDate:inMode:dequeue:"),
-        (mbw_nsuint_t)~(mbw_nsuint_t)0,
-        distant_past,
-        runloop_mode,
-        YES);
-    if (!event) {
-      break;
-    }
-    ((void(*)(id, SEL, id))objc_msgSend)(g_ns_app, mbw_sel("sendEvent:"), event);
-  }
-  mbw_msg_void(g_ns_app, "updateWindows");
-  mbw_update_window_state(window);
+  Class date_class = objc_getClass("NSDate");
+  id distant_past = date_class ? mbw_msg_id((id)date_class, "distantPast") : nil;
+  (void)window;
+  (void)mbw_pump_app_events(distant_past);
 #endif
 }
 

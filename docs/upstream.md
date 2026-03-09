@@ -21,4 +21,3 @@ Known deltas against upstream `winit`:
 - The current `ControlFlow::WaitUntil` payload is interpreted as a relative timeout in milliseconds.
 - `ApplicationHandler` currently receives a concrete `EventLoop` instead of an `ActiveEventLoop` trait object.
 - The initial event surface only includes `CloseRequested`, `SurfaceResized`, and `RedrawRequested`.
-- `ControlFlow::Wait` is still approximated with a short sleep instead of a platform blocking wait source.

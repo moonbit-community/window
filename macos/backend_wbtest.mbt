@@ -43,6 +43,7 @@ impl ApplicationHandler for StartCauseApp with can_create_surfaces(
 struct WaitCancelledApp {
   causes : Array[@core.StartCause]
   wake_requested : Ref[Bool]
+  control_flow : @core.ControlFlow
 }
 
 ///|
@@ -59,13 +60,13 @@ impl ApplicationHandler for WaitCancelledApp with new_events(
 
 ///|
 impl ApplicationHandler for WaitCancelledApp with can_create_surfaces(
-  _self,
+  self,
   event_loop,
 ) {
   runtime_now_set_for_test(200L)
   let attrs = @core.WindowAttributes::default().with_visible(false)
   let _ = event_loop.create_window(attrs)
-  event_loop.set_control_flow(@core.ControlFlow::WaitUntil(20))
+  event_loop.set_control_flow(self.control_flow)
 }
 
 ///|
@@ -126,7 +127,11 @@ test "new events reports init then wait-until timeout" {
 ///|
 test "new events reports wait-until cancellation when proxy wakes" {
   let event_loop = EventLoop::new()
-  let app = { causes: [], wake_requested: Ref::new(false) }
+  let app = {
+    causes: [],
+    wake_requested: Ref::new(false),
+    control_flow: @core.ControlFlow::WaitUntil(20),
+  }
   event_loop.run_app(app)
   runtime_now_clear_for_test()
   assert_eq(app.causes[0], @core.StartCause::Init)
@@ -136,4 +141,21 @@ test "new events reports wait-until cancellation when proxy wakes" {
   }
   assert_eq(start_ms, 200L)
   assert_eq(requested_resume_ms, 220L)
+}
+
+///|
+test "wait blocks on native wake source until proxy wake arrives" {
+  let event_loop = EventLoop::new()
+  let app = {
+    causes: [],
+    wake_requested: Ref::new(false),
+    control_flow: @core.ControlFlow::Wait,
+  }
+  event_loop.run_app(app)
+  runtime_now_clear_for_test()
+  assert_eq(app.causes[0], @core.StartCause::Init)
+  guard app.causes[1] is @core.StartCause::WaitCancelled(start_ms, None) else {
+    fail("expected WaitCancelled without a timeout")
+  }
+  assert_eq(start_ms, 200L)
 }

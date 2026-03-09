@@ -169,8 +169,12 @@ fn[A : ApplicationHandler] EventLoop::dispatch_window_events(
   self : EventLoop,
   app : A,
 ) -> Unit {
+  let mut polled = false
   for raw_id in self.window_ids {
-    native_poll_window(raw_id)
+    if polled == false {
+      native_poll_window(raw_id)
+      polled = true
+    }
     let window_id = @core.WindowId::from_raw(raw_id)
     if native_window_take_surface_resized(raw_id) {
       let size = @dpi.PhysicalSize::new(
@@ -204,13 +208,10 @@ fn[A : ApplicationHandler] EventLoop::dispatch_proxy_wake_up(
 ///|
 fn EventLoop::wait_next_iteration(self : EventLoop) -> @core.StartCause {
   match self.control_flow_ {
-    @core.ControlFlow::Poll => {
-      sleep_millis(1)
-      @core.StartCause::Poll
-    }
+    @core.ControlFlow::Poll => @core.StartCause::Poll
     @core.ControlFlow::Wait => {
       let start_ms = runtime_now_ms()
-      sleep_millis(1)
+      let _ = wait_for_events(-1)
       @core.StartCause::WaitCancelled(start_ms, None)
     }
     @core.ControlFlow::WaitUntil(timeout_ms) => {
@@ -218,17 +219,10 @@ fn EventLoop::wait_next_iteration(self : EventLoop) -> @core.StartCause {
       let requested_resume_ms = start_ms + timeout_ms.to_int64()
       if timeout_ms <= 0 {
         @core.StartCause::ResumeTimeReached(start_ms, start_ms)
-      } else {
-        while runtime_now_ms() < requested_resume_ms {
-          if proxy_wake_up_pending() {
-            return @core.StartCause::WaitCancelled(
-              start_ms,
-              Some(requested_resume_ms),
-            )
-          }
-          sleep_millis(1)
-        }
+      } else if wait_for_events(timeout_ms) {
         @core.StartCause::ResumeTimeReached(start_ms, requested_resume_ms)
+      } else {
+        @core.StartCause::WaitCancelled(start_ms, Some(requested_resume_ms))
       }
     }
   }

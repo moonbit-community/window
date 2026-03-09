@@ -9,18 +9,13 @@ fn reset_proxy_wake_state() -> Unit {
 }
 
 ///|
-fn proxy_wake_up_pending() -> Bool {
-  native_event_loop_peek_proxy_wake_up()
-}
-
-///|
 fn runtime_now_ms() -> Int64 {
   native_runtime_now_ms()
 }
 
 ///|
-fn sleep_millis(ms : Int) -> Unit {
-  native_sleep_millis(ms)
+fn wait_for_events(timeout_ms : Int) -> Bool {
+  native_event_loop_wait_millis(timeout_ms)
 }
 
 ///|
@@ -65,6 +60,9 @@ pub extern "C" fn native_event_loop_wake_up() -> Unit = "mbw_event_loop_wake_up"
 
 ///|
 pub extern "C" fn native_runtime_now_ms() -> Int64 = "mbw_runtime_now_ms"
+
+///|
+extern "C" fn native_event_loop_wait_millis(timeout_ms : Int) -> Bool = "mbw_event_loop_wait_millis"
 
 ///|
 pub extern "C" fn native_sleep_millis(ms : Int) -> Unit = "mbw_sleep_millis"
