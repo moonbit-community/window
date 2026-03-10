@@ -297,6 +297,13 @@ struct HiddenFocusWindowApp {
 }
 
 ///|
+struct MinimizedFocusWindowApp {
+  focused_event : Ref[Bool?]
+  has_focus : Ref[Bool?]
+  window : Ref[Window?]
+}
+
+///|
 struct InactiveWindowApp {
   has_focus : Ref[Bool?]
   window : Ref[Window?]
@@ -693,6 +700,51 @@ impl ApplicationHandler for HiddenFocusWindowApp with window_event(
 
 ///|
 impl ApplicationHandler for HiddenFocusWindowApp with about_to_wait(
+  self,
+  event_loop,
+) {
+  match self.window.val {
+    Some(window) => self.has_focus.val = Some(window.has_focus())
+    None => ()
+  }
+  event_loop.exit()
+}
+
+///|
+impl ApplicationHandler for MinimizedFocusWindowApp with can_create_surfaces(
+  self,
+  event_loop,
+) {
+  let window = event_loop.create_window(
+    @core.WindowAttributes::default().with_active(false),
+  )
+  window.set_minimized(true)
+  self.window.val = Some(window)
+  window.focus_window()
+}
+
+///|
+impl ApplicationHandler for MinimizedFocusWindowApp with window_event(
+  self,
+  event_loop,
+  _id,
+  event,
+) {
+  match event {
+    @core.WindowEvent::Focused(focused) => {
+      self.focused_event.val = Some(focused)
+      match self.window.val {
+        Some(window) => self.has_focus.val = Some(window.has_focus())
+        None => ()
+      }
+      event_loop.exit()
+    }
+    _ => ()
+  }
+}
+
+///|
+impl ApplicationHandler for MinimizedFocusWindowApp with about_to_wait(
   self,
   event_loop,
 ) {
@@ -2262,6 +2314,18 @@ test "focus_window is ignored for hidden windows" {
   let app : HiddenFocusWindowApp = { focused_event, has_focus, window }
   event_loop.run_app(app)
   assert_eq(focused_event.val, None)
+  assert_eq(has_focus.val, Some(false))
+}
+
+///|
+test "focus_window is ignored for minimized windows" {
+  let event_loop = EventLoop::new()
+  let focused_event = Ref::new(None)
+  let has_focus = Ref::new(None)
+  let window = Ref::new(None)
+  let app : MinimizedFocusWindowApp = { focused_event, has_focus, window }
+  event_loop.run_app(app)
+  assert_false(focused_event.val == Some(true))
   assert_eq(has_focus.val, Some(false))
 }
 
