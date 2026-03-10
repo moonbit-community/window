@@ -219,18 +219,24 @@ pub(all) enum WindowEvent {
   DragLeft(@dpi.PhysicalPositionF64?)
   Focused(Bool)
   Ime(Ime)
-  KeyboardInput(KeyEvent, Bool)
+  KeyboardInput(DeviceId?, KeyEvent, Bool)
   ModifiersChanged(Modifiers)
-  PointerMoved(@dpi.PhysicalPositionF64, Bool, PointerSource)
-  PointerEntered(@dpi.PhysicalPositionF64, Bool, PointerKind)
-  PointerLeft(@dpi.PhysicalPositionF64?, Bool, PointerKind)
-  PointerButton(ElementState, @dpi.PhysicalPositionF64, Bool, ButtonSource)
-  PinchGesture(Double, TouchPhase)
-  PanGesture(@dpi.PhysicalPositionF64, TouchPhase)
-  DoubleTapGesture
-  RotationGesture(Double, TouchPhase)
-  TouchpadPressure(Double, Int)
-  MouseWheel(MouseScrollDelta, TouchPhase)
+  PointerMoved(DeviceId?, @dpi.PhysicalPositionF64, Bool, PointerSource)
+  PointerEntered(DeviceId?, @dpi.PhysicalPositionF64, Bool, PointerKind)
+  PointerLeft(DeviceId?, @dpi.PhysicalPositionF64?, Bool, PointerKind)
+  PointerButton(
+    DeviceId?,
+    ElementState,
+    @dpi.PhysicalPositionF64,
+    Bool,
+    ButtonSource
+  )
+  PinchGesture(DeviceId?, Double, TouchPhase)
+  PanGesture(DeviceId?, @dpi.PhysicalPositionF64, TouchPhase)
+  DoubleTapGesture(DeviceId?)
+  RotationGesture(DeviceId?, Double, TouchPhase)
+  TouchpadPressure(DeviceId?, Double, Int)
+  MouseWheel(DeviceId?, MouseScrollDelta, TouchPhase)
   ScaleFactorChanged(Double, SurfaceSizeWriter)
   ThemeChanged(Theme)
   Occluded(Bool)

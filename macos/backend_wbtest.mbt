@@ -1356,7 +1356,12 @@ impl ApplicationHandler for PointerMovedApp with window_event(
   event,
 ) {
   match event {
-    @core.WindowEvent::PointerMoved(position, true, @core.PointerSource::Mouse) => {
+    @core.WindowEvent::PointerMoved(
+      None,
+      position,
+      true,
+      @core.PointerSource::Mouse
+    ) => {
       self.moved.val = Some(position)
       event_loop.exit()
     }
@@ -1472,9 +1477,14 @@ impl ApplicationHandler for PointerBoundaryApp with window_event(
   event,
 ) {
   match event {
-    @core.WindowEvent::PointerEntered(position, true, @core.PointerKind::Mouse) =>
-      self.entered.val = Some(position)
+    @core.WindowEvent::PointerEntered(
+      None,
+      position,
+      true,
+      @core.PointerKind::Mouse
+    ) => self.entered.val = Some(position)
     @core.WindowEvent::PointerLeft(
+      None,
       Some(position),
       true,
       @core.PointerKind::Mouse
@@ -1507,7 +1517,7 @@ impl ApplicationHandler for PointerButtonApp with window_event(
   event,
 ) {
   match event {
-    @core.WindowEvent::PointerButton(state, position, true, button) => {
+    @core.WindowEvent::PointerButton(None, state, position, true, button) => {
       self.state.val = Some(state)
       self.position.val = Some(position)
       self.button.val = Some(button)
@@ -1536,7 +1546,7 @@ impl ApplicationHandler for MouseWheelApp with window_event(
   event,
 ) {
   match event {
-    @core.WindowEvent::MouseWheel(delta, phase) => {
+    @core.WindowEvent::MouseWheel(None, delta, phase) => {
       self.delta.val = Some(delta)
       self.phase.val = Some(phase)
       event_loop.exit()
@@ -1569,20 +1579,20 @@ impl ApplicationHandler for GestureEventsApp with window_event(
   event,
 ) {
   match event {
-    @core.WindowEvent::PinchGesture(delta, phase) => {
+    @core.WindowEvent::PinchGesture(None, delta, phase) => {
       self.pinch_delta.val = Some(delta)
       self.pinch_phase.val = Some(phase)
     }
-    @core.WindowEvent::PanGesture(delta, phase) => {
+    @core.WindowEvent::PanGesture(None, delta, phase) => {
       self.pan_delta.val = Some(delta)
       self.pan_phase.val = Some(phase)
     }
-    @core.WindowEvent::DoubleTapGesture => self.double_tap_seen.val = true
-    @core.WindowEvent::RotationGesture(delta, phase) => {
+    @core.WindowEvent::DoubleTapGesture(None) => self.double_tap_seen.val = true
+    @core.WindowEvent::RotationGesture(None, delta, phase) => {
       self.rotation_delta.val = Some(delta)
       self.rotation_phase.val = Some(phase)
     }
-    @core.WindowEvent::TouchpadPressure(pressure, stage) => {
+    @core.WindowEvent::TouchpadPressure(None, pressure, stage) => {
       self.pressure.val = Some(pressure)
       self.pressure_stage.val = Some(stage)
       event_loop.exit()
@@ -1696,7 +1706,7 @@ impl ApplicationHandler for KeyboardInputApp with window_event(
   event,
 ) {
   match event {
-    @core.WindowEvent::KeyboardInput(key_event, false) => {
+    @core.WindowEvent::KeyboardInput(None, key_event, false) => {
       self.captured.val = Some(key_event)
       event_loop.exit()
     }
