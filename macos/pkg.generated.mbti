@@ -116,7 +116,7 @@ pub fn Window::pre_present_notify(Self) -> Unit
 pub fn Window::primary_monitor(Self) -> @core.MonitorHandle?
 pub fn Window::request_ime_update(Self, @core.ImeRequest) -> Unit raise @core.ImeRequestError
 pub fn Window::request_redraw(Self) -> Unit
-pub fn Window::request_surface_size(Self, @dpi.PhysicalSize) -> @dpi.PhysicalSize?
+pub fn Window::request_surface_size(Self, @dpi.Size) -> @dpi.PhysicalSize?
 pub fn Window::request_user_attention(Self, @core.UserAttentionType?) -> Unit
 pub fn Window::reset_dead_keys(Self) -> Unit
 pub fn Window::rwh_06_display_handle(Self) -> UInt64
@@ -128,7 +128,7 @@ pub fn Window::set_content_protected(Self, Bool) -> Unit
 pub fn Window::set_cursor(Self, @core.Cursor) -> Unit
 pub fn Window::set_cursor_grab(Self, @core.CursorGrabMode) -> Unit raise @core.RequestError
 pub fn Window::set_cursor_hittest(Self, Bool) -> Unit
-pub fn Window::set_cursor_position(Self, @dpi.PhysicalPosition) -> Unit raise @core.RequestError
+pub fn Window::set_cursor_position(Self, @dpi.Position) -> Unit raise @core.RequestError
 pub fn Window::set_cursor_visible(Self, Bool) -> Unit
 pub fn Window::set_decorations(Self, Bool) -> Unit
 pub fn Window::set_enabled_buttons(Self, @core.WindowButtons) -> Unit
@@ -138,20 +138,20 @@ pub fn Window::set_ime_cursor_area(Self, @dpi.PhysicalPosition, @dpi.PhysicalSiz
 pub fn Window::set_ime_hints(Self, @core.ImeHint) -> Unit
 pub fn Window::set_ime_purpose(Self, @core.ImePurpose) -> Unit
 pub fn Window::set_ime_surrounding_text(Self, @core.ImeSurroundingText?) -> Unit
-pub fn Window::set_max_surface_size(Self, @dpi.PhysicalSize?) -> Unit
+pub fn Window::set_max_surface_size(Self, @dpi.Size?) -> Unit
 pub fn Window::set_maximized(Self, Bool) -> Unit
-pub fn Window::set_min_surface_size(Self, @dpi.PhysicalSize?) -> Unit
+pub fn Window::set_min_surface_size(Self, @dpi.Size?) -> Unit
 pub fn Window::set_minimized(Self, Bool) -> Unit
-pub fn Window::set_outer_position(Self, @dpi.PhysicalPosition) -> Unit
+pub fn Window::set_outer_position(Self, @dpi.Position) -> Unit
 pub fn Window::set_resizable(Self, Bool) -> Unit
-pub fn Window::set_surface_resize_increments(Self, @dpi.PhysicalSize?) -> Unit
+pub fn Window::set_surface_resize_increments(Self, @dpi.Size?) -> Unit
 pub fn Window::set_theme(Self, @core.Theme?) -> Unit
 pub fn Window::set_title(Self, String) -> Unit
 pub fn Window::set_transparent(Self, Bool) -> Unit
 pub fn Window::set_visible(Self, Bool) -> Unit
 pub fn Window::set_window_icon(Self, @core.Icon?) -> Unit
 pub fn Window::set_window_level(Self, @core.WindowLevel) -> Unit
-pub fn Window::show_window_menu(Self, @dpi.PhysicalPosition) -> Unit
+pub fn Window::show_window_menu(Self, @dpi.Position) -> Unit
 pub fn Window::surface_position(Self) -> @dpi.PhysicalPosition
 pub fn Window::surface_resize_increments(Self) -> @dpi.PhysicalSize?
 pub fn Window::surface_size(Self) -> @dpi.PhysicalSize

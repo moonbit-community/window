@@ -565,14 +565,14 @@ pub struct WindowAttributes {
   priv mut fullscreen : Fullscreen?
   priv mut ime_hints : ImeHint
   priv mut ime_purpose : ImePurpose
-  priv mut max_surface_size : @dpi.PhysicalSize?
+  priv mut max_surface_size : @dpi.Size?
   priv mut maximized : Bool
-  priv mut min_surface_size : @dpi.PhysicalSize?
+  priv mut min_surface_size : @dpi.Size?
   priv mut parent_window : ParentWindow?
   priv mut platform_attributes : PlatformWindowAttributes
-  priv mut position : @dpi.PhysicalPosition?
-  priv mut surface_size : @dpi.PhysicalSize?
-  priv mut surface_resize_increments : @dpi.PhysicalSize?
+  priv mut position : @dpi.Position?
+  priv mut surface_size : @dpi.Size?
+  priv mut surface_resize_increments : @dpi.Size?
   priv mut theme : Theme?
   priv mut window_icon : Icon?
   priv mut transparent : Bool
@@ -602,7 +602,7 @@ pub fn WindowAttributes::default() -> WindowAttributes {
     parent_window: None,
     platform_attributes: PlatformWindowAttributes::default(),
     position: None,
-    surface_size: Some(@dpi.PhysicalSize::new(800, 600)),
+    surface_size: Some(@dpi.PhysicalSize::new(800, 600).into_size()),
     surface_resize_increments: None,
     theme: None,
     window_icon: None,
@@ -617,7 +617,7 @@ pub fn WindowAttributes::default() -> WindowAttributes {
 ///|
 pub fn WindowAttributes::with_surface_size(
   self : WindowAttributes,
-  size : @dpi.PhysicalSize,
+  size : @dpi.Size,
 ) -> WindowAttributes {
   self.surface_size = Some(size)
   self
@@ -626,7 +626,7 @@ pub fn WindowAttributes::with_surface_size(
 ///|
 pub fn WindowAttributes::with_surface_resize_increments(
   self : WindowAttributes,
-  size : @dpi.PhysicalSize?,
+  size : @dpi.Size?,
 ) -> WindowAttributes {
   self.surface_resize_increments = size
   self
@@ -635,7 +635,7 @@ pub fn WindowAttributes::with_surface_resize_increments(
 ///|
 pub fn WindowAttributes::with_min_surface_size(
   self : WindowAttributes,
-  size : @dpi.PhysicalSize?,
+  size : @dpi.Size?,
 ) -> WindowAttributes {
   self.min_surface_size = size
   self
@@ -644,7 +644,7 @@ pub fn WindowAttributes::with_min_surface_size(
 ///|
 pub fn WindowAttributes::with_max_surface_size(
   self : WindowAttributes,
-  size : @dpi.PhysicalSize?,
+  size : @dpi.Size?,
 ) -> WindowAttributes {
   self.max_surface_size = size
   self
@@ -653,7 +653,7 @@ pub fn WindowAttributes::with_max_surface_size(
 ///|
 pub fn WindowAttributes::with_position(
   self : WindowAttributes,
-  position : @dpi.PhysicalPosition?,
+  position : @dpi.Position?,
 ) -> WindowAttributes {
   self.position = position
   self
@@ -857,37 +857,33 @@ pub fn WindowAttributes::with_resizable(
 }
 
 ///|
-pub fn WindowAttributes::surface_size(
-  self : WindowAttributes,
-) -> @dpi.PhysicalSize? {
+pub fn WindowAttributes::surface_size(self : WindowAttributes) -> @dpi.Size? {
   self.surface_size
 }
 
 ///|
 pub fn WindowAttributes::surface_resize_increments(
   self : WindowAttributes,
-) -> @dpi.PhysicalSize? {
+) -> @dpi.Size? {
   self.surface_resize_increments
 }
 
 ///|
 pub fn WindowAttributes::min_surface_size(
   self : WindowAttributes,
-) -> @dpi.PhysicalSize? {
+) -> @dpi.Size? {
   self.min_surface_size
 }
 
 ///|
 pub fn WindowAttributes::max_surface_size(
   self : WindowAttributes,
-) -> @dpi.PhysicalSize? {
+) -> @dpi.Size? {
   self.max_surface_size
 }
 
 ///|
-pub fn WindowAttributes::position(
-  self : WindowAttributes,
-) -> @dpi.PhysicalPosition? {
+pub fn WindowAttributes::position(self : WindowAttributes) -> @dpi.Position? {
   self.position
 }
 

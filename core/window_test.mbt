@@ -16,7 +16,10 @@ test "window attributes follow winit defaults" {
   assert_true(default_buttons.minimize())
   assert_true(default_buttons.maximize())
   assert_eq(attrs.fullscreen(), None)
-  assert_eq(attrs.surface_size(), Some(@dpi.PhysicalSize::new(800, 600)))
+  assert_eq(
+    attrs.surface_size(),
+    Some(@dpi.PhysicalSize::new(800, 600).into_size()),
+  )
   assert_eq(attrs.surface_resize_increments(), None)
   assert_eq(attrs.min_surface_size(), None)
   assert_eq(attrs.max_surface_size(), None)
@@ -40,11 +43,13 @@ test "window attributes builders update fields" {
     .with_title("hello")
     .with_visible(false)
     .with_resizable(false)
-    .with_surface_size(@dpi.PhysicalSize::new(1024, 768))
-    .with_surface_resize_increments(Some(@dpi.PhysicalSize::new(32, 24)))
-    .with_min_surface_size(Some(@dpi.PhysicalSize::new(640, 480)))
-    .with_max_surface_size(Some(@dpi.PhysicalSize::new(1920, 1080)))
-    .with_position(Some(@dpi.PhysicalPosition::new(320, 180)))
+    .with_surface_size(@dpi.PhysicalSize::new(1024, 768).into_size())
+    .with_surface_resize_increments(
+      Some(@dpi.PhysicalSize::new(32, 24).into_size()),
+    )
+    .with_min_surface_size(Some(@dpi.PhysicalSize::new(640, 480).into_size()))
+    .with_max_surface_size(Some(@dpi.PhysicalSize::new(1920, 1080).into_size()))
+    .with_position(Some(@dpi.PhysicalPosition::new(320, 180).into_position()))
     .with_parent_window(Some(parent_window))
     .with_platform_attributes(
       PlatformWindowAttributes::default().with_simple_fullscreen(Some(true)),
@@ -84,14 +89,26 @@ test "window attributes builders update fields" {
   assert_true(buttons.minimize())
   assert_false(buttons.maximize())
   assert_eq(attrs.fullscreen(), Some(Fullscreen::Borderless(None)))
-  assert_eq(attrs.surface_size(), Some(@dpi.PhysicalSize::new(1024, 768)))
+  assert_eq(
+    attrs.surface_size(),
+    Some(@dpi.PhysicalSize::new(1024, 768).into_size()),
+  )
   assert_eq(
     attrs.surface_resize_increments(),
-    Some(@dpi.PhysicalSize::new(32, 24)),
+    Some(@dpi.PhysicalSize::new(32, 24).into_size()),
   )
-  assert_eq(attrs.min_surface_size(), Some(@dpi.PhysicalSize::new(640, 480)))
-  assert_eq(attrs.max_surface_size(), Some(@dpi.PhysicalSize::new(1920, 1080)))
-  assert_eq(attrs.position(), Some(@dpi.PhysicalPosition::new(320, 180)))
+  assert_eq(
+    attrs.min_surface_size(),
+    Some(@dpi.PhysicalSize::new(640, 480).into_size()),
+  )
+  assert_eq(
+    attrs.max_surface_size(),
+    Some(@dpi.PhysicalSize::new(1920, 1080).into_size()),
+  )
+  assert_eq(
+    attrs.position(),
+    Some(@dpi.PhysicalPosition::new(320, 180).into_position()),
+  )
   assert_eq(attrs.parent_window(), Some(parent_window))
   assert_eq(attrs.platform_attributes().simple_fullscreen(), Some(true))
   assert_eq(

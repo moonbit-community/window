@@ -1059,12 +1059,16 @@ impl ApplicationHandler for SurfaceResizeIncrementsApp with can_create_surfaces(
   let window = event_loop.create_window(
     @core.WindowAttributes::default()
     .with_visible(false)
-    .with_surface_resize_increments(Some(@dpi.PhysicalSize::new(64, 48))),
+    .with_surface_resize_increments(
+      Some(@dpi.PhysicalSize::new(64, 48).into_size()),
+    ),
   )
   self.increments_initial.val = window.surface_resize_increments()
   window.set_surface_resize_increments(None)
   self.increments_after_disable.val = window.surface_resize_increments()
-  window.set_surface_resize_increments(Some(@dpi.PhysicalSize::new(32, 24)))
+  window.set_surface_resize_increments(
+    Some(@dpi.PhysicalSize::new(32, 24).into_size()),
+  )
   self.increments_after_enable.val = window.surface_resize_increments()
   event_loop.exit()
 }
@@ -1129,7 +1133,9 @@ impl ApplicationHandler for OuterPositionApp with can_create_surfaces(
     @core.WindowAttributes::default().with_visible(false),
   )
   self.window.val = Some(window)
-  window.set_outer_position(@dpi.PhysicalPosition::new(320, 180))
+  window.set_outer_position(
+    @dpi.PhysicalPosition::new(320, 180).into_position(),
+  )
 }
 
 ///|
@@ -1160,7 +1166,7 @@ impl ApplicationHandler for OuterSizeApp with can_create_surfaces(
   let window = event_loop.create_window(
     @core.WindowAttributes::default()
     .with_visible(false)
-    .with_surface_size(@dpi.PhysicalSize::new(640, 480)),
+    .with_surface_size(@dpi.PhysicalSize::new(640, 480).into_size()),
   )
   self.surface_size.val = Some(window.surface_size())
   self.outer_size.val = Some(window.outer_size())
@@ -1176,7 +1182,7 @@ impl ApplicationHandler for AttributesPositionApp with can_create_surfaces(
   let window = event_loop.create_window(
     @core.WindowAttributes::default()
     .with_visible(false)
-    .with_position(Some(@dpi.PhysicalPosition::new(480, 260))),
+    .with_position(Some(@dpi.PhysicalPosition::new(480, 260).into_position())),
   )
   self.window.val = Some(window)
 }
@@ -1211,7 +1217,7 @@ impl ApplicationHandler for RequestSurfaceSizeApp with can_create_surfaces(
   )
   self.window.val = Some(window)
   self.request_result.val = window.request_surface_size(
-    @dpi.PhysicalSize::new(1200, 900),
+    @dpi.PhysicalSize::new(1200, 900).into_size(),
   )
 }
 
@@ -1244,9 +1250,13 @@ impl ApplicationHandler for MinSurfaceSizeApp with can_create_surfaces(
     @core.WindowAttributes::default().with_visible(false),
   )
   self.window.val = Some(window)
-  window.set_min_surface_size(Some(@dpi.PhysicalSize::new(960, 720)))
+  window.set_min_surface_size(
+    Some(@dpi.PhysicalSize::new(960, 720).into_size()),
+  )
   self.min_surface_size.val = window.min_surface_size()
-  let _ = window.request_surface_size(@dpi.PhysicalSize::new(640, 480))
+  let _ = window.request_surface_size(
+    @dpi.PhysicalSize::new(640, 480).into_size(),
+  )
 }
 
 ///|
@@ -1278,9 +1288,13 @@ impl ApplicationHandler for MaxSurfaceSizeApp with can_create_surfaces(
     @core.WindowAttributes::default().with_visible(false),
   )
   self.window.val = Some(window)
-  window.set_max_surface_size(Some(@dpi.PhysicalSize::new(1024, 768)))
+  window.set_max_surface_size(
+    Some(@dpi.PhysicalSize::new(1024, 768).into_size()),
+  )
   self.max_surface_size.val = window.max_surface_size()
-  let _ = window.request_surface_size(@dpi.PhysicalSize::new(1400, 1050))
+  let _ = window.request_surface_size(
+    @dpi.PhysicalSize::new(1400, 1050).into_size(),
+  )
 }
 
 ///|
@@ -1311,8 +1325,8 @@ impl ApplicationHandler for AttributesSurfaceConstraintsApp with can_create_surf
   let window = event_loop.create_window(
     @core.WindowAttributes::default()
     .with_visible(false)
-    .with_surface_size(@dpi.PhysicalSize::new(1600, 1200))
-    .with_max_surface_size(Some(@dpi.PhysicalSize::new(1280, 720))),
+    .with_surface_size(@dpi.PhysicalSize::new(1600, 1200).into_size())
+    .with_max_surface_size(Some(@dpi.PhysicalSize::new(1280, 720).into_size())),
   )
   self.window.val = Some(window)
 }
@@ -1933,7 +1947,7 @@ impl ApplicationHandler for WindowAuxiliaryApiApp with can_create_surfaces(
 
   window.pre_present_notify()
   window.reset_dead_keys()
-  window.set_cursor_position(@dpi.PhysicalPosition::new(24, 24)) catch {
+  window.set_cursor_position(@dpi.PhysicalPosition::new(24, 24).into_position()) catch {
     _ => ()
   }
   window.set_cursor_grab(@core.CursorGrabMode::Locked) catch {
@@ -1961,7 +1975,7 @@ impl ApplicationHandler for WindowAuxiliaryApiApp with can_create_surfaces(
   } catch {
     _ => false
   }
-  window.show_window_menu(@dpi.PhysicalPosition::new(8, 8))
+  window.show_window_menu(@dpi.PhysicalPosition::new(8, 8).into_position())
   window.request_user_attention(Some(@core.UserAttentionType::Informational))
   window.request_user_attention(Some(@core.UserAttentionType::Critical))
   window.request_user_attention(None)

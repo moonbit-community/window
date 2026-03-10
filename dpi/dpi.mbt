@@ -95,6 +95,25 @@ pub fn LogicalPosition::y(self : LogicalPosition) -> Double {
 }
 
 ///|
+pub fn LogicalPosition::to_physical(
+  self : LogicalPosition,
+  scale_factor : Double,
+) -> PhysicalPosition {
+  guard validate_scale_factor(scale_factor) else {
+    abort("scale_factor must be positive")
+  }
+  PhysicalPosition::new(
+    (self.x * scale_factor).to_int(),
+    (self.y * scale_factor).to_int(),
+  )
+}
+
+///|
+pub fn LogicalPosition::into_position(self : LogicalPosition) -> Position {
+  Position::Logical(self)
+}
+
+///|
 pub struct PhysicalPosition {
   x : Int
   y : Int
@@ -116,6 +135,25 @@ pub fn PhysicalPosition::y(self : PhysicalPosition) -> Int {
 }
 
 ///|
+pub fn PhysicalPosition::to_logical(
+  self : PhysicalPosition,
+  scale_factor : Double,
+) -> LogicalPosition {
+  guard validate_scale_factor(scale_factor) else {
+    abort("scale_factor must be positive")
+  }
+  LogicalPosition::new(
+    self.x.to_double() / scale_factor,
+    self.y.to_double() / scale_factor,
+  )
+}
+
+///|
+pub fn PhysicalPosition::into_position(self : PhysicalPosition) -> Position {
+  Position::Physical(self)
+}
+
+///|
 pub struct PhysicalPositionF64 {
   x : Double
   y : Double
@@ -134,6 +172,44 @@ pub fn PhysicalPositionF64::x(self : PhysicalPositionF64) -> Double {
 ///|
 pub fn PhysicalPositionF64::y(self : PhysicalPositionF64) -> Double {
   self.y
+}
+
+///|
+pub(all) enum Position {
+  Logical(LogicalPosition)
+  Physical(PhysicalPosition)
+} derive(Eq, Show)
+
+///|
+pub fn Position::from_logical(position : LogicalPosition) -> Position {
+  Position::Logical(position)
+}
+
+///|
+pub fn Position::from_physical(position : PhysicalPosition) -> Position {
+  Position::Physical(position)
+}
+
+///|
+pub fn Position::to_physical(
+  self : Position,
+  scale_factor : Double,
+) -> PhysicalPosition {
+  match self {
+    Logical(position) => position.to_physical(scale_factor)
+    Physical(position) => position
+  }
+}
+
+///|
+pub fn Position::to_logical(
+  self : Position,
+  scale_factor : Double,
+) -> LogicalPosition {
+  match self {
+    Logical(position) => position
+    Physical(position) => position.to_logical(scale_factor)
+  }
 }
 
 ///|
@@ -172,4 +248,46 @@ pub fn PhysicalInsets::bottom(self : PhysicalInsets) -> Int {
 ///|
 pub fn PhysicalInsets::right(self : PhysicalInsets) -> Int {
   self.right
+}
+
+///|
+pub(all) enum Size {
+  Logical(LogicalSize)
+  Physical(PhysicalSize)
+} derive(Eq, Show)
+
+///|
+pub fn LogicalSize::into_size(self : LogicalSize) -> Size {
+  Size::Logical(self)
+}
+
+///|
+pub fn PhysicalSize::into_size(self : PhysicalSize) -> Size {
+  Size::Physical(self)
+}
+
+///|
+pub fn Size::from_logical(size : LogicalSize) -> Size {
+  Size::Logical(size)
+}
+
+///|
+pub fn Size::from_physical(size : PhysicalSize) -> Size {
+  Size::Physical(size)
+}
+
+///|
+pub fn Size::to_physical(self : Size, scale_factor : Double) -> PhysicalSize {
+  match self {
+    Logical(size) => size.to_physical(scale_factor)
+    Physical(size) => size
+  }
+}
+
+///|
+pub fn Size::to_logical(self : Size, scale_factor : Double) -> LogicalSize {
+  match self {
+    Logical(size) => size
+    Physical(size) => size.to_logical(scale_factor)
+  }
 }
