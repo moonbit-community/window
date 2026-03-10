@@ -2,6 +2,7 @@
 pub struct Window {
   priv id : @core.WindowId
   priv mut fullscreen_state : @core.Fullscreen?
+  priv mut ime_capabilities_state : @core.ImeCapabilities?
 } derive(Eq, Show)
 
 ///|
@@ -431,6 +432,11 @@ pub fn Window::set_ime_hints(self : Window, hints : @core.ImeHint) -> Unit {
 
 ///|
 pub fn Window::set_ime_allowed(self : Window, allowed : Bool) -> Unit {
+  self.ime_capabilities_state = if allowed {
+    Some(default_ime_capabilities())
+  } else {
+    None
+  }
   set_ime_allowed(self.id.into_raw(), allowed)
 }
 
@@ -518,11 +524,12 @@ pub fn Window::request_ime_update(
   request : @core.ImeRequest,
 ) -> Unit raise @core.ImeRequestError {
   match request {
-    @core.ImeRequest::Enable(_capabilities) =>
+    @core.ImeRequest::Enable(capabilities) =>
       if self.ime_allowed() {
         raise @core.ImeRequestError::AlreadyEnabled
       } else {
         self.set_ime_allowed(true)
+        self.ime_capabilities_state = Some(capabilities)
         ()
       }
     @core.ImeRequest::Disable => {
@@ -535,6 +542,9 @@ pub fn Window::request_ime_update(
           raise @core.ImeRequestError::AlreadyEnabled
         } else {
           self.set_ime_allowed(true)
+          if self.ime_capabilities_state is None {
+            self.ime_capabilities_state = Some(default_ime_capabilities())
+          }
           ()
         }
       } else {
@@ -544,6 +554,8 @@ pub fn Window::request_ime_update(
     @core.ImeRequest::SetHintAndPurpose(hints, purpose) =>
       if self.ime_allowed() == false {
         raise @core.ImeRequestError::NotEnabled
+      } else if self.ime_supports_hint_and_purpose() == false {
+        raise @core.ImeRequestError::NotSupported
       } else {
         self.set_ime_hints(hints)
         self.set_ime_purpose(purpose)
@@ -552,6 +564,8 @@ pub fn Window::request_ime_update(
     @core.ImeRequest::SetPurpose(purpose) =>
       if self.ime_allowed() == false {
         raise @core.ImeRequestError::NotEnabled
+      } else if self.ime_supports_hint_and_purpose() == false {
+        raise @core.ImeRequestError::NotSupported
       } else {
         self.set_ime_purpose(purpose)
         ()
@@ -559,6 +573,8 @@ pub fn Window::request_ime_update(
     @core.ImeRequest::SetCursorArea(position, size) =>
       if self.ime_allowed() == false {
         raise @core.ImeRequestError::NotEnabled
+      } else if self.ime_supports_cursor_area() == false {
+        raise @core.ImeRequestError::NotSupported
       } else {
         self.set_ime_cursor_area(position, size)
         ()
@@ -566,6 +582,8 @@ pub fn Window::request_ime_update(
     @core.ImeRequest::SetSurroundingText(surrounding_text) =>
       if self.ime_allowed() == false {
         raise @core.ImeRequestError::NotEnabled
+      } else if self.ime_supports_surrounding_text() == false {
+        raise @core.ImeRequestError::NotSupported
       } else {
         self.set_ime_surrounding_text(surrounding_text)
         ()
@@ -574,8 +592,32 @@ pub fn Window::request_ime_update(
 }
 
 ///|
-pub fn Window::ime_capabilities(_self : Window) -> @core.ImeCapabilities? {
-  Some(@core.ImeCapabilities::new(true, true, true))
+pub fn Window::ime_capabilities(self : Window) -> @core.ImeCapabilities? {
+  self.ime_capabilities_state
+}
+
+///|
+fn Window::ime_supports_hint_and_purpose(self : Window) -> Bool {
+  match self.ime_capabilities_state {
+    Some(capabilities) => capabilities.hint_and_purpose()
+    None => true
+  }
+}
+
+///|
+fn Window::ime_supports_cursor_area(self : Window) -> Bool {
+  match self.ime_capabilities_state {
+    Some(capabilities) => capabilities.cursor_area()
+    None => true
+  }
+}
+
+///|
+fn Window::ime_supports_surrounding_text(self : Window) -> Bool {
+  match self.ime_capabilities_state {
+    Some(capabilities) => capabilities.surrounding_text()
+    None => true
+  }
 }
 
 ///|
@@ -1405,6 +1447,7 @@ pub fn EventLoop::create_window(
   {
     id: @core.WindowId::from_raw(raw_id),
     fullscreen_state: initial_fullscreen_state(attributes),
+    ime_capabilities_state: Some(default_ime_capabilities()),
   }
 }
 
@@ -1421,6 +1464,11 @@ fn initial_fullscreen_state(
         None
       }
   }
+}
+
+///|
+fn default_ime_capabilities() -> @core.ImeCapabilities {
+  @core.ImeCapabilities::new(true, true, true)
 }
 
 ///|

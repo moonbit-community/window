@@ -578,6 +578,14 @@ struct ImeConfigurationApp {
 }
 
 ///|
+struct ImeCapabilityRestrictionApp {
+  cursor_not_supported : Ref[Bool]
+  hint_and_purpose_not_supported : Ref[Bool]
+  purpose_not_supported : Ref[Bool]
+  surrounding_not_supported : Ref[Bool]
+}
+
+///|
 struct WindowAuxiliaryApiApp {
   cursor_grab_confined : Ref[Bool]
   drag_resize_started : Ref[Bool]
@@ -1785,6 +1793,64 @@ impl ApplicationHandler for ImeConfigurationApp with can_create_surfaces(
   self.ime_allowed.val = window.ime_allowed()
   self.cursor_position.val = Some(window.ime_cursor_area_position())
   self.cursor_size.val = Some(window.ime_cursor_area_size())
+  event_loop.exit()
+}
+
+///|
+impl ApplicationHandler for ImeCapabilityRestrictionApp with can_create_surfaces(
+  self,
+  event_loop,
+) {
+  let window = event_loop.create_window(
+    @core.WindowAttributes::default().with_visible(false),
+  )
+  let surrounding_text = try! @core.ImeSurroundingText::new("abc", 1, 1)
+  try! window.request_ime_update(@core.ImeRequest::Disable)
+  try! window.request_ime_update(
+    @core.ImeRequest::Enable(@core.ImeCapabilities::new(false, false, false)),
+  )
+  self.hint_and_purpose_not_supported.val = try {
+    window.request_ime_update(
+      @core.ImeRequest::SetHintAndPurpose(
+        @core.ImeHint::multiline(),
+        @core.ImePurpose::Email,
+      ),
+    )
+    false
+  } catch {
+    @core.ImeRequestError::NotSupported => true
+    _ => false
+  }
+  self.purpose_not_supported.val = try {
+    window.request_ime_update(
+      @core.ImeRequest::SetPurpose(@core.ImePurpose::Date),
+    )
+    false
+  } catch {
+    @core.ImeRequestError::NotSupported => true
+    _ => false
+  }
+  self.cursor_not_supported.val = try {
+    window.request_ime_update(
+      @core.ImeRequest::SetCursorArea(
+        @dpi.PhysicalPosition::new(2, 4),
+        @dpi.PhysicalSize::new(8, 12),
+      ),
+    )
+    false
+  } catch {
+    @core.ImeRequestError::NotSupported => true
+    _ => false
+  }
+  self.surrounding_not_supported.val = try {
+    window.request_ime_update(
+      @core.ImeRequest::SetSurroundingText(Some(surrounding_text)),
+    )
+    false
+  } catch {
+    @core.ImeRequestError::NotSupported => true
+    _ => false
+  }
   event_loop.exit()
 }
 
@@ -3097,6 +3163,26 @@ test "window ime configuration updates native state" {
   assert_false(ime_allowed.val)
   assert_eq(cursor_position.val, Some(@dpi.PhysicalPosition::new(48, 96)))
   assert_eq(cursor_size.val, Some(@dpi.PhysicalSize::new(20, 32)))
+}
+
+///|
+test "ime request updates respect negotiated capabilities" {
+  let event_loop = EventLoop::new()
+  let hint_and_purpose_not_supported = Ref::new(false)
+  let purpose_not_supported = Ref::new(false)
+  let cursor_not_supported = Ref::new(false)
+  let surrounding_not_supported = Ref::new(false)
+  let app : ImeCapabilityRestrictionApp = {
+    cursor_not_supported,
+    hint_and_purpose_not_supported,
+    purpose_not_supported,
+    surrounding_not_supported,
+  }
+  event_loop.run_app(app)
+  assert_true(hint_and_purpose_not_supported.val)
+  assert_true(purpose_not_supported.val)
+  assert_true(cursor_not_supported.val)
+  assert_true(surrounding_not_supported.val)
 }
 
 ///|
