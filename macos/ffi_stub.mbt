@@ -242,6 +242,11 @@ fn window_ime_purpose(_window_id : Int) -> Int {
 }
 
 ///|
+fn window_ime_hints(_window_id : Int) -> Int {
+  0
+}
+
+///|
 fn window_ime_cursor_area_x(_window_id : Int) -> Int {
   0
 }
@@ -660,6 +665,11 @@ fn set_window_content_protected(
 
 ///|
 fn set_ime_purpose(_window_id : Int, _purpose : Int) -> Unit {
+  ()
+}
+
+///|
+fn set_ime_hints(_window_id : Int, _hints : Int) -> Unit {
   ()
 }
 

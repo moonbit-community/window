@@ -143,6 +143,27 @@ pub fn ImeCursorRange::start(Self) -> Int
 pub impl Eq for ImeCursorRange
 pub impl Show for ImeCursorRange
 
+pub struct ImeHint {
+  // private fields
+}
+pub fn ImeHint::auto_capitalization() -> Self
+pub fn ImeHint::bits(Self) -> Int
+pub fn ImeHint::completion() -> Self
+pub fn ImeHint::contains(Self, Self) -> Bool
+pub fn ImeHint::from_bits(Int) -> Self
+pub fn ImeHint::hidden_text() -> Self
+pub fn ImeHint::latin() -> Self
+pub fn ImeHint::lowercase() -> Self
+pub fn ImeHint::multiline() -> Self
+pub fn ImeHint::none() -> Self
+pub fn ImeHint::sensitive_data() -> Self
+pub fn ImeHint::spellcheck() -> Self
+pub fn ImeHint::titlecase() -> Self
+pub fn ImeHint::union(Self, Self) -> Self
+pub fn ImeHint::uppercase() -> Self
+pub impl Eq for ImeHint
+pub impl Show for ImeHint
+
 pub(all) enum ImePurpose {
   Normal
   Password
@@ -163,6 +184,7 @@ pub(all) enum ImeRequest {
   Enable(ImeCapabilities)
   Disable
   SetAllowed(Bool)
+  SetHintAndPurpose(ImeHint, ImePurpose)
   SetPurpose(ImePurpose)
   SetCursorArea(@dpi.PhysicalPosition, @dpi.PhysicalSize)
   SetSurroundingText(ImeSurroundingText?)
@@ -581,6 +603,7 @@ pub fn WindowAttributes::decorations(Self) -> Bool
 pub fn WindowAttributes::default() -> Self
 pub fn WindowAttributes::enabled_buttons(Self) -> WindowButtons
 pub fn WindowAttributes::fullscreen(Self) -> Fullscreen?
+pub fn WindowAttributes::ime_hints(Self) -> ImeHint
 pub fn WindowAttributes::ime_purpose(Self) -> ImePurpose
 pub fn WindowAttributes::max_surface_size(Self) -> @dpi.PhysicalSize?
 pub fn WindowAttributes::maximized(Self) -> Bool
@@ -603,6 +626,7 @@ pub fn WindowAttributes::with_cursor(Self, CursorIcon) -> Self
 pub fn WindowAttributes::with_decorations(Self, Bool) -> Self
 pub fn WindowAttributes::with_enabled_buttons(Self, WindowButtons) -> Self
 pub fn WindowAttributes::with_fullscreen(Self, Fullscreen?) -> Self
+pub fn WindowAttributes::with_ime_hints(Self, ImeHint) -> Self
 pub fn WindowAttributes::with_ime_purpose(Self, ImePurpose) -> Self
 pub fn WindowAttributes::with_max_surface_size(Self, @dpi.PhysicalSize?) -> Self
 pub fn WindowAttributes::with_maximized(Self, Bool) -> Self

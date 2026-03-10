@@ -543,13 +543,16 @@ struct ImeConfigurationApp {
   cursor_size : Ref[@dpi.PhysicalSize?]
   ime_capabilities : Ref[@core.ImeCapabilities?]
   ime_allowed : Ref[Bool]
+  initial_hints : Ref[@core.ImeHint]
   initial_purpose : Ref[@core.ImePurpose]
   request_allowed_ok : Ref[Bool]
   request_cursor_ok : Ref[Bool]
+  request_hint_and_purpose_ok : Ref[Bool]
   request_purpose_ok : Ref[Bool]
   request_surrounding_ok : Ref[Bool]
   surrounding_text_after_clear : Ref[@core.ImeSurroundingText?]
   surrounding_text_after_request : Ref[@core.ImeSurroundingText?]
+  updated_hints : Ref[@core.ImeHint]
   updated_purpose : Ref[@core.ImePurpose]
 }
 
@@ -1598,9 +1601,13 @@ impl ApplicationHandler for ImeConfigurationApp with can_create_surfaces(
   let window = event_loop.create_window(
     @core.WindowAttributes::default()
     .with_visible(false)
+    .with_ime_hints(
+      @core.ImeHint::completion().union(@core.ImeHint::spellcheck()),
+    )
     .with_ime_purpose(@core.ImePurpose::Password),
   )
   self.ime_capabilities.val = window.ime_capabilities()
+  self.initial_hints.val = window.ime_hints()
   self.initial_purpose.val = window.ime_purpose()
   let surrounding_text = match
     @core.ImeSurroundingText::new("hello world", 5, 0) {
@@ -1616,6 +1623,12 @@ impl ApplicationHandler for ImeConfigurationApp with can_create_surfaces(
   }
   self.request_purpose_ok.val = window.request_ime_update(
     @core.ImeRequest::SetPurpose(@core.ImePurpose::DateTime),
+  )
+  self.request_hint_and_purpose_ok.val = window.request_ime_update(
+    @core.ImeRequest::SetHintAndPurpose(
+      @core.ImeHint::multiline().union(@core.ImeHint::sensitive_data()),
+      @core.ImePurpose::Email,
+    ),
   )
   self.request_surrounding_ok.val = window.request_ime_update(
     @core.ImeRequest::SetSurroundingText(Some(surrounding_text)),
@@ -1647,6 +1660,7 @@ impl ApplicationHandler for ImeConfigurationApp with can_create_surfaces(
     @dpi.PhysicalPosition::new(48, 96),
     @dpi.PhysicalSize::new(20, 32),
   )
+  self.updated_hints.val = window.ime_hints()
   self.updated_purpose.val = window.ime_purpose()
   self.ime_allowed.val = window.ime_allowed()
   self.cursor_position.val = Some(window.ime_cursor_area_position())
@@ -2786,12 +2800,15 @@ test "window ime configuration updates native state" {
   let cursor_when_disabled_error = Ref::new(None)
   let enable_when_enabled_error = Ref::new(None)
   let ime_capabilities = Ref::new(None)
+  let initial_hints = Ref::new(@core.ImeHint::none())
   let initial_purpose = Ref::new(@core.ImePurpose::Normal)
   let updated_purpose = Ref::new(@core.ImePurpose::Normal)
+  let updated_hints = Ref::new(@core.ImeHint::none())
   let ime_allowed = Ref::new(true)
   let request_allowed_ok = Ref::new(false)
   let request_purpose_ok = Ref::new(false)
   let request_cursor_ok = Ref::new(false)
+  let request_hint_and_purpose_ok = Ref::new(false)
   let request_surrounding_ok = Ref::new(false)
   let surrounding_text_after_request = Ref::new(None)
   let surrounding_text_after_clear = Ref::new(None)
@@ -2804,13 +2821,16 @@ test "window ime configuration updates native state" {
     cursor_size,
     ime_capabilities,
     ime_allowed,
+    initial_hints,
     initial_purpose,
     request_allowed_ok,
     request_cursor_ok,
+    request_hint_and_purpose_ok,
     request_purpose_ok,
     request_surrounding_ok,
     surrounding_text_after_clear,
     surrounding_text_after_request,
+    updated_hints,
     updated_purpose,
   }
   event_loop.run_app(app)
@@ -2818,8 +2838,13 @@ test "window ime configuration updates native state" {
     ime_capabilities.val,
     Some(@core.ImeCapabilities::new(true, true, true)),
   )
+  assert_eq(
+    initial_hints.val,
+    @core.ImeHint::completion().union(@core.ImeHint::spellcheck()),
+  )
   assert_eq(initial_purpose.val, @core.ImePurpose::Password)
   assert_true(request_allowed_ok.val)
+  assert_true(request_hint_and_purpose_ok.val)
   assert_true(request_purpose_ok.val)
   assert_true(request_cursor_ok.val)
   assert_eq(
@@ -2841,7 +2866,11 @@ test "window ime configuration updates native state" {
     ),
   )
   assert_eq(surrounding_text_after_clear.val, None)
-  assert_eq(updated_purpose.val, @core.ImePurpose::DateTime)
+  assert_eq(
+    updated_hints.val,
+    @core.ImeHint::multiline().union(@core.ImeHint::sensitive_data()),
+  )
+  assert_eq(updated_purpose.val, @core.ImePurpose::Email)
   assert_false(ime_allowed.val)
   assert_eq(cursor_position.val, Some(@dpi.PhysicalPosition::new(48, 96)))
   assert_eq(cursor_size.val, Some(@dpi.PhysicalSize::new(20, 32)))

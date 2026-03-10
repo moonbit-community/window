@@ -242,6 +242,11 @@ fn window_ime_purpose(window_id : Int) -> Int {
 }
 
 ///|
+fn window_ime_hints(window_id : Int) -> Int {
+  native_window_ime_hints(window_id)
+}
+
+///|
 fn window_ime_cursor_area_x(window_id : Int) -> Int {
   native_window_ime_cursor_area_x(window_id)
 }
@@ -683,6 +688,11 @@ fn set_ime_purpose(window_id : Int, purpose : Int) -> Unit {
 }
 
 ///|
+fn set_ime_hints(window_id : Int, hints : Int) -> Unit {
+  native_window_set_ime_hints(window_id, hints)
+}
+
+///|
 fn set_ime_allowed(window_id : Int, allowed : Bool) -> Unit {
   native_window_set_ime_allowed(window_id, allowed)
 }
@@ -1009,6 +1019,9 @@ extern "C" fn native_window_ime_allowed(window_id : Int) -> Bool = "mbw_window_i
 extern "C" fn native_window_ime_purpose(window_id : Int) -> Int = "mbw_window_ime_purpose"
 
 ///|
+extern "C" fn native_window_ime_hints(window_id : Int) -> Int = "mbw_window_ime_hints"
+
+///|
 extern "C" fn native_window_ime_cursor_area_x(window_id : Int) -> Int = "mbw_window_ime_cursor_area_x"
 
 ///|
@@ -1301,6 +1314,9 @@ extern "C" fn native_window_set_ime_purpose(
   window_id : Int,
   purpose : Int,
 ) -> Unit = "mbw_window_set_ime_purpose"
+
+///|
+extern "C" fn native_window_set_ime_hints(window_id : Int, hints : Int) -> Unit = "mbw_window_set_ime_hints"
 
 ///|
 extern "C" fn native_window_set_ime_allowed(

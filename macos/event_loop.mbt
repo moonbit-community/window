@@ -392,6 +392,11 @@ pub fn Window::set_ime_purpose(
 }
 
 ///|
+pub fn Window::set_ime_hints(self : Window, hints : @core.ImeHint) -> Unit {
+  set_ime_hints(self.id.into_raw(), hints.bits())
+}
+
+///|
 pub fn Window::set_ime_allowed(self : Window, allowed : Bool) -> Unit {
   set_ime_allowed(self.id.into_raw(), allowed)
 }
@@ -470,6 +475,11 @@ pub fn Window::ime_purpose(self : Window) -> @core.ImePurpose {
 }
 
 ///|
+pub fn Window::ime_hints(self : Window) -> @core.ImeHint {
+  @core.ImeHint::from_bits(window_ime_hints(self.id.into_raw()))
+}
+
+///|
 pub fn Window::request_ime_update(
   self : Window,
   request : @core.ImeRequest,
@@ -507,6 +517,14 @@ pub fn Window::request_ime_update_result(
         }
       } else {
         self.set_ime_allowed(false)
+        Ok(())
+      }
+    @core.ImeRequest::SetHintAndPurpose(hints, purpose) =>
+      if self.ime_allowed() == false {
+        Err(@core.ImeRequestError::NotEnabled)
+      } else {
+        self.set_ime_hints(hints)
+        self.set_ime_purpose(purpose)
         Ok(())
       }
     @core.ImeRequest::SetPurpose(purpose) =>
@@ -1316,6 +1334,7 @@ pub fn EventLoop::create_window(
     None => ()
   }
   set_ime_purpose(raw_id, ime_purpose_to_native(attributes.ime_purpose()))
+  set_ime_hints(raw_id, attributes.ime_hints().bits())
   set_window_level(raw_id, window_level_to_native(attributes.window_level()))
   set_window_transparent(raw_id, attributes.transparent())
   if attributes.maximized() {

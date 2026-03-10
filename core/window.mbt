@@ -20,6 +20,86 @@ pub(all) enum ImePurpose {
 } derive(Eq, Show)
 
 ///|
+pub struct ImeHint {
+  priv bits : Int
+} derive(Eq, Show)
+
+///|
+pub fn ImeHint::none() -> ImeHint {
+  { bits: 0 }
+}
+
+///|
+pub fn ImeHint::completion() -> ImeHint {
+  { bits: 1 }
+}
+
+///|
+pub fn ImeHint::spellcheck() -> ImeHint {
+  { bits: 2 }
+}
+
+///|
+pub fn ImeHint::auto_capitalization() -> ImeHint {
+  { bits: 4 }
+}
+
+///|
+pub fn ImeHint::lowercase() -> ImeHint {
+  { bits: 8 }
+}
+
+///|
+pub fn ImeHint::uppercase() -> ImeHint {
+  { bits: 16 }
+}
+
+///|
+pub fn ImeHint::titlecase() -> ImeHint {
+  { bits: 32 }
+}
+
+///|
+pub fn ImeHint::hidden_text() -> ImeHint {
+  { bits: 64 }
+}
+
+///|
+pub fn ImeHint::sensitive_data() -> ImeHint {
+  { bits: 128 }
+}
+
+///|
+pub fn ImeHint::latin() -> ImeHint {
+  { bits: 256 }
+}
+
+///|
+pub fn ImeHint::multiline() -> ImeHint {
+  { bits: 512 }
+}
+
+///|
+pub fn ImeHint::union(self : ImeHint, other : ImeHint) -> ImeHint {
+  { bits: self.bits | other.bits }
+}
+
+///|
+pub fn ImeHint::contains(self : ImeHint, other : ImeHint) -> Bool {
+  (self.bits & other.bits) == other.bits
+}
+
+///|
+pub fn ImeHint::from_bits(bits : Int) -> ImeHint {
+  { bits: bits & 1023 }
+}
+
+///|
+pub fn ImeHint::bits(self : ImeHint) -> Int {
+  self.bits
+}
+
+///|
 pub(all) enum ImeSurroundingTextError {
   TextTooLong(Int)
   CursorOutOfRange(Int, Int)
@@ -103,6 +183,7 @@ pub(all) enum ImeRequest {
   Enable(ImeCapabilities)
   Disable
   SetAllowed(Bool)
+  SetHintAndPurpose(ImeHint, ImePurpose)
   SetPurpose(ImePurpose)
   SetCursorArea(@dpi.PhysicalPosition, @dpi.PhysicalSize)
   SetSurroundingText(ImeSurroundingText?)
@@ -370,6 +451,7 @@ pub struct WindowAttributes {
   priv mut decorations : Bool
   priv mut enabled_buttons : WindowButtons
   priv mut fullscreen : Fullscreen?
+  priv mut ime_hints : ImeHint
   priv mut ime_purpose : ImePurpose
   priv mut max_surface_size : @dpi.PhysicalSize?
   priv mut maximized : Bool
@@ -397,6 +479,7 @@ pub fn WindowAttributes::default() -> WindowAttributes {
     decorations: true,
     enabled_buttons: WindowButtons::all(),
     fullscreen: None,
+    ime_hints: ImeHint::none(),
     ime_purpose: ImePurpose::Normal,
     maximized: false,
     min_surface_size: None,
@@ -475,6 +558,15 @@ pub fn WindowAttributes::with_ime_purpose(
   purpose : ImePurpose,
 ) -> WindowAttributes {
   self.ime_purpose = purpose
+  self
+}
+
+///|
+pub fn WindowAttributes::with_ime_hints(
+  self : WindowAttributes,
+  hints : ImeHint,
+) -> WindowAttributes {
+  self.ime_hints = hints
   self
 }
 
@@ -658,6 +750,11 @@ pub fn WindowAttributes::platform_attributes(
 ///|
 pub fn WindowAttributes::ime_purpose(self : WindowAttributes) -> ImePurpose {
   self.ime_purpose
+}
+
+///|
+pub fn WindowAttributes::ime_hints(self : WindowAttributes) -> ImeHint {
+  self.ime_hints
 }
 
 ///|

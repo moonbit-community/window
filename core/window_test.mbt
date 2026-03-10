@@ -20,6 +20,7 @@ test "window attributes follow winit defaults" {
   assert_eq(attrs.max_surface_size(), None)
   assert_eq(attrs.position(), None)
   assert_eq(attrs.platform_attributes().simple_fullscreen(), None)
+  assert_eq(attrs.ime_hints(), ImeHint::none())
   assert_eq(attrs.ime_purpose(), ImePurpose::Normal)
   assert_eq(attrs.window_level(), WindowLevel::Normal)
   assert_eq(attrs.theme(), None)
@@ -45,6 +46,11 @@ test "window attributes builders update fields" {
     .with_position(Some(@dpi.PhysicalPosition::new(320, 180)))
     .with_platform_attributes(
       PlatformWindowAttributes::default().with_simple_fullscreen(Some(true)),
+    )
+    .with_ime_hints(
+      ImeHint::completion()
+      .union(ImeHint::spellcheck())
+      .union(ImeHint::multiline()),
     )
     .with_ime_purpose(ImePurpose::Password)
     .with_active(false)
@@ -81,6 +87,12 @@ test "window attributes builders update fields" {
   assert_eq(attrs.max_surface_size(), Some(@dpi.PhysicalSize::new(1920, 1080)))
   assert_eq(attrs.position(), Some(@dpi.PhysicalPosition::new(320, 180)))
   assert_eq(attrs.platform_attributes().simple_fullscreen(), Some(true))
+  assert_eq(
+    attrs.ime_hints(),
+    ImeHint::completion()
+    .union(ImeHint::spellcheck())
+    .union(ImeHint::multiline()),
+  )
   assert_eq(attrs.ime_purpose(), ImePurpose::Password)
   assert_eq(attrs.window_level(), WindowLevel::AlwaysOnTop)
   assert_eq(attrs.theme(), Some(Theme::Dark))
@@ -133,14 +145,23 @@ test "ime capability and request models are constructible" {
     Err(_) => abort("expected surrounding text to be valid")
   }
   let capabilities_for_enable = ImeCapabilities::new(true, true, true)
+  let hints = ImeHint::completion().union(ImeHint::spellcheck())
   assert_eq(surrounding.text(), "editor")
   assert_eq(surrounding.cursor(), 3)
   assert_eq(surrounding.anchor(), 1)
+  assert_true(hints.contains(ImeHint::completion()))
+  assert_true(hints.contains(ImeHint::spellcheck()))
+  assert_false(hints.contains(ImeHint::multiline()))
+  assert_eq(ImeHint::from_bits(1025), ImeHint::completion())
   assert_eq(
     ImeRequest::Enable(capabilities_for_enable),
     ImeRequest::Enable(capabilities_for_enable),
   )
   assert_eq(ImeRequest::Disable, ImeRequest::Disable)
+  assert_eq(
+    ImeRequest::SetHintAndPurpose(hints, ImePurpose::Email),
+    ImeRequest::SetHintAndPurpose(hints, ImePurpose::Email),
+  )
   assert_eq(
     ImeRequest::SetPurpose(ImePurpose::DateTime),
     ImeRequest::SetPurpose(ImePurpose::DateTime),

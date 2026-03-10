@@ -101,6 +101,7 @@ typedef struct mbw_window {
   int ime_cursor_end;
   int ime_allowed;
   int ime_purpose;
+  int ime_hints;
   int ime_cursor_area_x;
   int ime_cursor_area_y;
   int ime_cursor_area_width;
@@ -180,6 +181,7 @@ static int64_t g_now_ms_override_for_test = -1;
 #define MBW_IME_PURPOSE_TIME 9
 #define MBW_IME_PURPOSE_DATETIME 10
 #define MBW_IME_SURROUNDING_TEXT_CAP 4000
+#define MBW_IME_HINT_MASK 1023
 
 #define MBW_WINDOW_LEVEL_NORMAL 0
 #define MBW_WINDOW_LEVEL_ALWAYS_ON_TOP 1
@@ -3437,6 +3439,7 @@ int mbw_window_create_utf8(
   window->ime_cursor_end = -1;
   window->ime_allowed = 1;
   window->ime_purpose = MBW_IME_PURPOSE_NORMAL;
+  window->ime_hints = 0;
   window->ime_cursor_area_x = 0;
   window->ime_cursor_area_y = 0;
   window->ime_cursor_area_width = 1;
@@ -4440,6 +4443,11 @@ bool mbw_window_ime_allowed(int window_id) {
 int mbw_window_ime_purpose(int window_id) {
   mbw_window_t *window = mbw_find_window(window_id);
   return window ? window->ime_purpose : MBW_IME_PURPOSE_NORMAL;
+}
+
+int mbw_window_ime_hints(int window_id) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  return window ? (window->ime_hints & MBW_IME_HINT_MASK) : 0;
 }
 
 int mbw_window_ime_cursor_area_x(int window_id) {
@@ -5948,6 +5956,18 @@ void mbw_window_set_ime_purpose(int window_id, int purpose) {
     next_purpose = MBW_IME_PURPOSE_DATETIME;
   }
   window->ime_purpose = next_purpose;
+}
+
+void mbw_window_set_ime_hints(int window_id, int hints) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  if (!window) {
+    return;
+  }
+  int next_hints = hints;
+  if (next_hints < 0) {
+    next_hints = 0;
+  }
+  window->ime_hints = next_hints & MBW_IME_HINT_MASK;
 }
 
 void mbw_window_set_ime_allowed(int window_id, bool allowed) {
