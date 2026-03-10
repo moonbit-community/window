@@ -294,29 +294,55 @@ pub fn Window::set_cursor_hittest(self : Window, hittest : Bool) -> Unit {
 pub fn Window::set_cursor_position(
   self : Window,
   position : @dpi.PhysicalPosition,
-) -> Bool {
-  set_cursor_position(self.id.into_raw(), position.x(), position.y())
+) -> Unit raise @core.RequestError {
+  if set_cursor_position(self.id.into_raw(), position.x(), position.y()) {
+    ()
+  } else {
+    raise @core.RequestError::Ignored("set_cursor_position was ignored")
+  }
 }
 
 ///|
 pub fn Window::set_cursor_grab(
   self : Window,
   mode : @core.CursorGrabMode,
-) -> Bool {
-  set_cursor_grab(self.id.into_raw(), cursor_grab_mode_to_native(mode))
+) -> Unit raise @core.RequestError {
+  if mode is @core.CursorGrabMode::Confined {
+    raise @core.RequestError::NotSupported(
+      "confined cursor grab is not supported on macOS",
+    )
+  }
+  if set_cursor_grab(self.id.into_raw(), cursor_grab_mode_to_native(mode)) {
+    ()
+  } else {
+    raise @core.RequestError::Ignored("set_cursor_grab was ignored")
+  }
 }
 
 ///|
-pub fn Window::drag_window(self : Window) -> Bool {
-  drag_window(self.id.into_raw())
+pub fn Window::drag_window(self : Window) -> Unit raise @core.RequestError {
+  if drag_window(self.id.into_raw()) {
+    ()
+  } else {
+    raise @core.RequestError::Ignored("drag_window was ignored")
+  }
 }
 
 ///|
 pub fn Window::drag_resize_window(
   self : Window,
   direction : @core.ResizeDirection,
-) -> Bool {
-  drag_resize_window(self.id.into_raw(), resize_direction_to_native(direction))
+) -> Unit raise @core.RequestError {
+  if drag_resize_window(
+      self.id.into_raw(),
+      resize_direction_to_native(direction),
+    ) {
+    ()
+  } else {
+    raise @core.RequestError::NotSupported(
+      "drag_resize_window is not supported on macOS",
+    )
+  }
 }
 
 ///|
@@ -463,10 +489,10 @@ pub fn Window::ime_surrounding_text(self : Window) -> @core.ImeSurroundingText? 
   let text = text_from_native(window_ime_surrounding_text(raw_id))
   let cursor = window_ime_surrounding_cursor(raw_id)
   let anchor = window_ime_surrounding_anchor(raw_id)
-  match @core.ImeSurroundingText::new(text, cursor, anchor) {
-    Ok(surrounding_text) => Some(surrounding_text)
-    Err(_) => None
+  let surrounding_text = @core.ImeSurroundingText::new(text, cursor, anchor) catch {
+    _ => return None
   }
+  Some(surrounding_text)
 }
 
 ///|
@@ -483,70 +509,59 @@ pub fn Window::ime_hints(self : Window) -> @core.ImeHint {
 pub fn Window::request_ime_update(
   self : Window,
   request : @core.ImeRequest,
-) -> Bool {
-  match self.request_ime_update_result(request) {
-    Ok(_) => true
-    Err(_) => false
-  }
-}
-
-///|
-pub fn Window::request_ime_update_result(
-  self : Window,
-  request : @core.ImeRequest,
-) -> Result[Unit, @core.ImeRequestError] {
+) -> Unit raise @core.ImeRequestError {
   match request {
     @core.ImeRequest::Enable(_capabilities) =>
       if self.ime_allowed() {
-        Err(@core.ImeRequestError::AlreadyEnabled)
+        raise @core.ImeRequestError::AlreadyEnabled
       } else {
         self.set_ime_allowed(true)
-        Ok(())
+        ()
       }
     @core.ImeRequest::Disable => {
       self.set_ime_allowed(false)
-      Ok(())
+      ()
     }
     @core.ImeRequest::SetAllowed(allowed) =>
       if allowed {
         if self.ime_allowed() {
-          Err(@core.ImeRequestError::AlreadyEnabled)
+          raise @core.ImeRequestError::AlreadyEnabled
         } else {
           self.set_ime_allowed(true)
-          Ok(())
+          ()
         }
       } else {
         self.set_ime_allowed(false)
-        Ok(())
+        ()
       }
     @core.ImeRequest::SetHintAndPurpose(hints, purpose) =>
       if self.ime_allowed() == false {
-        Err(@core.ImeRequestError::NotEnabled)
+        raise @core.ImeRequestError::NotEnabled
       } else {
         self.set_ime_hints(hints)
         self.set_ime_purpose(purpose)
-        Ok(())
+        ()
       }
     @core.ImeRequest::SetPurpose(purpose) =>
       if self.ime_allowed() == false {
-        Err(@core.ImeRequestError::NotEnabled)
+        raise @core.ImeRequestError::NotEnabled
       } else {
         self.set_ime_purpose(purpose)
-        Ok(())
+        ()
       }
     @core.ImeRequest::SetCursorArea(position, size) =>
       if self.ime_allowed() == false {
-        Err(@core.ImeRequestError::NotEnabled)
+        raise @core.ImeRequestError::NotEnabled
       } else {
         self.set_ime_cursor_area(position, size)
-        Ok(())
+        ()
       }
     @core.ImeRequest::SetSurroundingText(surrounding_text) =>
       if self.ime_allowed() == false {
-        Err(@core.ImeRequestError::NotEnabled)
+        raise @core.ImeRequestError::NotEnabled
       } else {
         self.set_ime_surrounding_text(surrounding_text)
-        Ok(())
+        ()
       }
   }
 }

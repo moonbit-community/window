@@ -34,8 +34,7 @@ native builds and focuses on `macos-arm64`.
   `set_content_protected`), and IME control (`set_ime_purpose`,
   `set_ime_hints`, `set_ime_allowed`, `set_ime_cursor_area`,
   `set_ime_surrounding_text`, `ime_hints`, `ime_surrounding_text`,
-  `request_ime_update`, `request_ime_update_result`, `ime_capabilities`).
-  Additional compatibility shims
+  `request_ime_update`, `ime_capabilities`). Additional compatibility shims
   include `pre_present_notify`, `reset_dead_keys`, `drag_window`,
   `drag_resize_window`, and `show_window_menu`.
 - Monitor APIs are available on macOS via `EventLoop::{available_monitors,
@@ -59,6 +58,9 @@ native builds and focuses on `macos-arm64`.
   hint/purpose pairs, cursor area, and surrounding text; `ImePurpose` includes `Normal`,
   `Password`, `Terminal`, `Number`, `Phone`, `Url`, `Email`, `Pin`, `Date`,
   `Time`, and `DateTime`.
+- API errors use MoonBit `raise` with typed errors (for example
+  `@core.BadIcon`, `@core.ImeSurroundingTextError`,
+  `@core.ImeRequestError`, `@core.RequestError`) rather than `Result`.
 - `Cmd + keyUp` is forwarded to the key window in the event pump so key
   release events are not dropped while Command is held.
 - Other platforms are planned but not implemented yet

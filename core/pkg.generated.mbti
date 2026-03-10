@@ -8,6 +8,31 @@ import {
 // Values
 
 // Errors
+pub(all) suberror BadIcon {
+  ByteCountNotDivisibleBy4(Int)
+  DimensionsVsPixelCount(Int, Int, Int, Int)
+}
+pub impl Show for BadIcon
+
+pub(all) suberror ImeRequestError {
+  NotEnabled
+  AlreadyEnabled
+  NotSupported
+}
+pub impl Show for ImeRequestError
+
+pub(all) suberror ImeSurroundingTextError {
+  TextTooLong(Int)
+  CursorOutOfRange(Int, Int)
+  AnchorOutOfRange(Int, Int)
+}
+pub impl Show for ImeSurroundingTextError
+
+pub(all) suberror RequestError {
+  NotSupported(String)
+  Ignored(String)
+}
+pub impl Show for RequestError
 
 // Types and methods
 pub struct ActivationToken {
@@ -18,13 +43,6 @@ pub fn ActivationToken::from_raw(String) -> Self
 pub fn ActivationToken::into_raw(Self) -> String
 pub impl Eq for ActivationToken
 pub impl Show for ActivationToken
-
-pub(all) enum BadIcon {
-  ByteCountNotDivisibleBy4(Int)
-  DimensionsVsPixelCount(Int, Int, Int, Int)
-}
-pub impl Eq for BadIcon
-pub impl Show for BadIcon
 
 pub(all) enum ButtonSource {
   Mouse(MouseButton)
@@ -108,7 +126,7 @@ pub struct Icon {
   // private fields
 }
 pub fn Icon::height(Self) -> Int
-pub fn Icon::new(Bytes, Int, Int) -> Result[Self, BadIcon]
+pub fn Icon::new(Bytes, Int, Int) -> Self raise BadIcon
 pub fn Icon::rgba(Self) -> Bytes
 pub fn Icon::width(Self) -> Int
 pub impl Eq for Icon
@@ -192,31 +210,15 @@ pub(all) enum ImeRequest {
 pub impl Eq for ImeRequest
 pub impl Show for ImeRequest
 
-pub(all) enum ImeRequestError {
-  NotEnabled
-  AlreadyEnabled
-  NotSupported
-}
-pub impl Eq for ImeRequestError
-pub impl Show for ImeRequestError
-
 pub struct ImeSurroundingText {
   // private fields
 }
 pub fn ImeSurroundingText::anchor(Self) -> Int
 pub fn ImeSurroundingText::cursor(Self) -> Int
-pub fn ImeSurroundingText::new(String, Int, Int) -> Result[Self, ImeSurroundingTextError]
+pub fn ImeSurroundingText::new(String, Int, Int) -> Self raise ImeSurroundingTextError
 pub fn ImeSurroundingText::text(Self) -> String
 pub impl Eq for ImeSurroundingText
 pub impl Show for ImeSurroundingText
-
-pub(all) enum ImeSurroundingTextError {
-  TextTooLong(Int)
-  CursorOutOfRange(Int, Int)
-  AnchorOutOfRange(Int, Int)
-}
-pub impl Eq for ImeSurroundingTextError
-pub impl Show for ImeSurroundingTextError
 
 pub(all) enum Key {
   Named(NamedKey)

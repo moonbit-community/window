@@ -31,10 +31,7 @@ test "window attributes follow winit defaults" {
 
 ///|
 test "window attributes builders update fields" {
-  let icon = match Icon::new(Bytes::make(4, (255 : Int).to_byte()), 1, 1) {
-    Ok(icon) => icon
-    Err(_) => abort("expected 1x1 icon to be valid")
-  }
+  let icon = try! Icon::new(Bytes::make(4, (255 : Int).to_byte()), 1, 1)
   let attrs = WindowAttributes::default()
     .with_title("hello")
     .with_visible(false)
@@ -140,10 +137,7 @@ test "ime capability and request models are constructible" {
   assert_true(capabilities.hint_and_purpose())
   assert_true(capabilities.cursor_area())
   assert_false(capabilities.surrounding_text())
-  let surrounding = match ImeSurroundingText::new("editor", 3, 1) {
-    Ok(value) => value
-    Err(_) => abort("expected surrounding text to be valid")
-  }
+  let surrounding = try! ImeSurroundingText::new("editor", 3, 1)
   let capabilities_for_enable = ImeCapabilities::new(true, true, true)
   let hints = ImeHint::completion().union(ImeHint::spellcheck())
   assert_eq(surrounding.text(), "editor")
@@ -170,15 +164,24 @@ test "ime capability and request models are constructible" {
     ImeRequest::SetSurroundingText(Some(surrounding)),
     ImeRequest::SetSurroundingText(Some(surrounding)),
   )
-  assert_eq(
-    ImeSurroundingText::new("abc", -1, 0),
-    Err(ImeSurroundingTextError::CursorOutOfRange(-1, 3)),
-  )
-  assert_eq(
-    ImeSurroundingText::new("abc", 1, 8),
-    Err(ImeSurroundingTextError::AnchorOutOfRange(8, 3)),
-  )
-  assert_eq(ImeRequestError::NotSupported, ImeRequestError::NotSupported)
+  let cursor_out_of_range = try {
+    ImeSurroundingText::new("abc", -1, 0) |> ignore
+    false
+  } catch {
+    ImeSurroundingTextError::CursorOutOfRange(-1, 3) => true
+    _ => false
+  }
+  assert_true(cursor_out_of_range)
+  let anchor_out_of_range = try {
+    ImeSurroundingText::new("abc", 1, 8) |> ignore
+    false
+  } catch {
+    ImeSurroundingTextError::AnchorOutOfRange(8, 3) => true
+    _ => false
+  }
+  assert_true(anchor_out_of_range)
+  let ime_error_show = "\{ImeRequestError::NotSupported}"
+  assert_true(ime_error_show.length() > 0)
 }
 
 ///|
@@ -190,17 +193,24 @@ test "activation token can be round-tripped" {
 
 ///|
 test "icon validation follows winit rgba rules" {
-  let bad_alignment = Icon::new(Bytes::make(3, (1 : Int).to_byte()), 1, 1)
-  assert_eq(bad_alignment, Err(BadIcon::ByteCountNotDivisibleBy4(3)))
-  let bad_dimensions = Icon::new(Bytes::make(8, (1 : Int).to_byte()), 1, 1)
-  assert_eq(bad_dimensions, Err(BadIcon::DimensionsVsPixelCount(1, 1, 1, 2)))
-  let good = Icon::new(Bytes::make(4, (1 : Int).to_byte()), 1, 1)
-  match good {
-    Ok(icon) => {
-      assert_eq(icon.width(), 1)
-      assert_eq(icon.height(), 1)
-      assert_eq(icon.rgba().length(), 4)
-    }
-    Err(_) => abort("expected valid icon")
+  let bad_alignment = try {
+    Icon::new(Bytes::make(3, (1 : Int).to_byte()), 1, 1) |> ignore
+    false
+  } catch {
+    BadIcon::ByteCountNotDivisibleBy4(3) => true
+    _ => false
   }
+  assert_true(bad_alignment)
+  let bad_dimensions = try {
+    Icon::new(Bytes::make(8, (1 : Int).to_byte()), 1, 1) |> ignore
+    false
+  } catch {
+    BadIcon::DimensionsVsPixelCount(1, 1, 1, 2) => true
+    _ => false
+  }
+  assert_true(bad_dimensions)
+  let icon = try! Icon::new(Bytes::make(4, (1 : Int).to_byte()), 1, 1)
+  assert_eq(icon.width(), 1)
+  assert_eq(icon.height(), 1)
+  assert_eq(icon.rgba().length(), 4)
 }

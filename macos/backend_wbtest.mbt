@@ -819,11 +819,7 @@ impl ApplicationHandler for WindowIconApp with can_create_surfaces(
   self,
   event_loop,
 ) {
-  let icon = match
-    @core.Icon::new(Bytes::make(4, (255 : Int).to_byte()), 1, 1) {
-    Ok(icon) => icon
-    Err(_) => abort("expected 1x1 icon to be valid")
-  }
+  let icon = try! @core.Icon::new(Bytes::make(4, (255 : Int).to_byte()), 1, 1)
   let window = event_loop.create_window(
     @core.WindowAttributes::default()
     .with_visible(false)
@@ -1609,52 +1605,79 @@ impl ApplicationHandler for ImeConfigurationApp with can_create_surfaces(
   self.ime_capabilities.val = window.ime_capabilities()
   self.initial_hints.val = window.ime_hints()
   self.initial_purpose.val = window.ime_purpose()
-  let surrounding_text = match
-    @core.ImeSurroundingText::new("hello world", 5, 0) {
-    Ok(value) => value
-    Err(_) => abort("expected surrounding text to be valid")
-  }
-  self.enable_when_enabled_error.val = match
-    window.request_ime_update_result(
+  let surrounding_text = try! @core.ImeSurroundingText::new("hello world", 5, 0)
+  self.enable_when_enabled_error.val = try {
+    window.request_ime_update(
       @core.ImeRequest::Enable(@core.ImeCapabilities::new(true, true, true)),
-    ) {
-    Ok(_) => None
-    Err(error) => Some(error)
+    )
+    None
+  } catch {
+    error => Some(error)
   }
-  self.request_purpose_ok.val = window.request_ime_update(
-    @core.ImeRequest::SetPurpose(@core.ImePurpose::DateTime),
-  )
-  self.request_hint_and_purpose_ok.val = window.request_ime_update(
-    @core.ImeRequest::SetHintAndPurpose(
-      @core.ImeHint::multiline().union(@core.ImeHint::sensitive_data()),
-      @core.ImePurpose::Email,
-    ),
-  )
-  self.request_surrounding_ok.val = window.request_ime_update(
-    @core.ImeRequest::SetSurroundingText(Some(surrounding_text)),
-  )
+  self.request_purpose_ok.val = try {
+    window.request_ime_update(
+      @core.ImeRequest::SetPurpose(@core.ImePurpose::DateTime),
+    )
+    true
+  } catch {
+    _ => false
+  }
+  self.request_hint_and_purpose_ok.val = try {
+    window.request_ime_update(
+      @core.ImeRequest::SetHintAndPurpose(
+        @core.ImeHint::multiline().union(@core.ImeHint::sensitive_data()),
+        @core.ImePurpose::Email,
+      ),
+    )
+    true
+  } catch {
+    _ => false
+  }
+  self.request_surrounding_ok.val = try {
+    window.request_ime_update(
+      @core.ImeRequest::SetSurroundingText(Some(surrounding_text)),
+    )
+    true
+  } catch {
+    _ => false
+  }
   self.surrounding_text_after_request.val = window.ime_surrounding_text()
-  self.request_surrounding_ok.val = self.request_surrounding_ok.val &&
+  let clear_surrounding_ok = try {
     window.request_ime_update(@core.ImeRequest::SetSurroundingText(None))
+    true
+  } catch {
+    _ => false
+  }
+  self.request_surrounding_ok.val = self.request_surrounding_ok.val &&
+    clear_surrounding_ok
   self.surrounding_text_after_clear.val = window.ime_surrounding_text()
-  self.request_cursor_ok.val = window.request_ime_update(
-    @core.ImeRequest::SetCursorArea(
-      @dpi.PhysicalPosition::new(48, 96),
-      @dpi.PhysicalSize::new(20, 32),
-    ),
-  )
-  self.request_allowed_ok.val = window.request_ime_update(
-    @core.ImeRequest::Disable,
-  )
-  self.cursor_when_disabled_error.val = match
-    window.request_ime_update_result(
+  self.request_cursor_ok.val = try {
+    window.request_ime_update(
       @core.ImeRequest::SetCursorArea(
         @dpi.PhysicalPosition::new(48, 96),
         @dpi.PhysicalSize::new(20, 32),
       ),
-    ) {
-    Ok(_) => None
-    Err(error) => Some(error)
+    )
+    true
+  } catch {
+    _ => false
+  }
+  self.request_allowed_ok.val = try {
+    window.request_ime_update(@core.ImeRequest::Disable)
+    true
+  } catch {
+    _ => false
+  }
+  self.cursor_when_disabled_error.val = try {
+    window.request_ime_update(
+      @core.ImeRequest::SetCursorArea(
+        @dpi.PhysicalPosition::new(48, 96),
+        @dpi.PhysicalSize::new(20, 32),
+      ),
+    )
+    None
+  } catch {
+    error => Some(error)
   }
   window.set_ime_cursor_area(
     @dpi.PhysicalPosition::new(48, 96),
@@ -1683,16 +1706,34 @@ impl ApplicationHandler for WindowAuxiliaryApiApp with can_create_surfaces(
 
   window.pre_present_notify()
   window.reset_dead_keys()
-  let _ = window.set_cursor_position(@dpi.PhysicalPosition::new(24, 24))
-  let _ = window.set_cursor_grab(@core.CursorGrabMode::Locked)
-  let _ = window.set_cursor_grab(@core.CursorGrabMode::None)
-  self.cursor_grab_confined.val = window.set_cursor_grab(
-    @core.CursorGrabMode::Confined,
-  )
-  self.drag_window_started.val = window.drag_window()
-  self.drag_resize_started.val = window.drag_resize_window(
-    @core.ResizeDirection::SouthEast,
-  )
+  window.set_cursor_position(@dpi.PhysicalPosition::new(24, 24)) catch {
+    _ => ()
+  }
+  window.set_cursor_grab(@core.CursorGrabMode::Locked) catch {
+    _ => ()
+  }
+  window.set_cursor_grab(@core.CursorGrabMode::None) catch {
+    _ => ()
+  }
+  self.cursor_grab_confined.val = try {
+    window.set_cursor_grab(@core.CursorGrabMode::Confined)
+    false
+  } catch {
+    @core.RequestError::NotSupported(_) => true
+    _ => false
+  }
+  self.drag_window_started.val = try {
+    window.drag_window()
+    true
+  } catch {
+    _ => false
+  }
+  self.drag_resize_started.val = try {
+    window.drag_resize_window(@core.ResizeDirection::SouthEast)
+    true
+  } catch {
+    _ => false
+  }
   window.show_window_menu(@dpi.PhysicalPosition::new(8, 8))
   window.request_user_attention(Some(@core.UserAttentionType::Informational))
   window.request_user_attention(Some(@core.UserAttentionType::Critical))
@@ -2847,23 +2888,22 @@ test "window ime configuration updates native state" {
   assert_true(request_hint_and_purpose_ok.val)
   assert_true(request_purpose_ok.val)
   assert_true(request_cursor_ok.val)
-  assert_eq(
-    enable_when_enabled_error.val,
-    Some(@core.ImeRequestError::AlreadyEnabled),
+  assert_true(
+    match enable_when_enabled_error.val {
+      Some(@core.ImeRequestError::AlreadyEnabled) => true
+      _ => false
+    },
   )
-  assert_eq(
-    cursor_when_disabled_error.val,
-    Some(@core.ImeRequestError::NotEnabled),
+  assert_true(
+    match cursor_when_disabled_error.val {
+      Some(@core.ImeRequestError::NotEnabled) => true
+      _ => false
+    },
   )
   assert_true(request_surrounding_ok.val)
   assert_eq(
     surrounding_text_after_request.val,
-    Some(
-      match @core.ImeSurroundingText::new("hello world", 5, 0) {
-        Ok(value) => value
-        Err(_) => abort("expected surrounding text to be valid")
-      },
-    ),
+    Some(try! @core.ImeSurroundingText::new("hello world", 5, 0)),
   )
   assert_eq(surrounding_text_after_clear.val, None)
   assert_eq(
@@ -2905,7 +2945,7 @@ test "window auxiliary api methods are available on macos" {
     }
     None => abort("expected safe area to be captured")
   }
-  assert_false(cursor_grab_confined.val)
+  assert_true(cursor_grab_confined.val)
   let _ = drag_window_started.val
   assert_false(drag_resize_started.val)
 }

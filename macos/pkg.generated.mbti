@@ -79,8 +79,8 @@ pub struct Window {
 pub fn Window::available_monitors(Self) -> Array[@core.MonitorHandle]
 pub fn Window::current_monitor(Self) -> @core.MonitorHandle?
 pub fn Window::cursor(Self) -> @core.CursorIcon
-pub fn Window::drag_resize_window(Self, @core.ResizeDirection) -> Bool
-pub fn Window::drag_window(Self) -> Bool
+pub fn Window::drag_resize_window(Self, @core.ResizeDirection) -> Unit raise @core.RequestError
+pub fn Window::drag_window(Self) -> Unit raise @core.RequestError
 pub fn Window::enabled_buttons(Self) -> @core.WindowButtons
 pub fn Window::focus_window(Self) -> Unit
 pub fn Window::fullscreen(Self) -> @core.Fullscreen?
@@ -111,8 +111,7 @@ pub fn Window::outer_position(Self) -> @dpi.PhysicalPosition
 pub fn Window::outer_size(Self) -> @dpi.PhysicalSize
 pub fn Window::pre_present_notify(Self) -> Unit
 pub fn Window::primary_monitor(Self) -> @core.MonitorHandle?
-pub fn Window::request_ime_update(Self, @core.ImeRequest) -> Bool
-pub fn Window::request_ime_update_result(Self, @core.ImeRequest) -> Result[Unit, @core.ImeRequestError]
+pub fn Window::request_ime_update(Self, @core.ImeRequest) -> Unit raise @core.ImeRequestError
 pub fn Window::request_redraw(Self) -> Unit
 pub fn Window::request_surface_size(Self, @dpi.PhysicalSize) -> Unit
 pub fn Window::request_user_attention(Self, @core.UserAttentionType?) -> Unit
@@ -122,9 +121,9 @@ pub fn Window::scale_factor(Self) -> Double
 pub fn Window::set_blur(Self, Bool) -> Unit
 pub fn Window::set_content_protected(Self, Bool) -> Unit
 pub fn Window::set_cursor(Self, @core.CursorIcon) -> Unit
-pub fn Window::set_cursor_grab(Self, @core.CursorGrabMode) -> Bool
+pub fn Window::set_cursor_grab(Self, @core.CursorGrabMode) -> Unit raise @core.RequestError
 pub fn Window::set_cursor_hittest(Self, Bool) -> Unit
-pub fn Window::set_cursor_position(Self, @dpi.PhysicalPosition) -> Bool
+pub fn Window::set_cursor_position(Self, @dpi.PhysicalPosition) -> Unit raise @core.RequestError
 pub fn Window::set_cursor_visible(Self, Bool) -> Unit
 pub fn Window::set_decorations(Self, Bool) -> Unit
 pub fn Window::set_enabled_buttons(Self, @core.WindowButtons) -> Unit

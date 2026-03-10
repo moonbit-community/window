@@ -100,11 +100,11 @@ pub fn ImeHint::bits(self : ImeHint) -> Int {
 }
 
 ///|
-pub(all) enum ImeSurroundingTextError {
+pub(all) suberror ImeSurroundingTextError {
   TextTooLong(Int)
   CursorOutOfRange(Int, Int)
   AnchorOutOfRange(Int, Int)
-} derive(Eq, Show)
+} derive(Show)
 
 ///|
 pub struct ImeSurroundingText {
@@ -118,18 +118,18 @@ pub fn ImeSurroundingText::new(
   text : String,
   cursor : Int,
   anchor : Int,
-) -> Result[ImeSurroundingText, ImeSurroundingTextError] {
+) -> ImeSurroundingText raise ImeSurroundingTextError {
   let byte_len = text.length()
   if byte_len > 4000 {
-    return Err(ImeSurroundingTextError::TextTooLong(byte_len))
+    raise ImeSurroundingTextError::TextTooLong(byte_len)
   }
   if cursor < 0 || cursor > byte_len {
-    return Err(ImeSurroundingTextError::CursorOutOfRange(cursor, byte_len))
+    raise ImeSurroundingTextError::CursorOutOfRange(cursor, byte_len)
   }
   if anchor < 0 || anchor > byte_len {
-    return Err(ImeSurroundingTextError::AnchorOutOfRange(anchor, byte_len))
+    raise ImeSurroundingTextError::AnchorOutOfRange(anchor, byte_len)
   }
-  Ok({ text, cursor, anchor })
+  { text, cursor, anchor }
 }
 
 ///|
@@ -190,11 +190,17 @@ pub(all) enum ImeRequest {
 } derive(Eq, Show)
 
 ///|
-pub(all) enum ImeRequestError {
+pub(all) suberror ImeRequestError {
   NotEnabled
   AlreadyEnabled
   NotSupported
-} derive(Eq, Show)
+} derive(Show)
+
+///|
+pub(all) suberror RequestError {
+  NotSupported(String)
+  Ignored(String)
+} derive(Show)
 
 ///|
 pub struct ActivationToken {
@@ -319,10 +325,10 @@ pub fn PlatformWindowAttributes::simple_fullscreen(
 }
 
 ///|
-pub(all) enum BadIcon {
+pub(all) suberror BadIcon {
   ByteCountNotDivisibleBy4(Int)
   DimensionsVsPixelCount(Int, Int, Int, Int)
-} derive(Eq, Show)
+} derive(Show)
 
 ///|
 pub struct Icon {
@@ -332,24 +338,18 @@ pub struct Icon {
 } derive(Eq, Show)
 
 ///|
-pub fn Icon::new(
-  rgba : Bytes,
-  width : Int,
-  height : Int,
-) -> Result[Icon, BadIcon] {
+pub fn Icon::new(rgba : Bytes, width : Int, height : Int) -> Icon raise BadIcon {
   if rgba.length() % 4 != 0 {
-    return Err(BadIcon::ByteCountNotDivisibleBy4(rgba.length()))
+    raise BadIcon::ByteCountNotDivisibleBy4(rgba.length())
   }
   let pixel_count = rgba.length() / 4
   let width_x_height = width * height
   if width <= 0 || height <= 0 || pixel_count != width_x_height {
-    Err(
-      BadIcon::DimensionsVsPixelCount(
-        width, height, width_x_height, pixel_count,
-      ),
+    raise BadIcon::DimensionsVsPixelCount(
+      width, height, width_x_height, pixel_count,
     )
   } else {
-    Ok({ width, height, rgba })
+    { width, height, rgba }
   }
 }
 
