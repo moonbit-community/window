@@ -44,12 +44,10 @@ test "window attributes builders update fields" {
     .with_visible(false)
     .with_resizable(false)
     .with_surface_size(@dpi.PhysicalSize::new(1024, 768).into_size())
-    .with_surface_resize_increments(
-      Some(@dpi.PhysicalSize::new(32, 24).into_size()),
-    )
-    .with_min_surface_size(Some(@dpi.PhysicalSize::new(640, 480).into_size()))
-    .with_max_surface_size(Some(@dpi.PhysicalSize::new(1920, 1080).into_size()))
-    .with_position(Some(@dpi.PhysicalPosition::new(320, 180).into_position()))
+    .with_surface_resize_increments(@dpi.PhysicalSize::new(32, 24).into_size())
+    .with_min_surface_size(@dpi.PhysicalSize::new(640, 480).into_size())
+    .with_max_surface_size(@dpi.PhysicalSize::new(1920, 1080).into_size())
+    .with_position(@dpi.PhysicalPosition::new(320, 180).into_position())
     .with_parent_window(Some(parent_window))
     .with_platform_attributes(
       PlatformWindowAttributes::default().with_simple_fullscreen(Some(true)),

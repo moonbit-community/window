@@ -626,36 +626,36 @@ pub fn WindowAttributes::with_surface_size(
 ///|
 pub fn WindowAttributes::with_surface_resize_increments(
   self : WindowAttributes,
-  size : @dpi.Size?,
+  size : @dpi.Size,
 ) -> WindowAttributes {
-  self.surface_resize_increments = size
+  self.surface_resize_increments = Some(size)
   self
 }
 
 ///|
 pub fn WindowAttributes::with_min_surface_size(
   self : WindowAttributes,
-  size : @dpi.Size?,
+  size : @dpi.Size,
 ) -> WindowAttributes {
-  self.min_surface_size = size
+  self.min_surface_size = Some(size)
   self
 }
 
 ///|
 pub fn WindowAttributes::with_max_surface_size(
   self : WindowAttributes,
-  size : @dpi.Size?,
+  size : @dpi.Size,
 ) -> WindowAttributes {
-  self.max_surface_size = size
+  self.max_surface_size = Some(size)
   self
 }
 
 ///|
 pub fn WindowAttributes::with_position(
   self : WindowAttributes,
-  position : @dpi.Position?,
+  position : @dpi.Position,
 ) -> WindowAttributes {
-  self.position = position
+  self.position = Some(position)
   self
 }
 

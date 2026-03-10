@@ -1059,9 +1059,7 @@ impl ApplicationHandler for SurfaceResizeIncrementsApp with can_create_surfaces(
   let window = event_loop.create_window(
     @core.WindowAttributes::default()
     .with_visible(false)
-    .with_surface_resize_increments(
-      Some(@dpi.PhysicalSize::new(64, 48).into_size()),
-    ),
+    .with_surface_resize_increments(@dpi.PhysicalSize::new(64, 48).into_size()),
   )
   self.increments_initial.val = window.surface_resize_increments()
   window.set_surface_resize_increments(None)
@@ -1182,7 +1180,7 @@ impl ApplicationHandler for AttributesPositionApp with can_create_surfaces(
   let window = event_loop.create_window(
     @core.WindowAttributes::default()
     .with_visible(false)
-    .with_position(Some(@dpi.PhysicalPosition::new(480, 260).into_position())),
+    .with_position(@dpi.PhysicalPosition::new(480, 260).into_position()),
   )
   self.window.val = Some(window)
 }
@@ -1326,7 +1324,7 @@ impl ApplicationHandler for AttributesSurfaceConstraintsApp with can_create_surf
     @core.WindowAttributes::default()
     .with_visible(false)
     .with_surface_size(@dpi.PhysicalSize::new(1600, 1200).into_size())
-    .with_max_surface_size(Some(@dpi.PhysicalSize::new(1280, 720).into_size())),
+    .with_max_surface_size(@dpi.PhysicalSize::new(1280, 720).into_size()),
   )
   self.window.val = Some(window)
 }
