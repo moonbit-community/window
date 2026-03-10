@@ -86,8 +86,9 @@ pub fn Window::safe_area(self : Window) -> @dpi.PhysicalInsets {
 pub fn Window::request_surface_size(
   self : Window,
   size : @dpi.PhysicalSize,
-) -> Unit {
+) -> @dpi.PhysicalSize? {
   set_surface_size(self.id.into_raw(), size.width(), size.height())
+  Some(self.surface_size())
 }
 
 ///|

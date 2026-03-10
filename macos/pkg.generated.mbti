@@ -113,7 +113,7 @@ pub fn Window::pre_present_notify(Self) -> Unit
 pub fn Window::primary_monitor(Self) -> @core.MonitorHandle?
 pub fn Window::request_ime_update(Self, @core.ImeRequest) -> Unit raise @core.ImeRequestError
 pub fn Window::request_redraw(Self) -> Unit
-pub fn Window::request_surface_size(Self, @dpi.PhysicalSize) -> Unit
+pub fn Window::request_surface_size(Self, @dpi.PhysicalSize) -> @dpi.PhysicalSize?
 pub fn Window::request_user_attention(Self, @core.UserAttentionType?) -> Unit
 pub fn Window::reset_dead_keys(Self) -> Unit
 pub fn Window::safe_area(Self) -> @dpi.PhysicalInsets

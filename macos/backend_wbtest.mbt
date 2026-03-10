@@ -435,6 +435,7 @@ struct AttributesPositionApp {
 
 ///|
 struct RequestSurfaceSizeApp {
+  request_result : Ref[@dpi.PhysicalSize?]
   resized : Ref[@dpi.PhysicalSize?]
   surface_size : Ref[@dpi.PhysicalSize?]
   window : Ref[Window?]
@@ -1092,7 +1093,9 @@ impl ApplicationHandler for RequestSurfaceSizeApp with can_create_surfaces(
     @core.WindowAttributes::default().with_visible(false),
   )
   self.window.val = Some(window)
-  window.request_surface_size(@dpi.PhysicalSize::new(1200, 900))
+  self.request_result.val = window.request_surface_size(
+    @dpi.PhysicalSize::new(1200, 900),
+  )
 }
 
 ///|
@@ -1126,7 +1129,7 @@ impl ApplicationHandler for MinSurfaceSizeApp with can_create_surfaces(
   self.window.val = Some(window)
   window.set_min_surface_size(Some(@dpi.PhysicalSize::new(960, 720)))
   self.min_surface_size.val = window.min_surface_size()
-  window.request_surface_size(@dpi.PhysicalSize::new(640, 480))
+  let _ = window.request_surface_size(@dpi.PhysicalSize::new(640, 480))
 }
 
 ///|
@@ -1160,7 +1163,7 @@ impl ApplicationHandler for MaxSurfaceSizeApp with can_create_surfaces(
   self.window.val = Some(window)
   window.set_max_surface_size(Some(@dpi.PhysicalSize::new(1024, 768)))
   self.max_surface_size.val = window.max_surface_size()
-  window.request_surface_size(@dpi.PhysicalSize::new(1400, 1050))
+  let _ = window.request_surface_size(@dpi.PhysicalSize::new(1400, 1050))
 }
 
 ///|
@@ -2448,11 +2451,18 @@ test "window attributes position applies at creation time" {
 ///|
 test "window request surface size delivers resized event" {
   let event_loop = EventLoop::new()
+  let request_result = Ref::new(None)
   let resized = Ref::new(None)
   let surface_size = Ref::new(None)
   let window = Ref::new(None)
-  let app : RequestSurfaceSizeApp = { resized, surface_size, window }
+  let app : RequestSurfaceSizeApp = {
+    request_result,
+    resized,
+    surface_size,
+    window,
+  }
   event_loop.run_app(app)
+  assert_eq(request_result.val, Some(@dpi.PhysicalSize::new(1200, 900)))
   assert_eq(resized.val, Some(@dpi.PhysicalSize::new(1200, 900)))
   assert_eq(surface_size.val, Some(@dpi.PhysicalSize::new(1200, 900)))
 }
