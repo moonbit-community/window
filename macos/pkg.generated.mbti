@@ -37,8 +37,6 @@ pub fn native_window_height(Int) -> Int
 
 pub fn native_window_request_redraw(Int) -> Unit
 
-pub fn native_window_should_close(Int) -> Bool
-
 pub fn native_window_take_close_requested(Int) -> Bool
 
 pub fn native_window_take_redraw_requested(Int) -> Bool

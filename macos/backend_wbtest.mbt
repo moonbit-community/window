@@ -272,6 +272,13 @@ struct ProxyWakeApp {
 }
 
 ///|
+struct ProxyWakeWithoutWindowApp {
+  about_to_wait_count : Ref[Int]
+  wake_requested : Ref[Bool]
+  wake_seen : Ref[Bool]
+}
+
+///|
 struct FocusApp {
   focused_values : Array[Bool]
 }
@@ -2015,10 +2022,56 @@ impl ApplicationHandler for ProxyWakeApp with proxy_wake_up(self, event_loop) {
 }
 
 ///|
+impl ApplicationHandler for ProxyWakeWithoutWindowApp with can_create_surfaces(
+  _self,
+  _event_loop,
+) {
+  ()
+}
+
+///|
+impl ApplicationHandler for ProxyWakeWithoutWindowApp with about_to_wait(
+  self,
+  event_loop,
+) {
+  self.about_to_wait_count.val = self.about_to_wait_count.val + 1
+  if self.wake_requested.val == false {
+    self.wake_requested.val = true
+    let proxy = event_loop.create_proxy()
+    proxy.wake_up()
+  }
+}
+
+///|
+impl ApplicationHandler for ProxyWakeWithoutWindowApp with proxy_wake_up(
+  self,
+  event_loop,
+) {
+  self.wake_seen.val = true
+  event_loop.exit()
+}
+
+///|
 test "event loop proxy wake up is delivered" {
   let wake_seen = Ref::new(false)
   let event_loop = EventLoop::new()
   event_loop.run_app({ wake_seen, })
+  assert_true(wake_seen.val)
+}
+
+///|
+test "event loop keeps running without windows and can be woken by proxy" {
+  let event_loop = EventLoop::new()
+  let about_to_wait_count = Ref::new(0)
+  let wake_requested = Ref::new(false)
+  let wake_seen = Ref::new(false)
+  let app : ProxyWakeWithoutWindowApp = {
+    about_to_wait_count,
+    wake_requested,
+    wake_seen,
+  }
+  event_loop.run_app(app)
+  assert_true(about_to_wait_count.val > 0)
   assert_true(wake_seen.val)
 }
 

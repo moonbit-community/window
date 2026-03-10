@@ -758,11 +758,6 @@ fn native_window_height(_window_id : Int) -> Int {
 }
 
 ///|
-fn native_window_should_close(_window_id : Int) -> Bool {
-  true
-}
-
-///|
 fn native_window_take_close_requested(_window_id : Int) -> Bool {
   false
 }

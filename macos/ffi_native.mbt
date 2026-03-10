@@ -935,9 +935,6 @@ extern "C" fn native_monitor_current_video_mode_index(
 extern "C" fn native_window_scale_factor(window_id : Int) -> Double = "mbw_window_scale_factor"
 
 ///|
-pub extern "C" fn native_window_should_close(window_id : Int) -> Bool = "mbw_window_should_close"
-
-///|
 pub extern "C" fn native_window_take_close_requested(window_id : Int) -> Bool = "mbw_window_take_close_requested"
 
 ///|

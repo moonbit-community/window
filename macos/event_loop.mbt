@@ -1499,16 +1499,6 @@ fn EventLoop::close_windows(self : EventLoop) -> Unit {
 }
 
 ///|
-fn EventLoop::has_open_windows(self : EventLoop) -> Bool {
-  for raw_id in self.window_ids {
-    if native_window_should_close(raw_id) == false {
-      return true
-    }
-  }
-  false
-}
-
-///|
 fn[A : ApplicationHandler] EventLoop::dispatch_window_events(
   self : EventLoop,
   app : A,
@@ -1645,7 +1635,7 @@ pub fn[A : ApplicationHandler] EventLoop::run_app(
       break
     }
     app.about_to_wait(self)
-    if self.exit_requested || self.has_open_windows() == false {
+    if self.exit_requested {
       break
     }
     app.new_events(self, self.wait_next_iteration())
