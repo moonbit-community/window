@@ -1,6 +1,7 @@
 ///|
 pub struct Window {
   priv id : @core.WindowId
+  priv mut fullscreen_state : @core.Fullscreen?
 } derive(Eq, Show)
 
 ///|
@@ -208,6 +209,7 @@ pub fn Window::set_fullscreen(
   self : Window,
   fullscreen : @core.Fullscreen?,
 ) -> Unit {
+  self.fullscreen_state = fullscreen
   let raw_id = self.id.into_raw()
   match fullscreen {
     None => set_window_fullscreen(raw_id, false)
@@ -241,8 +243,12 @@ pub fn Window::is_maximized(self : Window) -> Bool {
 ///|
 pub fn Window::fullscreen(self : Window) -> @core.Fullscreen? {
   if window_fullscreen(self.id.into_raw()) {
-    Some(@core.Fullscreen::Borderless(None))
+    match self.fullscreen_state {
+      Some(fullscreen) => Some(fullscreen)
+      None => Some(@core.Fullscreen::Borderless(self.current_monitor()))
+    }
   } else {
+    self.fullscreen_state = None
     None
   }
 }
@@ -1395,7 +1401,25 @@ pub fn EventLoop::create_window(
     None => ()
   }
   self.window_ids.push(raw_id)
-  { id: @core.WindowId::from_raw(raw_id) }
+  {
+    id: @core.WindowId::from_raw(raw_id),
+    fullscreen_state: initial_fullscreen_state(attributes),
+  }
+}
+
+///|
+fn initial_fullscreen_state(
+  attributes : @core.WindowAttributes,
+) -> @core.Fullscreen? {
+  match attributes.fullscreen() {
+    Some(fullscreen) => Some(fullscreen)
+    None =>
+      if attributes.platform_attributes().simple_fullscreen() == Some(true) {
+        Some(@core.Fullscreen::Borderless(None))
+      } else {
+        None
+      }
+  }
 }
 
 ///|

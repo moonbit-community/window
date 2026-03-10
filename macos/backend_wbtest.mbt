@@ -305,6 +305,13 @@ struct WindowFullscreenStateApp {
 }
 
 ///|
+struct WindowFullscreenRoundtripApp {
+  borderless_targeted : Ref[@core.Fullscreen?]
+  exclusive : Ref[@core.Fullscreen?]
+  has_monitor : Ref[Bool]
+}
+
+///|
 struct WindowDecorationsApp {
   decorated_after_disable : Ref[Bool]
   decorated_after_enable : Ref[Bool]
@@ -687,6 +694,36 @@ impl ApplicationHandler for WindowFullscreenStateApp with can_create_surfaces(
   self.fullscreen_after_disable.val = window.fullscreen()
   window.set_fullscreen(Some(@core.Fullscreen::Borderless(None)))
   self.fullscreen_after_enable.val = window.fullscreen()
+  event_loop.exit()
+}
+
+///|
+impl ApplicationHandler for WindowFullscreenRoundtripApp with can_create_surfaces(
+  self,
+  event_loop,
+) {
+  let window = event_loop.create_window(
+    @core.WindowAttributes::default().with_visible(false),
+  )
+  match window.current_monitor() {
+    Some(monitor) => {
+      self.has_monitor.val = true
+      let mode = match monitor.current_video_mode() {
+        Some(mode) => mode
+        None => @core.VideoMode::new(monitor.surface_size(), None, None)
+      }
+      window.set_fullscreen(Some(@core.Fullscreen::Exclusive(monitor, mode)))
+      self.exclusive.val = window.fullscreen()
+      window.set_fullscreen(Some(@core.Fullscreen::Borderless(Some(monitor))))
+      self.borderless_targeted.val = window.fullscreen()
+      window.set_fullscreen(None)
+    }
+    None => {
+      self.has_monitor.val = false
+      self.exclusive.val = None
+      self.borderless_targeted.val = None
+    }
+  }
   event_loop.exit()
 }
 
@@ -2096,6 +2133,29 @@ test "window fullscreen state can be controlled" {
     fullscreen_after_enable.val,
     Some(@core.Fullscreen::Borderless(None)),
   )
+}
+
+///|
+test "window fullscreen roundtrip keeps exclusive and targeted borderless modes" {
+  let event_loop = EventLoop::new()
+  let has_monitor = Ref::new(false)
+  let exclusive = Ref::new(None)
+  let borderless_targeted = Ref::new(None)
+  let app : WindowFullscreenRoundtripApp = {
+    borderless_targeted,
+    exclusive,
+    has_monitor,
+  }
+  event_loop.run_app(app)
+  if has_monitor.val {
+    assert_true(exclusive.val is Some(@core.Fullscreen::Exclusive(_, _)))
+    assert_true(
+      borderless_targeted.val is Some(@core.Fullscreen::Borderless(Some(_))),
+    )
+  } else {
+    assert_eq(exclusive.val, None)
+    assert_eq(borderless_targeted.val, None)
+  }
 }
 
 ///|
