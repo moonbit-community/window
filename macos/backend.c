@@ -5503,11 +5503,29 @@ void mbw_window_focus(int window_id) {
   if (!window || window->should_close) {
     return;
   }
+  if (!window->visible || window->minimized) {
+    return;
+  }
   window->focused = 1;
   window->pending_focus_value = 1;
   window->pending_focused_changed = 1;
 #if defined(__APPLE__)
-  if (window->window && window->visible) {
+  if (window->window) {
+    id app = g_ns_app;
+    if (!app) {
+      Class app_class = objc_getClass("NSApplication");
+      if (app_class) {
+        app = ((id(*)(id, SEL))objc_msgSend)(
+          (id)app_class,
+          mbw_sel("sharedApplication"));
+      }
+    }
+    if (app) {
+      ((void(*)(id, SEL, mbw_bool_t))objc_msgSend)(
+        app,
+        mbw_sel("activateIgnoringOtherApps:"),
+        YES);
+    }
     ((void(*)(id, SEL, id))objc_msgSend)(
       (id)window->window,
       mbw_sel("makeKeyAndOrderFront:"),

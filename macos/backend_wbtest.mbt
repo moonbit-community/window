@@ -285,6 +285,12 @@ struct FocusApp {
 
 ///|
 struct FocusWindowApp {
+  has_focus : Ref[Bool?]
+  window : Ref[Window?]
+}
+
+///|
+struct HiddenFocusWindowApp {
   focused_event : Ref[Bool?]
   has_focus : Ref[Bool?]
   window : Ref[Window?]
@@ -618,15 +624,47 @@ impl ApplicationHandler for FocusWindowApp with can_create_surfaces(
   self,
   event_loop,
 ) {
-  let window = event_loop.create_window(
-    @core.WindowAttributes::default().with_visible(false),
-  )
+  let window = event_loop.create_window(@core.WindowAttributes::default())
   self.window.val = Some(window)
   window.focus_window()
 }
 
 ///|
 impl ApplicationHandler for FocusWindowApp with window_event(
+  _self,
+  _event_loop,
+  _id,
+  event,
+) {
+  match event {
+    @core.WindowEvent::Focused(_focused) => ()
+    _ => ()
+  }
+}
+
+///|
+impl ApplicationHandler for FocusWindowApp with about_to_wait(self, event_loop) {
+  match self.window.val {
+    Some(window) => self.has_focus.val = Some(window.has_focus())
+    None => ()
+  }
+  event_loop.exit()
+}
+
+///|
+impl ApplicationHandler for HiddenFocusWindowApp with can_create_surfaces(
+  self,
+  event_loop,
+) {
+  let window = event_loop.create_window(
+    @core.WindowAttributes::default().with_active(false).with_visible(false),
+  )
+  self.window.val = Some(window)
+  window.focus_window()
+}
+
+///|
+impl ApplicationHandler for HiddenFocusWindowApp with window_event(
   self,
   event_loop,
   _id,
@@ -643,6 +681,18 @@ impl ApplicationHandler for FocusWindowApp with window_event(
     }
     _ => ()
   }
+}
+
+///|
+impl ApplicationHandler for HiddenFocusWindowApp with about_to_wait(
+  self,
+  event_loop,
+) {
+  match self.window.val {
+    Some(window) => self.has_focus.val = Some(window.has_focus())
+    None => ()
+  }
+  event_loop.exit()
 }
 
 ///|
@@ -2130,13 +2180,23 @@ test "focused events are delivered" {
 ///|
 test "focus_window updates focus state and has_focus" {
   let event_loop = EventLoop::new()
+  let has_focus = Ref::new(None)
+  let window = Ref::new(None)
+  let app : FocusWindowApp = { has_focus, window }
+  event_loop.run_app(app)
+  assert_eq(has_focus.val, Some(true))
+}
+
+///|
+test "focus_window is ignored for hidden windows" {
+  let event_loop = EventLoop::new()
   let focused_event = Ref::new(None)
   let has_focus = Ref::new(None)
   let window = Ref::new(None)
-  let app : FocusWindowApp = { focused_event, has_focus, window }
+  let app : HiddenFocusWindowApp = { focused_event, has_focus, window }
   event_loop.run_app(app)
-  assert_eq(focused_event.val, Some(true))
-  assert_eq(has_focus.val, Some(true))
+  assert_eq(focused_event.val, None)
+  assert_eq(has_focus.val, Some(false))
 }
 
 ///|
