@@ -34,6 +34,9 @@ extern "C" fn window_titlebar_buttons_hidden_for_test(window_id : Int) -> Bool =
 extern "C" fn window_fullsize_content_view_for_test(window_id : Int) -> Bool = "mbw_test_window_fullsize_content_view"
 
 ///|
+extern "C" fn window_tabbing_mode_for_test(window_id : Int) -> Int = "mbw_test_window_tabbing_mode"
+
+///|
 struct LifecycleCallbacksApp {
   can_create_surfaces_called : Ref[Bool]
   destroy_surfaces_called : Ref[Bool]
@@ -307,6 +310,7 @@ test "macos platform window attributes apply tabbing option-as-alt and shadow at
   )
   assert_false(window.has_shadow())
   assert_eq(window.tabbing_identifier(), "group-a")
+  assert_eq(window_tabbing_mode_for_test(window.id().into_raw()), 1)
   assert_eq(window.option_as_alt(), @core.OptionAsAlt::OnlyLeft)
   assert_eq(window.num_tabs(), 1)
 }
@@ -319,6 +323,7 @@ test "macos tabbing and option-as-alt APIs reflect runtime updates" {
   )
   window.set_tabbing_identifier("group-b")
   assert_eq(window.tabbing_identifier(), "group-b")
+  assert_eq(window_tabbing_mode_for_test(window.id().into_raw()), 0)
   window.select_next_tab()
   window.select_previous_tab()
   window.select_tab_at_index(0)

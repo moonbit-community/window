@@ -794,6 +794,11 @@ fn set_window_tabbing_identifier(
 }
 
 ///|
+fn set_window_tabbing_mode_preferred(_window_id : Int) -> Unit {
+  ()
+}
+
+///|
 fn select_window_next_tab(_window_id : Int) -> Unit {
   ()
 }

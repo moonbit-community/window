@@ -527,6 +527,7 @@ typedef int32_t (*mbw_cgs_set_window_blur_radius_fn)(
 #define MBW_NSWINDOW_BUTTON_MAXIMIZE ((mbw_nsinteger_t)2)
 #define MBW_NSWINDOW_SHARING_NONE ((mbw_nsuint_t)0)
 #define MBW_NSWINDOW_SHARING_READ_ONLY ((mbw_nsuint_t)1)
+#define MBW_NSWINDOW_TABBING_MODE_PREFERRED ((mbw_nsinteger_t)1)
 #define MBW_NS_REQUEST_USER_ATTENTION_CRITICAL ((mbw_nsinteger_t)0)
 #define MBW_NS_REQUEST_USER_ATTENTION_INFORMATIONAL ((mbw_nsinteger_t)10)
 #define MBW_NSDRAG_OPERATION_NONE ((mbw_nsuint_t)0)
@@ -4418,6 +4419,12 @@ int mbw_window_create_utf8(
             mbw_sel("setWantsBestResolutionOpenGLSurface:"),
             YES);
         }
+        if (window->content_view) {
+          ((void(*)(id, SEL, id))objc_msgSend)(
+            ns_window,
+            mbw_sel("setInitialFirstResponder:"),
+            (id)window->content_view);
+        }
         Class delegate_class = mbw_get_window_delegate_class();
         if (delegate_class) {
           id delegate = mbw_msg_id((id)delegate_class, "new");
@@ -6493,6 +6500,21 @@ bool mbw_test_window_fullsize_content_view(int window_id) {
   return window->fullsize_content_view != 0;
 }
 
+int mbw_test_window_tabbing_mode(int window_id) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  if (!window) {
+    return -1;
+  }
+#if defined(__APPLE__)
+  if (window->window) {
+    return (int)((mbw_nsinteger_t(*)(id, SEL))objc_msgSend)(
+      (id)window->window,
+      mbw_sel("tabbingMode"));
+  }
+#endif
+  return -1;
+}
+
 void mbw_test_window_queue_destroyed(int window_id) {
   mbw_window_t *window = mbw_find_window(window_id);
   if (!window) {
@@ -7228,6 +7250,21 @@ void mbw_window_set_tabbing_identifier_utf8(
 #else
   (void)identifier;
   (void)identifier_len;
+#endif
+}
+
+void mbw_window_set_tabbing_mode_preferred(int window_id) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  if (!window) {
+    return;
+  }
+#if defined(__APPLE__)
+  if (window->window) {
+    ((void(*)(id, SEL, mbw_nsinteger_t))objc_msgSend)(
+      (id)window->window,
+      mbw_sel("setTabbingMode:"),
+      MBW_NSWINDOW_TABBING_MODE_PREFERRED);
+  }
 #endif
 }
 

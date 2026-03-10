@@ -796,6 +796,11 @@ fn set_window_tabbing_identifier(window_id : Int, identifier : String) -> Unit {
 }
 
 ///|
+fn set_window_tabbing_mode_preferred(window_id : Int) -> Unit {
+  native_window_set_tabbing_mode_preferred(window_id)
+}
+
+///|
 fn select_window_next_tab(window_id : Int) -> Unit {
   native_window_select_next_tab(window_id)
 }
@@ -1622,6 +1627,9 @@ extern "C" fn native_window_set_tabbing_identifier_utf8(
   identifier : Bytes,
   identifier_len : UInt64,
 ) -> Unit = "mbw_window_set_tabbing_identifier_utf8"
+
+///|
+extern "C" fn native_window_set_tabbing_mode_preferred(window_id : Int) -> Unit = "mbw_window_set_tabbing_mode_preferred"
 
 ///|
 extern "C" fn native_window_select_next_tab(window_id : Int) -> Unit = "mbw_window_select_next_tab"

@@ -1881,7 +1881,10 @@ pub fn EventLoop::create_window(
     option_as_alt_to_native(attributes.platform_attributes().option_as_alt()),
   )
   match attributes.platform_attributes().tabbing_identifier() {
-    Some(identifier) => set_window_tabbing_identifier(raw_id, identifier)
+    Some(identifier) => {
+      set_window_tabbing_identifier(raw_id, identifier)
+      set_window_tabbing_mode_preferred(raw_id)
+    }
     None => ()
   }
   set_window_title_hidden(
