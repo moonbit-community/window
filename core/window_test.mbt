@@ -26,6 +26,7 @@ test "window attributes follow winit defaults" {
   assert_eq(attrs.position(), None)
   assert_eq(attrs.parent_window(), None)
   assert_eq(attrs.platform_attributes().simple_fullscreen(), None)
+  assert_false(attrs.platform_attributes().borderless_game())
   assert_eq(attrs.ime_hints(), ImeHint::none())
   assert_eq(attrs.ime_purpose(), ImePurpose::Normal)
   assert_eq(attrs.window_level(), WindowLevel::Normal)
@@ -50,7 +51,9 @@ test "window attributes builders update fields" {
     .with_position(@dpi.PhysicalPosition::new(320, 180).into_position())
     .with_parent_window(Some(parent_window))
     .with_platform_attributes(
-      PlatformWindowAttributes::default().with_simple_fullscreen(Some(true)),
+      PlatformWindowAttributes::default()
+      .with_simple_fullscreen(Some(true))
+      .with_borderless_game(true),
     )
     .with_ime_hints(
       ImeHint::completion()
@@ -109,6 +112,7 @@ test "window attributes builders update fields" {
   )
   assert_eq(attrs.parent_window(), Some(parent_window))
   assert_eq(attrs.platform_attributes().simple_fullscreen(), Some(true))
+  assert_true(attrs.platform_attributes().borderless_game())
   assert_eq(
     attrs.ime_hints(),
     ImeHint::completion()
@@ -158,20 +162,89 @@ test "window buttons builders work as expected" {
 
 ///|
 test "ime capability and request models are constructible" {
-  let capabilities = ImeCapabilities::new(true, true, false)
+  let capabilities = ImeCapabilities::default()
+    .with_hint_and_purpose()
+    .with_cursor_area()
   assert_true(capabilities.hint_and_purpose())
   assert_true(capabilities.cursor_area())
   assert_false(capabilities.surrounding_text())
   let surrounding = try! ImeSurroundingText::new("editor", 3, 1)
-  let capabilities_for_enable = ImeCapabilities::new(true, true, true)
+  let surrounding_for_into_text = try! ImeSurroundingText::new("editor", 3, 1)
+  let capabilities_for_enable = ImeCapabilities::all()
   let hints = ImeHint::completion().union(ImeHint::spellcheck())
+  let request_data = ImeRequestData::default()
+    .with_hint_and_purpose(hints, ImePurpose::Email)
+    .with_cursor_area(
+      @dpi.PhysicalPosition::new(48, 96).into_position(),
+      @dpi.PhysicalSize::new(20, 32).into_size(),
+    )
+    .with_surrounding_text(surrounding)
+  let empty_request_data = ImeRequestData::default()
   assert_eq(surrounding.text(), "editor")
   assert_eq(surrounding.cursor(), 3)
   assert_eq(surrounding.anchor(), 1)
+  assert_eq(ImeSurroundingText::max_text_bytes(), 4000)
+  assert_eq(surrounding_for_into_text.into_text(), "editor")
   assert_true(hints.contains(ImeHint::completion()))
   assert_true(hints.contains(ImeHint::spellcheck()))
   assert_false(hints.contains(ImeHint::multiline()))
   assert_eq(ImeHint::from_bits(1025), ImeHint::completion())
+  assert_eq(request_data.hint(), Some(hints))
+  assert_eq(request_data.hint_and_purpose(), Some((hints, ImePurpose::Email)))
+  assert_eq(request_data.purpose(), Some(ImePurpose::Email))
+  assert_eq(
+    request_data.cursor_area_position(),
+    Some(@dpi.PhysicalPosition::new(48, 96).into_position()),
+  )
+  assert_eq(
+    request_data.cursor_area(),
+    Some(
+      (
+        @dpi.PhysicalPosition::new(48, 96).into_position(),
+        @dpi.PhysicalSize::new(20, 32).into_size(),
+      ),
+    ),
+  )
+  assert_eq(
+    request_data.cursor_area_size(),
+    Some(@dpi.PhysicalSize::new(20, 32).into_size()),
+  )
+  assert_eq(request_data.surrounding_text(), Some(surrounding))
+  assert_true(request_data.has_hint_and_purpose())
+  assert_true(request_data.has_cursor_area())
+  assert_true(request_data.has_surrounding_text())
+  assert_false(request_data.is_empty())
+  assert_true(
+    empty_request_data
+    .with_hint_and_purpose(hints, ImePurpose::Phone)
+    .without_hint_and_purpose()
+    .with_cursor_area(
+      @dpi.PhysicalPosition::new(1, 2).into_position(),
+      @dpi.PhysicalSize::new(3, 4).into_size(),
+    )
+    .without_cursor_area()
+    .with_surrounding_text(surrounding)
+    .without_surrounding_text()
+    .is_empty(),
+  )
+  let enable_request = match
+    ImeEnableRequest::new(capabilities_for_enable, request_data) {
+    Some(enable_request) => enable_request
+    None => abort("expected valid IME enable request")
+  }
+  assert_eq(enable_request.capabilities(), capabilities_for_enable)
+  assert_eq(enable_request.request_data(), request_data)
+  assert_eq(enable_request.into_raw(), (capabilities_for_enable, request_data))
+  assert_eq(
+    enable_request.into_request(),
+    ImeRequest::EnableRequest(enable_request),
+  )
+  assert_eq(request_data.into_request(), ImeRequest::Update(request_data))
+  assert_true(ImeEnableRequest::new(capabilities, request_data) is None)
+  assert_true(
+    ImeEnableRequest::new(ImeCapabilities::default(), empty_request_data)
+    is Some(_),
+  )
   assert_eq(
     ImeRequest::Enable(capabilities_for_enable),
     ImeRequest::Enable(capabilities_for_enable),

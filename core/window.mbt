@@ -149,9 +149,9 @@ pub fn ImeSurroundingText::anchor(self : ImeSurroundingText) -> Int {
 
 ///|
 pub struct ImeCapabilities {
-  priv cursor_area : Bool
-  priv hint_and_purpose : Bool
-  priv surrounding_text : Bool
+  priv mut cursor_area : Bool
+  priv mut hint_and_purpose : Bool
+  priv mut surrounding_text : Bool
 } derive(Eq, Show)
 
 ///|
@@ -181,6 +181,8 @@ pub fn ImeCapabilities::surrounding_text(self : ImeCapabilities) -> Bool {
 ///|
 pub(all) enum ImeRequest {
   Enable(ImeCapabilities)
+  EnableRequest(ImeEnableRequest)
+  Update(ImeRequestData)
   Disable
   SetAllowed(Bool)
   SetHintAndPurpose(ImeHint, ImePurpose)
@@ -396,11 +398,12 @@ pub(all) enum Fullscreen {
 ///|
 pub struct PlatformWindowAttributes {
   priv mut simple_fullscreen : Bool?
+  priv mut borderless_game : Bool
 } derive(Eq, Show)
 
 ///|
 pub fn PlatformWindowAttributes::default() -> PlatformWindowAttributes {
-  { simple_fullscreen: None }
+  { simple_fullscreen: None, borderless_game: false }
 }
 
 ///|
@@ -417,6 +420,22 @@ pub fn PlatformWindowAttributes::simple_fullscreen(
   self : PlatformWindowAttributes,
 ) -> Bool? {
   self.simple_fullscreen
+}
+
+///|
+pub fn PlatformWindowAttributes::with_borderless_game(
+  self : PlatformWindowAttributes,
+  borderless_game : Bool,
+) -> PlatformWindowAttributes {
+  self.borderless_game = borderless_game
+  self
+}
+
+///|
+pub fn PlatformWindowAttributes::borderless_game(
+  self : PlatformWindowAttributes,
+) -> Bool {
+  self.borderless_game
 }
 
 ///|

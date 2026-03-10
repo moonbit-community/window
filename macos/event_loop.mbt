@@ -44,6 +44,11 @@ pub fn EventLoop::owned_display_handle(self : EventLoop) -> UInt64 {
 }
 
 ///|
+pub fn EventLoop::display_handle(self : EventLoop) -> UInt64 {
+  self.owned_display_handle()
+}
+
+///|
 pub fn EventLoop::system_theme(_self : EventLoop) -> @core.Theme? {
   theme_from_native(system_theme())
 }
@@ -81,6 +86,16 @@ pub fn Window::rwh_06_display_handle(self : Window) -> UInt64 {
 ///|
 pub fn Window::rwh_06_window_handle(self : Window) -> UInt64 {
   window_handle(self.id.into_raw())
+}
+
+///|
+pub fn Window::display_handle(self : Window) -> UInt64 {
+  self.rwh_06_display_handle()
+}
+
+///|
+pub fn Window::window_handle(self : Window) -> UInt64 {
+  self.rwh_06_window_handle()
 }
 
 ///|
@@ -235,7 +250,12 @@ pub fn Window::set_outer_position(
 
 ///|
 pub fn Window::focus_window(self : Window) -> Unit {
-  focus_window(self.id.into_raw())
+  let raw_id = self.id.into_raw()
+  let is_minimized = window_minimized(raw_id)
+  let is_visible = window_visible(raw_id)
+  if is_minimized == false && is_visible {
+    focus_window(raw_id)
+  }
 }
 
 ///|
@@ -249,8 +269,8 @@ pub fn Window::set_minimized(self : Window, minimized : Bool) -> Unit {
 }
 
 ///|
-pub fn Window::is_minimized(self : Window) -> Bool {
-  window_minimized(self.id.into_raw())
+pub fn Window::is_minimized(self : Window) -> Bool? {
+  Some(window_minimized(self.id.into_raw()))
 }
 
 ///|
@@ -263,28 +283,32 @@ pub fn Window::set_fullscreen(
   self : Window,
   fullscreen : @core.Fullscreen?,
 ) -> Unit {
-  self.fullscreen_state = fullscreen
-  let raw_id = self.id.into_raw()
-  match fullscreen {
-    None => set_window_fullscreen(raw_id, false)
-    Some(@core.Fullscreen::Borderless(target_monitor)) => {
-      match target_monitor {
-        Some(monitor) =>
-          set_window_position(
-            raw_id,
-            monitor.position().x(),
-            monitor.position().y(),
-          )
-        None => ()
+  if self.simple_fullscreen() {
+    ()
+  } else {
+    self.fullscreen_state = fullscreen
+    let raw_id = self.id.into_raw()
+    match fullscreen {
+      None => set_window_fullscreen(raw_id, false)
+      Some(@core.Fullscreen::Borderless(target_monitor)) => {
+        match target_monitor {
+          Some(monitor) =>
+            set_window_position(
+              raw_id,
+              monitor.position().x(),
+              monitor.position().y(),
+            )
+          None => ()
+        }
+        set_window_fullscreen(raw_id, true)
       }
-      set_window_fullscreen(raw_id, true)
-    }
-    Some(@core.Fullscreen::Exclusive(target_monitor, video_mode)) => {
-      let position = target_monitor.position()
-      let mode_size = video_mode.surface_size()
-      set_window_position(raw_id, position.x(), position.y())
-      set_surface_size(raw_id, mode_size.width(), mode_size.height())
-      set_window_fullscreen(raw_id, true)
+      Some(@core.Fullscreen::Exclusive(target_monitor, video_mode)) => {
+        let position = target_monitor.position()
+        let mode_size = video_mode.surface_size()
+        set_window_position(raw_id, position.x(), position.y())
+        set_surface_size(raw_id, mode_size.width(), mode_size.height())
+        set_window_fullscreen(raw_id, true)
+      }
     }
   }
 }
@@ -313,6 +337,29 @@ pub fn Window::is_fullscreen(self : Window) -> Bool {
 }
 
 ///|
+pub fn Window::simple_fullscreen(self : Window) -> Bool {
+  window_simple_fullscreen(self.id.into_raw())
+}
+
+///|
+pub fn Window::set_simple_fullscreen(self : Window, fullscreen : Bool) -> Bool {
+  set_window_simple_fullscreen(self.id.into_raw(), fullscreen)
+}
+
+///|
+pub fn Window::set_borderless_game(
+  self : Window,
+  borderless_game : Bool,
+) -> Unit {
+  set_window_borderless_game(self.id.into_raw(), borderless_game)
+}
+
+///|
+pub fn Window::is_borderless_game(self : Window) -> Bool {
+  window_is_borderless_game(self.id.into_raw())
+}
+
+///|
 pub fn Window::set_decorations(self : Window, decorations : Bool) -> Unit {
   set_window_decorations(self.id.into_raw(), decorations)
 }
@@ -333,6 +380,16 @@ pub fn Window::set_enabled_buttons(
 ///|
 pub fn Window::set_blur(self : Window, blur : Bool) -> Unit {
   set_window_blur(self.id.into_raw(), blur)
+}
+
+///|
+pub fn Window::has_shadow(self : Window) -> Bool {
+  window_has_shadow(self.id.into_raw())
+}
+
+///|
+pub fn Window::set_has_shadow(self : Window, has_shadow : Bool) -> Unit {
+  set_window_has_shadow(self.id.into_raw(), has_shadow)
 }
 
 ///|
@@ -597,6 +654,52 @@ pub fn Window::ime_hints(self : Window) -> @core.ImeHint {
 }
 
 ///|
+fn Window::apply_ime_request_data(
+  self : Window,
+  request_data : @core.ImeRequestData,
+) -> Unit raise @core.ImeRequestError {
+  if self.ime_allowed() == false {
+    raise @core.ImeRequestError::NotEnabled
+  }
+  if request_data.has_hint_and_purpose() {
+    if self.ime_supports_hint_and_purpose() == false {
+      raise @core.ImeRequestError::NotSupported
+    }
+    match request_data.hint_and_purpose() {
+      Some((hints, purpose)) => {
+        self.set_ime_hints(hints)
+        self.set_ime_purpose(purpose)
+      }
+      None => ()
+    }
+  }
+  if request_data.has_cursor_area() {
+    if self.ime_supports_cursor_area() == false {
+      raise @core.ImeRequestError::NotSupported
+    }
+    match request_data.cursor_area() {
+      Some((position, size)) => {
+        let scale_factor = self.scale_factor()
+        let physical_position = position.to_physical(scale_factor)
+        let physical_size = size.to_physical(scale_factor)
+        self.set_ime_cursor_area(physical_position, physical_size)
+      }
+      None => ()
+    }
+  }
+  if request_data.has_surrounding_text() {
+    if self.ime_supports_surrounding_text() == false {
+      raise @core.ImeRequestError::NotSupported
+    }
+    match request_data.surrounding_text() {
+      Some(surrounding_text) =>
+        self.set_ime_surrounding_text(Some(surrounding_text))
+      None => ()
+    }
+  }
+}
+
+///|
 pub fn Window::request_ime_update(
   self : Window,
   request : @core.ImeRequest,
@@ -610,6 +713,18 @@ pub fn Window::request_ime_update(
         self.ime_capabilities_state = Some(capabilities)
         ()
       }
+    @core.ImeRequest::EnableRequest(enable_request) =>
+      if self.ime_allowed() {
+        raise @core.ImeRequestError::AlreadyEnabled
+      } else {
+        let capabilities = enable_request.capabilities()
+        let request_data = enable_request.request_data()
+        self.set_ime_allowed(true)
+        self.ime_capabilities_state = Some(capabilities)
+        self.apply_ime_request_data(request_data)
+      }
+    @core.ImeRequest::Update(request_data) =>
+      self.apply_ime_request_data(request_data)
     @core.ImeRequest::Disable => {
       self.set_ime_allowed(false)
       ()
@@ -735,10 +850,10 @@ pub fn Window::set_theme(self : Window, theme : @core.Theme?) -> Unit {
 
 ///|
 pub fn Window::set_window_icon(
-  self : Window,
-  window_icon : @core.Icon?,
+  _self : Window,
+  _window_icon : @core.Icon?,
 ) -> Unit {
-  set_window_icon(self.id.into_raw(), window_icon)
+  ()
 }
 
 ///|
@@ -755,8 +870,8 @@ pub fn Window::set_visible(self : Window, visible : Bool) -> Unit {
 }
 
 ///|
-pub fn Window::is_visible(self : Window) -> Bool {
-  window_visible(self.id.into_raw())
+pub fn Window::is_visible(self : Window) -> Bool? {
+  Some(window_visible(self.id.into_raw()))
 }
 
 ///|
@@ -772,6 +887,16 @@ pub fn Window::is_resizable(self : Window) -> Bool {
 ///|
 pub fn Window::is_content_protected(self : Window) -> Bool {
   window_content_protected(self.id.into_raw())
+}
+
+///|
+pub fn Window::is_document_edited(self : Window) -> Bool {
+  window_document_edited(self.id.into_raw())
+}
+
+///|
+pub fn Window::set_document_edited(self : Window, edited : Bool) -> Unit {
+  set_window_document_edited(self.id.into_raw(), edited)
 }
 
 ///|
@@ -1551,8 +1676,11 @@ pub fn EventLoop::create_window(
     }
     None => ()
   }
+  set_window_borderless_game(
+    raw_id,
+    attributes.platform_attributes().borderless_game(),
+  )
   set_window_theme(raw_id, theme_to_native(attributes.theme()))
-  set_window_icon(raw_id, attributes.window_icon())
   set_window_content_protected(raw_id, attributes.content_protected())
   set_window_blur(raw_id, attributes.blur())
   let mut cursor_state = attributes.cursor()
@@ -1615,10 +1743,7 @@ pub fn EventLoop::create_window(
       set_surface_size(raw_id, mode_size.width(), mode_size.height())
       set_window_fullscreen(raw_id, true)
     }
-    None =>
-      if attributes.platform_attributes().simple_fullscreen() == Some(true) {
-        set_window_fullscreen(raw_id, true)
-      }
+    None => ()
   }
   match attributes.min_surface_size() {
     Some(min_size) => {
@@ -1640,6 +1765,10 @@ pub fn EventLoop::create_window(
       set_window_position(raw_id, physical_position.x(), physical_position.y())
     }
     None => ()
+  }
+  if attributes.fullscreen() is None &&
+    attributes.platform_attributes().simple_fullscreen() == Some(true) {
+    ignore(set_window_simple_fullscreen(raw_id, true))
   }
   self.window_ids.push(raw_id)
   {
@@ -1689,15 +1818,7 @@ pub fn EventLoop::create_custom_cursor(
 fn initial_fullscreen_state(
   attributes : @core.WindowAttributes,
 ) -> @core.Fullscreen? {
-  match attributes.fullscreen() {
-    Some(fullscreen) => Some(fullscreen)
-    None =>
-      if attributes.platform_attributes().simple_fullscreen() == Some(true) {
-        Some(@core.Fullscreen::Borderless(None))
-      } else {
-        None
-      }
-  }
+  attributes.fullscreen()
 }
 
 ///|
@@ -1821,6 +1942,7 @@ fn[A : ApplicationHandler] EventLoop::dispatch_window_events(
   app : A,
 ) -> Unit {
   let mut polled = false
+  let remaining_window_ids : Array[Int] = []
   for raw_id in self.window_ids {
     if polled == false {
       native_poll_window(raw_id)
@@ -1893,10 +2015,15 @@ fn[A : ApplicationHandler] EventLoop::dispatch_window_events(
     if native_window_take_close_requested(raw_id) {
       app.window_event(self, window_id, @core.WindowEvent::CloseRequested)
     }
-    if take_destroyed(raw_id) {
+    let destroyed = take_destroyed(raw_id)
+    if destroyed {
       app.window_event(self, window_id, @core.WindowEvent::Destroyed)
     }
+    if destroyed == false {
+      remaining_window_ids.push(raw_id)
+    }
   }
+  self.window_ids = remaining_window_ids
 }
 
 ///|

@@ -202,6 +202,11 @@ fn window_fullscreen(_window_id : Int) -> Bool {
 }
 
 ///|
+fn window_simple_fullscreen(_window_id : Int) -> Bool {
+  false
+}
+
+///|
 fn window_decorated(_window_id : Int) -> Bool {
   false
 }
@@ -223,6 +228,21 @@ fn window_maximize_button_enabled(_window_id : Int) -> Bool {
 
 ///|
 fn window_blur(_window_id : Int) -> Bool {
+  false
+}
+
+///|
+fn window_has_shadow(_window_id : Int) -> Bool {
+  false
+}
+
+///|
+fn window_document_edited(_window_id : Int) -> Bool {
+  false
+}
+
+///|
+fn window_is_borderless_game(_window_id : Int) -> Bool {
   false
 }
 
@@ -611,6 +631,29 @@ fn set_window_blur(_window_id : Int, _blur : Bool) -> Unit {
 }
 
 ///|
+fn set_window_simple_fullscreen(_window_id : Int, _fullscreen : Bool) -> Bool {
+  false
+}
+
+///|
+fn set_window_has_shadow(_window_id : Int, _has_shadow : Bool) -> Unit {
+  ()
+}
+
+///|
+fn set_window_document_edited(_window_id : Int, _edited : Bool) -> Unit {
+  ()
+}
+
+///|
+fn set_window_borderless_game(
+  _window_id : Int,
+  _borderless_game : Bool,
+) -> Unit {
+  ()
+}
+
+///|
 fn set_window_cursor(_window_id : Int, _cursor : Int) -> Unit {
   ()
 }
@@ -692,11 +735,6 @@ fn set_window_level(_window_id : Int, _level : Int) -> Unit {
 
 ///|
 fn set_window_theme(_window_id : Int, _theme : Int) -> Unit {
-  ()
-}
-
-///|
-fn set_window_icon(_window_id : Int, _window_icon : @core.Icon?) -> Unit {
   ()
 }
 

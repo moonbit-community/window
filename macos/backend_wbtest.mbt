@@ -314,8 +314,8 @@ struct InactiveWindowApp {
 struct WindowMinMaxStateApp {
   maximized_after_disable : Ref[Bool]
   maximized_after_enable : Ref[Bool]
-  minimized_after_disable : Ref[Bool]
-  minimized_after_enable : Ref[Bool]
+  minimized_after_disable : Ref[Bool?]
+  minimized_after_enable : Ref[Bool?]
 }
 
 ///|
@@ -352,7 +352,8 @@ struct AttributesMaximizedApp {
 
 ///|
 struct AttributesSimpleFullscreenApp {
-  fullscreen : Ref[Bool]
+  native_fullscreen : Ref[Bool]
+  simple_fullscreen : Ref[Bool]
 }
 
 ///|
@@ -394,9 +395,9 @@ struct WindowVisibilityResizableApp {
   resizable_after_disable : Ref[Bool]
   resizable_after_enable : Ref[Bool]
   resizable_initial : Ref[Bool]
-  visible_after_disable : Ref[Bool]
-  visible_after_enable : Ref[Bool]
-  visible_initial : Ref[Bool]
+  visible_after_disable : Ref[Bool?]
+  visible_after_enable : Ref[Bool?]
+  visible_initial : Ref[Bool?]
 }
 
 ///|
@@ -906,7 +907,8 @@ impl ApplicationHandler for AttributesSimpleFullscreenApp with can_create_surfac
       ),
     ),
   )
-  self.fullscreen.val = window.is_fullscreen()
+  self.native_fullscreen.val = window.is_fullscreen()
+  self.simple_fullscreen.val = window.simple_fullscreen()
   event_loop.exit()
 }
 
@@ -1787,10 +1789,25 @@ impl ApplicationHandler for ImeConfigurationApp with can_create_surfaces(
   self.initial_hints.val = window.ime_hints()
   self.initial_purpose.val = window.ime_purpose()
   let surrounding_text = try! @core.ImeSurroundingText::new("hello world", 5, 0)
+  let enable_request = match
+    @core.ImeEnableRequest::new(
+      @core.ImeCapabilities::all(),
+      @core.ImeRequestData::default()
+      .with_hint_and_purpose(
+        @core.ImeHint::completion(),
+        @core.ImePurpose::Normal,
+      )
+      .with_cursor_area(
+        @dpi.PhysicalPosition::new(8, 16).into_position(),
+        @dpi.PhysicalSize::new(10, 12).into_size(),
+      )
+      .with_surrounding_text(surrounding_text),
+    ) {
+    Some(enable_request) => enable_request
+    None => abort("expected valid IME enable request")
+  }
   self.enable_when_enabled_error.val = try {
-    window.request_ime_update(
-      @core.ImeRequest::Enable(@core.ImeCapabilities::new(true, true, true)),
-    )
+    window.request_ime_update(@core.ImeRequest::EnableRequest(enable_request))
     None
   } catch {
     error => Some(error)
@@ -1805,10 +1822,12 @@ impl ApplicationHandler for ImeConfigurationApp with can_create_surfaces(
   }
   self.request_hint_and_purpose_ok.val = try {
     window.request_ime_update(
-      @core.ImeRequest::SetHintAndPurpose(
+      @core.ImeRequestData::default()
+      .with_hint_and_purpose(
         @core.ImeHint::multiline().union(@core.ImeHint::sensitive_data()),
         @core.ImePurpose::Email,
-      ),
+      )
+      .into_request(),
     )
     true
   } catch {
@@ -1816,7 +1835,9 @@ impl ApplicationHandler for ImeConfigurationApp with can_create_surfaces(
   }
   self.request_surrounding_ok.val = try {
     window.request_ime_update(
-      @core.ImeRequest::SetSurroundingText(Some(surrounding_text)),
+      @core.ImeRequestData::default()
+      .with_surrounding_text(surrounding_text)
+      .into_request(),
     )
     true
   } catch {
@@ -1834,10 +1855,12 @@ impl ApplicationHandler for ImeConfigurationApp with can_create_surfaces(
   self.surrounding_text_after_clear.val = window.ime_surrounding_text()
   self.request_cursor_ok.val = try {
     window.request_ime_update(
-      @core.ImeRequest::SetCursorArea(
-        @dpi.PhysicalPosition::new(48, 96),
-        @dpi.PhysicalSize::new(20, 32),
-      ),
+      @core.ImeRequestData::default()
+      .with_cursor_area(
+        @dpi.PhysicalPosition::new(48, 96).into_position(),
+        @dpi.PhysicalSize::new(20, 32).into_size(),
+      )
+      .into_request(),
     )
     true
   } catch {
@@ -1851,10 +1874,12 @@ impl ApplicationHandler for ImeConfigurationApp with can_create_surfaces(
   }
   self.cursor_when_disabled_error.val = try {
     window.request_ime_update(
-      @core.ImeRequest::SetCursorArea(
-        @dpi.PhysicalPosition::new(48, 96),
-        @dpi.PhysicalSize::new(20, 32),
-      ),
+      @core.ImeRequestData::default()
+      .with_cursor_area(
+        @dpi.PhysicalPosition::new(48, 96).into_position(),
+        @dpi.PhysicalSize::new(20, 32).into_size(),
+      )
+      .into_request(),
     )
     None
   } catch {
@@ -1882,15 +1907,25 @@ impl ApplicationHandler for ImeCapabilityRestrictionApp with can_create_surfaces
   )
   let surrounding_text = try! @core.ImeSurroundingText::new("abc", 1, 1)
   try! window.request_ime_update(@core.ImeRequest::Disable)
+  let enable_request = match
+    @core.ImeEnableRequest::new(
+      @core.ImeCapabilities::default(),
+      @core.ImeRequestData::default(),
+    ) {
+    Some(enable_request) => enable_request
+    None => abort("expected valid IME enable request")
+  }
   try! window.request_ime_update(
-    @core.ImeRequest::Enable(@core.ImeCapabilities::new(false, false, false)),
+    @core.ImeRequest::EnableRequest(enable_request),
   )
   self.hint_and_purpose_not_supported.val = try {
     window.request_ime_update(
-      @core.ImeRequest::SetHintAndPurpose(
+      @core.ImeRequestData::default()
+      .with_hint_and_purpose(
         @core.ImeHint::multiline(),
         @core.ImePurpose::Email,
-      ),
+      )
+      .into_request(),
     )
     false
   } catch {
@@ -1908,10 +1943,12 @@ impl ApplicationHandler for ImeCapabilityRestrictionApp with can_create_surfaces
   }
   self.cursor_not_supported.val = try {
     window.request_ime_update(
-      @core.ImeRequest::SetCursorArea(
-        @dpi.PhysicalPosition::new(2, 4),
-        @dpi.PhysicalSize::new(8, 12),
-      ),
+      @core.ImeRequestData::default()
+      .with_cursor_area(
+        @dpi.PhysicalPosition::new(2, 4).into_position(),
+        @dpi.PhysicalSize::new(8, 12).into_size(),
+      )
+      .into_request(),
     )
     false
   } catch {
@@ -1920,7 +1957,9 @@ impl ApplicationHandler for ImeCapabilityRestrictionApp with can_create_surfaces
   }
   self.surrounding_not_supported.val = try {
     window.request_ime_update(
-      @core.ImeRequest::SetSurroundingText(Some(surrounding_text)),
+      @core.ImeRequestData::default()
+      .with_surrounding_text(surrounding_text)
+      .into_request(),
     )
     false
   } catch {
@@ -2377,8 +2416,8 @@ test "window attributes active=false keeps window unfocused" {
 #skip
 test "window minimize and maximize state can be controlled" {
   let event_loop = EventLoop::new()
-  let minimized_after_enable = Ref::new(false)
-  let minimized_after_disable = Ref::new(true)
+  let minimized_after_enable = Ref::new(None)
+  let minimized_after_disable = Ref::new(None)
   let maximized_after_enable = Ref::new(false)
   let maximized_after_disable = Ref::new(true)
   let app : WindowMinMaxStateApp = {
@@ -2388,8 +2427,8 @@ test "window minimize and maximize state can be controlled" {
     minimized_after_enable,
   }
   event_loop.run_app(app)
-  assert_true(minimized_after_enable.val)
-  assert_false(minimized_after_disable.val)
+  assert_eq(minimized_after_enable.val, Some(true))
+  assert_eq(minimized_after_disable.val, Some(false))
   assert_true(maximized_after_enable.val)
   assert_false(maximized_after_disable.val)
 }
@@ -2485,10 +2524,15 @@ test "window attributes maximized applies at creation time" {
 #skip
 test "window platform simple fullscreen applies at creation time" {
   let event_loop = EventLoop::new()
-  let fullscreen = Ref::new(false)
-  let app : AttributesSimpleFullscreenApp = { fullscreen, }
+  let native_fullscreen = Ref::new(true)
+  let simple_fullscreen = Ref::new(false)
+  let app : AttributesSimpleFullscreenApp = {
+    native_fullscreen,
+    simple_fullscreen,
+  }
   event_loop.run_app(app)
-  assert_true(fullscreen.val)
+  assert_false(native_fullscreen.val)
+  assert_true(simple_fullscreen.val)
 }
 
 ///|
@@ -2577,7 +2621,7 @@ test "window cursor can be configured at create and runtime" {
 test "window icon can be configured at create and runtime" {
   let event_loop = EventLoop::new()
   let icon_initial = Ref::new(false)
-  let icon_after_clear = Ref::new(true)
+  let icon_after_clear = Ref::new(false)
   let icon_after_restore = Ref::new(false)
   let app : WindowIconApp = {
     icon_after_clear,
@@ -2585,18 +2629,18 @@ test "window icon can be configured at create and runtime" {
     icon_initial,
   }
   event_loop.run_app(app)
-  assert_true(icon_initial.val)
+  assert_false(icon_initial.val)
   assert_false(icon_after_clear.val)
-  assert_true(icon_after_restore.val)
+  assert_false(icon_after_restore.val)
 }
 
 ///|
 #skip
 test "window visibility and resizable getters reflect runtime updates" {
   let event_loop = EventLoop::new()
-  let visible_initial = Ref::new(true)
-  let visible_after_enable = Ref::new(false)
-  let visible_after_disable = Ref::new(true)
+  let visible_initial = Ref::new(None)
+  let visible_after_enable = Ref::new(None)
+  let visible_after_disable = Ref::new(None)
   let resizable_initial = Ref::new(false)
   let resizable_after_disable = Ref::new(true)
   let resizable_after_enable = Ref::new(false)
@@ -2609,9 +2653,9 @@ test "window visibility and resizable getters reflect runtime updates" {
     visible_initial,
   }
   event_loop.run_app(app)
-  assert_false(visible_initial.val)
-  assert_true(visible_after_enable.val)
-  assert_false(visible_after_disable.val)
+  assert_eq(visible_initial.val, Some(false))
+  assert_eq(visible_after_enable.val, Some(true))
+  assert_eq(visible_after_disable.val, Some(false))
   assert_true(resizable_initial.val)
   assert_false(resizable_after_disable.val)
   assert_true(resizable_after_enable.val)

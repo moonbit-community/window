@@ -202,6 +202,11 @@ fn window_fullscreen(window_id : Int) -> Bool {
 }
 
 ///|
+fn window_simple_fullscreen(window_id : Int) -> Bool {
+  native_window_simple_fullscreen(window_id)
+}
+
+///|
 fn window_decorated(window_id : Int) -> Bool {
   native_window_decorated(window_id)
 }
@@ -224,6 +229,21 @@ fn window_maximize_button_enabled(window_id : Int) -> Bool {
 ///|
 fn window_blur(window_id : Int) -> Bool {
   native_window_blur(window_id)
+}
+
+///|
+fn window_has_shadow(window_id : Int) -> Bool {
+  native_window_has_shadow(window_id)
+}
+
+///|
+fn window_document_edited(window_id : Int) -> Bool {
+  native_window_document_edited(window_id)
+}
+
+///|
+fn window_is_borderless_game(window_id : Int) -> Bool {
+  native_window_is_borderless_game(window_id)
 }
 
 ///|
@@ -611,6 +631,26 @@ fn set_window_blur(window_id : Int, blur : Bool) -> Unit {
 }
 
 ///|
+fn set_window_simple_fullscreen(window_id : Int, fullscreen : Bool) -> Bool {
+  native_window_set_simple_fullscreen(window_id, fullscreen)
+}
+
+///|
+fn set_window_has_shadow(window_id : Int, has_shadow : Bool) -> Unit {
+  native_window_set_has_shadow(window_id, has_shadow)
+}
+
+///|
+fn set_window_document_edited(window_id : Int, edited : Bool) -> Unit {
+  native_window_set_document_edited(window_id, edited)
+}
+
+///|
+fn set_window_borderless_game(window_id : Int, borderless_game : Bool) -> Unit {
+  native_window_set_borderless_game(window_id, borderless_game)
+}
+
+///|
 fn set_window_cursor(window_id : Int, cursor : Int) -> Unit {
   native_window_set_cursor(window_id, cursor)
 }
@@ -706,30 +746,6 @@ fn set_window_level(window_id : Int, level : Int) -> Unit {
 ///|
 fn set_window_theme(window_id : Int, theme : Int) -> Unit {
   native_window_set_theme(window_id, theme)
-}
-
-///|
-fn set_window_icon(window_id : Int, window_icon : @core.Icon?) -> Unit {
-  match window_icon {
-    Some(icon) => {
-      let rgba = icon.rgba()
-      native_window_set_icon_rgba(
-        window_id,
-        rgba,
-        rgba.length(),
-        icon.width(),
-        icon.height(),
-      )
-    }
-    None =>
-      native_window_set_icon_rgba(
-        window_id,
-        Bytes::make(0, (0 : Int).to_byte()),
-        0,
-        0,
-        0,
-      )
-  }
 }
 
 ///|
@@ -1050,6 +1066,9 @@ extern "C" fn native_window_maximized(window_id : Int) -> Bool = "mbw_window_max
 extern "C" fn native_window_fullscreen(window_id : Int) -> Bool = "mbw_window_fullscreen"
 
 ///|
+extern "C" fn native_window_simple_fullscreen(window_id : Int) -> Bool = "mbw_window_simple_fullscreen"
+
+///|
 extern "C" fn native_window_decorated(window_id : Int) -> Bool = "mbw_window_decorated"
 
 ///|
@@ -1063,6 +1082,15 @@ extern "C" fn native_window_maximize_button_enabled(window_id : Int) -> Bool = "
 
 ///|
 extern "C" fn native_window_blur(window_id : Int) -> Bool = "mbw_window_blur"
+
+///|
+extern "C" fn native_window_has_shadow(window_id : Int) -> Bool = "mbw_window_has_shadow"
+
+///|
+extern "C" fn native_window_document_edited(window_id : Int) -> Bool = "mbw_window_document_edited"
+
+///|
+extern "C" fn native_window_is_borderless_game(window_id : Int) -> Bool = "mbw_window_is_borderless_game"
 
 ///|
 extern "C" fn native_window_cursor_visible(window_id : Int) -> Bool = "mbw_window_cursor_visible"
@@ -1299,6 +1327,30 @@ extern "C" fn native_window_set_enabled_buttons(
 extern "C" fn native_window_set_blur(window_id : Int, blur : Bool) -> Unit = "mbw_window_set_blur"
 
 ///|
+extern "C" fn native_window_set_simple_fullscreen(
+  window_id : Int,
+  fullscreen : Bool,
+) -> Bool = "mbw_window_set_simple_fullscreen"
+
+///|
+extern "C" fn native_window_set_has_shadow(
+  window_id : Int,
+  has_shadow : Bool,
+) -> Unit = "mbw_window_set_has_shadow"
+
+///|
+extern "C" fn native_window_set_document_edited(
+  window_id : Int,
+  edited : Bool,
+) -> Unit = "mbw_window_set_document_edited"
+
+///|
+extern "C" fn native_window_set_borderless_game(
+  window_id : Int,
+  borderless_game : Bool,
+) -> Unit = "mbw_window_set_borderless_game"
+
+///|
 extern "C" fn native_window_set_cursor(window_id : Int, cursor : Int) -> Unit = "mbw_window_set_cursor"
 
 ///|
@@ -1388,16 +1440,6 @@ extern "C" fn native_window_set_window_level(
 
 ///|
 extern "C" fn native_window_set_theme(window_id : Int, theme : Int) -> Unit = "mbw_window_set_theme"
-
-///|
-#borrow(rgba)
-extern "C" fn native_window_set_icon_rgba(
-  window_id : Int,
-  rgba : Bytes,
-  rgba_len : Int,
-  width : Int,
-  height : Int,
-) -> Unit = "mbw_window_set_icon_rgba"
 
 ///|
 extern "C" fn native_window_set_content_protected(

@@ -123,6 +123,19 @@ typedef struct mbw_window {
   int minimize_button_enabled;
   int maximize_button_enabled;
   int blur;
+  int has_shadow;
+  int document_edited;
+  int borderless_game;
+  int simple_fullscreen;
+  int simple_fullscreen_saved_frame_valid;
+  double simple_fullscreen_saved_frame_x;
+  double simple_fullscreen_saved_frame_y;
+  double simple_fullscreen_saved_frame_width;
+  double simple_fullscreen_saved_frame_height;
+  int simple_fullscreen_saved_style_valid;
+  unsigned long simple_fullscreen_saved_style_mask;
+  int simple_fullscreen_saved_presentation_valid;
+  unsigned long simple_fullscreen_saved_presentation_options;
   int has_icon;
   int cursor;
   uint64_t custom_cursor_id;
@@ -448,7 +461,15 @@ typedef int32_t (*mbw_cgs_set_window_blur_radius_fn)(
 #define MBW_THEME_UNKNOWN 0
 #define MBW_THEME_LIGHT 1
 #define MBW_THEME_DARK 2
+#define MBW_NSWINDOW_STYLE_MASK_TITLED (1UL << 0)
+#define MBW_NSWINDOW_STYLE_MASK_CLOSABLE (1UL << 1)
+#define MBW_NSWINDOW_STYLE_MASK_MINIATURIZABLE (1UL << 2)
+#define MBW_NSWINDOW_STYLE_MASK_RESIZABLE (1UL << 3)
 #define MBW_NSWINDOW_STYLE_MASK_FULLSCREEN (1UL << 14)
+#define MBW_NSAPPLICATION_PRESENTATION_AUTO_HIDE_DOCK (1UL << 0)
+#define MBW_NSAPPLICATION_PRESENTATION_HIDE_DOCK (1UL << 1)
+#define MBW_NSAPPLICATION_PRESENTATION_AUTO_HIDE_MENU_BAR (1UL << 2)
+#define MBW_NSAPPLICATION_PRESENTATION_HIDE_MENU_BAR (1UL << 3)
 #define MBW_NSWINDOW_OCCLUSION_STATE_VISIBLE (1UL << 1)
 #define MBW_NSEVENT_PHASE_BEGAN (1UL << 0)
 #define MBW_NSEVENT_PHASE_CHANGED (1UL << 2)
@@ -509,6 +530,15 @@ static void mbw_update_window_state(mbw_window_t *window);
 static void mbw_apply_blur_radius(mbw_window_t *window, int radius);
 static int mbw_window_theme_kind(mbw_window_t *window);
 static int mbw_window_occluded(mbw_window_t *window);
+#if defined(__APPLE__)
+static id mbw_shared_application(void);
+static void mbw_window_apply_style_mask(mbw_window_t *window, mbw_nsuint_t style_mask);
+static id mbw_window_screen(mbw_window_t *window);
+static void mbw_window_clear_simple_fullscreen(
+  mbw_window_t *window,
+  bool restore_window_state
+);
+#endif
 static void mbw_window_position(mbw_window_t *window, int *x, int *y);
 static mbw_window_t *mbw_view_window(id view);
 static id mbw_view_tracking_area(id view);
@@ -2425,6 +2455,9 @@ static void mbw_window_delegate_will_close(id self, SEL _cmd, id notification) {
   if (!window) {
     return;
   }
+#if defined(__APPLE__)
+  mbw_window_clear_simple_fullscreen(window, false);
+#endif
   window->should_close = 1;
   window->pending_destroyed = 1;
 }
@@ -3045,6 +3078,105 @@ static int mbw_window_occluded(mbw_window_t *window) {
   return (occlusion_state & MBW_NSWINDOW_OCCLUSION_STATE_VISIBLE) == 0 ? 1 : 0;
 }
 
+#if defined(__APPLE__)
+static id mbw_shared_application(void) {
+  id app = g_ns_app;
+  if (app) {
+    return app;
+  }
+  Class app_class = objc_getClass("NSApplication");
+  if (!app_class) {
+    return nil;
+  }
+  return ((id(*)(id, SEL))objc_msgSend)((id)app_class, mbw_sel("sharedApplication"));
+}
+
+static void mbw_window_apply_style_mask(mbw_window_t *window, mbw_nsuint_t style_mask) {
+  if (!window || !window->window) {
+    return;
+  }
+  ((void(*)(id, SEL, mbw_nsuint_t))objc_msgSend)(
+    (id)window->window,
+    mbw_sel("setStyleMask:"),
+    style_mask);
+  if (window->content_view) {
+    ((void(*)(id, SEL, id))objc_msgSend)(
+      (id)window->window,
+      mbw_sel("makeFirstResponder:"),
+      (id)window->content_view);
+  }
+}
+
+static id mbw_window_screen(mbw_window_t *window) {
+  if (window && window->window) {
+    id screen = ((id(*)(id, SEL))objc_msgSend)(
+      (id)window->window,
+      mbw_sel("screen"));
+    if (screen) {
+      return screen;
+    }
+  }
+  Class screen_class = objc_getClass("NSScreen");
+  if (!screen_class) {
+    return nil;
+  }
+  return ((id(*)(id, SEL))objc_msgSend)(
+    (id)screen_class,
+    mbw_sel("mainScreen"));
+}
+
+static void mbw_window_clear_simple_fullscreen(
+  mbw_window_t *window,
+  bool restore_window_state
+) {
+  if (!window || !window->simple_fullscreen) {
+    return;
+  }
+
+  id app = mbw_shared_application();
+  if (app && window->simple_fullscreen_saved_presentation_valid) {
+    ((void(*)(id, SEL, mbw_nsuint_t))objc_msgSend)(
+      app,
+      mbw_sel("setPresentationOptions:"),
+      window->simple_fullscreen_saved_presentation_options);
+  }
+
+  if (restore_window_state && window->window) {
+    if (window->simple_fullscreen_saved_style_valid) {
+      mbw_window_apply_style_mask(
+        window,
+        window->simple_fullscreen_saved_style_mask);
+    }
+    if (window->simple_fullscreen_saved_frame_valid) {
+      mbw_rect_t frame = {
+        .origin = {
+          window->simple_fullscreen_saved_frame_x,
+          window->simple_fullscreen_saved_frame_y,
+        },
+        .size = {
+          window->simple_fullscreen_saved_frame_width,
+          window->simple_fullscreen_saved_frame_height,
+        },
+      };
+      ((void(*)(id, SEL, mbw_rect_t, mbw_bool_t))objc_msgSend)(
+        (id)window->window,
+        mbw_sel("setFrame:display:"),
+        frame,
+        YES);
+    }
+    ((void(*)(id, SEL, mbw_bool_t))objc_msgSend)(
+      (id)window->window,
+      mbw_sel("setMovable:"),
+      YES);
+  }
+
+  window->simple_fullscreen = 0;
+  window->simple_fullscreen_saved_frame_valid = 0;
+  window->simple_fullscreen_saved_style_valid = 0;
+  window->simple_fullscreen_saved_presentation_valid = 0;
+}
+#endif
+
 static void mbw_window_position(mbw_window_t *window, int *x, int *y) {
   if (!x || !y) {
     return;
@@ -3612,6 +3744,13 @@ int mbw_window_create_utf8(
   window->minimize_button_enabled = 1;
   window->maximize_button_enabled = 1;
   window->blur = 0;
+  window->has_shadow = 1;
+  window->document_edited = 0;
+  window->borderless_game = 0;
+  window->simple_fullscreen = 0;
+  window->simple_fullscreen_saved_frame_valid = 0;
+  window->simple_fullscreen_saved_style_valid = 0;
+  window->simple_fullscreen_saved_presentation_valid = 0;
   window->has_icon = 0;
   window->cursor = MBW_CURSOR_DEFAULT;
   window->custom_cursor_id = 0;
@@ -3652,6 +3791,12 @@ int mbw_window_create_utf8(
       if (ns_window) {
         ((void(*)(id, SEL, mbw_bool_t))objc_msgSend)(
           ns_window, mbw_sel("setReleasedWhenClosed:"), NO);
+        window->has_shadow = ((mbw_bool_t(*)(id, SEL))objc_msgSend)(
+          ns_window,
+          mbw_sel("hasShadow")) ? 1 : 0;
+        window->document_edited = ((mbw_bool_t(*)(id, SEL))objc_msgSend)(
+          ns_window,
+          mbw_sel("isDocumentEdited")) ? 1 : 0;
         char *title_utf8 = mbw_copy_utf8(title, title_len);
         id ns_title = mbw_make_nsstring(
           title_utf8 && title_utf8[0] != '\0' ? title_utf8 : "winit window");
@@ -4594,6 +4739,11 @@ bool mbw_window_fullscreen(int window_id) {
   return window ? window->fullscreen != 0 : false;
 }
 
+bool mbw_window_simple_fullscreen(int window_id) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  return window ? window->simple_fullscreen != 0 : false;
+}
+
 bool mbw_window_decorated(int window_id) {
   mbw_window_t *window = mbw_find_window(window_id);
   return window ? window->decorated != 0 : false;
@@ -4617,6 +4767,21 @@ bool mbw_window_maximize_button_enabled(int window_id) {
 bool mbw_window_blur(int window_id) {
   mbw_window_t *window = mbw_find_window(window_id);
   return window ? window->blur != 0 : false;
+}
+
+bool mbw_window_has_shadow(int window_id) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  return window ? window->has_shadow != 0 : false;
+}
+
+bool mbw_window_document_edited(int window_id) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  return window ? window->document_edited != 0 : false;
+}
+
+bool mbw_window_is_borderless_game(int window_id) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  return window ? window->borderless_game != 0 : false;
 }
 
 int mbw_window_cursor(int window_id) {
@@ -5741,6 +5906,11 @@ void mbw_window_set_fullscreen(int window_id, bool fullscreen) {
   if (!window) {
     return;
   }
+#if defined(__APPLE__)
+  if (window->simple_fullscreen) {
+    return;
+  }
+#endif
   int target = fullscreen ? 1 : 0;
   window->fullscreen = target;
 #if defined(__APPLE__)
@@ -5756,6 +5926,92 @@ void mbw_window_set_fullscreen(int window_id, bool fullscreen) {
         nil);
     }
   }
+#endif
+}
+
+bool mbw_window_set_simple_fullscreen(int window_id, bool fullscreen) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  if (!window) {
+    return false;
+  }
+#if defined(__APPLE__)
+  if (!window->window) {
+    return false;
+  }
+  if (window->fullscreen) {
+    return false;
+  }
+
+  int target = fullscreen ? 1 : 0;
+  if (window->simple_fullscreen == target) {
+    return false;
+  }
+
+  if (!target) {
+    mbw_window_clear_simple_fullscreen(window, true);
+    return true;
+  }
+
+  id app = mbw_shared_application();
+  mbw_nsuint_t style_mask = ((mbw_nsuint_t(*)(id, SEL))objc_msgSend)(
+    (id)window->window,
+    mbw_sel("styleMask"));
+  mbw_rect_t frame = ((mbw_rect_t(*)(id, SEL))objc_msgSend)(
+    (id)window->window,
+    mbw_sel("frame"));
+  id screen = mbw_window_screen(window);
+  if (!screen) {
+    return false;
+  }
+
+  window->simple_fullscreen_saved_style_mask = style_mask;
+  window->simple_fullscreen_saved_style_valid = 1;
+  window->simple_fullscreen_saved_frame_x = frame.origin.x;
+  window->simple_fullscreen_saved_frame_y = frame.origin.y;
+  window->simple_fullscreen_saved_frame_width = frame.size.width;
+  window->simple_fullscreen_saved_frame_height = frame.size.height;
+  window->simple_fullscreen_saved_frame_valid = 1;
+  if (app) {
+    window->simple_fullscreen_saved_presentation_options =
+      ((mbw_nsuint_t(*)(id, SEL))objc_msgSend)(
+        app,
+        mbw_sel("presentationOptions"));
+    window->simple_fullscreen_saved_presentation_valid = 1;
+    ((void(*)(id, SEL, mbw_nsuint_t))objc_msgSend)(
+      app,
+      mbw_sel("setPresentationOptions:"),
+      window->borderless_game
+        ? (MBW_NSAPPLICATION_PRESENTATION_HIDE_DOCK |
+          MBW_NSAPPLICATION_PRESENTATION_HIDE_MENU_BAR)
+        : (MBW_NSAPPLICATION_PRESENTATION_AUTO_HIDE_DOCK |
+          MBW_NSAPPLICATION_PRESENTATION_AUTO_HIDE_MENU_BAR));
+  } else {
+    window->simple_fullscreen_saved_presentation_valid = 0;
+  }
+
+  window->simple_fullscreen = 1;
+  mbw_window_apply_style_mask(
+    window,
+    style_mask &
+    ~(MBW_NSWINDOW_STYLE_MASK_TITLED |
+      MBW_NSWINDOW_STYLE_MASK_MINIATURIZABLE |
+      MBW_NSWINDOW_STYLE_MASK_RESIZABLE));
+  ((void(*)(id, SEL, mbw_bool_t))objc_msgSend)(
+    (id)window->window,
+    mbw_sel("setMovable:"),
+    NO);
+  mbw_rect_t screen_frame = ((mbw_rect_t(*)(id, SEL))objc_msgSend)(
+    screen,
+    mbw_sel("frame"));
+  ((void(*)(id, SEL, mbw_rect_t, mbw_bool_t))objc_msgSend)(
+    (id)window->window,
+    mbw_sel("setFrame:display:"),
+    screen_frame,
+    YES);
+  return true;
+#else
+  (void)fullscreen;
+  return false;
 #endif
 }
 
@@ -5824,6 +6080,46 @@ void mbw_window_set_blur(int window_id, bool blur) {
     mbw_apply_blur_radius(window, window->blur ? 80 : 0);
   }
 #endif
+}
+
+void mbw_window_set_has_shadow(int window_id, bool has_shadow) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  if (!window) {
+    return;
+  }
+  window->has_shadow = has_shadow ? 1 : 0;
+#if defined(__APPLE__)
+  if (window->window) {
+    ((void(*)(id, SEL, mbw_bool_t))objc_msgSend)(
+      (id)window->window,
+      mbw_sel("setHasShadow:"),
+      has_shadow ? YES : NO);
+  }
+#endif
+}
+
+void mbw_window_set_document_edited(int window_id, bool edited) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  if (!window) {
+    return;
+  }
+  window->document_edited = edited ? 1 : 0;
+#if defined(__APPLE__)
+  if (window->window) {
+    ((void(*)(id, SEL, mbw_bool_t))objc_msgSend)(
+      (id)window->window,
+      mbw_sel("setDocumentEdited:"),
+      edited ? YES : NO);
+  }
+#endif
+}
+
+void mbw_window_set_borderless_game(int window_id, bool borderless_game) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  if (!window) {
+    return;
+  }
+  window->borderless_game = borderless_game ? 1 : 0;
 }
 
 #if defined(__APPLE__)

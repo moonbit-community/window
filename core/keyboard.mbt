@@ -33,6 +33,7 @@ pub fn NativeKey::from_key_code(code : NativeKeyCode) -> NativeKey {
 
 ///|
 pub(all) enum KeyCode {
+  Unidentified
   KeyA
   KeyS
   KeyD
@@ -86,6 +87,12 @@ pub(all) enum KeyCode {
   Backquote
   Backspace
   Escape
+  Convert
+  KanaMode
+  Lang3
+  Lang4
+  Lang5
+  NonConvert
   MetaRight
   MetaLeft
   ShiftLeft
@@ -96,6 +103,7 @@ pub(all) enum KeyCode {
   AltRight
   ControlRight
   Fn
+  FnLock
   F17
   NumpadDecimal
   NumpadMultiply
@@ -107,6 +115,18 @@ pub(all) enum KeyCode {
   NumpadDivide
   NumpadEnter
   NumpadSubtract
+  NumpadBackspace
+  NumpadClear
+  NumpadClearEntry
+  NumpadHash
+  NumpadMemoryAdd
+  NumpadMemoryClear
+  NumpadMemoryRecall
+  NumpadMemoryStore
+  NumpadMemorySubtract
+  NumpadParenLeft
+  NumpadParenRight
+  NumpadStar
   F18
   F19
   NumpadEqual
@@ -149,6 +169,9 @@ pub(all) enum KeyCode {
   PageUp
   Delete
   Help
+  PrintScreen
+  ScrollLock
+  Pause
   F4
   End
   F2
@@ -158,8 +181,81 @@ pub(all) enum KeyCode {
   ArrowRight
   ArrowDown
   ArrowUp
+  BrowserBack
+  BrowserFavorites
+  BrowserForward
+  BrowserHome
+  BrowserRefresh
+  BrowserSearch
+  BrowserStop
+  Close
+  Eject
+  LaunchApp1
+  LaunchApp2
+  LaunchMail
+  MediaPlayPause
+  MediaSelect
+  MediaStop
+  MediaTrackNext
+  MediaTrackPrevious
+  Sleep
+  WakeUp
+  BrightnessDown
+  BrightnessUp
+  Again
+  Copy
+  Cut
+  Find
+  Open
+  Paste
+  Props
+  Select
+  Undo
+  LaunchScreenSaver
+  MailForward
+  MailReply
+  MailSend
+  MediaFastForward
+  MediaPause
+  MediaPlay
+  MediaRecord
+  MediaRewind
+  MicrophoneMuteToggle
+  Abort
+  Resume
+  Suspend
+  Hiragana
+  Katakana
+  F25
+  F26
+  F27
+  F28
+  F29
+  F30
+  F31
+  F32
+  F33
+  F34
+  F35
+  DisplayToggleIntExt
+  KeyboardLayoutSelect
+  LaunchAssistant
+  LaunchControlPanel
+  PrivacyScreenToggle
+  KeyboardBacklightToggle
+  SelectTask
+  ShowAllWindows
+  ZoomToggle
+  Hyper
+  Super
+  Turbo
   Power
 } derive(Eq, Show)
+
+///|
+pub fn KeyCode::default() -> KeyCode {
+  KeyCode::Unidentified
+}
 
 ///|
 pub(all) enum PhysicalKey {
@@ -178,6 +274,14 @@ pub fn PhysicalKey::from_native_key_code(code : NativeKeyCode) -> PhysicalKey {
 }
 
 ///|
+pub fn PhysicalKey::into_key_code(self : PhysicalKey) -> KeyCode {
+  match self {
+    Code(code) => code
+    Unidentified(_) => KeyCode::Unidentified
+  }
+}
+
+///|
 pub(all) enum KeyLocation {
   Standard
   Left
@@ -187,6 +291,7 @@ pub(all) enum KeyLocation {
 
 ///|
 pub(all) enum NamedKey {
+  Unidentified
   Enter
   Tab
   Backspace
@@ -197,10 +302,12 @@ pub(all) enum NamedKey {
   Control
   CapsLock
   NumLock
+  ScrollLock
   AudioVolumeUp
   AudioVolumeDown
   AudioVolumeMute
   Fn
+  FnLock
   F1
   F2
   F3
@@ -229,6 +336,20 @@ pub(all) enum NamedKey {
   Home
   PageUp
   Delete
+  Clear
+  Copy
+  Cut
+  Find
+  Open
+  Paste
+  Redo
+  Undo
+  Accept
+  Again
+  Cancel
+  Execute
+  Props
+  Select
   End
   PageDown
   ArrowLeft
@@ -236,10 +357,253 @@ pub(all) enum NamedKey {
   ArrowDown
   ArrowUp
   ContextMenu
+  BrowserBack
+  BrowserFavorites
+  BrowserForward
+  BrowserHome
+  BrowserRefresh
+  BrowserSearch
+  BrowserStop
+  Close
+  Eject
   Eisu
   KanjiMode
   Help
+  Pause
+  Play
+  Power
+  PrintScreen
+  Standby
+  WakeUp
+  Alphanumeric
+  CodeInput
+  Convert
+  NonConvert
+  Hankaku
+  Hiragana
+  HiraganaKatakana
+  KanaMode
+  LaunchApplication1
+  LaunchApplication2
+  LaunchCalendar
+  LaunchContacts
+  LaunchMail
+  LaunchMediaPlayer
+  LaunchMusicPlayer
+  LaunchPhone
+  MediaClose
+  MediaPlayPause
+  MediaStop
+  MediaTrackNext
+  MediaTrackPrevious
+  New
+  Print
+  Save
+  SpellCheck
+  Key11
+  Key12
+  Katakana
+  BrightnessDown
+  BrightnessUp
+  LaunchScreenSaver
+  MailForward
+  MailReply
+  MailSend
+  MediaFastForward
+  MediaPause
+  MediaPlay
+  MediaRecord
+  MediaRewind
+  MicrophoneToggle
+  MicrophoneVolumeDown
+  MicrophoneVolumeUp
+  MicrophoneVolumeMute
+  LaunchSpreadsheet
+  LaunchWebBrowser
+  LaunchWebCam
+  LaunchWordProcessor
+  Romaji
+  Zenkaku
+  ZenkakuHankaku
+  F25
+  F26
+  F27
+  F28
+  F29
+  F30
+  F31
+  F32
+  F33
+  F34
+  F35
+  ZoomToggle
+  AltGraph
+  Symbol
+  SymbolLock
+  Hyper
+  Super
+  CrSel
+  EraseEof
+  ExSel
+  Attn
+  ZoomIn
+  ZoomOut
+  LogOff
+  PowerOff
+  Hibernate
+  AllCandidates
+  Compose
+  Dead
+  FinalMode
+  GroupFirst
+  GroupLast
+  GroupNext
+  GroupPrevious
+  ModeChange
+  NextCandidate
+  PreviousCandidate
+  Process
+  SingleCandidate
+  HangulMode
+  HanjaMode
+  JunjaMode
+  Soft1
+  Soft2
+  Soft3
+  Soft4
+  ChannelDown
+  ChannelUp
+  AudioBalanceLeft
+  AudioBalanceRight
+  AudioBassBoostDown
+  AudioBassBoostToggle
+  AudioBassBoostUp
+  AudioFaderFront
+  AudioFaderRear
+  AudioSurroundModeNext
+  AudioTrebleDown
+  AudioTrebleUp
+  SpeechCorrectionList
+  SpeechInputToggle
+  AppSwitch
+  Call
+  Camera
+  CameraFocus
+  EndCall
+  GoBack
+  GoHome
+  HeadsetHook
+  LastNumberRedial
+  Notification
+  MannerMode
+  VoiceDial
+  TV
+  TV3DMode
+  TVAntennaCable
+  TVAudioDescription
+  TVAudioDescriptionMixDown
+  TVAudioDescriptionMixUp
+  TVContentsMenu
+  TVDataService
+  TVInput
+  TVInputComponent1
+  TVInputComponent2
+  TVInputComposite1
+  TVInputComposite2
+  TVInputHDMI1
+  TVInputHDMI2
+  TVInputHDMI3
+  TVInputHDMI4
+  TVInputVGA1
+  TVMediaContext
+  TVNetwork
+  TVNumberEntry
+  TVPower
+  TVRadioService
+  TVSatellite
+  TVSatelliteBS
+  TVSatelliteCS
+  TVSatelliteToggle
+  TVTerrestrialAnalog
+  TVTerrestrialDigital
+  TVTimer
+  AVRInput
+  AVRPower
+  ColorF0Red
+  ColorF1Green
+  ColorF2Yellow
+  ColorF3Blue
+  ColorF4Grey
+  ColorF5Brown
+  ClosedCaptionToggle
+  Dimmer
+  DisplaySwap
+  DVR
+  Exit
+  FavoriteClear0
+  FavoriteClear1
+  FavoriteClear2
+  FavoriteClear3
+  FavoriteRecall0
+  FavoriteRecall1
+  FavoriteRecall2
+  FavoriteRecall3
+  FavoriteStore0
+  FavoriteStore1
+  FavoriteStore2
+  FavoriteStore3
+  Guide
+  GuideNextDay
+  GuidePreviousDay
+  Info
+  InstantReplay
+  Link
+  ListProgram
+  LiveContent
+  Lock
+  MediaApps
+  MediaAudioTrack
+  MediaLast
+  MediaSkipBackward
+  MediaSkipForward
+  MediaStepBackward
+  MediaStepForward
+  MediaTopMenu
+  NavigateIn
+  NavigateNext
+  NavigateOut
+  NavigatePrevious
+  NextFavoriteChannel
+  NextUserProfile
+  OnDemand
+  Pairing
+  PinPDown
+  PinPMove
+  PinPToggle
+  PinPUp
+  PlaySpeedDown
+  PlaySpeedReset
+  PlaySpeedUp
+  RandomToggle
+  RcLowBattery
+  RecordSpeedNext
+  RfBypass
+  ScanChannelsToggle
+  ScreenModeNext
+  Settings
+  SplitScreenToggle
+  STBInput
+  STBPower
+  Subtitle
+  Teletext
+  VideoModeNext
+  Wink
 } derive(Eq, Show)
+
+///|
+pub fn NamedKey::default() -> NamedKey {
+  NamedKey::Unidentified
+}
 
 ///|
 pub(all) enum Key {
@@ -257,6 +621,14 @@ pub fn Key::from_named(named : NamedKey) -> Key {
 ///|
 pub fn Key::from_native(native : NativeKey) -> Key {
   Key::Unidentified(native)
+}
+
+///|
+pub fn Key::character(self : Key) -> String? {
+  match self {
+    Character(character) => Some(character)
+    _ => None
+  }
 }
 
 ///|

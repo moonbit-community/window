@@ -57,6 +57,7 @@ pub fn EventLoop::control_flow(Self) -> @core.ControlFlow
 pub fn EventLoop::create_custom_cursor(Self, @core.CustomCursorSource) -> @core.CustomCursor raise @core.RequestError
 pub fn EventLoop::create_proxy(Self) -> EventLoopProxy
 pub fn EventLoop::create_window(Self, @core.WindowAttributes) -> Window
+pub fn EventLoop::display_handle(Self) -> UInt64
 pub fn EventLoop::exit(Self) -> Unit
 pub fn EventLoop::exiting(Self) -> Bool
 pub fn EventLoop::listen_device_events(Self, @core.DeviceEvents) -> Unit
@@ -82,12 +83,14 @@ pub struct Window {
 pub fn Window::available_monitors(Self) -> Array[@core.MonitorHandle]
 pub fn Window::current_monitor(Self) -> @core.MonitorHandle?
 pub fn Window::cursor(Self) -> @core.Cursor
+pub fn Window::display_handle(Self) -> UInt64
 pub fn Window::drag_resize_window(Self, @core.ResizeDirection) -> Unit raise @core.RequestError
 pub fn Window::drag_window(Self) -> Unit raise @core.RequestError
 pub fn Window::enabled_buttons(Self) -> @core.WindowButtons
 pub fn Window::focus_window(Self) -> Unit
 pub fn Window::fullscreen(Self) -> @core.Fullscreen?
 pub fn Window::has_focus(Self) -> Bool
+pub fn Window::has_shadow(Self) -> Bool
 pub fn Window::id(Self) -> @core.WindowId
 pub fn Window::ime_allowed(Self) -> Bool
 pub fn Window::ime_capabilities(Self) -> @core.ImeCapabilities?
@@ -97,17 +100,19 @@ pub fn Window::ime_hints(Self) -> @core.ImeHint
 pub fn Window::ime_purpose(Self) -> @core.ImePurpose
 pub fn Window::ime_surrounding_text(Self) -> @core.ImeSurroundingText?
 pub fn Window::is_blurred(Self) -> Bool
+pub fn Window::is_borderless_game(Self) -> Bool
 pub fn Window::is_content_protected(Self) -> Bool
 pub fn Window::is_cursor_hittest(Self) -> Bool
 pub fn Window::is_cursor_visible(Self) -> Bool
 pub fn Window::is_decorated(Self) -> Bool
+pub fn Window::is_document_edited(Self) -> Bool
 pub fn Window::is_fullscreen(Self) -> Bool
 pub fn Window::is_maximized(Self) -> Bool
-pub fn Window::is_minimized(Self) -> Bool
+pub fn Window::is_minimized(Self) -> Bool?
 pub fn Window::is_occluded(Self) -> Bool
 pub fn Window::is_resizable(Self) -> Bool
 pub fn Window::is_transparent(Self) -> Bool
-pub fn Window::is_visible(Self) -> Bool
+pub fn Window::is_visible(Self) -> Bool?
 pub fn Window::max_surface_size(Self) -> @dpi.PhysicalSize?
 pub fn Window::min_surface_size(Self) -> @dpi.PhysicalSize?
 pub fn Window::outer_position(Self) -> @dpi.PhysicalPosition
@@ -124,6 +129,7 @@ pub fn Window::rwh_06_window_handle(Self) -> UInt64
 pub fn Window::safe_area(Self) -> @dpi.PhysicalInsets
 pub fn Window::scale_factor(Self) -> Double
 pub fn Window::set_blur(Self, Bool) -> Unit
+pub fn Window::set_borderless_game(Self, Bool) -> Unit
 pub fn Window::set_content_protected(Self, Bool) -> Unit
 pub fn Window::set_cursor(Self, @core.Cursor) -> Unit
 pub fn Window::set_cursor_grab(Self, @core.CursorGrabMode) -> Unit raise @core.RequestError
@@ -131,8 +137,10 @@ pub fn Window::set_cursor_hittest(Self, Bool) -> Unit
 pub fn Window::set_cursor_position(Self, @dpi.Position) -> Unit raise @core.RequestError
 pub fn Window::set_cursor_visible(Self, Bool) -> Unit
 pub fn Window::set_decorations(Self, Bool) -> Unit
+pub fn Window::set_document_edited(Self, Bool) -> Unit
 pub fn Window::set_enabled_buttons(Self, @core.WindowButtons) -> Unit
 pub fn Window::set_fullscreen(Self, @core.Fullscreen?) -> Unit
+pub fn Window::set_has_shadow(Self, Bool) -> Unit
 pub fn Window::set_ime_allowed(Self, Bool) -> Unit
 pub fn Window::set_ime_cursor_area(Self, @dpi.PhysicalPosition, @dpi.PhysicalSize) -> Unit
 pub fn Window::set_ime_hints(Self, @core.ImeHint) -> Unit
@@ -144,6 +152,7 @@ pub fn Window::set_min_surface_size(Self, @dpi.Size?) -> Unit
 pub fn Window::set_minimized(Self, Bool) -> Unit
 pub fn Window::set_outer_position(Self, @dpi.Position) -> Unit
 pub fn Window::set_resizable(Self, Bool) -> Unit
+pub fn Window::set_simple_fullscreen(Self, Bool) -> Bool
 pub fn Window::set_surface_resize_increments(Self, @dpi.Size?) -> Unit
 pub fn Window::set_theme(Self, @core.Theme?) -> Unit
 pub fn Window::set_title(Self, String) -> Unit
@@ -152,11 +161,13 @@ pub fn Window::set_visible(Self, Bool) -> Unit
 pub fn Window::set_window_icon(Self, @core.Icon?) -> Unit
 pub fn Window::set_window_level(Self, @core.WindowLevel) -> Unit
 pub fn Window::show_window_menu(Self, @dpi.Position) -> Unit
+pub fn Window::simple_fullscreen(Self) -> Bool
 pub fn Window::surface_position(Self) -> @dpi.PhysicalPosition
 pub fn Window::surface_resize_increments(Self) -> @dpi.PhysicalSize?
 pub fn Window::surface_size(Self) -> @dpi.PhysicalSize
 pub fn Window::theme(Self) -> @core.Theme?
 pub fn Window::title(Self) -> String
+pub fn Window::window_handle(Self) -> UInt64
 pub fn Window::window_level(Self) -> @core.WindowLevel
 pub impl Eq for Window
 pub impl Show for Window

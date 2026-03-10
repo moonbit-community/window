@@ -60,8 +60,8 @@ test "system theme and device event policy APIs are callable" {
   let event_loop = EventLoop::new()
   event_loop.listen_device_events(@core.DeviceEvents::Always)
   let _ = event_loop.system_theme()
-  let _ = event_loop.rwh_06_handle()
-  let _ = event_loop.owned_display_handle()
+  assert_eq(event_loop.owned_display_handle(), event_loop.rwh_06_handle())
+  assert_eq(event_loop.display_handle(), event_loop.rwh_06_handle())
 }
 
 ///|
@@ -119,6 +119,8 @@ test "parent window attribute accepts native window handles" {
     @core.WindowAttributes::default().with_visible(false),
   )
   let parent_handle = parent.rwh_06_window_handle()
+  assert_eq(parent.display_handle(), parent.rwh_06_display_handle())
+  assert_eq(parent.window_handle(), parent_handle)
   let child = event_loop.create_window(
     @core.WindowAttributes::default()
     .with_visible(false)
@@ -126,4 +128,77 @@ test "parent window attribute accepts native window handles" {
   )
   assert_true(parent_handle > (0 : Int).to_uint64())
   assert_true(child.rwh_06_window_handle() > (0 : Int).to_uint64())
+}
+
+///|
+test "simple fullscreen can be toggled independently of native fullscreen" {
+  let event_loop = EventLoop::new()
+  let window = event_loop.create_window(
+    @core.WindowAttributes::default().with_visible(false),
+  )
+  assert_false(window.simple_fullscreen())
+  assert_false(window.is_fullscreen())
+  assert_eq(window.fullscreen(), None)
+  assert_true(window.set_simple_fullscreen(true))
+  assert_true(window.simple_fullscreen())
+  assert_false(window.is_fullscreen())
+  assert_eq(window.fullscreen(), None)
+  assert_false(window.set_simple_fullscreen(true))
+  assert_true(window.set_simple_fullscreen(false))
+  assert_false(window.simple_fullscreen())
+  assert_false(window.set_simple_fullscreen(false))
+}
+
+///|
+test "borderless game flag can be configured at create and runtime" {
+  let event_loop = EventLoop::new()
+  let window = event_loop.create_window(
+    @core.WindowAttributes::default()
+    .with_visible(false)
+    .with_platform_attributes(
+      @core.PlatformWindowAttributes::default().with_borderless_game(true),
+    ),
+  )
+  assert_true(window.is_borderless_game())
+  window.set_borderless_game(false)
+  assert_false(window.is_borderless_game())
+  window.set_borderless_game(true)
+  assert_true(window.is_borderless_game())
+}
+
+///|
+test "simple fullscreen attribute applies at creation time without native fullscreen state" {
+  let event_loop = EventLoop::new()
+  let window = event_loop.create_window(
+    @core.WindowAttributes::default()
+    .with_visible(false)
+    .with_platform_attributes(
+      @core.PlatformWindowAttributes::default().with_simple_fullscreen(
+        Some(true),
+      ),
+    ),
+  )
+  assert_true(window.simple_fullscreen())
+  assert_false(window.is_fullscreen())
+  assert_eq(window.fullscreen(), None)
+  assert_true(window.set_simple_fullscreen(false))
+}
+
+///|
+test "macos shadow and document edited APIs reflect runtime updates" {
+  let event_loop = EventLoop::new()
+  let window = event_loop.create_window(
+    @core.WindowAttributes::default().with_visible(false),
+  )
+  let initial_shadow = window.has_shadow()
+  window.set_has_shadow(false)
+  assert_false(window.has_shadow())
+  window.set_has_shadow(true)
+  assert_true(window.has_shadow())
+  ignore(initial_shadow)
+  assert_false(window.is_document_edited())
+  window.set_document_edited(true)
+  assert_true(window.is_document_edited())
+  window.set_document_edited(false)
+  assert_false(window.is_document_edited())
 }
