@@ -31,6 +31,16 @@ test "device event variants are constructible" {
 }
 
 ///|
+test "ime event variants are constructible" {
+  let range = ImeCursorRange::new(1, 2)
+  assert_eq(Ime::Enabled, Ime::Enabled)
+  assert_eq(Ime::Preedit("a", Some(range)), Ime::Preedit("a", Some(range)))
+  assert_eq(Ime::Commit("text"), Ime::Commit("text"))
+  assert_eq(Ime::DeleteSurrounding(2, 3), Ime::DeleteSurrounding(2, 3))
+  assert_eq(Ime::Disabled, Ime::Disabled)
+}
+
+///|
 test "async request serials can be created and round-tripped" {
   let serial = AsyncRequestSerial::get()
   assert_true(serial.into_raw() >= 0)

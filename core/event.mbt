@@ -511,6 +511,7 @@ pub(all) enum Ime {
   Enabled
   Preedit(String, ImeCursorRange?)
   Commit(String)
+  DeleteSurrounding(Int, Int)
   Disabled
 } derive(Eq, Show)
 
