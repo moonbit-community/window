@@ -189,6 +189,7 @@ pub(all) enum DeviceEvent {
   Button(ButtonId, ElementState)
   Key(RawKeyEvent)
 }
+pub fn DeviceEvent::into_winit_event(Self) -> WinitDeviceEvent
 pub impl Eq for DeviceEvent
 pub impl Show for DeviceEvent
 
@@ -1458,6 +1459,7 @@ pub(all) enum WindowEvent {
   Occluded(Bool)
   RedrawRequested
 }
+pub fn WindowEvent::into_winit_events(Self) -> Array[WinitWindowEvent]
 pub impl Show for WindowEvent
 
 pub struct WindowId {
@@ -1475,6 +1477,45 @@ pub(all) enum WindowLevel {
 }
 pub impl Eq for WindowLevel
 pub impl Show for WindowLevel
+
+pub(all) enum WinitDeviceEvent {
+  MouseMotion(Double, Double)
+  MouseWheel(MouseScrollDelta)
+  Button(ButtonId, ElementState)
+  Key(RawKeyEvent)
+}
+pub impl Eq for WinitDeviceEvent
+pub impl Show for WinitDeviceEvent
+
+pub(all) enum WinitWindowEvent {
+  ActivationTokenDone(AsyncRequestSerial, ActivationToken)
+  Resized(@dpi.PhysicalSize)
+  Moved(@dpi.PhysicalPosition)
+  CloseRequested
+  Destroyed
+  DroppedFile(String)
+  HoveredFile(String)
+  HoveredFileCancelled
+  Focused(Bool)
+  Ime(Ime)
+  KeyboardInput(DeviceId?, KeyEvent, Bool)
+  ModifiersChanged(Modifiers)
+  CursorMoved(DeviceId?, @dpi.PhysicalPositionF64)
+  CursorEntered(DeviceId?)
+  CursorLeft(DeviceId?)
+  MouseWheel(DeviceId?, MouseScrollDelta, TouchPhase)
+  MouseInput(DeviceId?, ElementState, MouseButton)
+  PinchGesture(DeviceId?, Double, TouchPhase)
+  PanGesture(DeviceId?, @dpi.PhysicalPositionF64, TouchPhase)
+  DoubleTapGesture(DeviceId?)
+  RotationGesture(DeviceId?, Double, TouchPhase)
+  TouchpadPressure(DeviceId?, Double, Int)
+  ScaleFactorChanged(Double, SurfaceSizeWriter)
+  ThemeChanged(Theme)
+  Occluded(Bool)
+  RedrawRequested
+}
+pub impl Show for WinitWindowEvent
 
 // Type aliases
 

@@ -563,6 +563,26 @@ pub(all) enum DeviceEvent {
 } derive(Eq, Show)
 
 ///|
+pub(all) enum WinitDeviceEvent {
+  MouseMotion(Double, Double)
+  MouseWheel(MouseScrollDelta)
+  Button(ButtonId, ElementState)
+  Key(RawKeyEvent)
+} derive(Eq, Show)
+
+///|
+pub fn DeviceEvent::into_winit_event(self : DeviceEvent) -> WinitDeviceEvent {
+  match self {
+    DeviceEvent::PointerMotion(delta_x, delta_y) =>
+      WinitDeviceEvent::MouseMotion(delta_x, delta_y)
+    DeviceEvent::MouseWheel(delta) => WinitDeviceEvent::MouseWheel(delta)
+    DeviceEvent::Button(button, state) =>
+      WinitDeviceEvent::Button(button, state)
+    DeviceEvent::Key(event) => WinitDeviceEvent::Key(event)
+  }
+}
+
+///|
 pub(all) enum WindowEvent {
   ActivationTokenDone(AsyncRequestSerial, ActivationToken)
   SurfaceResized(@dpi.PhysicalSize)
@@ -598,3 +618,98 @@ pub(all) enum WindowEvent {
   Occluded(Bool)
   RedrawRequested
 } derive(Show)
+
+///|
+pub(all) enum WinitWindowEvent {
+  ActivationTokenDone(AsyncRequestSerial, ActivationToken)
+  Resized(@dpi.PhysicalSize)
+  Moved(@dpi.PhysicalPosition)
+  CloseRequested
+  Destroyed
+  DroppedFile(String)
+  HoveredFile(String)
+  HoveredFileCancelled
+  Focused(Bool)
+  Ime(Ime)
+  KeyboardInput(DeviceId?, KeyEvent, Bool)
+  ModifiersChanged(Modifiers)
+  CursorMoved(DeviceId?, @dpi.PhysicalPositionF64)
+  CursorEntered(DeviceId?)
+  CursorLeft(DeviceId?)
+  MouseWheel(DeviceId?, MouseScrollDelta, TouchPhase)
+  MouseInput(DeviceId?, ElementState, MouseButton)
+  PinchGesture(DeviceId?, Double, TouchPhase)
+  PanGesture(DeviceId?, @dpi.PhysicalPositionF64, TouchPhase)
+  DoubleTapGesture(DeviceId?)
+  RotationGesture(DeviceId?, Double, TouchPhase)
+  TouchpadPressure(DeviceId?, Double, Int)
+  ScaleFactorChanged(Double, SurfaceSizeWriter)
+  ThemeChanged(Theme)
+  Occluded(Bool)
+  RedrawRequested
+} derive(Show)
+
+///|
+pub fn WindowEvent::into_winit_events(
+  self : WindowEvent,
+) -> Array[WinitWindowEvent] {
+  match self {
+    WindowEvent::ActivationTokenDone(serial, token) =>
+      [WinitWindowEvent::ActivationTokenDone(serial, token)]
+    WindowEvent::SurfaceResized(size) => [WinitWindowEvent::Resized(size)]
+    WindowEvent::Moved(position) => [WinitWindowEvent::Moved(position)]
+    WindowEvent::CloseRequested => [WinitWindowEvent::CloseRequested]
+    WindowEvent::Destroyed => [WinitWindowEvent::Destroyed]
+    WindowEvent::DragEntered(paths, _position) => {
+      let events : Array[WinitWindowEvent] = []
+      for path in paths {
+        events.push(WinitWindowEvent::HoveredFile(path))
+      }
+      events
+    }
+    WindowEvent::DragMoved(_position) => []
+    WindowEvent::DragDropped(paths, _position) => {
+      let events : Array[WinitWindowEvent] = []
+      for path in paths {
+        events.push(WinitWindowEvent::DroppedFile(path))
+      }
+      events
+    }
+    WindowEvent::DragLeft(_position) => [WinitWindowEvent::HoveredFileCancelled]
+    WindowEvent::Focused(focused) => [WinitWindowEvent::Focused(focused)]
+    WindowEvent::Ime(ime) => [WinitWindowEvent::Ime(ime)]
+    WindowEvent::KeyboardInput(device_id, event, is_synthetic) =>
+      [WinitWindowEvent::KeyboardInput(device_id, event, is_synthetic)]
+    WindowEvent::ModifiersChanged(modifiers) =>
+      [WinitWindowEvent::ModifiersChanged(modifiers)]
+    WindowEvent::PointerMoved(device_id, position, _is_primary, _source) =>
+      [WinitWindowEvent::CursorMoved(device_id, position)]
+    WindowEvent::PointerEntered(device_id, _position, _is_primary, _kind) =>
+      [WinitWindowEvent::CursorEntered(device_id)]
+    WindowEvent::PointerLeft(device_id, _position, _is_primary, _kind) =>
+      [WinitWindowEvent::CursorLeft(device_id)]
+    WindowEvent::PointerButton(device_id, state, _position, _is_primary, source) =>
+      match source {
+        ButtonSource::Mouse(button) =>
+          [WinitWindowEvent::MouseInput(device_id, state, button)]
+        _ => []
+      }
+    WindowEvent::PinchGesture(device_id, delta, phase) =>
+      [WinitWindowEvent::PinchGesture(device_id, delta, phase)]
+    WindowEvent::PanGesture(device_id, delta, phase) =>
+      [WinitWindowEvent::PanGesture(device_id, delta, phase)]
+    WindowEvent::DoubleTapGesture(device_id) =>
+      [WinitWindowEvent::DoubleTapGesture(device_id)]
+    WindowEvent::RotationGesture(device_id, delta, phase) =>
+      [WinitWindowEvent::RotationGesture(device_id, delta, phase)]
+    WindowEvent::TouchpadPressure(device_id, pressure, stage) =>
+      [WinitWindowEvent::TouchpadPressure(device_id, pressure, stage)]
+    WindowEvent::MouseWheel(device_id, delta, phase) =>
+      [WinitWindowEvent::MouseWheel(device_id, delta, phase)]
+    WindowEvent::ScaleFactorChanged(scale_factor, writer) =>
+      [WinitWindowEvent::ScaleFactorChanged(scale_factor, writer)]
+    WindowEvent::ThemeChanged(theme) => [WinitWindowEvent::ThemeChanged(theme)]
+    WindowEvent::Occluded(occluded) => [WinitWindowEvent::Occluded(occluded)]
+    WindowEvent::RedrawRequested => [WinitWindowEvent::RedrawRequested]
+  }
+}

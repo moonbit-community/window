@@ -28,6 +28,14 @@ test "device event variants are constructible" {
     DeviceEvent::Button(ButtonId::from_raw(1), ElementState::Released),
     DeviceEvent::Button(ButtonId::from_raw(1), ElementState::Released),
   )
+  assert_eq(
+    DeviceEvent::PointerMotion(1.5, -2.0).into_winit_event(),
+    WinitDeviceEvent::MouseMotion(1.5, -2.0),
+  )
+  assert_eq(
+    DeviceEvent::MouseWheel(MouseScrollDelta::LineDelta(0.0, 1.0)).into_winit_event(),
+    WinitDeviceEvent::MouseWheel(MouseScrollDelta::LineDelta(0.0, 1.0)),
+  )
 }
 
 ///|
@@ -78,4 +86,70 @@ test "tablet tool helpers and force normalization are available" {
   assert_true(angle_from_tilt.altitude() >= 0.0)
   let tilt_from_angle = angle_from_tilt.tilt()
   assert_true(tilt_from_angle.x() <= 90)
+}
+
+///|
+test "window events can be projected to winit-compatible events" {
+  let hovered = WindowEvent::DragEntered(
+    ["/tmp/a.txt", "/tmp/b.txt"],
+    @dpi.PhysicalPositionF64::new(12.0, 24.0),
+  ).into_winit_events()
+  assert_eq(hovered.length(), 2)
+  match hovered[0] {
+    WinitWindowEvent::HoveredFile(path) => assert_eq(path, "/tmp/a.txt")
+    _ => fail("expected first hovered file event")
+  }
+  match hovered[1] {
+    WinitWindowEvent::HoveredFile(path) => assert_eq(path, "/tmp/b.txt")
+    _ => fail("expected second hovered file event")
+  }
+
+  let cursor_moved = WindowEvent::PointerMoved(
+    Some(DeviceId::from_raw(5L)),
+    @dpi.PhysicalPositionF64::new(3.0, 4.0),
+    true,
+    PointerSource::Mouse,
+  ).into_winit_events()
+  assert_eq(cursor_moved.length(), 1)
+  match cursor_moved[0] {
+    WinitWindowEvent::CursorMoved(Some(device_id), position) => {
+      assert_eq(device_id, DeviceId::from_raw(5L))
+      assert_eq(position, @dpi.PhysicalPositionF64::new(3.0, 4.0))
+    }
+    _ => fail("expected cursor moved event")
+  }
+
+  let mouse_input = WindowEvent::PointerButton(
+    Some(DeviceId::from_raw(7L)),
+    ElementState::Pressed,
+    @dpi.PhysicalPositionF64::new(8.0, 9.0),
+    true,
+    ButtonSource::Mouse(MouseButton::Left),
+  ).into_winit_events()
+  assert_eq(mouse_input.length(), 1)
+  match mouse_input[0] {
+    WinitWindowEvent::MouseInput(Some(device_id), state, button) => {
+      assert_eq(device_id, DeviceId::from_raw(7L))
+      assert_eq(state, ElementState::Pressed)
+      assert_eq(button, MouseButton::Left)
+    }
+    _ => fail("expected mouse input event")
+  }
+
+  let touch_button = WindowEvent::PointerButton(
+    None,
+    ElementState::Pressed,
+    @dpi.PhysicalPositionF64::new(8.0, 9.0),
+    true,
+    ButtonSource::Touch(FingerId::from_raw(2), None),
+  ).into_winit_events()
+  assert_eq(touch_button.length(), 0)
+
+  let resized = WindowEvent::SurfaceResized(@dpi.PhysicalSize::new(640, 480)).into_winit_events()
+  assert_eq(resized.length(), 1)
+  match resized[0] {
+    WinitWindowEvent::Resized(size) =>
+      assert_eq(size, @dpi.PhysicalSize::new(640, 480))
+    _ => fail("expected resized event")
+  }
 }
