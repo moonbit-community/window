@@ -68,6 +68,8 @@ native builds and focuses on `macos-arm64`.
   `@core.ImeRequestError`, `@core.RequestError`) rather than `Result`.
 - `EventLoop::create_custom_cursor` supports both RGBA and URL cursor sources
   on macOS; URL inputs accept regular URL strings and local file paths.
+  Animation cursor sources are part of the API and currently raise
+  `RequestError::NotSupported` on macOS.
   `Window::set_cursor` accepts `@core.Cursor::{Icon, Custom}`.
 - `Cmd + keyUp` is forwarded to the key window in the event pump so key
   release events are not dropped while Command is held.

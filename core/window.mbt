@@ -317,6 +317,7 @@ pub(all) enum Cursor {
 pub(all) enum CustomCursorSource {
   Rgba(Bytes, Int, Int, Int, Int)
   Url(String, Int, Int)
+  Animation(Int, Array[CustomCursor])
 } derive(Eq, Show)
 
 ///|
@@ -325,6 +326,12 @@ pub(all) suberror BadCustomCursorSource {
   ByteCountNotDivisibleBy4(Int)
   DimensionsVsPixelCount(Int, Int, Int, Int)
   HotspotOutOfBounds(Int, Int, Int, Int)
+} derive(Show)
+
+///|
+pub(all) suberror BadCustomCursorAnimation {
+  Empty
+  NonPositiveFrameDuration(Int)
 } derive(Show)
 
 ///|
@@ -362,6 +369,22 @@ pub fn CustomCursorSource::from_rgba(
     )
   }
   CustomCursorSource::Rgba(rgba, width, height, hotspot_x, hotspot_y)
+}
+
+///|
+pub fn CustomCursorSource::from_animation(
+  frame_duration_millis : Int,
+  cursors : Array[CustomCursor],
+) -> CustomCursorSource raise BadCustomCursorAnimation {
+  if frame_duration_millis <= 0 {
+    raise BadCustomCursorAnimation::NonPositiveFrameDuration(
+      frame_duration_millis,
+    )
+  }
+  if cursors.length() == 0 {
+    raise BadCustomCursorAnimation::Empty
+  }
+  CustomCursorSource::Animation(frame_duration_millis, cursors)
 }
 
 ///|

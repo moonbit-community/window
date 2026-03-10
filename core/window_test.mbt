@@ -217,6 +217,8 @@ test "custom cursor models are constructible" {
     source,
     CustomCursorSource::Rgba(Bytes::make(4, (255 : Int).to_byte()), 1, 1, 0, 0),
   )
+  let animated = try! CustomCursorSource::from_animation(16, [cursor])
+  assert_eq(animated, CustomCursorSource::Animation(16, [cursor]))
   let bad_hotspot = try {
     CustomCursorSource::from_rgba(
       Bytes::make(4, (255 : Int).to_byte()),
@@ -232,6 +234,22 @@ test "custom cursor models are constructible" {
     _ => false
   }
   assert_true(bad_hotspot)
+  let empty_animation = try {
+    CustomCursorSource::from_animation(16, []) |> ignore
+    false
+  } catch {
+    BadCustomCursorAnimation::Empty => true
+    _ => false
+  }
+  assert_true(empty_animation)
+  let bad_duration = try {
+    CustomCursorSource::from_animation(0, [cursor]) |> ignore
+    false
+  } catch {
+    BadCustomCursorAnimation::NonPositiveFrameDuration(0) => true
+    _ => false
+  }
+  assert_true(bad_duration)
 }
 
 ///|

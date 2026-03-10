@@ -1546,6 +1546,10 @@ pub fn EventLoop::create_custom_cursor(
         @core.CustomCursor::from_raw(raw)
       }
     }
+    @core.CustomCursorSource::Animation(_, _) =>
+      raise @core.RequestError::NotSupported(
+        "animated custom cursors are not supported on macOS backend",
+      )
   }
 }
 

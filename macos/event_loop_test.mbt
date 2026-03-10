@@ -91,6 +91,28 @@ test "create_custom_cursor supports rgba cursor sources" {
 }
 
 ///|
+test "create_custom_cursor reports not supported for animation sources" {
+  let event_loop = EventLoop::new()
+  let frame_source = try! @core.CustomCursorSource::from_rgba(
+    Bytes::make(4, (255 : Int).to_byte()),
+    1,
+    1,
+    0,
+    0,
+  )
+  let frame = try! event_loop.create_custom_cursor(frame_source)
+  let animated = try! @core.CustomCursorSource::from_animation(16, [frame])
+  let not_supported = try {
+    event_loop.create_custom_cursor(animated) |> ignore
+    false
+  } catch {
+    @core.RequestError::NotSupported(_) => true
+    _ => false
+  }
+  assert_true(not_supported)
+}
+
+///|
 test "parent window attribute accepts native window handles" {
   let event_loop = EventLoop::new()
   let parent = event_loop.create_window(

@@ -8,6 +8,12 @@ import {
 // Values
 
 // Errors
+pub(all) suberror BadCustomCursorAnimation {
+  Empty
+  NonPositiveFrameDuration(Int)
+}
+pub impl Show for BadCustomCursorAnimation
+
 pub(all) suberror BadCustomCursorSource {
   TooLarge(Int, Int)
   ByteCountNotDivisibleBy4(Int)
@@ -134,7 +140,9 @@ pub impl Show for CustomCursor
 pub(all) enum CustomCursorSource {
   Rgba(Bytes, Int, Int, Int, Int)
   Url(String, Int, Int)
+  Animation(Int, Array[CustomCursor])
 }
+pub fn CustomCursorSource::from_animation(Int, Array[CustomCursor]) -> Self raise BadCustomCursorAnimation
 pub fn CustomCursorSource::from_rgba(Bytes, Int, Int, Int, Int) -> Self raise BadCustomCursorSource
 pub impl Eq for CustomCursorSource
 pub impl Show for CustomCursorSource
