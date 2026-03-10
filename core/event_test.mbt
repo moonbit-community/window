@@ -31,6 +31,14 @@ test "device event variants are constructible" {
 }
 
 ///|
+test "async request serials can be created and round-tripped" {
+  let serial = AsyncRequestSerial::get()
+  assert_true(serial.into_raw() >= 0)
+  let restored = AsyncRequestSerial::from_raw(7)
+  assert_eq(restored.into_raw(), 7)
+}
+
+///|
 test "mouse button conversion and button source helpers" {
   assert_eq(MouseButton::try_from_u8(0), Some(MouseButton::Left))
   assert_eq(MouseButton::try_from_u8(4), Some(MouseButton::Forward))

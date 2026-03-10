@@ -58,6 +58,15 @@ pub fn ActivationToken::into_raw(Self) -> String
 pub impl Eq for ActivationToken
 pub impl Show for ActivationToken
 
+pub struct AsyncRequestSerial {
+  raw : Int
+}
+pub fn AsyncRequestSerial::from_raw(Int) -> Self
+pub fn AsyncRequestSerial::get() -> Self
+pub fn AsyncRequestSerial::into_raw(Self) -> Int
+pub impl Eq for AsyncRequestSerial
+pub impl Show for AsyncRequestSerial
+
 pub struct AxisId {
   raw : Int
 }
@@ -880,7 +889,7 @@ pub impl Eq for WindowButtons
 pub impl Show for WindowButtons
 
 pub(all) enum WindowEvent {
-  ActivationTokenDone(Int, ActivationToken)
+  ActivationTokenDone(AsyncRequestSerial, ActivationToken)
   SurfaceResized(@dpi.PhysicalSize)
   Moved(@dpi.PhysicalPosition)
   CloseRequested

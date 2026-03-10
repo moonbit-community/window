@@ -13,6 +13,31 @@ pub(all) enum DeviceEvents {
 } derive(Eq, Show)
 
 ///|
+pub struct AsyncRequestSerial {
+  raw : Int
+} derive(Eq, Show)
+
+///|
+let async_request_serial_counter : Ref[Int] = Ref::new(0)
+
+///|
+pub fn AsyncRequestSerial::get() -> AsyncRequestSerial {
+  let current = async_request_serial_counter.val
+  async_request_serial_counter.val = current + 1
+  { raw: current }
+}
+
+///|
+pub fn AsyncRequestSerial::from_raw(raw : Int) -> AsyncRequestSerial {
+  { raw, }
+}
+
+///|
+pub fn AsyncRequestSerial::into_raw(self : AsyncRequestSerial) -> Int {
+  self.raw
+}
+
+///|
 pub fn ControlFlow::wait_until(resume_time_ms : Int64) -> ControlFlow {
   ControlFlow::WaitUntil(resume_time_ms)
 }

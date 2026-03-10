@@ -614,7 +614,7 @@ pub(all) enum DeviceEvent {
 
 ///|
 pub(all) enum WindowEvent {
-  ActivationTokenDone(Int, ActivationToken)
+  ActivationTokenDone(AsyncRequestSerial, ActivationToken)
   SurfaceResized(@dpi.PhysicalSize)
   Moved(@dpi.PhysicalPosition)
   CloseRequested
