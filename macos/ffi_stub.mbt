@@ -19,6 +19,21 @@ fn window_theme(_window_id : Int) -> Int {
 }
 
 ///|
+fn display_handle() -> UInt64 {
+  (0 : Int).to_uint64()
+}
+
+///|
+fn window_display_handle(_window_id : Int) -> UInt64 {
+  (0 : Int).to_uint64()
+}
+
+///|
+fn window_handle(_window_id : Int) -> UInt64 {
+  (0 : Int).to_uint64()
+}
+
+///|
 fn system_theme() -> Int {
   0
 }
@@ -209,11 +224,6 @@ fn window_maximize_button_enabled(_window_id : Int) -> Bool {
 ///|
 fn window_blur(_window_id : Int) -> Bool {
   false
-}
-
-///|
-fn window_cursor(_window_id : Int) -> Int {
-  0
 }
 
 ///|
@@ -603,6 +613,27 @@ fn set_window_blur(_window_id : Int, _blur : Bool) -> Unit {
 ///|
 fn set_window_cursor(_window_id : Int, _cursor : Int) -> Unit {
   ()
+}
+
+///|
+fn create_custom_cursor_rgba(
+  _rgba : Bytes,
+  _width : Int,
+  _height : Int,
+  _hotspot_x : Int,
+  _hotspot_y : Int,
+) -> UInt64 {
+  (0 : Int).to_uint64()
+}
+
+///|
+fn set_window_custom_cursor(_window_id : Int, _custom_cursor : UInt64) -> Bool {
+  false
+}
+
+///|
+fn set_parent_window(_window_id : Int, _parent_window : UInt64) -> Bool {
+  false
 }
 
 ///|

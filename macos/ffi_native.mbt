@@ -19,6 +19,21 @@ fn window_theme(window_id : Int) -> Int {
 }
 
 ///|
+fn display_handle() -> UInt64 {
+  native_display_handle()
+}
+
+///|
+fn window_display_handle(window_id : Int) -> UInt64 {
+  native_window_display_handle(window_id)
+}
+
+///|
+fn window_handle(window_id : Int) -> UInt64 {
+  native_window_handle(window_id)
+}
+
+///|
 fn system_theme() -> Int {
   native_system_theme()
 }
@@ -209,11 +224,6 @@ fn window_maximize_button_enabled(window_id : Int) -> Bool {
 ///|
 fn window_blur(window_id : Int) -> Bool {
   native_window_blur(window_id)
-}
-
-///|
-fn window_cursor(window_id : Int) -> Int {
-  native_window_cursor(window_id)
 }
 
 ///|
@@ -606,6 +616,34 @@ fn set_window_cursor(window_id : Int, cursor : Int) -> Unit {
 }
 
 ///|
+fn create_custom_cursor_rgba(
+  rgba : Bytes,
+  width : Int,
+  height : Int,
+  hotspot_x : Int,
+  hotspot_y : Int,
+) -> UInt64 {
+  native_custom_cursor_create_rgba(
+    rgba,
+    rgba.length(),
+    width,
+    height,
+    hotspot_x,
+    hotspot_y,
+  )
+}
+
+///|
+fn set_window_custom_cursor(window_id : Int, custom_cursor : UInt64) -> Bool {
+  native_window_set_custom_cursor(window_id, custom_cursor)
+}
+
+///|
+fn set_parent_window(window_id : Int, parent_window : UInt64) -> Bool {
+  native_window_set_parent_window(window_id, parent_window)
+}
+
+///|
 fn set_window_cursor_visible(window_id : Int, visible : Bool) -> Unit {
   native_window_set_cursor_visible(window_id, visible)
 }
@@ -872,6 +910,15 @@ extern "C" fn native_window_y(window_id : Int) -> Int = "mbw_window_y"
 extern "C" fn native_window_theme(window_id : Int) -> Int = "mbw_window_theme"
 
 ///|
+extern "C" fn native_display_handle() -> UInt64 = "mbw_display_handle"
+
+///|
+extern "C" fn native_window_display_handle(window_id : Int) -> UInt64 = "mbw_window_display_handle"
+
+///|
+extern "C" fn native_window_handle(window_id : Int) -> UInt64 = "mbw_window_handle"
+
+///|
 extern "C" fn native_system_theme() -> Int = "mbw_system_theme"
 
 ///|
@@ -1001,9 +1048,6 @@ extern "C" fn native_window_maximize_button_enabled(window_id : Int) -> Bool = "
 
 ///|
 extern "C" fn native_window_blur(window_id : Int) -> Bool = "mbw_window_blur"
-
-///|
-extern "C" fn native_window_cursor(window_id : Int) -> Int = "mbw_window_cursor"
 
 ///|
 extern "C" fn native_window_cursor_visible(window_id : Int) -> Bool = "mbw_window_cursor_visible"
@@ -1241,6 +1285,29 @@ extern "C" fn native_window_set_blur(window_id : Int, blur : Bool) -> Unit = "mb
 
 ///|
 extern "C" fn native_window_set_cursor(window_id : Int, cursor : Int) -> Unit = "mbw_window_set_cursor"
+
+///|
+#borrow(rgba)
+extern "C" fn native_custom_cursor_create_rgba(
+  rgba : Bytes,
+  rgba_len : Int,
+  width : Int,
+  height : Int,
+  hotspot_x : Int,
+  hotspot_y : Int,
+) -> UInt64 = "mbw_custom_cursor_create_rgba"
+
+///|
+extern "C" fn native_window_set_custom_cursor(
+  window_id : Int,
+  custom_cursor : UInt64,
+) -> Bool = "mbw_window_set_custom_cursor"
+
+///|
+extern "C" fn native_window_set_parent_window(
+  window_id : Int,
+  parent_window : UInt64,
+) -> Bool = "mbw_window_set_parent_window"
 
 ///|
 extern "C" fn native_window_set_cursor_visible(

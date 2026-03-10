@@ -16,7 +16,9 @@ native builds and focuses on `macos-arm64`.
   `Occluded`, `RedrawRequested`
 - Event loop support: `run_app`, `EventLoopProxy::wake_up()`,
   `ControlFlow::{Poll, Wait, WaitUntil}`, `EventLoop::system_theme`,
-  and `EventLoop::listen_device_events` (accepted as a no-op on macOS)
+  `EventLoop::listen_device_events` (accepted as a no-op on macOS), and
+  lifecycle callbacks (`resumed`, `can_create_surfaces`,
+  `destroy_surfaces`, `suspended`, `device_event`)
 - Runtime window control currently includes surface and frame sizing
   (`surface_size`, `outer_size`, `surface_position`, `safe_area`,
   `request_surface_size`,
@@ -30,7 +32,8 @@ native builds and focuses on `macos-arm64`.
   `set_cursor_position`, `set_cursor_grab`, `set_cursor_visible`,
   `is_cursor_visible`, `set_cursor_hittest`, `is_cursor_hittest`, `set_blur`,
   `set_transparent`, `set_decorations`, `set_window_level`,
-  `request_user_attention`), visibility and
+  `request_user_attention`), raw handle bridge (`rwh_06_window_handle`,
+  `rwh_06_display_handle`), visibility and
   capability flags (`set_visible`, `set_resizable`, `set_enabled_buttons`,
   `set_content_protected`), and IME control (`set_ime_purpose`,
   `set_ime_hints`, `set_ime_allowed`, `set_ime_cursor_area`,
@@ -45,8 +48,9 @@ native builds and focuses on `macos-arm64`.
 - `WindowAttributes` supports initial surface sizing/constraints and position,
   title/visibility/resizable, focus/active, fullscreen, theme, cursor
   icon/visibility/hittest, blur/transparency/decorations/content protection,
-  enabled buttons, window level, IME purpose, and macOS platform attributes (such as
-  `simple_fullscreen`).
+  enabled buttons, window level, IME purpose, optional `parent_window`
+  (native handle), and
+  macOS platform attributes (such as `simple_fullscreen`).
 - `Fullscreen` supports both `Borderless(MonitorHandle?)` and
   `Exclusive(MonitorHandle, VideoMode)` payloads in the core API.
 - Current keyboard support is macOS-first and now prefers native
@@ -62,6 +66,9 @@ native builds and focuses on `macos-arm64`.
 - API errors use MoonBit `raise` with typed errors (for example
   `@core.BadIcon`, `@core.ImeSurroundingTextError`,
   `@core.ImeRequestError`, `@core.RequestError`) rather than `Result`.
+- `EventLoop::create_custom_cursor` supports RGBA cursor sources on macOS.
+  URL-backed custom cursors currently raise `RequestError::NotSupported`.
+  `Window::set_cursor` accepts `@core.Cursor::{Icon, Custom}`.
 - `Cmd + keyUp` is forwarded to the key window in the event pump so key
   release events are not dropped while Command is held.
 - Other platforms are planned but not implemented yet

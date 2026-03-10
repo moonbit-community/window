@@ -160,6 +160,53 @@ pub fn Modifiers::is_empty(self : Modifiers) -> Bool {
 }
 
 ///|
+pub struct DeviceId {
+  raw : Int64
+} derive(Eq, Show)
+
+///|
+pub fn DeviceId::from_raw(raw : Int64) -> DeviceId {
+  { raw, }
+}
+
+///|
+pub fn DeviceId::into_raw(self : DeviceId) -> Int64 {
+  self.raw
+}
+
+///|
+pub struct RawKeyEvent {
+  physical_key : PhysicalKey
+  state : ElementState
+} derive(Eq, Show)
+
+///|
+pub fn RawKeyEvent::new(
+  physical_key : PhysicalKey,
+  state : ElementState,
+) -> RawKeyEvent {
+  { physical_key, state }
+}
+
+///|
+pub fn RawKeyEvent::physical_key(self : RawKeyEvent) -> PhysicalKey {
+  self.physical_key
+}
+
+///|
+pub fn RawKeyEvent::state(self : RawKeyEvent) -> ElementState {
+  self.state
+}
+
+///|
+pub(all) enum DeviceEvent {
+  PointerMotion(Double, Double)
+  MouseWheel(MouseScrollDelta)
+  Button(Int, ElementState)
+  Key(RawKeyEvent)
+} derive(Eq, Show)
+
+///|
 pub(all) enum WindowEvent {
   ActivationTokenDone(Int, ActivationToken)
   SurfaceResized(@dpi.PhysicalSize)

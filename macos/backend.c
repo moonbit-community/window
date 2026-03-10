@@ -97,6 +97,9 @@ typedef struct mbw_window {
   int resize_increment_width;
   int resize_increment_height;
   int modifiers_state;
+  int has_pointer_position;
+  double pointer_x;
+  double pointer_y;
   int ime_marked_active;
   int ime_cursor_start;
   int ime_cursor_end;
@@ -122,6 +125,7 @@ typedef struct mbw_window {
   int blur;
   int has_icon;
   int cursor;
+  uint64_t custom_cursor_id;
   int cursor_visible;
   int cursor_hittest;
   int transparent;
@@ -144,6 +148,16 @@ static size_t g_windows_cap = 0;
 static int g_next_window_id = 1;
 static atomic_int g_pending_proxy_wake_up = 0;
 static int64_t g_now_ms_override_for_test = -1;
+
+typedef struct mbw_custom_cursor {
+  uint64_t id;
+  void *ns_cursor;
+} mbw_custom_cursor_t;
+
+static mbw_custom_cursor_t *g_custom_cursors = NULL;
+static size_t g_custom_cursors_len = 0;
+static size_t g_custom_cursors_cap = 0;
+static uint64_t g_next_custom_cursor_id = 1;
 
 #define MBW_INPUT_EVENT_NONE 0
 #define MBW_INPUT_EVENT_POINTER_MOVED 1
@@ -316,6 +330,40 @@ static void mbw_push_window(mbw_window_t *window) {
     g_windows_cap = next_cap;
   }
   g_windows[g_windows_len++] = window;
+}
+
+static mbw_custom_cursor_t *mbw_find_custom_cursor(uint64_t id) {
+  if (id == 0) {
+    return NULL;
+  }
+  for (size_t i = 0; i < g_custom_cursors_len; ++i) {
+    if (g_custom_cursors[i].id == id) {
+      return &g_custom_cursors[i];
+    }
+  }
+  return NULL;
+}
+
+static bool mbw_push_custom_cursor(uint64_t id, void *ns_cursor) {
+  if (id == 0 || !ns_cursor) {
+    return false;
+  }
+  if (g_custom_cursors_len + 1 > g_custom_cursors_cap) {
+    size_t next_cap = g_custom_cursors_cap == 0 ? 8 : g_custom_cursors_cap * 2;
+    mbw_custom_cursor_t *next = (mbw_custom_cursor_t *)realloc(
+      g_custom_cursors,
+      next_cap * sizeof(mbw_custom_cursor_t));
+    if (!next) {
+      return false;
+    }
+    g_custom_cursors = next;
+    g_custom_cursors_cap = next_cap;
+  }
+  g_custom_cursors[g_custom_cursors_len++] = (mbw_custom_cursor_t){
+    .id = id,
+    .ns_cursor = ns_cursor,
+  };
+  return true;
 }
 
 static bool mbw_push_input_event(
@@ -1056,6 +1104,10 @@ static id mbw_ns_cursor_for_window(mbw_window_t *window) {
     return nil;
   }
   if (window->cursor_visible) {
+    mbw_custom_cursor_t *custom_cursor = mbw_find_custom_cursor(window->custom_cursor_id);
+    if (custom_cursor && custom_cursor->ns_cursor) {
+      return (id)custom_cursor->ns_cursor;
+    }
     return mbw_ns_cursor_for_kind(window->cursor);
   }
   Class ns_cursor_class = objc_getClass("NSCursor");
@@ -1149,12 +1201,25 @@ static void mbw_view_pointer_position(id view, id event, double *x, double *y) {
 }
 
 static void mbw_window_queue_pointer_moved(mbw_window_t *window, double x, double y) {
+  double delta_x = 0.0;
+  double delta_y = 0.0;
+  if (window && window->has_pointer_position) {
+    delta_x = x - window->pointer_x;
+    delta_y = y - window->pointer_y;
+  }
   mbw_input_event_t event = {
     .kind = MBW_INPUT_EVENT_POINTER_MOVED,
     .x = x,
     .y = y,
+    .delta_x = delta_x,
+    .delta_y = delta_y,
     .pointer_source = MBW_POINTER_SOURCE_MOUSE,
   };
+  if (window) {
+    window->has_pointer_position = 1;
+    window->pointer_x = x;
+    window->pointer_y = y;
+  }
   (void)mbw_push_input_event(window, &event);
 }
 
@@ -1165,6 +1230,11 @@ static void mbw_window_queue_pointer_entered(mbw_window_t *window, double x, dou
     .y = y,
     .pointer_kind = MBW_POINTER_KIND_MOUSE,
   };
+  if (window) {
+    window->has_pointer_position = 1;
+    window->pointer_x = x;
+    window->pointer_y = y;
+  }
   (void)mbw_push_input_event(window, &event);
 }
 
@@ -1175,6 +1245,9 @@ static void mbw_window_queue_pointer_left(mbw_window_t *window, double x, double
     .y = y,
     .pointer_kind = MBW_POINTER_KIND_MOUSE,
   };
+  if (window) {
+    window->has_pointer_position = 0;
+  }
   (void)mbw_push_input_event(window, &event);
 }
 
@@ -3106,12 +3179,25 @@ static void mbw_update_window_state(mbw_window_t *window) {
 
 #if !defined(__APPLE__)
 static void mbw_window_queue_pointer_moved(mbw_window_t *window, double x, double y) {
+  double delta_x = 0.0;
+  double delta_y = 0.0;
+  if (window && window->has_pointer_position) {
+    delta_x = x - window->pointer_x;
+    delta_y = y - window->pointer_y;
+  }
   mbw_input_event_t event = {
     .kind = MBW_INPUT_EVENT_POINTER_MOVED,
     .x = x,
     .y = y,
+    .delta_x = delta_x,
+    .delta_y = delta_y,
     .pointer_source = MBW_POINTER_SOURCE_MOUSE,
   };
+  if (window) {
+    window->has_pointer_position = 1;
+    window->pointer_x = x;
+    window->pointer_y = y;
+  }
   (void)mbw_push_input_event(window, &event);
 }
 
@@ -3122,6 +3208,11 @@ static void mbw_window_queue_pointer_entered(mbw_window_t *window, double x, dou
     .y = y,
     .pointer_kind = MBW_POINTER_KIND_MOUSE,
   };
+  if (window) {
+    window->has_pointer_position = 1;
+    window->pointer_x = x;
+    window->pointer_y = y;
+  }
   (void)mbw_push_input_event(window, &event);
 }
 
@@ -3132,6 +3223,9 @@ static void mbw_window_queue_pointer_left(mbw_window_t *window, double x, double
     .y = y,
     .pointer_kind = MBW_POINTER_KIND_MOUSE,
   };
+  if (window) {
+    window->has_pointer_position = 0;
+  }
   (void)mbw_push_input_event(window, &event);
 }
 
@@ -3492,6 +3586,9 @@ int mbw_window_create_utf8(
   window->resize_increment_width = 0;
   window->resize_increment_height = 0;
   window->modifiers_state = 0;
+  window->has_pointer_position = 0;
+  window->pointer_x = 0.0;
+  window->pointer_y = 0.0;
   window->ime_marked_active = 0;
   window->ime_cursor_start = -1;
   window->ime_cursor_end = -1;
@@ -3517,6 +3614,7 @@ int mbw_window_create_utf8(
   window->blur = 0;
   window->has_icon = 0;
   window->cursor = MBW_CURSOR_DEFAULT;
+  window->custom_cursor_id = 0;
   window->cursor_visible = 1;
   window->cursor_hittest = 1;
   window->transparent = 0;
@@ -3962,6 +4060,44 @@ void mbw_window_set_position(int window_id, int x, int y) {
 int mbw_window_theme(int window_id) {
   mbw_window_t *window = mbw_find_window(window_id);
   return window ? window->theme_kind : MBW_THEME_UNKNOWN;
+}
+
+uint64_t mbw_display_handle(void) {
+#if defined(__APPLE__)
+  if (!mbw_bootstrap_app() || !g_ns_app) {
+    return 0;
+  }
+  return (uint64_t)(uintptr_t)g_ns_app;
+#else
+  return 0;
+#endif
+}
+
+uint64_t mbw_window_display_handle(int window_id) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  if (!window) {
+    return 0;
+  }
+#if defined(__APPLE__)
+  if (!window->window) {
+    return 0;
+  }
+  return mbw_display_handle();
+#else
+  return 0;
+#endif
+}
+
+uint64_t mbw_window_handle(int window_id) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  if (!window) {
+    return 0;
+  }
+#if defined(__APPLE__)
+  return window->window ? (uint64_t)(uintptr_t)window->window : 0;
+#else
+  return 0;
+#endif
 }
 
 int mbw_system_theme(void) {
@@ -5690,6 +5826,152 @@ void mbw_window_set_blur(int window_id, bool blur) {
 #endif
 }
 
+uint64_t mbw_custom_cursor_create_rgba(
+  const uint8_t *rgba,
+  int rgba_len,
+  int width,
+  int height,
+  int hotspot_x,
+  int hotspot_y
+) {
+  int expected_len = width > 0 && height > 0 ? width * height * 4 : 0;
+  if (!rgba || rgba_len != expected_len) {
+    return 0;
+  }
+  if (
+    hotspot_x < 0 ||
+    hotspot_y < 0 ||
+    hotspot_x >= width ||
+    hotspot_y >= height) {
+    return 0;
+  }
+#if defined(__APPLE__)
+  Class rep_class = objc_getClass("NSBitmapImageRep");
+  Class image_class = objc_getClass("NSImage");
+  Class cursor_class = objc_getClass("NSCursor");
+  if (!rep_class || !image_class || !cursor_class) {
+    return 0;
+  }
+
+  id allocated_rep = mbw_msg_id((id)rep_class, "alloc");
+  if (!allocated_rep) {
+    return 0;
+  }
+  id color_space_name = mbw_make_nsstring("NSCalibratedRGBColorSpace");
+  id rep = ((id(*)(id, SEL, uint8_t **, mbw_nsinteger_t, mbw_nsinteger_t, mbw_nsinteger_t, mbw_nsinteger_t, mbw_bool_t, mbw_bool_t, id, mbw_nsinteger_t, mbw_nsinteger_t))objc_msgSend)(
+    allocated_rep,
+    mbw_sel("initWithBitmapDataPlanes:pixelsWide:pixelsHigh:bitsPerSample:samplesPerPixel:hasAlpha:isPlanar:colorSpaceName:bytesPerRow:bitsPerPixel:"),
+    NULL,
+    (mbw_nsinteger_t)width,
+    (mbw_nsinteger_t)height,
+    (mbw_nsinteger_t)8,
+    (mbw_nsinteger_t)4,
+    YES,
+    NO,
+    color_space_name,
+    (mbw_nsinteger_t)(width * 4),
+    (mbw_nsinteger_t)32);
+  if (!rep) {
+    return 0;
+  }
+  uint8_t *bitmap_data = ((uint8_t *(*)(id, SEL))objc_msgSend)(
+    rep,
+    mbw_sel("bitmapData"));
+  if (!bitmap_data) {
+    return 0;
+  }
+  memcpy(bitmap_data, rgba, (size_t)rgba_len);
+
+  id allocated_image = mbw_msg_id((id)image_class, "alloc");
+  if (!allocated_image) {
+    return 0;
+  }
+  mbw_size_t image_size = { (double)width, (double)height };
+  id image = ((id(*)(id, SEL, mbw_size_t))objc_msgSend)(
+    allocated_image,
+    mbw_sel("initWithSize:"),
+    image_size);
+  if (!image) {
+    return 0;
+  }
+  ((void(*)(id, SEL, id))objc_msgSend)(image, mbw_sel("addRepresentation:"), rep);
+
+  id allocated_cursor = mbw_msg_id((id)cursor_class, "alloc");
+  if (!allocated_cursor) {
+    return 0;
+  }
+  mbw_point_t hot_spot = { (double)hotspot_x, (double)hotspot_y };
+  id cursor = ((id(*)(id, SEL, id, mbw_point_t))objc_msgSend)(
+    allocated_cursor,
+    mbw_sel("initWithImage:hotSpot:"),
+    image,
+    hot_spot);
+  if (!cursor) {
+    return 0;
+  }
+
+  uint64_t cursor_id = g_next_custom_cursor_id++;
+  if (cursor_id == 0 || !mbw_push_custom_cursor(cursor_id, (void *)cursor)) {
+    ((void(*)(id, SEL))objc_msgSend)(cursor, mbw_sel("release"));
+    return 0;
+  }
+  return cursor_id;
+#else
+  (void)rgba;
+  (void)rgba_len;
+  (void)width;
+  (void)height;
+  (void)hotspot_x;
+  (void)hotspot_y;
+  return 0;
+#endif
+}
+
+bool mbw_window_set_custom_cursor(int window_id, uint64_t cursor_id) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  if (!window) {
+    return false;
+  }
+  mbw_custom_cursor_t *custom_cursor = mbw_find_custom_cursor(cursor_id);
+  if (!custom_cursor || !custom_cursor->ns_cursor) {
+    return false;
+  }
+  window->custom_cursor_id = cursor_id;
+#if defined(__APPLE__)
+  if (window->content_view) {
+    id content_view = (id)window->content_view;
+    mbw_view_refresh_cursor(content_view);
+    id ns_cursor = mbw_ns_cursor_for_window(window);
+    if (ns_cursor) {
+      ((void(*)(id, SEL))objc_msgSend)(ns_cursor, mbw_sel("set"));
+    }
+  }
+#endif
+  return true;
+}
+
+bool mbw_window_set_parent_window(int window_id, uint64_t parent_window_handle) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  if (!window || !window->window || parent_window_handle == 0) {
+    return false;
+  }
+#if defined(__APPLE__)
+  id parent_window = (id)(uintptr_t)parent_window_handle;
+  if (!parent_window) {
+    return false;
+  }
+  ((void(*)(id, SEL, id, mbw_nsinteger_t))objc_msgSend)(
+    parent_window,
+    mbw_sel("addChildWindow:ordered:"),
+    (id)window->window,
+    (mbw_nsinteger_t)1);
+  return true;
+#else
+  (void)parent_window_handle;
+  return false;
+#endif
+}
+
 void mbw_window_set_cursor(int window_id, int cursor) {
   mbw_window_t *window = mbw_find_window(window_id);
   if (!window) {
@@ -5700,6 +5982,7 @@ void mbw_window_set_cursor(int window_id, int cursor) {
     next_cursor = cursor;
   }
   window->cursor = next_cursor;
+  window->custom_cursor_id = 0;
 #if defined(__APPLE__)
   if (window->content_view) {
     id content_view = (id)window->content_view;

@@ -1,6 +1,7 @@
 ///|
 pub struct Window {
   priv id : @core.WindowId
+  priv mut cursor_state : @core.Cursor
   priv mut fullscreen_state : @core.Fullscreen?
   priv mut ime_capabilities_state : @core.ImeCapabilities?
 } derive(Eq, Show)
@@ -33,6 +34,16 @@ pub fn EventLoop::primary_monitor(_self : EventLoop) -> @core.MonitorHandle? {
 }
 
 ///|
+pub fn EventLoop::rwh_06_handle(_self : EventLoop) -> UInt64 {
+  display_handle()
+}
+
+///|
+pub fn EventLoop::owned_display_handle(self : EventLoop) -> UInt64 {
+  self.rwh_06_handle()
+}
+
+///|
 pub fn EventLoop::system_theme(_self : EventLoop) -> @core.Theme? {
   theme_from_native(system_theme())
 }
@@ -60,6 +71,16 @@ pub fn Window::primary_monitor(self : Window) -> @core.MonitorHandle? {
 ///|
 pub fn Window::current_monitor(self : Window) -> @core.MonitorHandle? {
   monitor_from_native_id(window_current_monitor_id(self.id.into_raw()))
+}
+
+///|
+pub fn Window::rwh_06_display_handle(self : Window) -> UInt64 {
+  window_display_handle(self.id.into_raw())
+}
+
+///|
+pub fn Window::rwh_06_window_handle(self : Window) -> UInt64 {
+  window_handle(self.id.into_raw())
 }
 
 ///|
@@ -297,8 +318,24 @@ pub fn Window::set_blur(self : Window, blur : Bool) -> Unit {
 }
 
 ///|
-pub fn Window::set_cursor(self : Window, cursor : @core.CursorIcon) -> Unit {
-  set_window_cursor(self.id.into_raw(), cursor_icon_to_native(cursor))
+pub fn Window::set_cursor(self : Window, cursor : @core.Cursor) -> Unit {
+  let raw_id = self.id.into_raw()
+  match cursor {
+    @core.Cursor::Icon(icon) => {
+      set_window_cursor(raw_id, cursor_icon_to_native(icon))
+      self.cursor_state = cursor
+    }
+    @core.Cursor::Custom(custom_cursor) =>
+      if set_window_custom_cursor(raw_id, custom_cursor.into_raw()) {
+        self.cursor_state = cursor
+      } else {
+        set_window_cursor(
+          raw_id,
+          cursor_icon_to_native(@core.CursorIcon::Default),
+        )
+        self.cursor_state = @core.Cursor::Icon(@core.CursorIcon::Default)
+      }
+  }
 }
 
 ///|
@@ -393,8 +430,8 @@ pub fn Window::is_blurred(self : Window) -> Bool {
 }
 
 ///|
-pub fn Window::cursor(self : Window) -> @core.CursorIcon {
-  cursor_icon_from_native(window_cursor(self.id.into_raw()))
+pub fn Window::cursor(self : Window) -> @core.Cursor {
+  self.cursor_state
 }
 
 ///|
@@ -896,46 +933,6 @@ fn cursor_icon_to_native(cursor : @core.CursorIcon) -> Int {
 }
 
 ///|
-fn cursor_icon_from_native(cursor : Int) -> @core.CursorIcon {
-  match cursor {
-    1 => @core.CursorIcon::ContextMenu
-    2 => @core.CursorIcon::Help
-    3 => @core.CursorIcon::Progress
-    4 => @core.CursorIcon::Wait
-    5 => @core.CursorIcon::Cell
-    6 => @core.CursorIcon::VerticalText
-    7 => @core.CursorIcon::Alias
-    8 => @core.CursorIcon::Copy
-    9 => @core.CursorIcon::NoDrop
-    10 => @core.CursorIcon::Grab
-    11 => @core.CursorIcon::Grabbing
-    12 => @core.CursorIcon::EResize
-    13 => @core.CursorIcon::NResize
-    14 => @core.CursorIcon::NeResize
-    15 => @core.CursorIcon::NwResize
-    16 => @core.CursorIcon::SResize
-    17 => @core.CursorIcon::SeResize
-    18 => @core.CursorIcon::SwResize
-    19 => @core.CursorIcon::WResize
-    20 => @core.CursorIcon::EwResize
-    21 => @core.CursorIcon::NsResize
-    22 => @core.CursorIcon::NeswResize
-    23 => @core.CursorIcon::NwseResize
-    24 => @core.CursorIcon::ColResize
-    25 => @core.CursorIcon::RowResize
-    26 => @core.CursorIcon::AllScroll
-    27 => @core.CursorIcon::ZoomIn
-    28 => @core.CursorIcon::ZoomOut
-    29 => @core.CursorIcon::Pointer
-    30 => @core.CursorIcon::Text
-    31 => @core.CursorIcon::Crosshair
-    32 => @core.CursorIcon::Move
-    33 => @core.CursorIcon::NotAllowed
-    _ => @core.CursorIcon::Default
-  }
-}
-
-///|
 fn window_level_to_native(level : @core.WindowLevel) -> Int {
   match level {
     @core.WindowLevel::Normal => 0
@@ -1139,7 +1136,7 @@ fn[A : ApplicationHandler] EventLoop::dispatch_input_events(
       input_event_y(raw_id),
     )
     match input_event_kind(raw_id) {
-      1 =>
+      1 => {
         app.window_event(
           self,
           window_id,
@@ -1149,6 +1146,15 @@ fn[A : ApplicationHandler] EventLoop::dispatch_input_events(
             pointer_source_from_native(input_event_pointer_source(raw_id)),
           ),
         )
+        app.device_event(
+          self,
+          None,
+          @core.DeviceEvent::PointerMotion(
+            input_event_scroll_delta_x(raw_id),
+            input_event_scroll_delta_y(raw_id),
+          ),
+        )
+      }
       2 =>
         app.window_event(
           self,
@@ -1171,7 +1177,7 @@ fn[A : ApplicationHandler] EventLoop::dispatch_input_events(
         )
       4 =>
         match element_state_from_native(input_event_state(raw_id)) {
-          Some(state) =>
+          Some(state) => {
             app.window_event(
               self,
               window_id,
@@ -1182,6 +1188,12 @@ fn[A : ApplicationHandler] EventLoop::dispatch_input_events(
                 button_source_from_native(input_event_button(raw_id)),
               ),
             )
+            app.device_event(
+              self,
+              None,
+              @core.DeviceEvent::Button(input_event_button(raw_id), state),
+            )
+          }
           None => ()
         }
       5 =>
@@ -1194,12 +1206,14 @@ fn[A : ApplicationHandler] EventLoop::dispatch_input_events(
             ),
             touch_phase_from_native(input_event_phase(raw_id)),
           ) {
-          (Some(delta), Some(phase)) =>
+          (Some(delta), Some(phase)) => {
             app.window_event(
               self,
               window_id,
               @core.WindowEvent::MouseWheel(delta, phase),
             )
+            app.device_event(self, None, @core.DeviceEvent::MouseWheel(delta))
+          }
           _ => ()
         }
       6 =>
@@ -1212,29 +1226,35 @@ fn[A : ApplicationHandler] EventLoop::dispatch_input_events(
         )
       7 =>
         match element_state_from_native(input_event_state(raw_id)) {
-          Some(state) =>
+          Some(state) => {
+            let key_event = create_key_event(
+              input_event_scancode(raw_id),
+              state,
+              input_event_repeat(raw_id),
+              modifiers_from_native(input_event_modifiers(raw_id)),
+              optional_text_from_native(
+                input_event_text_with_all_modifiers(raw_id),
+              ),
+              optional_text_from_native(
+                input_event_text_ignoring_modifiers(raw_id),
+              ),
+              optional_text_from_native(
+                input_event_text_without_modifiers(raw_id),
+              ),
+            )
             app.window_event(
               self,
               window_id,
-              @core.WindowEvent::KeyboardInput(
-                create_key_event(
-                  input_event_scancode(raw_id),
-                  state,
-                  input_event_repeat(raw_id),
-                  modifiers_from_native(input_event_modifiers(raw_id)),
-                  optional_text_from_native(
-                    input_event_text_with_all_modifiers(raw_id),
-                  ),
-                  optional_text_from_native(
-                    input_event_text_ignoring_modifiers(raw_id),
-                  ),
-                  optional_text_from_native(
-                    input_event_text_without_modifiers(raw_id),
-                  ),
-                ),
-                false,
+              @core.WindowEvent::KeyboardInput(key_event, false),
+            )
+            app.device_event(
+              self,
+              None,
+              @core.DeviceEvent::Key(
+                @core.RawKeyEvent::new(key_event.physical_key(), state),
               ),
             )
+          }
           None => ()
         }
       8 =>
@@ -1389,11 +1409,30 @@ pub fn EventLoop::create_window(
     attributes.title(),
   )
   guard raw_id > 0 else { abort("failed to create macos window") }
+  match attributes.parent_window() {
+    Some(parent_window) => {
+      let _ = set_parent_window(raw_id, parent_window.into_raw())
+      ()
+    }
+    None => ()
+  }
   set_window_theme(raw_id, theme_to_native(attributes.theme()))
   set_window_icon(raw_id, attributes.window_icon())
   set_window_content_protected(raw_id, attributes.content_protected())
   set_window_blur(raw_id, attributes.blur())
-  set_window_cursor(raw_id, cursor_icon_to_native(attributes.cursor()))
+  let mut cursor_state = attributes.cursor()
+  match attributes.cursor() {
+    @core.Cursor::Icon(icon) =>
+      set_window_cursor(raw_id, cursor_icon_to_native(icon))
+    @core.Cursor::Custom(custom_cursor) =>
+      if set_window_custom_cursor(raw_id, custom_cursor.into_raw()) == false {
+        set_window_cursor(
+          raw_id,
+          cursor_icon_to_native(@core.CursorIcon::Default),
+        )
+        cursor_state = @core.Cursor::Icon(@core.CursorIcon::Default)
+      }
+  }
   set_window_cursor_visible(raw_id, attributes.cursor_visible())
   set_window_cursor_hittest(raw_id, attributes.cursor_hittest())
   let enabled_buttons = attributes.enabled_buttons()
@@ -1461,8 +1500,34 @@ pub fn EventLoop::create_window(
   self.window_ids.push(raw_id)
   {
     id: @core.WindowId::from_raw(raw_id),
+    cursor_state,
     fullscreen_state: initial_fullscreen_state(attributes),
     ime_capabilities_state: Some(default_ime_capabilities()),
+  }
+}
+
+///|
+pub fn EventLoop::create_custom_cursor(
+  _self : EventLoop,
+  source : @core.CustomCursorSource,
+) -> @core.CustomCursor raise @core.RequestError {
+  match source {
+    @core.CustomCursorSource::Rgba(rgba, width, height, hotspot_x, hotspot_y) => {
+      let raw = create_custom_cursor_rgba(
+        rgba, width, height, hotspot_x, hotspot_y,
+      )
+      if raw == (0 : Int).to_uint64() {
+        raise @core.RequestError::NotSupported(
+          "custom cursor is not supported on this platform",
+        )
+      } else {
+        @core.CustomCursor::from_raw(raw)
+      }
+    }
+    @core.CustomCursorSource::Url(_, _, _) =>
+      raise @core.RequestError::NotSupported(
+        "url-backed custom cursor is not supported on macOS backend",
+      )
   }
 }
 
@@ -1521,10 +1586,12 @@ pub(open) trait ApplicationHandler {
   can_create_surfaces(Self, ActiveEventLoop) -> Unit = _
   proxy_wake_up(Self, ActiveEventLoop) -> Unit = _
   window_event(Self, EventLoop, @core.WindowId, @core.WindowEvent) -> Unit = _
+  device_event(Self, ActiveEventLoop, @core.DeviceId?, @core.DeviceEvent) -> Unit = _
   about_to_wait(Self, ActiveEventLoop) -> Unit = _
   suspended(Self, ActiveEventLoop) -> Unit = _
   destroy_surfaces(Self, ActiveEventLoop) -> Unit = _
   memory_warning(Self, ActiveEventLoop) -> Unit = _
+  macos_handler(Self) -> Bool = _
 }
 
 ///|
@@ -1553,6 +1620,16 @@ impl ApplicationHandler with window_event(_self, _event_loop, _id, _event) {
 }
 
 ///|
+impl ApplicationHandler with device_event(
+  _self,
+  _event_loop,
+  _device_id,
+  _event,
+) {
+  ()
+}
+
+///|
 impl ApplicationHandler with about_to_wait(_self, _event_loop) {
   ()
 }
@@ -1570,6 +1647,11 @@ impl ApplicationHandler with destroy_surfaces(_self, _event_loop) {
 ///|
 impl ApplicationHandler with memory_warning(_self, _event_loop) {
   ()
+}
+
+///|
+impl ApplicationHandler with macos_handler(_self) {
+  false
 }
 
 ///|
@@ -1708,6 +1790,7 @@ pub fn[A : ApplicationHandler] EventLoop::run_app(
   app : A,
 ) -> Unit {
   app.new_events(self, @core.StartCause::Init)
+  app.resumed(self)
   app.can_create_surfaces(self)
   while self.exit_requested == false {
     self.dispatch_window_events(app)
@@ -1722,7 +1805,9 @@ pub fn[A : ApplicationHandler] EventLoop::run_app(
     app.new_events(self, self.wait_next_iteration())
   }
   if self.exit_requested {
+    app.destroy_surfaces(self)
     self.close_windows()
     self.dispatch_window_events(app)
+    app.suspended(self)
   }
 }

@@ -6,7 +6,7 @@ test "window attributes follow winit defaults" {
   assert_true(attrs.resizable())
   assert_true(attrs.active())
   assert_false(attrs.blur())
-  assert_eq(attrs.cursor(), CursorIcon::Default)
+  assert_eq(attrs.cursor(), Cursor::Icon(CursorIcon::Default))
   assert_true(attrs.cursor_visible())
   assert_true(attrs.cursor_hittest())
   assert_true(attrs.decorations())
@@ -21,6 +21,7 @@ test "window attributes follow winit defaults" {
   assert_eq(attrs.min_surface_size(), None)
   assert_eq(attrs.max_surface_size(), None)
   assert_eq(attrs.position(), None)
+  assert_eq(attrs.parent_window(), None)
   assert_eq(attrs.platform_attributes().simple_fullscreen(), None)
   assert_eq(attrs.ime_hints(), ImeHint::none())
   assert_eq(attrs.ime_purpose(), ImePurpose::Normal)
@@ -34,6 +35,7 @@ test "window attributes follow winit defaults" {
 ///|
 test "window attributes builders update fields" {
   let icon = try! Icon::new(Bytes::make(4, (255 : Int).to_byte()), 1, 1)
+  let parent_window = ParentWindow::from_raw((99 : Int).to_uint64())
   let attrs = WindowAttributes::default()
     .with_title("hello")
     .with_visible(false)
@@ -43,6 +45,7 @@ test "window attributes builders update fields" {
     .with_min_surface_size(Some(@dpi.PhysicalSize::new(640, 480)))
     .with_max_surface_size(Some(@dpi.PhysicalSize::new(1920, 1080)))
     .with_position(Some(@dpi.PhysicalPosition::new(320, 180)))
+    .with_parent_window(Some(parent_window))
     .with_platform_attributes(
       PlatformWindowAttributes::default().with_simple_fullscreen(Some(true)),
     )
@@ -54,7 +57,7 @@ test "window attributes builders update fields" {
     .with_ime_purpose(ImePurpose::Password)
     .with_active(false)
     .with_blur(true)
-    .with_cursor(CursorIcon::Pointer)
+    .with_cursor(Cursor::Icon(CursorIcon::Pointer))
     .with_cursor_visible(false)
     .with_cursor_hittest(false)
     .with_decorations(false)
@@ -71,7 +74,7 @@ test "window attributes builders update fields" {
   assert_false(attrs.resizable())
   assert_false(attrs.active())
   assert_true(attrs.blur())
-  assert_eq(attrs.cursor(), CursorIcon::Pointer)
+  assert_eq(attrs.cursor(), Cursor::Icon(CursorIcon::Pointer))
   assert_false(attrs.cursor_visible())
   assert_false(attrs.cursor_hittest())
   assert_false(attrs.decorations())
@@ -89,6 +92,7 @@ test "window attributes builders update fields" {
   assert_eq(attrs.min_surface_size(), Some(@dpi.PhysicalSize::new(640, 480)))
   assert_eq(attrs.max_surface_size(), Some(@dpi.PhysicalSize::new(1920, 1080)))
   assert_eq(attrs.position(), Some(@dpi.PhysicalPosition::new(320, 180)))
+  assert_eq(attrs.parent_window(), Some(parent_window))
   assert_eq(attrs.platform_attributes().simple_fullscreen(), Some(true))
   assert_eq(
     attrs.ime_hints(),
@@ -195,6 +199,39 @@ test "activation token can be round-tripped" {
   let token = ActivationToken::from_raw("activation-token")
   assert_eq(token.as_raw(), "activation-token")
   assert_eq(token.into_raw(), "activation-token")
+}
+
+///|
+test "custom cursor models are constructible" {
+  let cursor = CustomCursor::from_raw((7 : Int).to_uint64())
+  assert_eq(cursor.into_raw(), (7 : Int).to_uint64())
+  assert_eq(Cursor::Custom(cursor), Cursor::Custom(cursor))
+  let source = try! CustomCursorSource::from_rgba(
+    Bytes::make(4, (255 : Int).to_byte()),
+    1,
+    1,
+    0,
+    0,
+  )
+  assert_eq(
+    source,
+    CustomCursorSource::Rgba(Bytes::make(4, (255 : Int).to_byte()), 1, 1, 0, 0),
+  )
+  let bad_hotspot = try {
+    CustomCursorSource::from_rgba(
+      Bytes::make(4, (255 : Int).to_byte()),
+      1,
+      1,
+      1,
+      0,
+    )
+    |> ignore
+    false
+  } catch {
+    BadCustomCursorSource::HotspotOutOfBounds(1, 1, 1, 0) => true
+    _ => false
+  }
+  assert_true(bad_hotspot)
 }
 
 ///|

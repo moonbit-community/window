@@ -371,9 +371,9 @@ struct WindowBlurApp {
 
 ///|
 struct WindowCursorApp {
-  cursor_after_first_update : Ref[@core.CursorIcon?]
-  cursor_after_second_update : Ref[@core.CursorIcon?]
-  cursor_initial : Ref[@core.CursorIcon?]
+  cursor_after_first_update : Ref[@core.Cursor?]
+  cursor_after_second_update : Ref[@core.Cursor?]
+  cursor_initial : Ref[@core.Cursor?]
   hittest_after_disable : Ref[Bool]
   hittest_after_enable : Ref[Bool]
   hittest_initial : Ref[Bool]
@@ -950,14 +950,14 @@ impl ApplicationHandler for WindowCursorApp with can_create_surfaces(
   let window = event_loop.create_window(
     @core.WindowAttributes::default()
     .with_visible(false)
-    .with_cursor(@core.CursorIcon::NeResize),
+    .with_cursor(@core.Cursor::Icon(@core.CursorIcon::NeResize)),
   )
   self.cursor_initial.val = Some(window.cursor())
   self.visible_initial.val = window.is_cursor_visible()
   self.hittest_initial.val = window.is_cursor_hittest()
-  window.set_cursor(@core.CursorIcon::ContextMenu)
+  window.set_cursor(@core.Cursor::Icon(@core.CursorIcon::ContextMenu))
   self.cursor_after_first_update.val = Some(window.cursor())
-  window.set_cursor(@core.CursorIcon::RowResize)
+  window.set_cursor(@core.Cursor::Icon(@core.CursorIcon::RowResize))
   self.cursor_after_second_update.val = Some(window.cursor())
   window.set_cursor_visible(false)
   self.visible_after_disable.val = window.is_cursor_visible()
@@ -2529,9 +2529,18 @@ test "window cursor can be configured at create and runtime" {
     visible_initial,
   }
   event_loop.run_app(app)
-  assert_eq(cursor_initial.val, Some(@core.CursorIcon::NeResize))
-  assert_eq(cursor_after_first_update.val, Some(@core.CursorIcon::ContextMenu))
-  assert_eq(cursor_after_second_update.val, Some(@core.CursorIcon::RowResize))
+  assert_eq(
+    cursor_initial.val,
+    Some(@core.Cursor::Icon(@core.CursorIcon::NeResize)),
+  )
+  assert_eq(
+    cursor_after_first_update.val,
+    Some(@core.Cursor::Icon(@core.CursorIcon::ContextMenu)),
+  )
+  assert_eq(
+    cursor_after_second_update.val,
+    Some(@core.Cursor::Icon(@core.CursorIcon::RowResize)),
+  )
   assert_true(visible_initial.val)
   assert_false(visible_after_disable.val)
   assert_true(visible_after_enable.val)

@@ -293,6 +293,78 @@ pub(all) enum CursorIcon {
 } derive(Eq, Show)
 
 ///|
+pub struct CustomCursor {
+  priv raw : UInt64
+} derive(Eq, Show)
+
+///|
+pub fn CustomCursor::from_raw(raw : UInt64) -> CustomCursor {
+  { raw, }
+}
+
+///|
+pub fn CustomCursor::into_raw(self : CustomCursor) -> UInt64 {
+  self.raw
+}
+
+///|
+pub(all) enum Cursor {
+  Icon(CursorIcon)
+  Custom(CustomCursor)
+} derive(Eq, Show)
+
+///|
+pub(all) enum CustomCursorSource {
+  Rgba(Bytes, Int, Int, Int, Int)
+  Url(String, Int, Int)
+} derive(Eq, Show)
+
+///|
+pub(all) suberror BadCustomCursorSource {
+  TooLarge(Int, Int)
+  ByteCountNotDivisibleBy4(Int)
+  DimensionsVsPixelCount(Int, Int, Int, Int)
+  HotspotOutOfBounds(Int, Int, Int, Int)
+} derive(Show)
+
+///|
+pub fn CustomCursorSource::from_rgba(
+  rgba : Bytes,
+  width : Int,
+  height : Int,
+  hotspot_x : Int,
+  hotspot_y : Int,
+) -> CustomCursorSource raise BadCustomCursorSource {
+  if width <= 0 || height <= 0 {
+    raise BadCustomCursorSource::DimensionsVsPixelCount(
+      width,
+      height,
+      width * height,
+      rgba.length() / 4,
+    )
+  }
+  if width > 2048 || height > 2048 {
+    raise BadCustomCursorSource::TooLarge(width, height)
+  }
+  if rgba.length() % 4 != 0 {
+    raise BadCustomCursorSource::ByteCountNotDivisibleBy4(rgba.length())
+  }
+  let pixel_count = rgba.length() / 4
+  let width_x_height = width * height
+  if pixel_count != width_x_height {
+    raise BadCustomCursorSource::DimensionsVsPixelCount(
+      width, height, width_x_height, pixel_count,
+    )
+  }
+  if hotspot_x < 0 || hotspot_x >= width || hotspot_y < 0 || hotspot_y >= height {
+    raise BadCustomCursorSource::HotspotOutOfBounds(
+      width, height, hotspot_x, hotspot_y,
+    )
+  }
+  CustomCursorSource::Rgba(rgba, width, height, hotspot_x, hotspot_y)
+}
+
+///|
 pub(all) enum Fullscreen {
   Borderless(MonitorHandle?)
   Exclusive(MonitorHandle, VideoMode)
@@ -443,11 +515,26 @@ pub fn WindowId::into_raw(self : WindowId) -> Int {
 }
 
 ///|
+pub struct ParentWindow {
+  priv raw : UInt64
+} derive(Eq, Show)
+
+///|
+pub fn ParentWindow::from_raw(raw : UInt64) -> ParentWindow {
+  { raw, }
+}
+
+///|
+pub fn ParentWindow::into_raw(self : ParentWindow) -> UInt64 {
+  self.raw
+}
+
+///|
 pub struct WindowAttributes {
   priv mut active : Bool
   priv mut blur : Bool
   priv mut content_protected : Bool
-  priv mut cursor : CursorIcon
+  priv mut cursor : Cursor
   priv mut cursor_hittest : Bool
   priv mut cursor_visible : Bool
   priv mut decorations : Bool
@@ -458,6 +545,7 @@ pub struct WindowAttributes {
   priv mut max_surface_size : @dpi.PhysicalSize?
   priv mut maximized : Bool
   priv mut min_surface_size : @dpi.PhysicalSize?
+  priv mut parent_window : ParentWindow?
   priv mut platform_attributes : PlatformWindowAttributes
   priv mut position : @dpi.PhysicalPosition?
   priv mut surface_size : @dpi.PhysicalSize?
@@ -477,7 +565,7 @@ pub fn WindowAttributes::default() -> WindowAttributes {
     active: true,
     blur: false,
     content_protected: false,
-    cursor: CursorIcon::Default,
+    cursor: Cursor::Icon(CursorIcon::Default),
     cursor_hittest: true,
     cursor_visible: true,
     decorations: true,
@@ -488,6 +576,7 @@ pub fn WindowAttributes::default() -> WindowAttributes {
     maximized: false,
     min_surface_size: None,
     max_surface_size: None,
+    parent_window: None,
     platform_attributes: PlatformWindowAttributes::default(),
     position: None,
     surface_size: Some(@dpi.PhysicalSize::new(800, 600)),
@@ -548,6 +637,15 @@ pub fn WindowAttributes::with_position(
 }
 
 ///|
+pub fn WindowAttributes::with_parent_window(
+  self : WindowAttributes,
+  parent_window : ParentWindow?,
+) -> WindowAttributes {
+  self.parent_window = parent_window
+  self
+}
+
+///|
 pub fn WindowAttributes::with_platform_attributes(
   self : WindowAttributes,
   platform_attributes : PlatformWindowAttributes,
@@ -595,10 +693,18 @@ pub fn WindowAttributes::with_blur(
 ///|
 pub fn WindowAttributes::with_cursor(
   self : WindowAttributes,
-  cursor : CursorIcon,
+  cursor : Cursor,
 ) -> WindowAttributes {
   self.cursor = cursor
   self
+}
+
+///|
+pub fn WindowAttributes::with_cursor_icon(
+  self : WindowAttributes,
+  cursor : CursorIcon,
+) -> WindowAttributes {
+  self.with_cursor(Cursor::Icon(cursor))
 }
 
 ///|
@@ -763,6 +869,13 @@ pub fn WindowAttributes::position(
 }
 
 ///|
+pub fn WindowAttributes::parent_window(
+  self : WindowAttributes,
+) -> ParentWindow? {
+  self.parent_window
+}
+
+///|
 pub fn WindowAttributes::platform_attributes(
   self : WindowAttributes,
 ) -> PlatformWindowAttributes {
@@ -790,7 +903,7 @@ pub fn WindowAttributes::blur(self : WindowAttributes) -> Bool {
 }
 
 ///|
-pub fn WindowAttributes::cursor(self : WindowAttributes) -> CursorIcon {
+pub fn WindowAttributes::cursor(self : WindowAttributes) -> Cursor {
   self.cursor
 }
 

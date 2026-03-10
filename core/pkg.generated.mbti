@@ -8,6 +8,14 @@ import {
 // Values
 
 // Errors
+pub(all) suberror BadCustomCursorSource {
+  TooLarge(Int, Int)
+  ByteCountNotDivisibleBy4(Int)
+  DimensionsVsPixelCount(Int, Int, Int, Int)
+  HotspotOutOfBounds(Int, Int, Int, Int)
+}
+pub impl Show for BadCustomCursorSource
+
 pub(all) suberror BadIcon {
   ByteCountNotDivisibleBy4(Int)
   DimensionsVsPixelCount(Int, Int, Int, Int)
@@ -61,6 +69,13 @@ pub fn ControlFlow::wait_until(Int64) -> Self
 pub impl Eq for ControlFlow
 pub impl Show for ControlFlow
 
+pub(all) enum Cursor {
+  Icon(CursorIcon)
+  Custom(CustomCursor)
+}
+pub impl Eq for Cursor
+pub impl Show for Cursor
+
 pub(all) enum CursorGrabMode {
   None
   Locked
@@ -108,6 +123,31 @@ pub(all) enum CursorIcon {
 pub impl Eq for CursorIcon
 pub impl Show for CursorIcon
 
+pub struct CustomCursor {
+  // private fields
+}
+pub fn CustomCursor::from_raw(UInt64) -> Self
+pub fn CustomCursor::into_raw(Self) -> UInt64
+pub impl Eq for CustomCursor
+pub impl Show for CustomCursor
+
+pub(all) enum CustomCursorSource {
+  Rgba(Bytes, Int, Int, Int, Int)
+  Url(String, Int, Int)
+}
+pub fn CustomCursorSource::from_rgba(Bytes, Int, Int, Int, Int) -> Self raise BadCustomCursorSource
+pub impl Eq for CustomCursorSource
+pub impl Show for CustomCursorSource
+
+pub(all) enum DeviceEvent {
+  PointerMotion(Double, Double)
+  MouseWheel(MouseScrollDelta)
+  Button(Int, ElementState)
+  Key(RawKeyEvent)
+}
+pub impl Eq for DeviceEvent
+pub impl Show for DeviceEvent
+
 pub(all) enum DeviceEvents {
   Always
   WhenFocused
@@ -115,6 +155,14 @@ pub(all) enum DeviceEvents {
 }
 pub impl Eq for DeviceEvents
 pub impl Show for DeviceEvents
+
+pub struct DeviceId {
+  raw : Int64
+}
+pub fn DeviceId::from_raw(Int64) -> Self
+pub fn DeviceId::into_raw(Self) -> Int64
+pub impl Eq for DeviceId
+pub impl Show for DeviceId
 
 pub(all) enum ElementState {
   Pressed
@@ -509,6 +557,14 @@ pub(all) enum NativeKeyCode {
 pub impl Eq for NativeKeyCode
 pub impl Show for NativeKeyCode
 
+pub struct ParentWindow {
+  // private fields
+}
+pub fn ParentWindow::from_raw(UInt64) -> Self
+pub fn ParentWindow::into_raw(Self) -> UInt64
+pub impl Eq for ParentWindow
+pub impl Show for ParentWindow
+
 pub(all) enum PhysicalKey {
   Code(KeyCode)
   Unidentified(NativeKeyCode)
@@ -538,6 +594,16 @@ pub(all) enum PointerSource {
 }
 pub impl Eq for PointerSource
 pub impl Show for PointerSource
+
+pub struct RawKeyEvent {
+  physical_key : PhysicalKey
+  state : ElementState
+}
+pub fn RawKeyEvent::new(PhysicalKey, ElementState) -> Self
+pub fn RawKeyEvent::physical_key(Self) -> PhysicalKey
+pub fn RawKeyEvent::state(Self) -> ElementState
+pub impl Eq for RawKeyEvent
+pub impl Show for RawKeyEvent
 
 pub(all) enum ResizeDirection {
   East
@@ -608,7 +674,7 @@ pub struct WindowAttributes {
 pub fn WindowAttributes::active(Self) -> Bool
 pub fn WindowAttributes::blur(Self) -> Bool
 pub fn WindowAttributes::content_protected(Self) -> Bool
-pub fn WindowAttributes::cursor(Self) -> CursorIcon
+pub fn WindowAttributes::cursor(Self) -> Cursor
 pub fn WindowAttributes::cursor_hittest(Self) -> Bool
 pub fn WindowAttributes::cursor_visible(Self) -> Bool
 pub fn WindowAttributes::decorations(Self) -> Bool
@@ -620,6 +686,7 @@ pub fn WindowAttributes::ime_purpose(Self) -> ImePurpose
 pub fn WindowAttributes::max_surface_size(Self) -> @dpi.PhysicalSize?
 pub fn WindowAttributes::maximized(Self) -> Bool
 pub fn WindowAttributes::min_surface_size(Self) -> @dpi.PhysicalSize?
+pub fn WindowAttributes::parent_window(Self) -> ParentWindow?
 pub fn WindowAttributes::platform_attributes(Self) -> PlatformWindowAttributes
 pub fn WindowAttributes::position(Self) -> @dpi.PhysicalPosition?
 pub fn WindowAttributes::resizable(Self) -> Bool
@@ -634,8 +701,9 @@ pub fn WindowAttributes::window_level(Self) -> WindowLevel
 pub fn WindowAttributes::with_active(Self, Bool) -> Self
 pub fn WindowAttributes::with_blur(Self, Bool) -> Self
 pub fn WindowAttributes::with_content_protected(Self, Bool) -> Self
-pub fn WindowAttributes::with_cursor(Self, CursorIcon) -> Self
+pub fn WindowAttributes::with_cursor(Self, Cursor) -> Self
 pub fn WindowAttributes::with_cursor_hittest(Self, Bool) -> Self
+pub fn WindowAttributes::with_cursor_icon(Self, CursorIcon) -> Self
 pub fn WindowAttributes::with_cursor_visible(Self, Bool) -> Self
 pub fn WindowAttributes::with_decorations(Self, Bool) -> Self
 pub fn WindowAttributes::with_enabled_buttons(Self, WindowButtons) -> Self
@@ -645,6 +713,7 @@ pub fn WindowAttributes::with_ime_purpose(Self, ImePurpose) -> Self
 pub fn WindowAttributes::with_max_surface_size(Self, @dpi.PhysicalSize?) -> Self
 pub fn WindowAttributes::with_maximized(Self, Bool) -> Self
 pub fn WindowAttributes::with_min_surface_size(Self, @dpi.PhysicalSize?) -> Self
+pub fn WindowAttributes::with_parent_window(Self, ParentWindow?) -> Self
 pub fn WindowAttributes::with_platform_attributes(Self, PlatformWindowAttributes) -> Self
 pub fn WindowAttributes::with_position(Self, @dpi.PhysicalPosition?) -> Self
 pub fn WindowAttributes::with_resizable(Self, Bool) -> Self
