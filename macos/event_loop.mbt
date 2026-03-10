@@ -1131,6 +1131,8 @@ fn[A : ApplicationHandler] EventLoop::dispatch_input_events(
   window_id : @core.WindowId,
 ) -> Unit {
   while take_input_event(raw_id) {
+    let pointer_device_id = Some(@core.DeviceId::from_raw(1L))
+    let keyboard_device_id = Some(@core.DeviceId::from_raw(2L))
     let position = @dpi.PhysicalPositionF64::new(
       input_event_x(raw_id),
       input_event_y(raw_id),
@@ -1141,7 +1143,7 @@ fn[A : ApplicationHandler] EventLoop::dispatch_input_events(
           self,
           window_id,
           @core.WindowEvent::PointerMoved(
-            None,
+            pointer_device_id,
             position,
             true,
             pointer_source_from_native(input_event_pointer_source(raw_id)),
@@ -1149,7 +1151,7 @@ fn[A : ApplicationHandler] EventLoop::dispatch_input_events(
         )
         app.device_event(
           self,
-          None,
+          pointer_device_id,
           @core.DeviceEvent::PointerMotion(
             input_event_scroll_delta_x(raw_id),
             input_event_scroll_delta_y(raw_id),
@@ -1161,7 +1163,7 @@ fn[A : ApplicationHandler] EventLoop::dispatch_input_events(
           self,
           window_id,
           @core.WindowEvent::PointerEntered(
-            None,
+            pointer_device_id,
             position,
             true,
             pointer_kind_from_native(input_event_pointer_kind(raw_id)),
@@ -1172,7 +1174,7 @@ fn[A : ApplicationHandler] EventLoop::dispatch_input_events(
           self,
           window_id,
           @core.WindowEvent::PointerLeft(
-            None,
+            pointer_device_id,
             Some(position),
             true,
             pointer_kind_from_native(input_event_pointer_kind(raw_id)),
@@ -1185,7 +1187,7 @@ fn[A : ApplicationHandler] EventLoop::dispatch_input_events(
               self,
               window_id,
               @core.WindowEvent::PointerButton(
-                None,
+                pointer_device_id,
                 state,
                 position,
                 true,
@@ -1194,7 +1196,7 @@ fn[A : ApplicationHandler] EventLoop::dispatch_input_events(
             )
             app.device_event(
               self,
-              None,
+              pointer_device_id,
               @core.DeviceEvent::Button(input_event_button(raw_id), state),
             )
           }
@@ -1214,9 +1216,13 @@ fn[A : ApplicationHandler] EventLoop::dispatch_input_events(
             app.window_event(
               self,
               window_id,
-              @core.WindowEvent::MouseWheel(None, delta, phase),
+              @core.WindowEvent::MouseWheel(pointer_device_id, delta, phase),
             )
-            app.device_event(self, None, @core.DeviceEvent::MouseWheel(delta))
+            app.device_event(
+              self,
+              pointer_device_id,
+              @core.DeviceEvent::MouseWheel(delta),
+            )
           }
           _ => ()
         }
@@ -1249,11 +1255,13 @@ fn[A : ApplicationHandler] EventLoop::dispatch_input_events(
             app.window_event(
               self,
               window_id,
-              @core.WindowEvent::KeyboardInput(None, key_event, false),
+              @core.WindowEvent::KeyboardInput(
+                keyboard_device_id, key_event, false,
+              ),
             )
             app.device_event(
               self,
-              None,
+              keyboard_device_id,
               @core.DeviceEvent::Key(
                 @core.RawKeyEvent::new(key_event.physical_key(), state),
               ),
@@ -1310,7 +1318,7 @@ fn[A : ApplicationHandler] EventLoop::dispatch_input_events(
               self,
               window_id,
               @core.WindowEvent::PinchGesture(
-                None,
+                pointer_device_id,
                 input_event_scroll_delta_x(raw_id),
                 phase,
               ),
@@ -1324,7 +1332,7 @@ fn[A : ApplicationHandler] EventLoop::dispatch_input_events(
               self,
               window_id,
               @core.WindowEvent::PanGesture(
-                None,
+                pointer_device_id,
                 @dpi.PhysicalPositionF64::new(
                   input_event_scroll_delta_x(raw_id),
                   input_event_scroll_delta_y(raw_id),
@@ -1338,7 +1346,7 @@ fn[A : ApplicationHandler] EventLoop::dispatch_input_events(
         app.window_event(
           self,
           window_id,
-          @core.WindowEvent::DoubleTapGesture(None),
+          @core.WindowEvent::DoubleTapGesture(pointer_device_id),
         )
       16 =>
         match touch_phase_from_native(input_event_phase(raw_id)) {
@@ -1347,7 +1355,7 @@ fn[A : ApplicationHandler] EventLoop::dispatch_input_events(
               self,
               window_id,
               @core.WindowEvent::RotationGesture(
-                None,
+                pointer_device_id,
                 input_event_scroll_delta_x(raw_id),
                 phase,
               ),
@@ -1359,7 +1367,7 @@ fn[A : ApplicationHandler] EventLoop::dispatch_input_events(
           self,
           window_id,
           @core.WindowEvent::TouchpadPressure(
-            None,
+            pointer_device_id,
             input_event_scroll_delta_x(raw_id),
             input_event_state(raw_id),
           ),
