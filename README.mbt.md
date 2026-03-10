@@ -66,8 +66,8 @@ native builds and focuses on `macos-arm64`.
 - API errors use MoonBit `raise` with typed errors (for example
   `@core.BadIcon`, `@core.ImeSurroundingTextError`,
   `@core.ImeRequestError`, `@core.RequestError`) rather than `Result`.
-- `EventLoop::create_custom_cursor` supports RGBA cursor sources on macOS.
-  URL-backed custom cursors currently raise `RequestError::NotSupported`.
+- `EventLoop::create_custom_cursor` supports both RGBA and URL cursor sources
+  on macOS; URL inputs accept regular URL strings and local file paths.
   `Window::set_cursor` accepts `@core.Cursor::{Icon, Custom}`.
 - `Cmd + keyUp` is forwarded to the key window in the event pump so key
   release events are not dropped while Command is held.

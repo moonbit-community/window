@@ -1524,10 +1524,16 @@ pub fn EventLoop::create_custom_cursor(
         @core.CustomCursor::from_raw(raw)
       }
     }
-    @core.CustomCursorSource::Url(_, _, _) =>
-      raise @core.RequestError::NotSupported(
-        "url-backed custom cursor is not supported on macOS backend",
-      )
+    @core.CustomCursorSource::Url(url, hotspot_x, hotspot_y) => {
+      let raw = create_custom_cursor_url(url, hotspot_x, hotspot_y)
+      if raw == (0 : Int).to_uint64() {
+        raise @core.RequestError::NotSupported(
+          "failed to create url-backed custom cursor on macOS backend",
+        )
+      } else {
+        @core.CustomCursor::from_raw(raw)
+      }
+    }
   }
 }
 

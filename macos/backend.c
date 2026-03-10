@@ -5826,6 +5826,85 @@ void mbw_window_set_blur(int window_id, bool blur) {
 #endif
 }
 
+#if defined(__APPLE__)
+static bool mbw_utf8_has_url_scheme(const uint8_t *url_utf8, int url_len) {
+  if (!url_utf8 || url_len <= 1) {
+    return false;
+  }
+  uint8_t first = url_utf8[0];
+  if (
+    !((first >= 'a' && first <= 'z') ||
+      (first >= 'A' && first <= 'Z'))) {
+    return false;
+  }
+  for (int i = 1; i < url_len; ++i) {
+    uint8_t c = url_utf8[i];
+    if (c == ':') {
+      return true;
+    }
+    if (
+      (c >= 'a' && c <= 'z') ||
+      (c >= 'A' && c <= 'Z') ||
+      (c >= '0' && c <= '9') ||
+      c == '+' ||
+      c == '-' ||
+      c == '.') {
+      continue;
+    }
+    return false;
+  }
+  return false;
+}
+
+static uint64_t mbw_custom_cursor_from_nsimage(
+  id image,
+  int hotspot_x,
+  int hotspot_y
+) {
+  if (!image) {
+    return 0;
+  }
+  Class cursor_class = objc_getClass("NSCursor");
+  if (!cursor_class) {
+    return 0;
+  }
+  mbw_size_t image_size = ((mbw_size_t(*)(id, SEL))objc_msgSend)(
+    image,
+    mbw_sel("size"));
+  int width = (int)(image_size.width + 0.5);
+  int height = (int)(image_size.height + 0.5);
+  if (width <= 0 || height <= 0) {
+    return 0;
+  }
+  if (
+    hotspot_x < 0 ||
+    hotspot_y < 0 ||
+    hotspot_x >= width ||
+    hotspot_y >= height) {
+    return 0;
+  }
+  id allocated_cursor = mbw_msg_id((id)cursor_class, "alloc");
+  if (!allocated_cursor) {
+    return 0;
+  }
+  mbw_point_t hot_spot = { (double)hotspot_x, (double)hotspot_y };
+  id cursor = ((id(*)(id, SEL, id, mbw_point_t))objc_msgSend)(
+    allocated_cursor,
+    mbw_sel("initWithImage:hotSpot:"),
+    image,
+    hot_spot);
+  if (!cursor) {
+    return 0;
+  }
+  uint64_t cursor_id = g_next_custom_cursor_id++;
+  if (cursor_id == 0 || !mbw_push_custom_cursor(cursor_id, (void *)cursor)) {
+    ((void(*)(id, SEL))objc_msgSend)(cursor, mbw_sel("release"));
+    return 0;
+  }
+  return cursor_id;
+}
+#endif
+
 uint64_t mbw_custom_cursor_create_rgba(
   const uint8_t *rgba,
   int rgba_len,
@@ -5848,8 +5927,7 @@ uint64_t mbw_custom_cursor_create_rgba(
 #if defined(__APPLE__)
   Class rep_class = objc_getClass("NSBitmapImageRep");
   Class image_class = objc_getClass("NSImage");
-  Class cursor_class = objc_getClass("NSCursor");
-  if (!rep_class || !image_class || !cursor_class) {
+  if (!rep_class || !image_class) {
     return 0;
   }
 
@@ -5895,32 +5973,83 @@ uint64_t mbw_custom_cursor_create_rgba(
     return 0;
   }
   ((void(*)(id, SEL, id))objc_msgSend)(image, mbw_sel("addRepresentation:"), rep);
-
-  id allocated_cursor = mbw_msg_id((id)cursor_class, "alloc");
-  if (!allocated_cursor) {
-    return 0;
-  }
-  mbw_point_t hot_spot = { (double)hotspot_x, (double)hotspot_y };
-  id cursor = ((id(*)(id, SEL, id, mbw_point_t))objc_msgSend)(
-    allocated_cursor,
-    mbw_sel("initWithImage:hotSpot:"),
-    image,
-    hot_spot);
-  if (!cursor) {
-    return 0;
-  }
-
-  uint64_t cursor_id = g_next_custom_cursor_id++;
-  if (cursor_id == 0 || !mbw_push_custom_cursor(cursor_id, (void *)cursor)) {
-    ((void(*)(id, SEL))objc_msgSend)(cursor, mbw_sel("release"));
-    return 0;
-  }
-  return cursor_id;
+  return mbw_custom_cursor_from_nsimage(image, hotspot_x, hotspot_y);
 #else
   (void)rgba;
   (void)rgba_len;
   (void)width;
   (void)height;
+  (void)hotspot_x;
+  (void)hotspot_y;
+  return 0;
+#endif
+}
+
+uint64_t mbw_custom_cursor_create_url(
+  const uint8_t *url_utf8,
+  int url_len,
+  int hotspot_x,
+  int hotspot_y
+) {
+#if defined(__APPLE__)
+  if (!url_utf8 || url_len <= 0) {
+    return 0;
+  }
+  Class ns_url_class = objc_getClass("NSURL");
+  Class image_class = objc_getClass("NSImage");
+  if (!ns_url_class || !image_class) {
+    return 0;
+  }
+  char *url_cstr = mbw_copy_utf8(url_utf8, (uint64_t)url_len);
+  if (!url_cstr || url_cstr[0] == '\0') {
+    if (url_cstr) {
+      free(url_cstr);
+    }
+    return 0;
+  }
+  id url_string = mbw_make_nsstring(url_cstr);
+  free(url_cstr);
+  if (!url_string) {
+    return 0;
+  }
+
+  id ns_url = nil;
+  if (mbw_utf8_has_url_scheme(url_utf8, url_len)) {
+    ns_url = ((id(*)(id, SEL, id))objc_msgSend)(
+      (id)ns_url_class,
+      mbw_sel("URLWithString:"),
+      url_string);
+  } else {
+    id path = url_string;
+    id expanded_path = ((id(*)(id, SEL))objc_msgSend)(
+      path,
+      mbw_sel("stringByExpandingTildeInPath"));
+    if (expanded_path) {
+      path = expanded_path;
+    }
+    ns_url = ((id(*)(id, SEL, id))objc_msgSend)(
+      (id)ns_url_class,
+      mbw_sel("fileURLWithPath:"),
+      path);
+  }
+  if (!ns_url) {
+    return 0;
+  }
+  id allocated_image = mbw_msg_id((id)image_class, "alloc");
+  if (!allocated_image) {
+    return 0;
+  }
+  id image = ((id(*)(id, SEL, id))objc_msgSend)(
+    allocated_image,
+    mbw_sel("initWithContentsOfURL:"),
+    ns_url);
+  if (!image) {
+    return 0;
+  }
+  return mbw_custom_cursor_from_nsimage(image, hotspot_x, hotspot_y);
+#else
+  (void)url_utf8;
+  (void)url_len;
   (void)hotspot_x;
   (void)hotspot_y;
   return 0;

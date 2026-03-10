@@ -627,6 +627,15 @@ fn create_custom_cursor_rgba(
 }
 
 ///|
+fn create_custom_cursor_url(
+  _url : String,
+  _hotspot_x : Int,
+  _hotspot_y : Int,
+) -> UInt64 {
+  (0 : Int).to_uint64()
+}
+
+///|
 fn set_window_custom_cursor(_window_id : Int, _custom_cursor : UInt64) -> Bool {
   false
 }

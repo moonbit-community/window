@@ -65,19 +65,15 @@ test "system theme and device event policy APIs are callable" {
 }
 
 ///|
-test "create_custom_cursor currently reports not supported" {
+test "create_custom_cursor supports url cursor sources" {
   let event_loop = EventLoop::new()
-  let not_supported = try {
-    event_loop.create_custom_cursor(
-      @core.CustomCursorSource::Url("https://example.com/cursor.png", 0, 0),
-    )
-    |> ignore
-    false
-  } catch {
-    @core.RequestError::NotSupported(_) => true
-    _ => false
-  }
-  assert_true(not_supported)
+  let cursor = try! event_loop.create_custom_cursor(
+    @core.CustomCursorSource::Url(
+      "/System/Library/CoreServices/CoreTypes.bundle/Contents/Resources/GenericDocumentIcon.icns",
+      1, 1,
+    ),
+  )
+  assert_true(cursor.into_raw() > (0 : Int).to_uint64())
 }
 
 ///|

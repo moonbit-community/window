@@ -634,6 +634,21 @@ fn create_custom_cursor_rgba(
 }
 
 ///|
+fn create_custom_cursor_url(
+  url : String,
+  hotspot_x : Int,
+  hotspot_y : Int,
+) -> UInt64 {
+  let url_bytes = @utf8.encode(url[:], bom=false)
+  native_custom_cursor_create_url(
+    url_bytes,
+    url_bytes.length(),
+    hotspot_x,
+    hotspot_y,
+  )
+}
+
+///|
 fn set_window_custom_cursor(window_id : Int, custom_cursor : UInt64) -> Bool {
   native_window_set_custom_cursor(window_id, custom_cursor)
 }
@@ -1296,6 +1311,15 @@ extern "C" fn native_custom_cursor_create_rgba(
   hotspot_x : Int,
   hotspot_y : Int,
 ) -> UInt64 = "mbw_custom_cursor_create_rgba"
+
+///|
+#borrow(url)
+extern "C" fn native_custom_cursor_create_url(
+  url : Bytes,
+  url_len : Int,
+  hotspot_x : Int,
+  hotspot_y : Int,
+) -> UInt64 = "mbw_custom_cursor_create_url"
 
 ///|
 extern "C" fn native_window_set_custom_cursor(
