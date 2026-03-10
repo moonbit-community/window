@@ -39,6 +39,26 @@ fn system_theme() -> Int {
 }
 
 ///|
+fn hide_application() -> Unit {
+  native_hide_application()
+}
+
+///|
+fn hide_other_applications() -> Unit {
+  native_hide_other_applications()
+}
+
+///|
+fn set_allows_automatic_window_tabbing(enabled : Bool) -> Unit {
+  native_set_allows_automatic_window_tabbing(enabled)
+}
+
+///|
+fn allows_automatic_window_tabbing() -> Bool {
+  native_allows_automatic_window_tabbing()
+}
+
+///|
 fn window_title(window_id : Int) -> Bytes {
   native_window_title_utf8(window_id)
 }
@@ -244,6 +264,21 @@ fn window_document_edited(window_id : Int) -> Bool {
 ///|
 fn window_is_borderless_game(window_id : Int) -> Bool {
   native_window_is_borderless_game(window_id)
+}
+
+///|
+fn window_tabbing_identifier(window_id : Int) -> Bytes {
+  native_window_tabbing_identifier_utf8(window_id)
+}
+
+///|
+fn window_option_as_alt(window_id : Int) -> Int {
+  native_window_option_as_alt(window_id)
+}
+
+///|
+fn window_num_tabs(window_id : Int) -> Int {
+  native_window_num_tabs(window_id)
 }
 
 ///|
@@ -651,6 +686,36 @@ fn set_window_borderless_game(window_id : Int, borderless_game : Bool) -> Unit {
 }
 
 ///|
+fn set_window_tabbing_identifier(window_id : Int, identifier : String) -> Unit {
+  let identifier_bytes = @utf8.encode(identifier[:], bom=false)
+  native_window_set_tabbing_identifier_utf8(
+    window_id,
+    identifier_bytes,
+    identifier_bytes.length().to_uint64(),
+  )
+}
+
+///|
+fn select_window_next_tab(window_id : Int) -> Unit {
+  native_window_select_next_tab(window_id)
+}
+
+///|
+fn select_window_previous_tab(window_id : Int) -> Unit {
+  native_window_select_previous_tab(window_id)
+}
+
+///|
+fn select_window_tab_at_index(window_id : Int, index : Int) -> Unit {
+  native_window_select_tab_at_index(window_id, index)
+}
+
+///|
+fn set_window_option_as_alt(window_id : Int, option_as_alt : Int) -> Unit {
+  native_window_set_option_as_alt(window_id, option_as_alt)
+}
+
+///|
 fn set_window_cursor(window_id : Int, cursor : Int) -> Unit {
   native_window_set_cursor(window_id, cursor)
 }
@@ -953,6 +1018,20 @@ extern "C" fn native_window_handle(window_id : Int) -> UInt64 = "mbw_window_hand
 extern "C" fn native_system_theme() -> Int = "mbw_system_theme"
 
 ///|
+extern "C" fn native_hide_application() -> Unit = "mbw_event_loop_hide_application"
+
+///|
+extern "C" fn native_hide_other_applications() -> Unit = "mbw_event_loop_hide_other_applications"
+
+///|
+extern "C" fn native_set_allows_automatic_window_tabbing(
+  enabled : Bool,
+) -> Unit = "mbw_event_loop_set_allows_automatic_window_tabbing"
+
+///|
+extern "C" fn native_allows_automatic_window_tabbing() -> Bool = "mbw_event_loop_allows_automatic_window_tabbing"
+
+///|
 extern "C" fn native_window_title_utf8(window_id : Int) -> Bytes = "mbw_window_title_utf8"
 
 ///|
@@ -1091,6 +1170,15 @@ extern "C" fn native_window_document_edited(window_id : Int) -> Bool = "mbw_wind
 
 ///|
 extern "C" fn native_window_is_borderless_game(window_id : Int) -> Bool = "mbw_window_is_borderless_game"
+
+///|
+extern "C" fn native_window_tabbing_identifier_utf8(window_id : Int) -> Bytes = "mbw_window_tabbing_identifier_utf8"
+
+///|
+extern "C" fn native_window_option_as_alt(window_id : Int) -> Int = "mbw_window_option_as_alt"
+
+///|
+extern "C" fn native_window_num_tabs(window_id : Int) -> Int = "mbw_window_num_tabs"
 
 ///|
 extern "C" fn native_window_cursor_visible(window_id : Int) -> Bool = "mbw_window_cursor_visible"
@@ -1349,6 +1437,32 @@ extern "C" fn native_window_set_borderless_game(
   window_id : Int,
   borderless_game : Bool,
 ) -> Unit = "mbw_window_set_borderless_game"
+
+///|
+#borrow(identifier)
+extern "C" fn native_window_set_tabbing_identifier_utf8(
+  window_id : Int,
+  identifier : Bytes,
+  identifier_len : UInt64,
+) -> Unit = "mbw_window_set_tabbing_identifier_utf8"
+
+///|
+extern "C" fn native_window_select_next_tab(window_id : Int) -> Unit = "mbw_window_select_next_tab"
+
+///|
+extern "C" fn native_window_select_previous_tab(window_id : Int) -> Unit = "mbw_window_select_previous_tab"
+
+///|
+extern "C" fn native_window_select_tab_at_index(
+  window_id : Int,
+  index : Int,
+) -> Unit = "mbw_window_select_tab_at_index"
+
+///|
+extern "C" fn native_window_set_option_as_alt(
+  window_id : Int,
+  option_as_alt : Int,
+) -> Unit = "mbw_window_set_option_as_alt"
 
 ///|
 extern "C" fn native_window_set_cursor(window_id : Int, cursor : Int) -> Unit = "mbw_window_set_cursor"

@@ -25,8 +25,11 @@ test "window attributes follow winit defaults" {
   assert_eq(attrs.max_surface_size(), None)
   assert_eq(attrs.position(), None)
   assert_eq(attrs.parent_window(), None)
+  assert_true(attrs.platform_attributes().has_shadow())
   assert_eq(attrs.platform_attributes().simple_fullscreen(), None)
   assert_false(attrs.platform_attributes().borderless_game())
+  assert_eq(attrs.platform_attributes().option_as_alt(), OptionAsAlt::None)
+  assert_eq(attrs.platform_attributes().tabbing_identifier(), None)
   assert_eq(attrs.ime_hints(), ImeHint::none())
   assert_eq(attrs.ime_purpose(), ImePurpose::Normal)
   assert_eq(attrs.window_level(), WindowLevel::Normal)
@@ -52,8 +55,11 @@ test "window attributes builders update fields" {
     .with_parent_window(Some(parent_window))
     .with_platform_attributes(
       PlatformWindowAttributes::default()
+      .with_has_shadow(false)
       .with_simple_fullscreen(Some(true))
-      .with_borderless_game(true),
+      .with_borderless_game(true)
+      .with_option_as_alt(OptionAsAlt::OnlyLeft)
+      .with_tabbing_identifier("group-a"),
     )
     .with_ime_hints(
       ImeHint::completion()
@@ -111,8 +117,11 @@ test "window attributes builders update fields" {
     Some(@dpi.PhysicalPosition::new(320, 180).into_position()),
   )
   assert_eq(attrs.parent_window(), Some(parent_window))
+  assert_false(attrs.platform_attributes().has_shadow())
   assert_eq(attrs.platform_attributes().simple_fullscreen(), Some(true))
   assert_true(attrs.platform_attributes().borderless_game())
+  assert_eq(attrs.platform_attributes().option_as_alt(), OptionAsAlt::OnlyLeft)
+  assert_eq(attrs.platform_attributes().tabbing_identifier(), Some("group-a"))
   assert_eq(
     attrs.ime_hints(),
     ImeHint::completion()

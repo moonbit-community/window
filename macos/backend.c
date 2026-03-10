@@ -125,6 +125,7 @@ typedef struct mbw_window {
   int blur;
   int has_shadow;
   int document_edited;
+  int option_as_alt;
   int borderless_game;
   int simple_fullscreen;
   int simple_fullscreen_saved_frame_valid;
@@ -283,6 +284,10 @@ static uint64_t g_next_custom_cursor_id = 1;
 #define MBW_MODIFIERS_CONTROL 2
 #define MBW_MODIFIERS_ALT 4
 #define MBW_MODIFIERS_META 8
+#define MBW_OPTION_AS_ALT_NONE 0
+#define MBW_OPTION_AS_ALT_ONLY_LEFT 1
+#define MBW_OPTION_AS_ALT_ONLY_RIGHT 2
+#define MBW_OPTION_AS_ALT_BOTH 3
 
 void mbw_window_set_enabled_buttons(
   int window_id,
@@ -559,6 +564,7 @@ static int mbw_window_scroll_phase(id event);
 static int mbw_event_modifiers_state(id event);
 static mbw_nsuint_t mbw_event_modifier_device_flags(id event);
 static bool mbw_modifier_active_for_scancode(id event, int scancode);
+static id mbw_event_replace_option_as_alt(id event, int option_as_alt);
 static void mbw_window_queue_pointer_moved(mbw_window_t *window, double x, double y);
 static void mbw_window_queue_pointer_entered(mbw_window_t *window, double x, double y);
 static void mbw_window_queue_pointer_left(mbw_window_t *window, double x, double y);
@@ -1573,6 +1579,68 @@ static bool mbw_modifier_active_for_scancode(id event, int scancode) {
   return (flags & mask) != 0;
 }
 
+static id mbw_event_replace_option_as_alt(id event, int option_as_alt) {
+#if defined(__APPLE__)
+  if (!event) {
+    return nil;
+  }
+  int modifiers = mbw_event_modifiers_state(event);
+  if ((modifiers & (MBW_MODIFIERS_CONTROL | MBW_MODIFIERS_META)) != 0) {
+    return event;
+  }
+  mbw_nsuint_t device_flags = mbw_event_modifier_device_flags(event);
+  bool ignore_alt_characters = false;
+  switch (option_as_alt) {
+    case MBW_OPTION_AS_ALT_ONLY_LEFT:
+      ignore_alt_characters = (device_flags & MBW_NX_DEVICELALTKEYMASK) != 0;
+      break;
+    case MBW_OPTION_AS_ALT_ONLY_RIGHT:
+      ignore_alt_characters = (device_flags & MBW_NX_DEVICERALTKEYMASK) != 0;
+      break;
+    case MBW_OPTION_AS_ALT_BOTH:
+      ignore_alt_characters =
+        (device_flags & (MBW_NX_DEVICELALTKEYMASK | MBW_NX_DEVICERALTKEYMASK)) != 0;
+      break;
+    case MBW_OPTION_AS_ALT_NONE:
+    default:
+      ignore_alt_characters = false;
+      break;
+  }
+  if (!ignore_alt_characters) {
+    return event;
+  }
+
+  Class event_class = objc_getClass("NSEvent");
+  if (!event_class) {
+    return event;
+  }
+  id ns_chars = ((id(*)(id, SEL))objc_msgSend)(
+    event,
+    mbw_sel("charactersIgnoringModifiers"));
+  if (!ns_chars) {
+    return event;
+  }
+  return ((id(*)(id, SEL, mbw_nsuint_t, mbw_point_t, mbw_nsuint_t, double, mbw_nsinteger_t, id, id, id, mbw_bool_t, unsigned short))objc_msgSend)(
+    (id)event_class,
+    mbw_sel("keyEventWithType:location:modifierFlags:timestamp:windowNumber:context:characters:charactersIgnoringModifiers:isARepeat:keyCode:"),
+    ((mbw_nsuint_t(*)(id, SEL))objc_msgSend)(event, mbw_sel("type")),
+    ((mbw_point_t(*)(id, SEL))objc_msgSend)(event, mbw_sel("locationInWindow")),
+    ((mbw_nsuint_t(*)(id, SEL))objc_msgSend)(event, mbw_sel("modifierFlags")),
+    ((double(*)(id, SEL))objc_msgSend)(event, mbw_sel("timestamp")),
+    ((mbw_nsinteger_t(*)(id, SEL))objc_msgSend)(event, mbw_sel("windowNumber")),
+    nil,
+    ns_chars,
+    ns_chars,
+    ((mbw_bool_t(*)(id, SEL))objc_msgSend)(event, mbw_sel("isARepeat")),
+    (unsigned short)((mbw_nsinteger_t(*)(id, SEL))objc_msgSend)(
+      event,
+      mbw_sel("keyCode")));
+#else
+  (void)option_as_alt;
+  return event;
+#endif
+}
+
 static void mbw_window_update_modifiers_from_event(mbw_window_t *window, id event) {
   if (!window || !event) {
     return;
@@ -1937,21 +2005,27 @@ static void mbw_content_view_key_down(id self, SEL _cmd, id event) {
   if (!window || !event) {
     return;
   }
-  mbw_window_update_modifiers_from_event(window, event);
+  id effective_event = mbw_event_replace_option_as_alt(event, window->option_as_alt);
+  if (!effective_event) {
+    effective_event = event;
+  }
+  mbw_window_update_modifiers_from_event(window, effective_event);
   int modifiers = window->modifiers_state;
   int scancode = (int)((mbw_nsinteger_t(*)(id, SEL))objc_msgSend)(
-    event, mbw_sel("keyCode"));
-  mbw_bool_t is_repeat = ((mbw_bool_t(*)(id, SEL))objc_msgSend)(event, mbw_sel("isARepeat"));
+    effective_event, mbw_sel("keyCode"));
+  mbw_bool_t is_repeat = ((mbw_bool_t(*)(id, SEL))objc_msgSend)(
+    effective_event,
+    mbw_sel("isARepeat"));
   uint8_t text_with_all_modifiers[MBW_KEY_TEXT_CAP];
   uint8_t text_ignoring_modifiers[MBW_KEY_TEXT_CAP];
   uint8_t text_without_modifiers[MBW_KEY_TEXT_CAP];
   int text_with_all_modifiers_len = mbw_event_nsstring_utf8(
-    event,
+    effective_event,
     "characters",
     text_with_all_modifiers,
     MBW_KEY_TEXT_CAP);
   int text_ignoring_modifiers_len = mbw_event_nsstring_utf8(
-    event,
+    effective_event,
     "charactersIgnoringModifiers",
     text_ignoring_modifiers,
     MBW_KEY_TEXT_CAP);
@@ -1984,7 +2058,7 @@ static void mbw_content_view_key_down(id self, SEL _cmd, id event) {
       id events = ((id(*)(id, SEL, id))objc_msgSend)(
         (id)ns_array,
         mbw_sel("arrayWithObject:"),
-        event);
+        effective_event);
       if (events) {
         ((void(*)(id, SEL, id))objc_msgSend)(
           self,
@@ -2001,19 +2075,24 @@ static void mbw_content_view_key_up(id self, SEL _cmd, id event) {
   if (!window || !event) {
     return;
   }
-  mbw_window_update_modifiers_from_event(window, event);
+  id effective_event = mbw_event_replace_option_as_alt(event, window->option_as_alt);
+  if (!effective_event) {
+    effective_event = event;
+  }
+  mbw_window_update_modifiers_from_event(window, effective_event);
   int scancode = (int)((mbw_nsinteger_t(*)(id, SEL))objc_msgSend)(
-    event, mbw_sel("keyCode"));
+    effective_event,
+    mbw_sel("keyCode"));
   uint8_t text_with_all_modifiers[MBW_KEY_TEXT_CAP];
   uint8_t text_ignoring_modifiers[MBW_KEY_TEXT_CAP];
   uint8_t text_without_modifiers[MBW_KEY_TEXT_CAP];
   int text_with_all_modifiers_len = mbw_event_nsstring_utf8(
-    event,
+    effective_event,
     "characters",
     text_with_all_modifiers,
     MBW_KEY_TEXT_CAP);
   int text_ignoring_modifiers_len = mbw_event_nsstring_utf8(
-    event,
+    effective_event,
     "charactersIgnoringModifiers",
     text_ignoring_modifiers,
     MBW_KEY_TEXT_CAP);
@@ -2209,20 +2288,25 @@ static void mbw_content_view_flags_changed(id self, SEL _cmd, id event) {
   if (!window || !event) {
     return;
   }
+  id effective_event = mbw_event_replace_option_as_alt(event, window->option_as_alt);
+  if (!effective_event) {
+    effective_event = event;
+  }
   int scancode = (int)((mbw_nsinteger_t(*)(id, SEL))objc_msgSend)(
-    event, mbw_sel("keyCode"));
+    effective_event,
+    mbw_sel("keyCode"));
   int previous_modifiers = window->modifiers_state;
-  int next_modifiers = mbw_event_modifiers_state(event);
+  int next_modifiers = mbw_event_modifiers_state(effective_event);
   uint8_t text_with_all_modifiers[MBW_KEY_TEXT_CAP];
   uint8_t text_ignoring_modifiers[MBW_KEY_TEXT_CAP];
   uint8_t text_without_modifiers[MBW_KEY_TEXT_CAP];
   int text_with_all_modifiers_len = mbw_event_nsstring_utf8(
-    event,
+    effective_event,
     "characters",
     text_with_all_modifiers,
     MBW_KEY_TEXT_CAP);
   int text_ignoring_modifiers_len = mbw_event_nsstring_utf8(
-    event,
+    effective_event,
     "charactersIgnoringModifiers",
     text_ignoring_modifiers,
     MBW_KEY_TEXT_CAP);
@@ -2249,7 +2333,7 @@ static void mbw_content_view_flags_changed(id self, SEL _cmd, id event) {
     mbw_window_queue_keyboard_input(
       window,
       scancode,
-      mbw_modifier_active_for_scancode(event, scancode)
+      mbw_modifier_active_for_scancode(effective_event, scancode)
         ? MBW_ELEMENT_STATE_PRESSED
         : MBW_ELEMENT_STATE_RELEASED,
       next_modifiers,
@@ -3657,6 +3741,60 @@ bool mbw_event_loop_wait_millis(int timeout_ms) {
 #endif
 }
 
+void mbw_event_loop_hide_application(void) {
+#if defined(__APPLE__)
+  if (!g_ns_app && !mbw_bootstrap_app()) {
+    return;
+  }
+  if (g_ns_app) {
+    ((void(*)(id, SEL, id))objc_msgSend)(g_ns_app, mbw_sel("hide:"), nil);
+  }
+#endif
+}
+
+void mbw_event_loop_hide_other_applications(void) {
+#if defined(__APPLE__)
+  if (!g_ns_app && !mbw_bootstrap_app()) {
+    return;
+  }
+  if (g_ns_app) {
+    ((void(*)(id, SEL, id))objc_msgSend)(
+      g_ns_app,
+      mbw_sel("hideOtherApplications:"),
+      nil);
+  }
+#endif
+}
+
+void mbw_event_loop_set_allows_automatic_window_tabbing(bool enabled) {
+#if defined(__APPLE__)
+  Class window_class = objc_getClass("NSWindow");
+  if (!window_class) {
+    return;
+  }
+  ((void(*)(id, SEL, mbw_bool_t))objc_msgSend)(
+    (id)window_class,
+    mbw_sel("setAllowsAutomaticWindowTabbing:"),
+    enabled ? YES : NO);
+#else
+  (void)enabled;
+#endif
+}
+
+bool mbw_event_loop_allows_automatic_window_tabbing(void) {
+#if defined(__APPLE__)
+  Class window_class = objc_getClass("NSWindow");
+  if (!window_class) {
+    return false;
+  }
+  return ((mbw_bool_t(*)(id, SEL))objc_msgSend)(
+    (id)window_class,
+    mbw_sel("allowsAutomaticWindowTabbing")) != 0;
+#else
+  return false;
+#endif
+}
+
 int mbw_window_create_utf8(
   int width,
   int height,
@@ -3746,6 +3884,7 @@ int mbw_window_create_utf8(
   window->blur = 0;
   window->has_shadow = 1;
   window->document_edited = 0;
+  window->option_as_alt = MBW_OPTION_AS_ALT_NONE;
   window->borderless_game = 0;
   window->simple_fullscreen = 0;
   window->simple_fullscreen_saved_frame_valid = 0;
@@ -4779,9 +4918,37 @@ bool mbw_window_document_edited(int window_id) {
   return window ? window->document_edited != 0 : false;
 }
 
+int mbw_window_option_as_alt(int window_id) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  return window ? window->option_as_alt : MBW_OPTION_AS_ALT_NONE;
+}
+
 bool mbw_window_is_borderless_game(int window_id) {
   mbw_window_t *window = mbw_find_window(window_id);
   return window ? window->borderless_game != 0 : false;
+}
+
+int mbw_window_num_tabs(int window_id) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  if (!window) {
+    return 1;
+  }
+#if defined(__APPLE__)
+  if (window->window) {
+    id tabbed_windows = ((id(*)(id, SEL))objc_msgSend)(
+      (id)window->window,
+      mbw_sel("tabbedWindows"));
+    if (tabbed_windows) {
+      mbw_nsinteger_t count = ((mbw_nsinteger_t(*)(id, SEL))objc_msgSend)(
+        tabbed_windows,
+        mbw_sel("count"));
+      if (count > 0) {
+        return (int)count;
+      }
+    }
+  }
+#endif
+  return 1;
 }
 
 int mbw_window_cursor(int window_id) {
@@ -4959,6 +5126,29 @@ moonbit_bytes_t mbw_window_title_utf8(int window_id) {
     id title = ((id(*)(id, SEL))objc_msgSend)((id)window->window, mbw_sel("title"));
     if (title) {
       const char *utf8 = ((const char *(*)(id, SEL))objc_msgSend)(title, mbw_sel("UTF8String"));
+      if (utf8) {
+        return mbw_make_bytes_from_slice((const uint8_t *)utf8, (int)strlen(utf8));
+      }
+    }
+  }
+#endif
+  return moonbit_make_bytes_raw(0);
+}
+
+moonbit_bytes_t mbw_window_tabbing_identifier_utf8(int window_id) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  if (!window) {
+    return moonbit_make_bytes_raw(0);
+  }
+#if defined(__APPLE__)
+  if (window->window) {
+    id identifier = ((id(*)(id, SEL))objc_msgSend)(
+      (id)window->window,
+      mbw_sel("tabbingIdentifier"));
+    if (identifier) {
+      const char *utf8 = ((const char *(*)(id, SEL))objc_msgSend)(
+        identifier,
+        mbw_sel("UTF8String"));
       if (utf8) {
         return mbw_make_bytes_from_slice((const uint8_t *)utf8, (int)strlen(utf8));
       }
@@ -6112,6 +6302,120 @@ void mbw_window_set_document_edited(int window_id, bool edited) {
       edited ? YES : NO);
   }
 #endif
+}
+
+void mbw_window_set_tabbing_identifier_utf8(
+  int window_id,
+  const uint8_t *identifier,
+  uint64_t identifier_len
+) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  if (!window) {
+    return;
+  }
+#if defined(__APPLE__)
+  if (window->window) {
+    char *identifier_utf8 = mbw_copy_utf8(identifier, identifier_len);
+    id ns_identifier = mbw_make_nsstring(identifier_utf8 ? identifier_utf8 : "");
+    if (ns_identifier) {
+      ((void(*)(id, SEL, id))objc_msgSend)(
+        (id)window->window,
+        mbw_sel("setTabbingIdentifier:"),
+        ns_identifier);
+    }
+    if (identifier_utf8) {
+      free(identifier_utf8);
+    }
+  }
+#else
+  (void)identifier;
+  (void)identifier_len;
+#endif
+}
+
+void mbw_window_select_next_tab(int window_id) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  if (!window) {
+    return;
+  }
+#if defined(__APPLE__)
+  if (window->window) {
+    ((void(*)(id, SEL, id))objc_msgSend)(
+      (id)window->window,
+      mbw_sel("selectNextTab:"),
+      nil);
+  }
+#endif
+}
+
+void mbw_window_select_previous_tab(int window_id) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  if (!window) {
+    return;
+  }
+#if defined(__APPLE__)
+  if (window->window) {
+    ((void(*)(id, SEL, id))objc_msgSend)(
+      (id)window->window,
+      mbw_sel("selectPreviousTab:"),
+      nil);
+  }
+#endif
+}
+
+void mbw_window_select_tab_at_index(int window_id, int index) {
+  if (index < 0) {
+    return;
+  }
+  mbw_window_t *window = mbw_find_window(window_id);
+  if (!window) {
+    return;
+  }
+#if defined(__APPLE__)
+  if (window->window) {
+    id group = ((id(*)(id, SEL))objc_msgSend)(
+      (id)window->window,
+      mbw_sel("tabGroup"));
+    id tabbed_windows = ((id(*)(id, SEL))objc_msgSend)(
+      (id)window->window,
+      mbw_sel("tabbedWindows"));
+    if (group && tabbed_windows) {
+      mbw_nsinteger_t count = ((mbw_nsinteger_t(*)(id, SEL))objc_msgSend)(
+        tabbed_windows,
+        mbw_sel("count"));
+      if ((mbw_nsinteger_t)index < count) {
+        id selected_window = ((id(*)(id, SEL, mbw_nsinteger_t))objc_msgSend)(
+          tabbed_windows,
+          mbw_sel("objectAtIndex:"),
+          (mbw_nsinteger_t)index);
+        if (selected_window) {
+          ((void(*)(id, SEL, id))objc_msgSend)(
+            group,
+            mbw_sel("setSelectedWindow:"),
+            selected_window);
+        }
+      }
+    }
+  }
+#endif
+}
+
+void mbw_window_set_option_as_alt(int window_id, int option_as_alt) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  if (!window) {
+    return;
+  }
+  switch (option_as_alt) {
+    case MBW_OPTION_AS_ALT_ONLY_LEFT:
+    case MBW_OPTION_AS_ALT_ONLY_RIGHT:
+    case MBW_OPTION_AS_ALT_BOTH:
+      window->option_as_alt = option_as_alt;
+      break;
+    case MBW_OPTION_AS_ALT_NONE:
+    default:
+      window->option_as_alt = MBW_OPTION_AS_ALT_NONE;
+      break;
+  }
 }
 
 void mbw_window_set_borderless_game(int window_id, bool borderless_game) {

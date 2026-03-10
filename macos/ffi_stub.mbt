@@ -39,6 +39,26 @@ fn system_theme() -> Int {
 }
 
 ///|
+fn hide_application() -> Unit {
+  ()
+}
+
+///|
+fn hide_other_applications() -> Unit {
+  ()
+}
+
+///|
+fn set_allows_automatic_window_tabbing(_enabled : Bool) -> Unit {
+  ()
+}
+
+///|
+fn allows_automatic_window_tabbing() -> Bool {
+  false
+}
+
+///|
 fn window_title(_window_id : Int) -> Bytes {
   Bytes::make(0, (0 : Int).to_byte())
 }
@@ -244,6 +264,21 @@ fn window_document_edited(_window_id : Int) -> Bool {
 ///|
 fn window_is_borderless_game(_window_id : Int) -> Bool {
   false
+}
+
+///|
+fn window_tabbing_identifier(_window_id : Int) -> Bytes {
+  Bytes::make(0, (0 : Int).to_byte())
+}
+
+///|
+fn window_option_as_alt(_window_id : Int) -> Int {
+  0
+}
+
+///|
+fn window_num_tabs(_window_id : Int) -> Int {
+  1
 }
 
 ///|
@@ -650,6 +685,34 @@ fn set_window_borderless_game(
   _window_id : Int,
   _borderless_game : Bool,
 ) -> Unit {
+  ()
+}
+
+///|
+fn set_window_tabbing_identifier(
+  _window_id : Int,
+  _identifier : String,
+) -> Unit {
+  ()
+}
+
+///|
+fn select_window_next_tab(_window_id : Int) -> Unit {
+  ()
+}
+
+///|
+fn select_window_previous_tab(_window_id : Int) -> Unit {
+  ()
+}
+
+///|
+fn select_window_tab_at_index(_window_id : Int, _index : Int) -> Unit {
+  ()
+}
+
+///|
+fn set_window_option_as_alt(_window_id : Int, _option_as_alt : Int) -> Unit {
   ()
 }
 

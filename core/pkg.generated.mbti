@@ -1113,6 +1113,15 @@ pub(all) enum NativeKeyCode {
 pub impl Eq for NativeKeyCode
 pub impl Show for NativeKeyCode
 
+pub(all) enum OptionAsAlt {
+  OnlyLeft
+  OnlyRight
+  Both
+  None
+}
+pub impl Eq for OptionAsAlt
+pub impl Show for OptionAsAlt
+
 pub struct ParentWindow {
   // private fields
 }
@@ -1136,9 +1145,15 @@ pub struct PlatformWindowAttributes {
 }
 pub fn PlatformWindowAttributes::borderless_game(Self) -> Bool
 pub fn PlatformWindowAttributes::default() -> Self
+pub fn PlatformWindowAttributes::has_shadow(Self) -> Bool
+pub fn PlatformWindowAttributes::option_as_alt(Self) -> OptionAsAlt
 pub fn PlatformWindowAttributes::simple_fullscreen(Self) -> Bool?
+pub fn PlatformWindowAttributes::tabbing_identifier(Self) -> String?
 pub fn PlatformWindowAttributes::with_borderless_game(Self, Bool) -> Self
+pub fn PlatformWindowAttributes::with_has_shadow(Self, Bool) -> Self
+pub fn PlatformWindowAttributes::with_option_as_alt(Self, OptionAsAlt) -> Self
 pub fn PlatformWindowAttributes::with_simple_fullscreen(Self, Bool?) -> Self
+pub fn PlatformWindowAttributes::with_tabbing_identifier(Self, String) -> Self
 pub impl Eq for PlatformWindowAttributes
 pub impl Show for PlatformWindowAttributes
 

@@ -54,6 +54,29 @@ pub fn EventLoop::system_theme(_self : EventLoop) -> @core.Theme? {
 }
 
 ///|
+pub fn EventLoop::hide_application(_self : EventLoop) -> Unit {
+  hide_application()
+}
+
+///|
+pub fn EventLoop::hide_other_applications(_self : EventLoop) -> Unit {
+  hide_other_applications()
+}
+
+///|
+pub fn EventLoop::set_allows_automatic_window_tabbing(
+  _self : EventLoop,
+  enabled : Bool,
+) -> Unit {
+  set_allows_automatic_window_tabbing(enabled)
+}
+
+///|
+pub fn EventLoop::allows_automatic_window_tabbing(_self : EventLoop) -> Bool {
+  allows_automatic_window_tabbing()
+}
+
+///|
 pub fn EventLoop::listen_device_events(
   _self : EventLoop,
   _allowed : @core.DeviceEvents,
@@ -357,6 +380,41 @@ pub fn Window::set_borderless_game(
 ///|
 pub fn Window::is_borderless_game(self : Window) -> Bool {
   window_is_borderless_game(self.id.into_raw())
+}
+
+///|
+pub fn Window::set_tabbing_identifier(
+  self : Window,
+  identifier : String,
+) -> Unit {
+  set_window_tabbing_identifier(self.id.into_raw(), identifier)
+}
+
+///|
+pub fn Window::tabbing_identifier(self : Window) -> String {
+  text_from_native(window_tabbing_identifier(self.id.into_raw()))
+}
+
+///|
+pub fn Window::select_next_tab(self : Window) -> Unit {
+  select_window_next_tab(self.id.into_raw())
+}
+
+///|
+pub fn Window::select_previous_tab(self : Window) -> Unit {
+  select_window_previous_tab(self.id.into_raw())
+}
+
+///|
+pub fn Window::select_tab_at_index(self : Window, index : Int) -> Unit {
+  if index >= 0 {
+    select_window_tab_at_index(self.id.into_raw(), index)
+  }
+}
+
+///|
+pub fn Window::num_tabs(self : Window) -> Int {
+  window_num_tabs(self.id.into_raw())
 }
 
 ///|
@@ -900,6 +958,22 @@ pub fn Window::set_document_edited(self : Window, edited : Bool) -> Unit {
 }
 
 ///|
+pub fn Window::set_option_as_alt(
+  self : Window,
+  option_as_alt : @core.OptionAsAlt,
+) -> Unit {
+  set_window_option_as_alt(
+    self.id.into_raw(),
+    option_as_alt_to_native(option_as_alt),
+  )
+}
+
+///|
+pub fn Window::option_as_alt(self : Window) -> @core.OptionAsAlt {
+  option_as_alt_from_native(window_option_as_alt(self.id.into_raw()))
+}
+
+///|
 pub fn Window::request_user_attention(
   self : Window,
   request_type : @core.UserAttentionType?,
@@ -1196,6 +1270,26 @@ fn user_attention_type_to_native(
     None => 0
     Some(@core.UserAttentionType::Critical) => 1
     Some(@core.UserAttentionType::Informational) => 2
+  }
+}
+
+///|
+fn option_as_alt_to_native(option_as_alt : @core.OptionAsAlt) -> Int {
+  match option_as_alt {
+    @core.OptionAsAlt::OnlyLeft => 1
+    @core.OptionAsAlt::OnlyRight => 2
+    @core.OptionAsAlt::Both => 3
+    @core.OptionAsAlt::None => 0
+  }
+}
+
+///|
+fn option_as_alt_from_native(option_as_alt : Int) -> @core.OptionAsAlt {
+  match option_as_alt {
+    1 => @core.OptionAsAlt::OnlyLeft
+    2 => @core.OptionAsAlt::OnlyRight
+    3 => @core.OptionAsAlt::Both
+    _ => @core.OptionAsAlt::None
   }
 }
 
@@ -1680,6 +1774,15 @@ pub fn EventLoop::create_window(
     raw_id,
     attributes.platform_attributes().borderless_game(),
   )
+  set_window_has_shadow(raw_id, attributes.platform_attributes().has_shadow())
+  set_window_option_as_alt(
+    raw_id,
+    option_as_alt_to_native(attributes.platform_attributes().option_as_alt()),
+  )
+  match attributes.platform_attributes().tabbing_identifier() {
+    Some(identifier) => set_window_tabbing_identifier(raw_id, identifier)
+    None => ()
+  }
   set_window_theme(raw_id, theme_to_native(attributes.theme()))
   set_window_content_protected(raw_id, attributes.content_protected())
   set_window_blur(raw_id, attributes.blur())

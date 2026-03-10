@@ -202,3 +202,53 @@ test "macos shadow and document edited APIs reflect runtime updates" {
   window.set_document_edited(false)
   assert_false(window.is_document_edited())
 }
+
+///|
+test "macos platform window attributes apply tabbing option-as-alt and shadow at creation time" {
+  let event_loop = EventLoop::new()
+  let window = event_loop.create_window(
+    @core.WindowAttributes::default()
+    .with_visible(false)
+    .with_platform_attributes(
+      @core.PlatformWindowAttributes::default()
+      .with_has_shadow(false)
+      .with_tabbing_identifier("group-a")
+      .with_option_as_alt(@core.OptionAsAlt::OnlyLeft),
+    ),
+  )
+  assert_false(window.has_shadow())
+  assert_eq(window.tabbing_identifier(), "group-a")
+  assert_eq(window.option_as_alt(), @core.OptionAsAlt::OnlyLeft)
+  assert_eq(window.num_tabs(), 1)
+}
+
+///|
+test "macos tabbing and option-as-alt APIs reflect runtime updates" {
+  let event_loop = EventLoop::new()
+  let window = event_loop.create_window(
+    @core.WindowAttributes::default().with_visible(false),
+  )
+  window.set_tabbing_identifier("group-b")
+  assert_eq(window.tabbing_identifier(), "group-b")
+  window.select_next_tab()
+  window.select_previous_tab()
+  window.select_tab_at_index(0)
+  window.select_tab_at_index(99)
+  assert_true(window.num_tabs() >= 1)
+  assert_eq(window.option_as_alt(), @core.OptionAsAlt::None)
+  window.set_option_as_alt(@core.OptionAsAlt::Both)
+  assert_eq(window.option_as_alt(), @core.OptionAsAlt::Both)
+  window.set_option_as_alt(@core.OptionAsAlt::OnlyRight)
+  assert_eq(window.option_as_alt(), @core.OptionAsAlt::OnlyRight)
+}
+
+///|
+test "macos event loop automatic tabbing can be toggled" {
+  let event_loop = EventLoop::new()
+  let initial = event_loop.allows_automatic_window_tabbing()
+  event_loop.set_allows_automatic_window_tabbing(false)
+  assert_false(event_loop.allows_automatic_window_tabbing())
+  event_loop.set_allows_automatic_window_tabbing(true)
+  assert_true(event_loop.allows_automatic_window_tabbing())
+  event_loop.set_allows_automatic_window_tabbing(initial)
+}

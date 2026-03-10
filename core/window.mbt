@@ -396,14 +396,47 @@ pub(all) enum Fullscreen {
 } derive(Eq, Show)
 
 ///|
+pub(all) enum OptionAsAlt {
+  OnlyLeft
+  OnlyRight
+  Both
+  None
+} derive(Eq, Show)
+
+///|
 pub struct PlatformWindowAttributes {
+  priv mut has_shadow : Bool
   priv mut simple_fullscreen : Bool?
   priv mut borderless_game : Bool
+  priv mut option_as_alt : OptionAsAlt
+  priv mut tabbing_identifier : String?
 } derive(Eq, Show)
 
 ///|
 pub fn PlatformWindowAttributes::default() -> PlatformWindowAttributes {
-  { simple_fullscreen: None, borderless_game: false }
+  {
+    has_shadow: true,
+    simple_fullscreen: None,
+    borderless_game: false,
+    option_as_alt: OptionAsAlt::None,
+    tabbing_identifier: None,
+  }
+}
+
+///|
+pub fn PlatformWindowAttributes::with_has_shadow(
+  self : PlatformWindowAttributes,
+  has_shadow : Bool,
+) -> PlatformWindowAttributes {
+  self.has_shadow = has_shadow
+  self
+}
+
+///|
+pub fn PlatformWindowAttributes::has_shadow(
+  self : PlatformWindowAttributes,
+) -> Bool {
+  self.has_shadow
 }
 
 ///|
@@ -436,6 +469,38 @@ pub fn PlatformWindowAttributes::borderless_game(
   self : PlatformWindowAttributes,
 ) -> Bool {
   self.borderless_game
+}
+
+///|
+pub fn PlatformWindowAttributes::with_option_as_alt(
+  self : PlatformWindowAttributes,
+  option_as_alt : OptionAsAlt,
+) -> PlatformWindowAttributes {
+  self.option_as_alt = option_as_alt
+  self
+}
+
+///|
+pub fn PlatformWindowAttributes::option_as_alt(
+  self : PlatformWindowAttributes,
+) -> OptionAsAlt {
+  self.option_as_alt
+}
+
+///|
+pub fn PlatformWindowAttributes::with_tabbing_identifier(
+  self : PlatformWindowAttributes,
+  tabbing_identifier : String,
+) -> PlatformWindowAttributes {
+  self.tabbing_identifier = Some(tabbing_identifier)
+  self
+}
+
+///|
+pub fn PlatformWindowAttributes::tabbing_identifier(
+  self : PlatformWindowAttributes,
+) -> String? {
+  self.tabbing_identifier
 }
 
 ///|
