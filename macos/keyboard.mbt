@@ -528,16 +528,6 @@ fn logical_key_from_scancode(
 }
 
 ///|
-fn key_text(key : @core.Key) -> String? {
-  match key {
-    @core.Key::Character(character) => Some(character)
-    @core.Key::Named(@core.NamedKey::Enter) => Some("\r")
-    @core.Key::Named(@core.NamedKey::Tab) => Some("\t")
-    _ => None
-  }
-}
-
-///|
 fn create_key_event(
   scancode : Int,
   state : @core.ElementState,
@@ -565,7 +555,7 @@ fn create_key_event(
     normalized_text_ignoring_modifiers, normalized_text_without_modifiers,
   )
   let text = match state {
-    @core.ElementState::Pressed => key_text(logical_key)
+    @core.ElementState::Pressed => logical_key.to_text()
     @core.ElementState::Released => None
   }
   let text_with_all_modifiers = match state {

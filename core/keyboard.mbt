@@ -251,6 +251,18 @@ pub fn Key::from_native(native : NativeKey) -> Key {
 }
 
 ///|
+pub fn Key::to_text(self : Key) -> String? {
+  match self {
+    Named(NamedKey::Enter) => Some("\r")
+    Named(NamedKey::Backspace) => Some("\b")
+    Named(NamedKey::Tab) => Some("\t")
+    Named(NamedKey::Escape) => Some("\u{1b}")
+    Character(character) => Some(character)
+    _ => None
+  }
+}
+
+///|
 pub struct KeyEvent {
   key_without_modifiers : Key
   location : KeyLocation

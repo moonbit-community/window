@@ -338,6 +338,7 @@ pub(all) enum Key {
 }
 pub fn Key::from_named(NamedKey) -> Self
 pub fn Key::from_native(NativeKey) -> Self
+pub fn Key::to_text(Self) -> String?
 pub impl Eq for Key
 pub impl Show for Key
 
