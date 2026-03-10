@@ -58,10 +58,29 @@ pub fn ActivationToken::into_raw(Self) -> String
 pub impl Eq for ActivationToken
 pub impl Show for ActivationToken
 
+pub struct AxisId {
+  raw : Int
+}
+pub fn AxisId::from_raw(Int) -> Self
+pub fn AxisId::into_raw(Self) -> Int
+pub impl Eq for AxisId
+pub impl Show for AxisId
+
+pub struct ButtonId {
+  raw : Int
+}
+pub fn ButtonId::from_raw(Int) -> Self
+pub fn ButtonId::into_raw(Self) -> Int
+pub impl Eq for ButtonId
+pub impl Show for ButtonId
+
 pub(all) enum ButtonSource {
   Mouse(MouseButton)
+  Touch(FingerId, Force?)
+  TabletTool(TabletToolKind, TabletToolButton, TabletToolData)
   Unknown(Int)
 }
+pub fn ButtonSource::mouse_button(Self) -> MouseButton?
 pub impl Eq for ButtonSource
 pub impl Show for ButtonSource
 
@@ -150,7 +169,7 @@ pub impl Show for CustomCursorSource
 pub(all) enum DeviceEvent {
   PointerMotion(Double, Double)
   MouseWheel(MouseScrollDelta)
-  Button(Int, ElementState)
+  Button(ButtonId, ElementState)
   Key(RawKeyEvent)
 }
 pub impl Eq for DeviceEvent
@@ -176,8 +195,25 @@ pub(all) enum ElementState {
   Pressed
   Released
 }
+pub fn ElementState::is_pressed(Self) -> Bool
 pub impl Eq for ElementState
 pub impl Show for ElementState
+
+pub struct FingerId {
+  raw : Int
+}
+pub fn FingerId::from_raw(Int) -> Self
+pub fn FingerId::into_raw(Self) -> Int
+pub impl Eq for FingerId
+pub impl Show for FingerId
+
+pub(all) enum Force {
+  Calibrated(Double, Double)
+  Normalized(Double)
+}
+pub fn Force::normalized(Self, TabletToolAngle?) -> Double
+pub impl Eq for Force
+pub impl Show for Force
 
 pub(all) enum Fullscreen {
   Borderless(MonitorHandle?)
@@ -486,8 +522,35 @@ pub(all) enum MouseButton {
   Middle
   Back
   Forward
-  Other(Int)
+  Button6
+  Button7
+  Button8
+  Button9
+  Button10
+  Button11
+  Button12
+  Button13
+  Button14
+  Button15
+  Button16
+  Button17
+  Button18
+  Button19
+  Button20
+  Button21
+  Button22
+  Button23
+  Button24
+  Button25
+  Button26
+  Button27
+  Button28
+  Button29
+  Button30
+  Button31
+  Button32
 }
+pub fn MouseButton::try_from_u8(Int) -> Self?
 pub impl Eq for MouseButton
 pub impl Show for MouseButton
 
@@ -591,6 +654,8 @@ pub impl Show for PlatformWindowAttributes
 
 pub(all) enum PointerKind {
   Mouse
+  Touch(FingerId)
+  TabletTool(TabletToolKind)
   Unknown
 }
 pub impl Eq for PointerKind
@@ -598,6 +663,8 @@ pub impl Show for PointerKind
 
 pub(all) enum PointerSource {
   Mouse
+  Touch(FingerId, Force?)
+  TabletTool(TabletToolKind, TabletToolData)
   Unknown
 }
 pub impl Eq for PointerSource
@@ -642,6 +709,68 @@ pub fn SurfaceSizeWriter::new(@dpi.PhysicalSize) -> Self
 pub fn SurfaceSizeWriter::request_surface_size(Self, @dpi.PhysicalSize) -> Unit
 pub fn SurfaceSizeWriter::surface_size(Self) -> @dpi.PhysicalSize
 pub impl Show for SurfaceSizeWriter
+
+pub struct TabletToolAngle {
+  altitude : Double
+  azimuth : Double
+}
+pub fn TabletToolAngle::altitude(Self) -> Double
+pub fn TabletToolAngle::azimuth(Self) -> Double
+pub fn TabletToolAngle::default() -> Self
+pub fn TabletToolAngle::new(Double, Double) -> Self
+pub fn TabletToolAngle::tilt(Self) -> TabletToolTilt
+pub impl Eq for TabletToolAngle
+pub impl Show for TabletToolAngle
+
+pub(all) enum TabletToolButton {
+  Contact
+  Barrel
+  Other(Int)
+}
+pub fn TabletToolButton::mouse_button(Self) -> MouseButton?
+pub impl Eq for TabletToolButton
+pub impl Show for TabletToolButton
+
+pub struct TabletToolData {
+  force : Force?
+  tangential_force : Double?
+  twist : Int?
+  tilt : TabletToolTilt?
+  angle : TabletToolAngle?
+}
+pub fn TabletToolData::angle(Self) -> TabletToolAngle?
+pub fn TabletToolData::force(Self) -> Force?
+pub fn TabletToolData::new(Force?, Double?, Int?, TabletToolTilt?, TabletToolAngle?) -> Self
+pub fn TabletToolData::tangential_force(Self) -> Double?
+pub fn TabletToolData::tilt(Self) -> TabletToolTilt?
+pub fn TabletToolData::twist(Self) -> Int?
+pub impl Eq for TabletToolData
+pub impl Show for TabletToolData
+
+pub(all) enum TabletToolKind {
+  Pen
+  Eraser
+  Brush
+  Pencil
+  Airbrush
+  Finger
+  Mouse
+  Lens
+}
+pub fn TabletToolKind::default() -> Self
+pub impl Eq for TabletToolKind
+pub impl Show for TabletToolKind
+
+pub struct TabletToolTilt {
+  x : Int
+  y : Int
+}
+pub fn TabletToolTilt::angle(Self) -> TabletToolAngle
+pub fn TabletToolTilt::new(Int, Int) -> Self
+pub fn TabletToolTilt::x(Self) -> Int
+pub fn TabletToolTilt::y(Self) -> Int
+pub impl Eq for TabletToolTilt
+pub impl Show for TabletToolTilt
 
 pub(all) enum Theme {
   Light

@@ -785,23 +785,15 @@ fn element_state_from_native(state : Int) -> @core.ElementState? {
 }
 
 ///|
-fn mouse_button_from_native(button : Int) -> @core.MouseButton {
-  match button {
-    0 => @core.MouseButton::Left
-    1 => @core.MouseButton::Right
-    2 => @core.MouseButton::Middle
-    3 => @core.MouseButton::Back
-    4 => @core.MouseButton::Forward
-    _ => @core.MouseButton::Other(button)
-  }
+fn mouse_button_from_native(button : Int) -> @core.MouseButton? {
+  @core.MouseButton::try_from_u8(button)
 }
 
 ///|
 fn button_source_from_native(button : Int) -> @core.ButtonSource {
-  if button < 0 {
-    @core.ButtonSource::Unknown(button)
-  } else {
-    @core.ButtonSource::Mouse(mouse_button_from_native(button))
+  match mouse_button_from_native(button) {
+    Some(mouse) => @core.ButtonSource::Mouse(mouse)
+    None => @core.ButtonSource::Unknown(button)
   }
 }
 
@@ -1197,7 +1189,10 @@ fn[A : ApplicationHandler] EventLoop::dispatch_input_events(
             app.device_event(
               self,
               pointer_device_id,
-              @core.DeviceEvent::Button(input_event_button(raw_id), state),
+              @core.DeviceEvent::Button(
+                @core.ButtonId::from_raw(input_event_button(raw_id)),
+                state,
+              ),
             )
           }
           None => ()
