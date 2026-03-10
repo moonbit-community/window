@@ -227,6 +227,11 @@ fn window_simple_fullscreen(window_id : Int) -> Bool {
 }
 
 ///|
+fn window_is_exclusive_fullscreen(window_id : Int) -> Bool {
+  native_window_is_exclusive_fullscreen(window_id)
+}
+
+///|
 fn window_decorated(window_id : Int) -> Bool {
   native_window_decorated(window_id)
 }
@@ -668,6 +673,20 @@ fn set_window_blur(window_id : Int, blur : Bool) -> Unit {
 ///|
 fn set_window_simple_fullscreen(window_id : Int, fullscreen : Bool) -> Bool {
   native_window_set_simple_fullscreen(window_id, fullscreen)
+}
+
+///|
+fn set_window_exclusive_fullscreen(
+  window_id : Int,
+  monitor_id : UInt64,
+  width : Int,
+  height : Int,
+  bit_depth : Int,
+  refresh_rate_millihertz : Int,
+) -> Bool {
+  native_window_set_exclusive_fullscreen(
+    window_id, monitor_id, width, height, bit_depth, refresh_rate_millihertz,
+  )
 }
 
 ///|
@@ -1148,6 +1167,9 @@ extern "C" fn native_window_fullscreen(window_id : Int) -> Bool = "mbw_window_fu
 extern "C" fn native_window_simple_fullscreen(window_id : Int) -> Bool = "mbw_window_simple_fullscreen"
 
 ///|
+extern "C" fn native_window_is_exclusive_fullscreen(window_id : Int) -> Bool = "mbw_window_is_exclusive_fullscreen"
+
+///|
 extern "C" fn native_window_decorated(window_id : Int) -> Bool = "mbw_window_decorated"
 
 ///|
@@ -1419,6 +1441,16 @@ extern "C" fn native_window_set_simple_fullscreen(
   window_id : Int,
   fullscreen : Bool,
 ) -> Bool = "mbw_window_set_simple_fullscreen"
+
+///|
+extern "C" fn native_window_set_exclusive_fullscreen(
+  window_id : Int,
+  monitor_id : UInt64,
+  width : Int,
+  height : Int,
+  bit_depth : Int,
+  refresh_rate_millihertz : Int,
+) -> Bool = "mbw_window_set_exclusive_fullscreen"
 
 ///|
 extern "C" fn native_window_set_has_shadow(

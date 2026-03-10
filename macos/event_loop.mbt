@@ -312,8 +312,34 @@ pub fn Window::set_fullscreen(
     self.fullscreen_state = fullscreen
     let raw_id = self.id.into_raw()
     match fullscreen {
-      None => set_window_fullscreen(raw_id, false)
+      None =>
+        if window_is_exclusive_fullscreen(raw_id) {
+          ignore(
+            set_window_exclusive_fullscreen(
+              raw_id,
+              (0 : Int).to_uint64(),
+              0,
+              0,
+              0,
+              0,
+            ),
+          )
+        } else {
+          set_window_fullscreen(raw_id, false)
+        }
       Some(@core.Fullscreen::Borderless(target_monitor)) => {
+        if window_is_exclusive_fullscreen(raw_id) {
+          ignore(
+            set_window_exclusive_fullscreen(
+              raw_id,
+              (0 : Int).to_uint64(),
+              0,
+              0,
+              0,
+              0,
+            ),
+          )
+        }
         match target_monitor {
           Some(monitor) =>
             set_window_position(
@@ -326,11 +352,26 @@ pub fn Window::set_fullscreen(
         set_window_fullscreen(raw_id, true)
       }
       Some(@core.Fullscreen::Exclusive(target_monitor, video_mode)) => {
-        let position = target_monitor.position()
+        if window_fullscreen(raw_id) && !window_is_exclusive_fullscreen(raw_id) {
+          set_window_fullscreen(raw_id, false)
+        }
         let mode_size = video_mode.surface_size()
-        set_window_position(raw_id, position.x(), position.y())
-        set_surface_size(raw_id, mode_size.width(), mode_size.height())
-        set_window_fullscreen(raw_id, true)
+        ignore(
+          set_window_exclusive_fullscreen(
+            raw_id,
+            target_monitor.native_id(),
+            mode_size.width(),
+            mode_size.height(),
+            match video_mode.bit_depth() {
+              Some(bit_depth) => bit_depth
+              None => 0
+            },
+            match video_mode.refresh_rate_millihertz() {
+              Some(refresh_rate) => refresh_rate
+              None => 0
+            },
+          ),
+        )
       }
     }
   }
@@ -343,7 +384,13 @@ pub fn Window::is_maximized(self : Window) -> Bool {
 
 ///|
 pub fn Window::fullscreen(self : Window) -> @core.Fullscreen? {
-  if window_fullscreen(self.id.into_raw()) {
+  let raw_id = self.id.into_raw()
+  if window_is_exclusive_fullscreen(raw_id) {
+    match self.fullscreen_state {
+      Some(fullscreen) => Some(fullscreen)
+      None => None
+    }
+  } else if window_fullscreen(raw_id) {
     match self.fullscreen_state {
       Some(fullscreen) => Some(fullscreen)
       None => Some(@core.Fullscreen::Borderless(self.current_monitor()))
@@ -1840,11 +1887,23 @@ pub fn EventLoop::create_window(
       set_window_fullscreen(raw_id, true)
     }
     Some(@core.Fullscreen::Exclusive(target_monitor, video_mode)) => {
-      let monitor_position = target_monitor.position()
       let mode_size = video_mode.surface_size()
-      set_window_position(raw_id, monitor_position.x(), monitor_position.y())
-      set_surface_size(raw_id, mode_size.width(), mode_size.height())
-      set_window_fullscreen(raw_id, true)
+      ignore(
+        set_window_exclusive_fullscreen(
+          raw_id,
+          target_monitor.native_id(),
+          mode_size.width(),
+          mode_size.height(),
+          match video_mode.bit_depth() {
+            Some(bit_depth) => bit_depth
+            None => 0
+          },
+          match video_mode.refresh_rate_millihertz() {
+            Some(refresh_rate) => refresh_rate
+            None => 0
+          },
+        ),
+      )
     }
     None => ()
   }

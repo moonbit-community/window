@@ -137,6 +137,18 @@ typedef struct mbw_window {
   unsigned long simple_fullscreen_saved_style_mask;
   int simple_fullscreen_saved_presentation_valid;
   unsigned long simple_fullscreen_saved_presentation_options;
+  int exclusive_fullscreen;
+  uint32_t exclusive_fullscreen_display_id;
+  int exclusive_fullscreen_display_captured;
+  int exclusive_fullscreen_saved_mode_valid;
+  void *exclusive_fullscreen_saved_mode;
+  int exclusive_fullscreen_saved_frame_valid;
+  double exclusive_fullscreen_saved_frame_x;
+  double exclusive_fullscreen_saved_frame_y;
+  double exclusive_fullscreen_saved_frame_width;
+  double exclusive_fullscreen_saved_frame_height;
+  int exclusive_fullscreen_saved_style_valid;
+  unsigned long exclusive_fullscreen_saved_style_mask;
   int has_icon;
   int cursor;
   uint64_t custom_cursor_id;
@@ -540,6 +552,18 @@ static id mbw_shared_application(void);
 static void mbw_window_apply_style_mask(mbw_window_t *window, mbw_nsuint_t style_mask);
 static id mbw_window_screen(mbw_window_t *window);
 static void mbw_window_clear_simple_fullscreen(
+  mbw_window_t *window,
+  bool restore_window_state
+);
+static CGDisplayModeRef mbw_find_display_mode(
+  CGDirectDisplayID display_id,
+  int width,
+  int height,
+  int bit_depth,
+  int refresh_rate_millihertz,
+  CFArrayRef *modes_out
+);
+static void mbw_window_clear_exclusive_fullscreen(
   mbw_window_t *window,
   bool restore_window_state
 );
@@ -2540,6 +2564,7 @@ static void mbw_window_delegate_will_close(id self, SEL _cmd, id notification) {
     return;
   }
 #if defined(__APPLE__)
+  mbw_window_clear_exclusive_fullscreen(window, false);
   mbw_window_clear_simple_fullscreen(window, false);
 #endif
   window->should_close = 1;
@@ -3259,6 +3284,71 @@ static void mbw_window_clear_simple_fullscreen(
   window->simple_fullscreen_saved_style_valid = 0;
   window->simple_fullscreen_saved_presentation_valid = 0;
 }
+
+static void mbw_window_clear_exclusive_fullscreen(
+  mbw_window_t *window,
+  bool restore_window_state
+) {
+  if (!window || !window->exclusive_fullscreen) {
+    return;
+  }
+
+  CGDirectDisplayID display_id = (CGDirectDisplayID)window->exclusive_fullscreen_display_id;
+  CGDisplayModeRef saved_mode =
+    (CGDisplayModeRef)window->exclusive_fullscreen_saved_mode;
+  if (
+    display_id != 0 &&
+    window->exclusive_fullscreen_saved_mode_valid &&
+    saved_mode) {
+    CGDisplaySetDisplayMode(display_id, saved_mode, NULL);
+  }
+  if (
+    display_id != 0 &&
+    window->exclusive_fullscreen_display_captured) {
+    CGDisplayRelease(display_id);
+  }
+
+  if (restore_window_state && window->window) {
+    if (window->exclusive_fullscreen_saved_style_valid) {
+      mbw_window_apply_style_mask(
+        window,
+        window->exclusive_fullscreen_saved_style_mask);
+    }
+    if (window->exclusive_fullscreen_saved_frame_valid) {
+      mbw_rect_t frame = {
+        .origin = {
+          window->exclusive_fullscreen_saved_frame_x,
+          window->exclusive_fullscreen_saved_frame_y,
+        },
+        .size = {
+          window->exclusive_fullscreen_saved_frame_width,
+          window->exclusive_fullscreen_saved_frame_height,
+        },
+      };
+      ((void(*)(id, SEL, mbw_rect_t, mbw_bool_t))objc_msgSend)(
+        (id)window->window,
+        mbw_sel("setFrame:display:"),
+        frame,
+        YES);
+    }
+    ((void(*)(id, SEL, mbw_bool_t))objc_msgSend)(
+      (id)window->window,
+      mbw_sel("setMovable:"),
+      YES);
+  }
+
+  if (saved_mode) {
+    CGDisplayModeRelease(saved_mode);
+  }
+  window->exclusive_fullscreen = 0;
+  window->exclusive_fullscreen_display_id = 0;
+  window->exclusive_fullscreen_display_captured = 0;
+  window->exclusive_fullscreen_saved_mode_valid = 0;
+  window->exclusive_fullscreen_saved_mode = NULL;
+  window->exclusive_fullscreen_saved_frame_valid = 0;
+  window->exclusive_fullscreen_saved_style_valid = 0;
+  window->fullscreen = 0;
+}
 #endif
 
 static void mbw_window_position(mbw_window_t *window, int *x, int *y) {
@@ -3299,8 +3389,9 @@ static void mbw_update_window_state(mbw_window_t *window) {
   window->maximized = is_zoomed ? 1 : 0;
   mbw_nsuint_t style_mask = ((mbw_nsuint_t(*)(id, SEL))objc_msgSend)(
     (id)window->window, mbw_sel("styleMask"));
-  window->fullscreen =
-    (style_mask & MBW_NSWINDOW_STYLE_MASK_FULLSCREEN) != 0 ? 1 : 0;
+  window->fullscreen = window->exclusive_fullscreen
+    ? 1
+    : ((style_mask & MBW_NSWINDOW_STYLE_MASK_FULLSCREEN) != 0 ? 1 : 0);
 
   window->scale_factor = ((double(*)(id, SEL))objc_msgSend)(
     (id)window->window, mbw_sel("backingScaleFactor"));
@@ -3890,6 +3981,13 @@ int mbw_window_create_utf8(
   window->simple_fullscreen_saved_frame_valid = 0;
   window->simple_fullscreen_saved_style_valid = 0;
   window->simple_fullscreen_saved_presentation_valid = 0;
+  window->exclusive_fullscreen = 0;
+  window->exclusive_fullscreen_display_id = 0;
+  window->exclusive_fullscreen_display_captured = 0;
+  window->exclusive_fullscreen_saved_mode_valid = 0;
+  window->exclusive_fullscreen_saved_mode = NULL;
+  window->exclusive_fullscreen_saved_frame_valid = 0;
+  window->exclusive_fullscreen_saved_style_valid = 0;
   window->has_icon = 0;
   window->cursor = MBW_CURSOR_DEFAULT;
   window->custom_cursor_id = 0;
@@ -4639,6 +4737,76 @@ static int mbw_display_mode_refresh_rate_millihertz(CGDisplayModeRef mode) {
   double millihertz = refresh_rate * 1000.0;
   return (int)(millihertz + 0.5);
 }
+
+static CGDisplayModeRef mbw_find_display_mode(
+  CGDirectDisplayID display_id,
+  int width,
+  int height,
+  int bit_depth,
+  int refresh_rate_millihertz,
+  CFArrayRef *modes_out
+) {
+  if (modes_out) {
+    *modes_out = NULL;
+  }
+  if (display_id == 0 || width <= 0 || height <= 0) {
+    return NULL;
+  }
+  CFArrayRef modes = CGDisplayCopyAllDisplayModes(display_id, NULL);
+  if (!modes) {
+    return NULL;
+  }
+  CFIndex count = CFArrayGetCount(modes);
+  CGDisplayModeRef fallback = NULL;
+  for (CFIndex i = 0; i < count; ++i) {
+    CGDisplayModeRef mode = (CGDisplayModeRef)CFArrayGetValueAtIndex(modes, i);
+    if (!mode) {
+      continue;
+    }
+    if (
+      (int)CGDisplayModeGetPixelWidth(mode) != width ||
+      (int)CGDisplayModeGetPixelHeight(mode) != height) {
+      continue;
+    }
+    int mode_bit_depth = mbw_display_mode_bit_depth(mode);
+    int mode_refresh_rate = mbw_display_mode_refresh_rate_millihertz(mode);
+    if (
+      bit_depth > 0 &&
+      mode_bit_depth > 0 &&
+      mode_bit_depth != bit_depth) {
+      continue;
+    }
+    if (
+      refresh_rate_millihertz > 0 &&
+      mode_refresh_rate > 0 &&
+      mode_refresh_rate != refresh_rate_millihertz) {
+      continue;
+    }
+    fallback = mode;
+    if (
+      (bit_depth <= 0 || mode_bit_depth == bit_depth || mode_bit_depth == 0) &&
+      (refresh_rate_millihertz <= 0 ||
+       mode_refresh_rate == refresh_rate_millihertz ||
+       mode_refresh_rate == 0)) {
+      if (modes_out) {
+        *modes_out = modes;
+      } else {
+        CFRelease(modes);
+      }
+      return mode;
+    }
+  }
+  if (fallback) {
+    if (modes_out) {
+      *modes_out = modes;
+    } else {
+      CFRelease(modes);
+    }
+    return fallback;
+  }
+  CFRelease(modes);
+  return NULL;
+}
 #endif
 
 int mbw_monitor_video_mode_count(uint64_t monitor_id) {
@@ -4881,6 +5049,11 @@ bool mbw_window_fullscreen(int window_id) {
 bool mbw_window_simple_fullscreen(int window_id) {
   mbw_window_t *window = mbw_find_window(window_id);
   return window ? window->simple_fullscreen != 0 : false;
+}
+
+bool mbw_window_is_exclusive_fullscreen(int window_id) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  return window ? window->exclusive_fullscreen != 0 : false;
 }
 
 bool mbw_window_decorated(int window_id) {
@@ -6097,6 +6270,12 @@ void mbw_window_set_fullscreen(int window_id, bool fullscreen) {
     return;
   }
 #if defined(__APPLE__)
+  if (window->exclusive_fullscreen) {
+    mbw_window_clear_exclusive_fullscreen(window, true);
+    if (!fullscreen) {
+      return;
+    }
+  }
   if (window->simple_fullscreen) {
     return;
   }
@@ -6116,6 +6295,135 @@ void mbw_window_set_fullscreen(int window_id, bool fullscreen) {
         nil);
     }
   }
+#endif
+}
+
+bool mbw_window_set_exclusive_fullscreen(
+  int window_id,
+  uint64_t monitor_id,
+  int width,
+  int height,
+  int bit_depth,
+  int refresh_rate_millihertz
+) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  if (!window) {
+    return false;
+  }
+#if defined(__APPLE__)
+  if (!window->window || window->simple_fullscreen) {
+    return false;
+  }
+  if (monitor_id == 0) {
+    if (!window->exclusive_fullscreen) {
+      return false;
+    }
+    mbw_window_clear_exclusive_fullscreen(window, true);
+    return true;
+  }
+  if (window->fullscreen && !window->exclusive_fullscreen) {
+    return false;
+  }
+  if (window->exclusive_fullscreen) {
+    mbw_window_clear_exclusive_fullscreen(window, true);
+  }
+
+  CGDirectDisplayID display_id = (CGDirectDisplayID)monitor_id;
+  CFArrayRef modes = NULL;
+  CGDisplayModeRef target_mode = mbw_find_display_mode(
+    display_id,
+    width,
+    height,
+    bit_depth,
+    refresh_rate_millihertz,
+    &modes);
+  if (!target_mode) {
+    return false;
+  }
+
+  CGDisplayModeRef current_mode = CGDisplayCopyDisplayMode(display_id);
+  if (!current_mode) {
+    if (modes) {
+      CFRelease(modes);
+    }
+    return false;
+  }
+  if (CGDisplayCapture(display_id) != kCGErrorSuccess) {
+    CGDisplayModeRelease(current_mode);
+    if (modes) {
+      CFRelease(modes);
+    }
+    return false;
+  }
+  if (CGDisplaySetDisplayMode(display_id, target_mode, NULL) != kCGErrorSuccess) {
+    CGDisplayRelease(display_id);
+    CGDisplayModeRelease(current_mode);
+    if (modes) {
+      CFRelease(modes);
+    }
+    return false;
+  }
+  if (modes) {
+    CFRelease(modes);
+  }
+
+  mbw_rect_t frame = ((mbw_rect_t(*)(id, SEL))objc_msgSend)(
+    (id)window->window,
+    mbw_sel("frame"));
+  mbw_nsuint_t style_mask = ((mbw_nsuint_t(*)(id, SEL))objc_msgSend)(
+    (id)window->window,
+    mbw_sel("styleMask"));
+  id screen = mbw_screen_for_display_id(display_id);
+  if (!screen) {
+    screen = mbw_window_screen(window);
+  }
+  if (!screen) {
+    CGDisplaySetDisplayMode(display_id, current_mode, NULL);
+    CGDisplayRelease(display_id);
+    CGDisplayModeRelease(current_mode);
+    return false;
+  }
+
+  window->exclusive_fullscreen_saved_mode = (void *)current_mode;
+  window->exclusive_fullscreen_saved_mode_valid = 1;
+  window->exclusive_fullscreen_saved_frame_x = frame.origin.x;
+  window->exclusive_fullscreen_saved_frame_y = frame.origin.y;
+  window->exclusive_fullscreen_saved_frame_width = frame.size.width;
+  window->exclusive_fullscreen_saved_frame_height = frame.size.height;
+  window->exclusive_fullscreen_saved_frame_valid = 1;
+  window->exclusive_fullscreen_saved_style_mask = style_mask;
+  window->exclusive_fullscreen_saved_style_valid = 1;
+  window->exclusive_fullscreen_display_id = (uint32_t)display_id;
+  window->exclusive_fullscreen_display_captured = 1;
+  window->exclusive_fullscreen = 1;
+  window->fullscreen = 1;
+
+  mbw_window_apply_style_mask(
+    window,
+    style_mask &
+    ~(MBW_NSWINDOW_STYLE_MASK_TITLED |
+      MBW_NSWINDOW_STYLE_MASK_MINIATURIZABLE |
+      MBW_NSWINDOW_STYLE_MASK_RESIZABLE));
+  ((void(*)(id, SEL, mbw_bool_t))objc_msgSend)(
+    (id)window->window,
+    mbw_sel("setMovable:"),
+    NO);
+  mbw_rect_t screen_frame = ((mbw_rect_t(*)(id, SEL))objc_msgSend)(
+    screen,
+    mbw_sel("frame"));
+  ((void(*)(id, SEL, mbw_rect_t, mbw_bool_t))objc_msgSend)(
+    (id)window->window,
+    mbw_sel("setFrame:display:"),
+    screen_frame,
+    YES);
+  return true;
+#else
+  (void)monitor_id;
+  (void)width;
+  (void)height;
+  (void)bit_depth;
+  (void)refresh_rate_millihertz;
+  return false;
 #endif
 }
 

@@ -227,6 +227,11 @@ fn window_simple_fullscreen(_window_id : Int) -> Bool {
 }
 
 ///|
+fn window_is_exclusive_fullscreen(_window_id : Int) -> Bool {
+  false
+}
+
+///|
 fn window_decorated(_window_id : Int) -> Bool {
   false
 }
@@ -667,6 +672,18 @@ fn set_window_blur(_window_id : Int, _blur : Bool) -> Unit {
 
 ///|
 fn set_window_simple_fullscreen(_window_id : Int, _fullscreen : Bool) -> Bool {
+  false
+}
+
+///|
+fn set_window_exclusive_fullscreen(
+  _window_id : Int,
+  _monitor_id : UInt64,
+  _width : Int,
+  _height : Int,
+  _bit_depth : Int,
+  _refresh_rate_millihertz : Int,
+) -> Bool {
   false
 }
 
