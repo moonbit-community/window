@@ -106,6 +106,8 @@ pub fn Window::ime_cursor_area_size(Self) -> @dpi.PhysicalSize
 pub fn Window::ime_hints(Self) -> @core.ImeHint
 pub fn Window::ime_purpose(Self) -> @core.ImePurpose
 pub fn Window::ime_surrounding_text(Self) -> @core.ImeSurroundingText?
+pub fn Window::inner_position(Self) -> @dpi.PhysicalPosition
+pub fn Window::inner_size(Self) -> @dpi.PhysicalSize
 pub fn Window::is_blurred(Self) -> Bool
 pub fn Window::is_borderless_game(Self) -> Bool
 pub fn Window::is_content_protected(Self) -> Bool
@@ -120,7 +122,9 @@ pub fn Window::is_occluded(Self) -> Bool
 pub fn Window::is_resizable(Self) -> Bool
 pub fn Window::is_transparent(Self) -> Bool
 pub fn Window::is_visible(Self) -> Bool?
+pub fn Window::max_inner_size(Self) -> @dpi.PhysicalSize?
 pub fn Window::max_surface_size(Self) -> @dpi.PhysicalSize?
+pub fn Window::min_inner_size(Self) -> @dpi.PhysicalSize?
 pub fn Window::min_surface_size(Self) -> @dpi.PhysicalSize?
 pub fn Window::num_tabs(Self) -> Int
 pub fn Window::option_as_alt(Self) -> @core.OptionAsAlt
@@ -129,10 +133,12 @@ pub fn Window::outer_size(Self) -> @dpi.PhysicalSize
 pub fn Window::pre_present_notify(Self) -> Unit
 pub fn Window::primary_monitor(Self) -> @core.MonitorHandle?
 pub fn Window::request_ime_update(Self, @core.ImeRequest) -> Unit raise @core.ImeRequestError
+pub fn Window::request_inner_size(Self, @dpi.Size) -> @dpi.PhysicalSize?
 pub fn Window::request_redraw(Self) -> Unit
 pub fn Window::request_surface_size(Self, @dpi.Size) -> @dpi.PhysicalSize?
 pub fn Window::request_user_attention(Self, @core.UserAttentionType?) -> Unit
 pub fn Window::reset_dead_keys(Self) -> Unit
+pub fn Window::resize_increments(Self) -> @dpi.PhysicalSize?
 pub fn Window::rwh_06_display_handle(Self) -> UInt64
 pub fn Window::rwh_06_window_handle(Self) -> UInt64
 pub fn Window::safe_area(Self) -> @dpi.PhysicalInsets
@@ -146,6 +152,7 @@ pub fn Window::set_content_protected(Self, Bool) -> Unit
 pub fn Window::set_cursor(Self, @core.Cursor) -> Unit
 pub fn Window::set_cursor_grab(Self, @core.CursorGrabMode) -> Unit raise @core.RequestError
 pub fn Window::set_cursor_hittest(Self, Bool) -> Unit
+pub fn Window::set_cursor_icon(Self, @core.CursorIcon) -> Unit
 pub fn Window::set_cursor_position(Self, @dpi.Position) -> Unit raise @core.RequestError
 pub fn Window::set_cursor_visible(Self, Bool) -> Unit
 pub fn Window::set_decorations(Self, Bool) -> Unit
@@ -158,13 +165,16 @@ pub fn Window::set_ime_cursor_area(Self, @dpi.PhysicalPosition, @dpi.PhysicalSiz
 pub fn Window::set_ime_hints(Self, @core.ImeHint) -> Unit
 pub fn Window::set_ime_purpose(Self, @core.ImePurpose) -> Unit
 pub fn Window::set_ime_surrounding_text(Self, @core.ImeSurroundingText?) -> Unit
+pub fn Window::set_max_inner_size(Self, @dpi.Size?) -> Unit
 pub fn Window::set_max_surface_size(Self, @dpi.Size?) -> Unit
 pub fn Window::set_maximized(Self, Bool) -> Unit
+pub fn Window::set_min_inner_size(Self, @dpi.Size?) -> Unit
 pub fn Window::set_min_surface_size(Self, @dpi.Size?) -> Unit
 pub fn Window::set_minimized(Self, Bool) -> Unit
 pub fn Window::set_option_as_alt(Self, @core.OptionAsAlt) -> Unit
 pub fn Window::set_outer_position(Self, @dpi.Position) -> Unit
 pub fn Window::set_resizable(Self, Bool) -> Unit
+pub fn Window::set_resize_increments(Self, @dpi.Size?) -> Unit
 pub fn Window::set_simple_fullscreen(Self, Bool) -> Bool
 pub fn Window::set_surface_resize_increments(Self, @dpi.Size?) -> Unit
 pub fn Window::set_tabbing_identifier(Self, String) -> Unit

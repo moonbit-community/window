@@ -140,6 +140,11 @@ pub fn Window::surface_size(self : Window) -> @dpi.PhysicalSize {
 }
 
 ///|
+pub fn Window::inner_size(self : Window) -> @dpi.PhysicalSize {
+  self.surface_size()
+}
+
+///|
 pub fn Window::outer_size(self : Window) -> @dpi.PhysicalSize {
   @dpi.PhysicalSize::new(
     window_outer_width(self.id.into_raw()),
@@ -153,6 +158,11 @@ pub fn Window::surface_position(self : Window) -> @dpi.PhysicalPosition {
     window_surface_x(self.id.into_raw()),
     window_surface_y(self.id.into_raw()),
   )
+}
+
+///|
+pub fn Window::inner_position(self : Window) -> @dpi.PhysicalPosition {
+  self.surface_position()
 }
 
 ///|
@@ -180,6 +190,14 @@ pub fn Window::request_surface_size(
 }
 
 ///|
+pub fn Window::request_inner_size(
+  self : Window,
+  size : @dpi.Size,
+) -> @dpi.PhysicalSize? {
+  self.request_surface_size(size)
+}
+
+///|
 pub fn Window::set_surface_resize_increments(
   self : Window,
   size : @dpi.Size?,
@@ -198,6 +216,11 @@ pub fn Window::set_surface_resize_increments(
 }
 
 ///|
+pub fn Window::set_resize_increments(self : Window, size : @dpi.Size?) -> Unit {
+  self.set_surface_resize_increments(size)
+}
+
+///|
 pub fn Window::surface_resize_increments(self : Window) -> @dpi.PhysicalSize? {
   let width = window_resize_increment_width(self.id.into_raw())
   let height = window_resize_increment_height(self.id.into_raw())
@@ -206,6 +229,11 @@ pub fn Window::surface_resize_increments(self : Window) -> @dpi.PhysicalSize? {
   } else {
     None
   }
+}
+
+///|
+pub fn Window::resize_increments(self : Window) -> @dpi.PhysicalSize? {
+  self.surface_resize_increments()
 }
 
 ///|
@@ -224,6 +252,11 @@ pub fn Window::set_min_surface_size(self : Window, size : @dpi.Size?) -> Unit {
 }
 
 ///|
+pub fn Window::set_min_inner_size(self : Window, size : @dpi.Size?) -> Unit {
+  self.set_min_surface_size(size)
+}
+
+///|
 pub fn Window::set_max_surface_size(self : Window, size : @dpi.Size?) -> Unit {
   match size {
     Some(size) => {
@@ -239,6 +272,11 @@ pub fn Window::set_max_surface_size(self : Window, size : @dpi.Size?) -> Unit {
 }
 
 ///|
+pub fn Window::set_max_inner_size(self : Window, size : @dpi.Size?) -> Unit {
+  self.set_max_surface_size(size)
+}
+
+///|
 pub fn Window::min_surface_size(self : Window) -> @dpi.PhysicalSize? {
   let width = window_min_surface_width(self.id.into_raw())
   let height = window_min_surface_height(self.id.into_raw())
@@ -250,6 +288,11 @@ pub fn Window::min_surface_size(self : Window) -> @dpi.PhysicalSize? {
 }
 
 ///|
+pub fn Window::min_inner_size(self : Window) -> @dpi.PhysicalSize? {
+  self.min_surface_size()
+}
+
+///|
 pub fn Window::max_surface_size(self : Window) -> @dpi.PhysicalSize? {
   let width = window_max_surface_width(self.id.into_raw())
   let height = window_max_surface_height(self.id.into_raw())
@@ -258,6 +301,11 @@ pub fn Window::max_surface_size(self : Window) -> @dpi.PhysicalSize? {
   } else {
     None
   }
+}
+
+///|
+pub fn Window::max_inner_size(self : Window) -> @dpi.PhysicalSize? {
+  self.max_surface_size()
 }
 
 ///|
@@ -526,6 +574,14 @@ pub fn Window::set_cursor(self : Window, cursor : @core.Cursor) -> Unit {
         self.cursor_state = @core.Cursor::Icon(@core.CursorIcon::Default)
       }
   }
+}
+
+///|
+pub fn Window::set_cursor_icon(
+  self : Window,
+  cursor : @core.CursorIcon,
+) -> Unit {
+  self.set_cursor(@core.Cursor::Icon(cursor))
 }
 
 ///|

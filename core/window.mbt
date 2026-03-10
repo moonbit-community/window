@@ -852,12 +852,28 @@ pub fn WindowAttributes::with_surface_size(
 }
 
 ///|
+pub fn WindowAttributes::with_inner_size(
+  self : WindowAttributes,
+  size : @dpi.Size,
+) -> WindowAttributes {
+  self.with_surface_size(size)
+}
+
+///|
 pub fn WindowAttributes::with_surface_resize_increments(
   self : WindowAttributes,
   size : @dpi.Size,
 ) -> WindowAttributes {
   self.surface_resize_increments = Some(size)
   self
+}
+
+///|
+pub fn WindowAttributes::with_resize_increments(
+  self : WindowAttributes,
+  size : @dpi.Size,
+) -> WindowAttributes {
+  self.with_surface_resize_increments(size)
 }
 
 ///|
@@ -870,12 +886,28 @@ pub fn WindowAttributes::with_min_surface_size(
 }
 
 ///|
+pub fn WindowAttributes::with_min_inner_size(
+  self : WindowAttributes,
+  size : @dpi.Size,
+) -> WindowAttributes {
+  self.with_min_surface_size(size)
+}
+
+///|
 pub fn WindowAttributes::with_max_surface_size(
   self : WindowAttributes,
   size : @dpi.Size,
 ) -> WindowAttributes {
   self.max_surface_size = Some(size)
   self
+}
+
+///|
+pub fn WindowAttributes::with_max_inner_size(
+  self : WindowAttributes,
+  size : @dpi.Size,
+) -> WindowAttributes {
+  self.with_max_surface_size(size)
 }
 
 ///|
@@ -1090,10 +1122,22 @@ pub fn WindowAttributes::surface_size(self : WindowAttributes) -> @dpi.Size? {
 }
 
 ///|
+pub fn WindowAttributes::inner_size(self : WindowAttributes) -> @dpi.Size? {
+  self.surface_size()
+}
+
+///|
 pub fn WindowAttributes::surface_resize_increments(
   self : WindowAttributes,
 ) -> @dpi.Size? {
   self.surface_resize_increments
+}
+
+///|
+pub fn WindowAttributes::resize_increments(
+  self : WindowAttributes,
+) -> @dpi.Size? {
+  self.surface_resize_increments()
 }
 
 ///|
@@ -1104,10 +1148,20 @@ pub fn WindowAttributes::min_surface_size(
 }
 
 ///|
+pub fn WindowAttributes::min_inner_size(self : WindowAttributes) -> @dpi.Size? {
+  self.min_surface_size()
+}
+
+///|
 pub fn WindowAttributes::max_surface_size(
   self : WindowAttributes,
 ) -> @dpi.Size? {
   self.max_surface_size
+}
+
+///|
+pub fn WindowAttributes::max_inner_size(self : WindowAttributes) -> @dpi.Size? {
+  self.max_surface_size()
 }
 
 ///|

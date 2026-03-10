@@ -157,6 +157,36 @@ test "macos creation-only platform window attributes apply at creation time" {
 }
 
 ///|
+test "winit-compatible window aliases reuse macos surface APIs" {
+  let event_loop = EventLoop::new()
+  let window = event_loop.create_window(
+    @core.WindowAttributes::default()
+    .with_visible(false)
+    .with_inner_size(@dpi.PhysicalSize::new(320, 240).into_size())
+    .with_resize_increments(@dpi.PhysicalSize::new(5, 7).into_size())
+    .with_min_inner_size(@dpi.PhysicalSize::new(100, 80).into_size())
+    .with_max_inner_size(@dpi.PhysicalSize::new(640, 480).into_size()),
+  )
+  assert_eq(window.inner_size(), window.surface_size())
+  assert_eq(window.inner_position(), window.surface_position())
+  assert_eq(window.resize_increments(), window.surface_resize_increments())
+  assert_eq(window.min_inner_size(), window.min_surface_size())
+  assert_eq(window.max_inner_size(), window.max_surface_size())
+  assert_eq(
+    window.request_inner_size(@dpi.PhysicalSize::new(400, 300).into_size()),
+    None,
+  )
+  window.set_resize_increments(Some(@dpi.PhysicalSize::new(9, 11).into_size()))
+  window.set_min_inner_size(Some(@dpi.PhysicalSize::new(120, 90).into_size()))
+  window.set_max_inner_size(Some(@dpi.PhysicalSize::new(800, 600).into_size()))
+  assert_eq(window.resize_increments(), Some(@dpi.PhysicalSize::new(9, 11)))
+  assert_eq(window.min_inner_size(), Some(@dpi.PhysicalSize::new(120, 90)))
+  assert_eq(window.max_inner_size(), Some(@dpi.PhysicalSize::new(800, 600)))
+  window.set_cursor_icon(@core.CursorIcon::Pointer)
+  assert_eq(window.cursor(), @core.Cursor::Icon(@core.CursorIcon::Pointer))
+}
+
+///|
 test "create_custom_cursor supports url cursor sources" {
   let event_loop = EventLoop::new()
   let cursor = try! event_loop.create_custom_cursor(

@@ -1362,13 +1362,17 @@ pub fn WindowAttributes::enabled_buttons(Self) -> WindowButtons
 pub fn WindowAttributes::fullscreen(Self) -> Fullscreen?
 pub fn WindowAttributes::ime_hints(Self) -> ImeHint
 pub fn WindowAttributes::ime_purpose(Self) -> ImePurpose
+pub fn WindowAttributes::inner_size(Self) -> @dpi.Size?
+pub fn WindowAttributes::max_inner_size(Self) -> @dpi.Size?
 pub fn WindowAttributes::max_surface_size(Self) -> @dpi.Size?
 pub fn WindowAttributes::maximized(Self) -> Bool
+pub fn WindowAttributes::min_inner_size(Self) -> @dpi.Size?
 pub fn WindowAttributes::min_surface_size(Self) -> @dpi.Size?
 pub fn WindowAttributes::parent_window(Self) -> ParentWindow?
 pub fn WindowAttributes::platform_attributes(Self) -> PlatformWindowAttributes
 pub fn WindowAttributes::position(Self) -> @dpi.Position?
 pub fn WindowAttributes::resizable(Self) -> Bool
+pub fn WindowAttributes::resize_increments(Self) -> @dpi.Size?
 pub fn WindowAttributes::surface_resize_increments(Self) -> @dpi.Size?
 pub fn WindowAttributes::surface_size(Self) -> @dpi.Size?
 pub fn WindowAttributes::theme(Self) -> Theme?
@@ -1389,13 +1393,17 @@ pub fn WindowAttributes::with_enabled_buttons(Self, WindowButtons) -> Self
 pub fn WindowAttributes::with_fullscreen(Self, Fullscreen?) -> Self
 pub fn WindowAttributes::with_ime_hints(Self, ImeHint) -> Self
 pub fn WindowAttributes::with_ime_purpose(Self, ImePurpose) -> Self
+pub fn WindowAttributes::with_inner_size(Self, @dpi.Size) -> Self
+pub fn WindowAttributes::with_max_inner_size(Self, @dpi.Size) -> Self
 pub fn WindowAttributes::with_max_surface_size(Self, @dpi.Size) -> Self
 pub fn WindowAttributes::with_maximized(Self, Bool) -> Self
+pub fn WindowAttributes::with_min_inner_size(Self, @dpi.Size) -> Self
 pub fn WindowAttributes::with_min_surface_size(Self, @dpi.Size) -> Self
 pub fn WindowAttributes::with_parent_window(Self, ParentWindow?) -> Self
 pub fn WindowAttributes::with_platform_attributes(Self, PlatformWindowAttributes) -> Self
 pub fn WindowAttributes::with_position(Self, @dpi.Position) -> Self
 pub fn WindowAttributes::with_resizable(Self, Bool) -> Self
+pub fn WindowAttributes::with_resize_increments(Self, @dpi.Size) -> Self
 pub fn WindowAttributes::with_surface_resize_increments(Self, @dpi.Size) -> Self
 pub fn WindowAttributes::with_surface_size(Self, @dpi.Size) -> Self
 pub fn WindowAttributes::with_theme(Self, Theme?) -> Self

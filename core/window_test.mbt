@@ -194,6 +194,35 @@ test "window buttons builders work as expected" {
 }
 
 ///|
+test "winit-compatible window attribute aliases reuse surface fields" {
+  let attrs = WindowAttributes::default()
+    .with_inner_size(@dpi.PhysicalSize::new(111, 222).into_size())
+    .with_resize_increments(@dpi.PhysicalSize::new(3, 4).into_size())
+    .with_min_inner_size(@dpi.PhysicalSize::new(10, 20).into_size())
+    .with_max_inner_size(@dpi.PhysicalSize::new(300, 400).into_size())
+  assert_eq(attrs.inner_size(), attrs.surface_size())
+  assert_eq(attrs.resize_increments(), attrs.surface_resize_increments())
+  assert_eq(attrs.min_inner_size(), attrs.min_surface_size())
+  assert_eq(attrs.max_inner_size(), attrs.max_surface_size())
+  assert_eq(
+    attrs.inner_size(),
+    Some(@dpi.PhysicalSize::new(111, 222).into_size()),
+  )
+  assert_eq(
+    attrs.resize_increments(),
+    Some(@dpi.PhysicalSize::new(3, 4).into_size()),
+  )
+  assert_eq(
+    attrs.min_inner_size(),
+    Some(@dpi.PhysicalSize::new(10, 20).into_size()),
+  )
+  assert_eq(
+    attrs.max_inner_size(),
+    Some(@dpi.PhysicalSize::new(300, 400).into_size()),
+  )
+}
+
+///|
 test "ime capability and request models are constructible" {
   let capabilities = ImeCapabilities::default()
     .with_hint_and_purpose()
