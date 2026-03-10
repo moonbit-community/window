@@ -12,6 +12,7 @@
 #if defined(__APPLE__)
 #include <CoreGraphics/CGDirectDisplay.h>
 #include <Carbon/Carbon.h>
+#include <dlfcn.h>
 #include <objc/message.h>
 #include <objc/runtime.h>
 #endif
@@ -379,6 +380,13 @@ typedef struct {
   mbw_nsuint_t length;
 } mbw_range_t;
 
+typedef int32_t (*mbw_cgs_main_connection_id_fn)(void);
+typedef int32_t (*mbw_cgs_set_window_blur_radius_fn)(
+  int32_t connection_id,
+  int32_t window_number,
+  int32_t blur_radius
+);
+
 #ifndef YES
 #define YES ((mbw_bool_t)1)
 #endif
@@ -432,6 +440,9 @@ static bool g_bootstrap_ok = false;
 static id g_ns_app = nil;
 static Class g_window_delegate_class = Nil;
 static Class g_content_view_class = Nil;
+static bool g_blur_api_lookup_done = false;
+static mbw_cgs_main_connection_id_fn g_cgs_main_connection_id = NULL;
+static mbw_cgs_set_window_blur_radius_fn g_cgs_set_window_blur_radius = NULL;
 
 static mbw_nsinteger_t mbw_native_window_level(int level) {
   switch (level) {
@@ -447,6 +458,7 @@ static mbw_nsinteger_t mbw_native_window_level(int level) {
 
 static id mbw_make_nsstring(const char *utf8);
 static void mbw_update_window_state(mbw_window_t *window);
+static void mbw_apply_blur_radius(mbw_window_t *window, int radius);
 static int mbw_window_theme_kind(mbw_window_t *window);
 static int mbw_window_occluded(mbw_window_t *window);
 static void mbw_window_position(mbw_window_t *window, int *x, int *y);
@@ -569,6 +581,45 @@ static bool mbw_active_displays(CGDirectDisplayID **displays_out, uint32_t *coun
 static uint32_t mbw_display_id_from_screen(id screen);
 static id mbw_screen_for_display_id(uint32_t display_id);
 static moonbit_bytes_t mbw_make_bytes_from_slice(const uint8_t *src, int len);
+static SEL mbw_sel(const char *name);
+
+static void mbw_lookup_blur_api(void) {
+  if (g_blur_api_lookup_done) {
+    return;
+  }
+  g_blur_api_lookup_done = true;
+  g_cgs_main_connection_id =
+    (mbw_cgs_main_connection_id_fn)dlsym(RTLD_DEFAULT, "CGSMainConnectionID");
+  g_cgs_set_window_blur_radius =
+    (mbw_cgs_set_window_blur_radius_fn)dlsym(
+      RTLD_DEFAULT,
+      "CGSSetWindowBackgroundBlurRadius");
+}
+
+static void mbw_apply_blur_radius(mbw_window_t *window, int radius) {
+  if (!window || !window->window) {
+    return;
+  }
+  mbw_lookup_blur_api();
+  if (!g_cgs_main_connection_id || !g_cgs_set_window_blur_radius) {
+    return;
+  }
+  mbw_nsinteger_t raw_window_number =
+    ((mbw_nsinteger_t(*)(id, SEL))objc_msgSend)(
+      (id)window->window,
+      mbw_sel("windowNumber"));
+  if (raw_window_number <= 0) {
+    return;
+  }
+  int32_t connection_id = g_cgs_main_connection_id();
+  if (connection_id <= 0) {
+    return;
+  }
+  (void)g_cgs_set_window_blur_radius(
+    connection_id,
+    (int32_t)raw_window_number,
+    (int32_t)radius);
+}
 
 static SEL mbw_sel(const char *name) {
   return sel_registerName(name);
@@ -5594,6 +5645,7 @@ void mbw_window_set_blur(int window_id, bool blur) {
           background_color);
       }
     }
+    mbw_apply_blur_radius(window, window->blur ? 80 : 0);
   }
 #endif
 }

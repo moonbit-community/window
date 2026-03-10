@@ -36,8 +36,7 @@ native builds and focuses on `macos-arm64`.
   `set_ime_surrounding_text`, `ime_hints`, `ime_surrounding_text`,
   `request_ime_update`, `ime_capabilities`). Additional compatibility shims
   include `pre_present_notify`, `reset_dead_keys`, `drag_window`,
-  `drag_resize_window`, and `show_window_menu` (currently raises
-  `@core.RequestError::NotSupported` on macOS).
+  `drag_resize_window`, and `show_window_menu`.
 - Monitor APIs are available on macOS via `EventLoop::{available_monitors,
   primary_monitor}` and `Window::{available_monitors, primary_monitor,
   current_monitor}`; monitor handles include native id, name, position,

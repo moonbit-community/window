@@ -88,7 +88,7 @@ pub fn Window::request_surface_size(
   size : @dpi.PhysicalSize,
 ) -> @dpi.PhysicalSize? {
   set_surface_size(self.id.into_raw(), size.width(), size.height())
-  Some(self.surface_size())
+  None
 }
 
 ///|
@@ -356,14 +356,8 @@ pub fn Window::drag_resize_window(
 pub fn Window::show_window_menu(
   self : Window,
   position : @dpi.PhysicalPosition,
-) -> Unit raise @core.RequestError {
-  if show_window_menu(self.id.into_raw(), position.x(), position.y()) {
-    ()
-  } else {
-    raise @core.RequestError::NotSupported(
-      "show_window_menu is not supported on macOS",
-    )
-  }
+) -> Unit {
+  let _ = show_window_menu(self.id.into_raw(), position.x(), position.y())
 }
 
 ///|

@@ -144,7 +144,7 @@ pub fn Window::set_transparent(Self, Bool) -> Unit
 pub fn Window::set_visible(Self, Bool) -> Unit
 pub fn Window::set_window_icon(Self, @core.Icon?) -> Unit
 pub fn Window::set_window_level(Self, @core.WindowLevel) -> Unit
-pub fn Window::show_window_menu(Self, @dpi.PhysicalPosition) -> Unit raise @core.RequestError
+pub fn Window::show_window_menu(Self, @dpi.PhysicalPosition) -> Unit
 pub fn Window::surface_position(Self) -> @dpi.PhysicalPosition
 pub fn Window::surface_resize_increments(Self) -> @dpi.PhysicalSize?
 pub fn Window::surface_size(Self) -> @dpi.PhysicalSize
