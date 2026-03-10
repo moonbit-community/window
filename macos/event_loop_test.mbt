@@ -37,11 +37,25 @@ extern "C" fn window_fullsize_content_view_for_test(window_id : Int) -> Bool = "
 extern "C" fn window_tabbing_mode_for_test(window_id : Int) -> Int = "mbw_test_window_tabbing_mode"
 
 ///|
+extern "C" fn queue_pointer_moved_for_test(
+  window_id : Int,
+  x : Double,
+  y : Double,
+) -> Unit = "mbw_test_window_queue_pointer_moved"
+
+///|
 struct LifecycleCallbacksApp {
   can_create_surfaces_called : Ref[Bool]
   destroy_surfaces_called : Ref[Bool]
   resumed_called : Ref[Bool]
   suspended_called : Ref[Bool]
+}
+
+///|
+struct DeviceEventsPolicyApp {
+  policy : @core.DeviceEvents
+  device_event_seen : Ref[Bool]
+  window_event_seen : Ref[Bool]
 }
 
 ///|
@@ -78,6 +92,65 @@ impl ApplicationHandler for LifecycleCallbacksApp with suspended(
 }
 
 ///|
+impl ApplicationHandler for DeviceEventsPolicyApp with can_create_surfaces(
+  self,
+  event_loop,
+) {
+  event_loop.listen_device_events(self.policy)
+  let window = event_loop.create_window(
+    @core.WindowAttributes::default().with_visible(false),
+  )
+  queue_pointer_moved_for_test(window.id().into_raw(), 24.5, 48.25)
+}
+
+///|
+impl ApplicationHandler for DeviceEventsPolicyApp with window_event(
+  self,
+  event_loop,
+  _id,
+  event,
+) {
+  match event {
+    @core.WindowEvent::PointerMoved(
+      Some(_),
+      position,
+      true,
+      @core.PointerSource::Mouse
+    ) =>
+      if position == @dpi.PhysicalPositionF64::new(24.5, 48.25) {
+        self.window_event_seen.val = true
+        event_loop.exit()
+      }
+    _ => ()
+  }
+}
+
+///|
+impl ApplicationHandler for DeviceEventsPolicyApp with device_event(
+  self,
+  _event_loop,
+  _device_id,
+  event,
+) {
+  match event {
+    @core.DeviceEvent::PointerMotion(_, _) => self.device_event_seen.val = true
+    _ => ()
+  }
+}
+
+///|
+fn run_device_events_policy(policy : @core.DeviceEvents) -> (Bool, Bool) {
+  let app : DeviceEventsPolicyApp = {
+    policy,
+    device_event_seen: Ref::new(false),
+    window_event_seen: Ref::new(false),
+  }
+  let event_loop = EventLoop::new()
+  event_loop.run_app(app)
+  (app.window_event_seen.val, app.device_event_seen.val)
+}
+
+///|
 test "run_app dispatches lifecycle callbacks on startup and shutdown" {
   let app : LifecycleCallbacksApp = {
     can_create_surfaces_called: Ref::new(false),
@@ -100,6 +173,33 @@ test "system theme and device event policy APIs are callable" {
   let _ = event_loop.system_theme()
   assert_eq(event_loop.owned_display_handle(), event_loop.rwh_06_handle())
   assert_eq(event_loop.display_handle(), event_loop.rwh_06_handle())
+}
+
+///|
+test "device events are suppressed when policy is never" {
+  let (window_event_seen, device_event_seen) = run_device_events_policy(
+    @core.DeviceEvents::Never,
+  )
+  assert_true(window_event_seen)
+  assert_false(device_event_seen)
+}
+
+///|
+test "device events are suppressed for unfocused windows by default policy" {
+  let (window_event_seen, device_event_seen) = run_device_events_policy(
+    @core.DeviceEvents::WhenFocused,
+  )
+  assert_true(window_event_seen)
+  assert_false(device_event_seen)
+}
+
+///|
+test "device events are delivered when policy is always" {
+  let (window_event_seen, device_event_seen) = run_device_events_policy(
+    @core.DeviceEvents::Always,
+  )
+  assert_true(window_event_seen)
+  assert_true(device_event_seen)
 }
 
 ///|

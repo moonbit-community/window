@@ -88,10 +88,10 @@ pub fn EventLoop::allows_automatic_window_tabbing(_self : EventLoop) -> Bool {
 
 ///|
 pub fn EventLoop::listen_device_events(
-  _self : EventLoop,
-  _allowed : @core.DeviceEvents,
+  self : EventLoop,
+  allowed : @core.DeviceEvents,
 ) -> Unit {
-  ()
+  self.device_events_ = allowed
 }
 
 ///|
@@ -1558,6 +1558,15 @@ fn ime_from_native(window_id : Int) -> @core.Ime? {
 }
 
 ///|
+fn EventLoop::device_events_allowed(self : EventLoop, raw_id : Int) -> Bool {
+  match self.device_events_ {
+    @core.DeviceEvents::Always => true
+    @core.DeviceEvents::WhenFocused => window_has_focus(raw_id)
+    @core.DeviceEvents::Never => false
+  }
+}
+
+///|
 fn[A : ApplicationHandler] EventLoop::dispatch_input_events(
   self : EventLoop,
   app : A,
@@ -1565,6 +1574,7 @@ fn[A : ApplicationHandler] EventLoop::dispatch_input_events(
   window_id : @core.WindowId,
 ) -> Unit {
   while take_input_event(raw_id) {
+    let emit_device_events = self.device_events_allowed(raw_id)
     let pointer_device_id = Some(@core.DeviceId::from_raw(1L))
     let keyboard_device_id = Some(@core.DeviceId::from_raw(2L))
     let position = @dpi.PhysicalPositionF64::new(
@@ -1583,14 +1593,16 @@ fn[A : ApplicationHandler] EventLoop::dispatch_input_events(
             pointer_source_from_native(input_event_pointer_source(raw_id)),
           ),
         )
-        app.device_event(
-          self,
-          pointer_device_id,
-          @core.DeviceEvent::PointerMotion(
-            input_event_scroll_delta_x(raw_id),
-            input_event_scroll_delta_y(raw_id),
-          ),
-        )
+        if emit_device_events {
+          app.device_event(
+            self,
+            pointer_device_id,
+            @core.DeviceEvent::PointerMotion(
+              input_event_scroll_delta_x(raw_id),
+              input_event_scroll_delta_y(raw_id),
+            ),
+          )
+        }
       }
       2 =>
         app.window_event(
@@ -1628,14 +1640,16 @@ fn[A : ApplicationHandler] EventLoop::dispatch_input_events(
                 button_source_from_native(input_event_button(raw_id)),
               ),
             )
-            app.device_event(
-              self,
-              pointer_device_id,
-              @core.DeviceEvent::Button(
-                @core.ButtonId::from_raw(input_event_button(raw_id)),
-                state,
-              ),
-            )
+            if emit_device_events {
+              app.device_event(
+                self,
+                pointer_device_id,
+                @core.DeviceEvent::Button(
+                  @core.ButtonId::from_raw(input_event_button(raw_id)),
+                  state,
+                ),
+              )
+            }
           }
           None => ()
         }
@@ -1655,11 +1669,13 @@ fn[A : ApplicationHandler] EventLoop::dispatch_input_events(
               window_id,
               @core.WindowEvent::MouseWheel(pointer_device_id, delta, phase),
             )
-            app.device_event(
-              self,
-              pointer_device_id,
-              @core.DeviceEvent::MouseWheel(delta),
-            )
+            if emit_device_events {
+              app.device_event(
+                self,
+                pointer_device_id,
+                @core.DeviceEvent::MouseWheel(delta),
+              )
+            }
           }
           _ => ()
         }
@@ -1712,13 +1728,15 @@ fn[A : ApplicationHandler] EventLoop::dispatch_input_events(
                 keyboard_device_id, key_event, false,
               ),
             )
-            app.device_event(
-              self,
-              keyboard_device_id,
-              @core.DeviceEvent::Key(
-                @core.RawKeyEvent::new(key_event.physical_key(), state),
-              ),
-            )
+            if emit_device_events {
+              app.device_event(
+                self,
+                keyboard_device_id,
+                @core.DeviceEvent::Key(
+                  @core.RawKeyEvent::new(key_event.physical_key(), state),
+                ),
+              )
+            }
           }
           None => ()
         }
@@ -1843,6 +1861,7 @@ pub fn Window::is_occluded(self : Window) -> Bool {
 ///|
 pub struct EventLoop {
   priv mut control_flow_ : @core.ControlFlow
+  priv mut device_events_ : @core.DeviceEvents
   priv mut exit_requested : Bool
   priv mut pressed_modifiers_ : @core.ModifiersKeys
   priv mut window_ids : Array[Int]
@@ -1875,6 +1894,7 @@ pub fn EventLoop::new_with_platform_attributes(
   )
   {
     control_flow_: @core.ControlFlow::Wait,
+    device_events_: @core.DeviceEvents::WhenFocused,
     exit_requested: false,
     pressed_modifiers_: @core.ModifiersKeys::none(),
     window_ids: [],
