@@ -1,14 +1,35 @@
 ///|
 pub(all) enum NativeKeyCode {
   Unidentified
+  Android(Int)
   MacOS(Int)
+  Windows(Int)
+  Xkb(Int)
+  Ohos(Int)
 } derive(Eq, Show)
 
 ///|
 pub(all) enum NativeKey {
   Unidentified
+  Android(Int)
   MacOS(Int)
+  Windows(Int)
+  Xkb(Int)
+  Web(String)
+  Ohos(Int)
 } derive(Eq, Show)
+
+///|
+pub fn NativeKey::from_key_code(code : NativeKeyCode) -> NativeKey {
+  match code {
+    Unidentified => NativeKey::Unidentified
+    Android(code) => NativeKey::Android(code)
+    MacOS(code) => NativeKey::MacOS(code)
+    Windows(code) => NativeKey::Windows(code)
+    Xkb(code) => NativeKey::Xkb(code)
+    Ohos(code) => NativeKey::Ohos(code)
+  }
+}
 
 ///|
 pub(all) enum KeyCode {
@@ -142,6 +163,16 @@ pub(all) enum PhysicalKey {
 } derive(Eq, Show)
 
 ///|
+pub fn PhysicalKey::from_key_code(code : KeyCode) -> PhysicalKey {
+  PhysicalKey::Code(code)
+}
+
+///|
+pub fn PhysicalKey::from_native_key_code(code : NativeKeyCode) -> PhysicalKey {
+  PhysicalKey::Unidentified(code)
+}
+
+///|
 pub(all) enum KeyLocation {
   Standard
   Left
@@ -208,6 +239,16 @@ pub(all) enum Key {
   Dead(String?)
   Unidentified(NativeKey)
 } derive(Eq, Show)
+
+///|
+pub fn Key::from_named(named : NamedKey) -> Key {
+  Key::Named(named)
+}
+
+///|
+pub fn Key::from_native(native : NativeKey) -> Key {
+  Key::Unidentified(native)
+}
 
 ///|
 pub struct KeyEvent {

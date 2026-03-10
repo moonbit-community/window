@@ -336,6 +336,8 @@ pub(all) enum Key {
   Dead(String?)
   Unidentified(NativeKey)
 }
+pub fn Key::from_named(NamedKey) -> Self
+pub fn Key::from_native(NativeKey) -> Self
 pub impl Eq for Key
 pub impl Show for Key
 
@@ -497,20 +499,76 @@ pub impl Eq for KeyLocation
 pub impl Show for KeyLocation
 
 pub struct Modifiers {
-  alt : Bool
-  control : Bool
-  meta : Bool
-  shift : Bool
+  // private fields
 }
 pub fn Modifiers::alt_key(Self) -> Bool
 pub fn Modifiers::control_key(Self) -> Bool
 pub fn Modifiers::default() -> Self
+pub fn Modifiers::from_state(ModifiersState, ModifiersKeys) -> Self
 pub fn Modifiers::is_empty(Self) -> Bool
+pub fn Modifiers::lalt_state(Self) -> ModifiersKeyState
+pub fn Modifiers::lcontrol_state(Self) -> ModifiersKeyState
+pub fn Modifiers::lshift_state(Self) -> ModifiersKeyState
+pub fn Modifiers::lsuper_state(Self) -> ModifiersKeyState
 pub fn Modifiers::meta_key(Self) -> Bool
 pub fn Modifiers::new(Bool, Bool, Bool, Bool) -> Self
+pub fn Modifiers::pressed_mods(Self) -> ModifiersKeys
+pub fn Modifiers::ralt_state(Self) -> ModifiersKeyState
+pub fn Modifiers::rcontrol_state(Self) -> ModifiersKeyState
+pub fn Modifiers::rshift_state(Self) -> ModifiersKeyState
+pub fn Modifiers::rsuper_state(Self) -> ModifiersKeyState
 pub fn Modifiers::shift_key(Self) -> Bool
+pub fn Modifiers::state(Self) -> ModifiersState
 pub impl Eq for Modifiers
 pub impl Show for Modifiers
+
+pub(all) enum ModifiersKeyState {
+  Pressed
+  Unknown
+}
+pub impl Eq for ModifiersKeyState
+pub impl Show for ModifiersKeyState
+
+pub struct ModifiersKeys {
+  // private fields
+}
+pub fn ModifiersKeys::bits(Self) -> Int
+pub fn ModifiersKeys::contains(Self, Self) -> Bool
+pub fn ModifiersKeys::from_bits(Int) -> Self
+pub fn ModifiersKeys::is_empty(Self) -> Bool
+pub fn ModifiersKeys::lalt() -> Self
+pub fn ModifiersKeys::lcontrol() -> Self
+pub fn ModifiersKeys::lmeta() -> Self
+pub fn ModifiersKeys::lshift() -> Self
+pub fn ModifiersKeys::none() -> Self
+pub fn ModifiersKeys::ralt() -> Self
+pub fn ModifiersKeys::rcontrol() -> Self
+pub fn ModifiersKeys::rmeta() -> Self
+pub fn ModifiersKeys::rshift() -> Self
+pub fn ModifiersKeys::union(Self, Self) -> Self
+pub fn ModifiersKeys::without(Self, Self) -> Self
+pub impl Eq for ModifiersKeys
+pub impl Show for ModifiersKeys
+
+pub struct ModifiersState {
+  // private fields
+}
+pub fn ModifiersState::alt() -> Self
+pub fn ModifiersState::alt_key(Self) -> Bool
+pub fn ModifiersState::bits(Self) -> Int
+pub fn ModifiersState::contains(Self, Self) -> Bool
+pub fn ModifiersState::control() -> Self
+pub fn ModifiersState::control_key(Self) -> Bool
+pub fn ModifiersState::from_bits(Int) -> Self
+pub fn ModifiersState::is_empty(Self) -> Bool
+pub fn ModifiersState::meta() -> Self
+pub fn ModifiersState::meta_key(Self) -> Bool
+pub fn ModifiersState::none() -> Self
+pub fn ModifiersState::shift() -> Self
+pub fn ModifiersState::shift_key(Self) -> Bool
+pub fn ModifiersState::union(Self, Self) -> Self
+pub impl Eq for ModifiersState
+pub impl Show for ModifiersState
 
 pub struct MonitorHandle {
   // private fields
@@ -626,14 +684,24 @@ pub impl Show for NamedKey
 
 pub(all) enum NativeKey {
   Unidentified
+  Android(Int)
   MacOS(Int)
+  Windows(Int)
+  Xkb(Int)
+  Web(String)
+  Ohos(Int)
 }
+pub fn NativeKey::from_key_code(NativeKeyCode) -> Self
 pub impl Eq for NativeKey
 pub impl Show for NativeKey
 
 pub(all) enum NativeKeyCode {
   Unidentified
+  Android(Int)
   MacOS(Int)
+  Windows(Int)
+  Xkb(Int)
+  Ohos(Int)
 }
 pub impl Eq for NativeKeyCode
 pub impl Show for NativeKeyCode
@@ -650,6 +718,8 @@ pub(all) enum PhysicalKey {
   Code(KeyCode)
   Unidentified(NativeKeyCode)
 }
+pub fn PhysicalKey::from_key_code(KeyCode) -> Self
+pub fn PhysicalKey::from_native_key_code(NativeKeyCode) -> Self
 pub impl Eq for PhysicalKey
 pub impl Show for PhysicalKey
 

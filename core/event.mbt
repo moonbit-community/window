@@ -516,57 +516,6 @@ pub(all) enum Ime {
 } derive(Eq, Show)
 
 ///|
-pub struct Modifiers {
-  alt : Bool
-  control : Bool
-  meta : Bool
-  shift : Bool
-} derive(Eq, Show)
-
-///|
-pub fn Modifiers::new(
-  shift : Bool,
-  control : Bool,
-  alt : Bool,
-  meta : Bool,
-) -> Modifiers {
-  { shift, control, alt, meta }
-}
-
-///|
-pub fn Modifiers::default() -> Modifiers {
-  { shift: false, control: false, alt: false, meta: false }
-}
-
-///|
-pub fn Modifiers::shift_key(self : Modifiers) -> Bool {
-  self.shift
-}
-
-///|
-pub fn Modifiers::control_key(self : Modifiers) -> Bool {
-  self.control
-}
-
-///|
-pub fn Modifiers::alt_key(self : Modifiers) -> Bool {
-  self.alt
-}
-
-///|
-pub fn Modifiers::meta_key(self : Modifiers) -> Bool {
-  self.meta
-}
-
-///|
-pub fn Modifiers::is_empty(self : Modifiers) -> Bool {
-  self.shift == false &&
-  self.control == false &&
-  self.alt == false &&
-  self.meta == false
-}
-
-///|
 pub struct DeviceId {
   raw : Int64
 } derive(Eq, Show)

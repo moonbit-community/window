@@ -869,13 +869,83 @@ fn touch_phase_from_native(phase : Int) -> @core.TouchPhase? {
 }
 
 ///|
-fn modifiers_from_native(modifiers : Int) -> @core.Modifiers {
-  @core.Modifiers::new(
-    (modifiers & 1) != 0,
-    (modifiers & 2) != 0,
-    (modifiers & 4) != 0,
-    (modifiers & 8) != 0,
+fn modifiers_state_from_native(modifiers : Int) -> @core.ModifiersState {
+  let mut state = @core.ModifiersState::none()
+  if (modifiers & 1) != 0 {
+    state = state.union(@core.ModifiersState::shift())
+  }
+  if (modifiers & 2) != 0 {
+    state = state.union(@core.ModifiersState::control())
+  }
+  if (modifiers & 4) != 0 {
+    state = state.union(@core.ModifiersState::alt())
+  }
+  if (modifiers & 8) != 0 {
+    state = state.union(@core.ModifiersState::meta())
+  }
+  state
+}
+
+///|
+fn modifiers_from_native(
+  modifiers : Int,
+  pressed_mods : @core.ModifiersKeys,
+) -> @core.Modifiers {
+  @core.Modifiers::from_state(
+    modifiers_state_from_native(modifiers),
+    pressed_mods,
   )
+}
+
+///|
+fn modifier_keys_from_physical_key(
+  physical_key : @core.PhysicalKey,
+) -> @core.ModifiersKeys? {
+  match physical_key {
+    @core.PhysicalKey::Code(@core.KeyCode::ShiftLeft) =>
+      Some(@core.ModifiersKeys::lshift())
+    @core.PhysicalKey::Code(@core.KeyCode::ShiftRight) =>
+      Some(@core.ModifiersKeys::rshift())
+    @core.PhysicalKey::Code(@core.KeyCode::ControlLeft) =>
+      Some(@core.ModifiersKeys::lcontrol())
+    @core.PhysicalKey::Code(@core.KeyCode::ControlRight) =>
+      Some(@core.ModifiersKeys::rcontrol())
+    @core.PhysicalKey::Code(@core.KeyCode::AltLeft) =>
+      Some(@core.ModifiersKeys::lalt())
+    @core.PhysicalKey::Code(@core.KeyCode::AltRight) =>
+      Some(@core.ModifiersKeys::ralt())
+    @core.PhysicalKey::Code(@core.KeyCode::MetaLeft) =>
+      Some(@core.ModifiersKeys::lmeta())
+    @core.PhysicalKey::Code(@core.KeyCode::MetaRight) =>
+      Some(@core.ModifiersKeys::rmeta())
+    _ => None
+  }
+}
+
+///|
+fn update_pressed_modifier_keys(
+  state : @core.ModifiersState,
+  pressed_mods : @core.ModifiersKeys,
+  physical_key : @core.PhysicalKey,
+  element_state : @core.ElementState,
+) -> @core.ModifiersKeys {
+  let updated = match modifier_keys_from_physical_key(physical_key) {
+    Some(modifier_key) =>
+      match element_state {
+        @core.ElementState::Pressed => pressed_mods.union(modifier_key)
+        @core.ElementState::Released => pressed_mods.without(modifier_key)
+      }
+    None => pressed_mods
+  }
+  normalize_pressed_modifier_keys(state, updated)
+}
+
+///|
+fn normalize_pressed_modifier_keys(
+  state : @core.ModifiersState,
+  pressed_mods : @core.ModifiersKeys,
+) -> @core.ModifiersKeys {
+  @core.Modifiers::from_state(state, pressed_mods).pressed_mods()
 }
 
 ///|
@@ -1249,22 +1319,32 @@ fn[A : ApplicationHandler] EventLoop::dispatch_input_events(
           }
           _ => ()
         }
-      6 =>
+      6 => {
+        let state = modifiers_state_from_native(input_event_modifiers(raw_id))
+        self.pressed_modifiers_ = normalize_pressed_modifier_keys(
+          state,
+          self.pressed_modifiers_,
+        )
         app.window_event(
           self,
           window_id,
           @core.WindowEvent::ModifiersChanged(
-            modifiers_from_native(input_event_modifiers(raw_id)),
+            @core.Modifiers::from_state(state, self.pressed_modifiers_),
           ),
         )
+      }
       7 =>
         match element_state_from_native(input_event_state(raw_id)) {
           Some(state) => {
+            let modifiers = modifiers_from_native(
+              input_event_modifiers(raw_id),
+              self.pressed_modifiers_,
+            )
             let key_event = create_key_event(
               input_event_scancode(raw_id),
               state,
               input_event_repeat(raw_id),
-              modifiers_from_native(input_event_modifiers(raw_id)),
+              modifiers,
               optional_text_from_native(
                 input_event_text_with_all_modifiers(raw_id),
               ),
@@ -1274,6 +1354,12 @@ fn[A : ApplicationHandler] EventLoop::dispatch_input_events(
               optional_text_from_native(
                 input_event_text_without_modifiers(raw_id),
               ),
+            )
+            self.pressed_modifiers_ = update_pressed_modifier_keys(
+              modifiers.state(),
+              self.pressed_modifiers_,
+              key_event.physical_key(),
+              state,
             )
             app.window_event(
               self,
@@ -1414,6 +1500,7 @@ pub fn Window::is_occluded(self : Window) -> Bool {
 pub struct EventLoop {
   priv mut control_flow_ : @core.ControlFlow
   priv mut exit_requested : Bool
+  priv mut pressed_modifiers_ : @core.ModifiersKeys
   priv mut window_ids : Array[Int]
 } derive(Show)
 
@@ -1429,6 +1516,7 @@ pub fn EventLoop::new() -> EventLoop {
   {
     control_flow_: @core.ControlFlow::Wait,
     exit_requested: false,
+    pressed_modifiers_: @core.ModifiersKeys::none(),
     window_ids: [],
   }
 }
