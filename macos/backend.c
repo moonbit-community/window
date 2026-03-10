@@ -2936,12 +2936,7 @@ static bool mbw_pump_app_events(id initial_until_date) {
   return saw_event;
 }
 
-static int mbw_window_theme_kind(mbw_window_t *window) {
-  if (!window || !window->window) {
-    return MBW_THEME_UNKNOWN;
-  }
-  id appearance =
-    ((id(*)(id, SEL))objc_msgSend)((id)window->window, mbw_sel("effectiveAppearance"));
+static int mbw_theme_kind_from_appearance(id appearance) {
   if (!appearance) {
     return MBW_THEME_UNKNOWN;
   }
@@ -2950,10 +2945,22 @@ static int mbw_window_theme_kind(mbw_window_t *window) {
     return MBW_THEME_UNKNOWN;
   }
   const char *utf8 = ((const char *(*)(id, SEL))objc_msgSend)(name, mbw_sel("UTF8String"));
-  if (utf8 && strstr(utf8, "Dark")) {
+  if (!utf8) {
+    return MBW_THEME_UNKNOWN;
+  }
+  if (strstr(utf8, "Dark")) {
     return MBW_THEME_DARK;
   }
   return MBW_THEME_LIGHT;
+}
+
+static int mbw_window_theme_kind(mbw_window_t *window) {
+  if (!window || !window->window) {
+    return MBW_THEME_UNKNOWN;
+  }
+  id appearance =
+    ((id(*)(id, SEL))objc_msgSend)((id)window->window, mbw_sel("effectiveAppearance"));
+  return mbw_theme_kind_from_appearance(appearance);
 }
 
 static int mbw_window_occluded(mbw_window_t *window) {
@@ -3955,6 +3962,21 @@ void mbw_window_set_position(int window_id, int x, int y) {
 int mbw_window_theme(int window_id) {
   mbw_window_t *window = mbw_find_window(window_id);
   return window ? window->theme_kind : MBW_THEME_UNKNOWN;
+}
+
+int mbw_system_theme(void) {
+#if defined(__APPLE__)
+  if (!mbw_bootstrap_app() || !g_ns_app) {
+    return MBW_THEME_UNKNOWN;
+  }
+  id appearance = ((id(*)(id, SEL))objc_msgSend)(g_ns_app, mbw_sel("effectiveAppearance"));
+  if (!appearance) {
+    appearance = ((id(*)(id, SEL))objc_msgSend)(g_ns_app, mbw_sel("appearance"));
+  }
+  return mbw_theme_kind_from_appearance(appearance);
+#else
+  return MBW_THEME_UNKNOWN;
+#endif
 }
 
 int mbw_monitor_count(void) {

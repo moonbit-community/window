@@ -6,6 +6,13 @@ pub(all) enum ControlFlow {
 } derive(Eq, Show)
 
 ///|
+pub(all) enum DeviceEvents {
+  Always
+  WhenFocused
+  Never
+} derive(Eq, Show)
+
+///|
 pub fn ControlFlow::wait_until(resume_time_ms : Int64) -> ControlFlow {
   ControlFlow::WaitUntil(resume_time_ms)
 }

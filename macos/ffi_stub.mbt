@@ -19,6 +19,11 @@ fn window_theme(_window_id : Int) -> Int {
 }
 
 ///|
+fn system_theme() -> Int {
+  0
+}
+
+///|
 fn window_title(_window_id : Int) -> Bytes {
   Bytes::make(0, (0 : Int).to_byte())
 }

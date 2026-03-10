@@ -15,7 +15,8 @@ native builds and focuses on `macos-arm64`.
   `SurfaceResized`, `ScaleFactorChanged`, `ThemeChanged`,
   `Occluded`, `RedrawRequested`
 - Event loop support: `run_app`, `EventLoopProxy::wake_up()`,
-  `ControlFlow::{Poll, Wait, WaitUntil}`
+  `ControlFlow::{Poll, Wait, WaitUntil}`, `EventLoop::system_theme`,
+  and `EventLoop::listen_device_events` (accepted as a no-op on macOS)
 - Runtime window control currently includes surface and frame sizing
   (`surface_size`, `outer_size`, `surface_position`, `safe_area`,
   `request_surface_size`,
@@ -42,9 +43,9 @@ native builds and focuses on `macos-arm64`.
   current_monitor}`; monitor handles include native id, name, position,
   surface size, scale factor, current video mode, and video mode list.
 - `WindowAttributes` supports initial surface sizing/constraints and position,
-  title/visibility/resizable, focus/active, fullscreen, theme, cursor/icon,
-  blur/transparency/decorations/content protection, enabled buttons, window
-  level, IME purpose, and macOS platform attributes (such as
+  title/visibility/resizable, focus/active, fullscreen, theme, cursor
+  icon/visibility/hittest, blur/transparency/decorations/content protection,
+  enabled buttons, window level, IME purpose, and macOS platform attributes (such as
   `simple_fullscreen`).
 - `Fullscreen` supports both `Borderless(MonitorHandle?)` and
   `Exclusive(MonitorHandle, VideoMode)` payloads in the core API.

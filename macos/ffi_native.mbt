@@ -19,6 +19,11 @@ fn window_theme(window_id : Int) -> Int {
 }
 
 ///|
+fn system_theme() -> Int {
+  native_system_theme()
+}
+
+///|
 fn window_title(window_id : Int) -> Bytes {
   native_window_title_utf8(window_id)
 }
@@ -865,6 +870,9 @@ extern "C" fn native_window_y(window_id : Int) -> Int = "mbw_window_y"
 
 ///|
 extern "C" fn native_window_theme(window_id : Int) -> Int = "mbw_window_theme"
+
+///|
+extern "C" fn native_system_theme() -> Int = "mbw_system_theme"
 
 ///|
 extern "C" fn native_window_title_utf8(window_id : Int) -> Bytes = "mbw_window_title_utf8"

@@ -448,6 +448,8 @@ pub struct WindowAttributes {
   priv mut blur : Bool
   priv mut content_protected : Bool
   priv mut cursor : CursorIcon
+  priv mut cursor_hittest : Bool
+  priv mut cursor_visible : Bool
   priv mut decorations : Bool
   priv mut enabled_buttons : WindowButtons
   priv mut fullscreen : Fullscreen?
@@ -476,6 +478,8 @@ pub fn WindowAttributes::default() -> WindowAttributes {
     blur: false,
     content_protected: false,
     cursor: CursorIcon::Default,
+    cursor_hittest: true,
+    cursor_visible: true,
     decorations: true,
     enabled_buttons: WindowButtons::all(),
     fullscreen: None,
@@ -594,6 +598,24 @@ pub fn WindowAttributes::with_cursor(
   cursor : CursorIcon,
 ) -> WindowAttributes {
   self.cursor = cursor
+  self
+}
+
+///|
+pub fn WindowAttributes::with_cursor_visible(
+  self : WindowAttributes,
+  cursor_visible : Bool,
+) -> WindowAttributes {
+  self.cursor_visible = cursor_visible
+  self
+}
+
+///|
+pub fn WindowAttributes::with_cursor_hittest(
+  self : WindowAttributes,
+  cursor_hittest : Bool,
+) -> WindowAttributes {
+  self.cursor_hittest = cursor_hittest
   self
 }
 
@@ -770,6 +792,16 @@ pub fn WindowAttributes::blur(self : WindowAttributes) -> Bool {
 ///|
 pub fn WindowAttributes::cursor(self : WindowAttributes) -> CursorIcon {
   self.cursor
+}
+
+///|
+pub fn WindowAttributes::cursor_visible(self : WindowAttributes) -> Bool {
+  self.cursor_visible
+}
+
+///|
+pub fn WindowAttributes::cursor_hittest(self : WindowAttributes) -> Bool {
+  self.cursor_hittest
 }
 
 ///|

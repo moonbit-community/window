@@ -25,3 +25,10 @@ test "surface size writer updates the requested size" {
   writer.request_surface_size(@dpi.PhysicalSize::new(1200, 900))
   assert_eq(writer.surface_size(), @dpi.PhysicalSize::new(1200, 900))
 }
+
+///|
+test "device event policy variants are available" {
+  assert_eq(DeviceEvents::Always, DeviceEvents::Always)
+  assert_eq(DeviceEvents::WhenFocused, DeviceEvents::WhenFocused)
+  assert_eq(DeviceEvents::Never, DeviceEvents::Never)
+}

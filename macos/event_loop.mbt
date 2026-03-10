@@ -33,6 +33,19 @@ pub fn EventLoop::primary_monitor(_self : EventLoop) -> @core.MonitorHandle? {
 }
 
 ///|
+pub fn EventLoop::system_theme(_self : EventLoop) -> @core.Theme? {
+  theme_from_native(system_theme())
+}
+
+///|
+pub fn EventLoop::listen_device_events(
+  _self : EventLoop,
+  _allowed : @core.DeviceEvents,
+) -> Unit {
+  ()
+}
+
+///|
 pub fn Window::available_monitors(self : Window) -> Array[@core.MonitorHandle] {
   let _ = self
   monitors_from_native()
@@ -1381,6 +1394,8 @@ pub fn EventLoop::create_window(
   set_window_content_protected(raw_id, attributes.content_protected())
   set_window_blur(raw_id, attributes.blur())
   set_window_cursor(raw_id, cursor_icon_to_native(attributes.cursor()))
+  set_window_cursor_visible(raw_id, attributes.cursor_visible())
+  set_window_cursor_hittest(raw_id, attributes.cursor_hittest())
   let enabled_buttons = attributes.enabled_buttons()
   set_window_enabled_buttons(
     raw_id,
@@ -1502,14 +1517,23 @@ pub fn EventLoop::exiting(self : EventLoop) -> Bool {
 ///|
 pub(open) trait ApplicationHandler {
   new_events(Self, ActiveEventLoop, @core.StartCause) -> Unit = _
+  resumed(Self, ActiveEventLoop) -> Unit = _
   can_create_surfaces(Self, ActiveEventLoop) -> Unit = _
   proxy_wake_up(Self, ActiveEventLoop) -> Unit = _
   window_event(Self, EventLoop, @core.WindowId, @core.WindowEvent) -> Unit = _
   about_to_wait(Self, ActiveEventLoop) -> Unit = _
+  suspended(Self, ActiveEventLoop) -> Unit = _
+  destroy_surfaces(Self, ActiveEventLoop) -> Unit = _
+  memory_warning(Self, ActiveEventLoop) -> Unit = _
 }
 
 ///|
 impl ApplicationHandler with new_events(_self, _event_loop, _cause) {
+  ()
+}
+
+///|
+impl ApplicationHandler with resumed(_self, _event_loop) {
   ()
 }
 
@@ -1530,6 +1554,21 @@ impl ApplicationHandler with window_event(_self, _event_loop, _id, _event) {
 
 ///|
 impl ApplicationHandler with about_to_wait(_self, _event_loop) {
+  ()
+}
+
+///|
+impl ApplicationHandler with suspended(_self, _event_loop) {
+  ()
+}
+
+///|
+impl ApplicationHandler with destroy_surfaces(_self, _event_loop) {
+  ()
+}
+
+///|
+impl ApplicationHandler with memory_warning(_self, _event_loop) {
   ()
 }
 

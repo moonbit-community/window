@@ -108,6 +108,14 @@ pub(all) enum CursorIcon {
 pub impl Eq for CursorIcon
 pub impl Show for CursorIcon
 
+pub(all) enum DeviceEvents {
+  Always
+  WhenFocused
+  Never
+}
+pub impl Eq for DeviceEvents
+pub impl Show for DeviceEvents
+
 pub(all) enum ElementState {
   Pressed
   Released
@@ -601,6 +609,8 @@ pub fn WindowAttributes::active(Self) -> Bool
 pub fn WindowAttributes::blur(Self) -> Bool
 pub fn WindowAttributes::content_protected(Self) -> Bool
 pub fn WindowAttributes::cursor(Self) -> CursorIcon
+pub fn WindowAttributes::cursor_hittest(Self) -> Bool
+pub fn WindowAttributes::cursor_visible(Self) -> Bool
 pub fn WindowAttributes::decorations(Self) -> Bool
 pub fn WindowAttributes::default() -> Self
 pub fn WindowAttributes::enabled_buttons(Self) -> WindowButtons
@@ -625,6 +635,8 @@ pub fn WindowAttributes::with_active(Self, Bool) -> Self
 pub fn WindowAttributes::with_blur(Self, Bool) -> Self
 pub fn WindowAttributes::with_content_protected(Self, Bool) -> Self
 pub fn WindowAttributes::with_cursor(Self, CursorIcon) -> Self
+pub fn WindowAttributes::with_cursor_hittest(Self, Bool) -> Self
+pub fn WindowAttributes::with_cursor_visible(Self, Bool) -> Self
 pub fn WindowAttributes::with_decorations(Self, Bool) -> Self
 pub fn WindowAttributes::with_enabled_buttons(Self, WindowButtons) -> Self
 pub fn WindowAttributes::with_fullscreen(Self, Fullscreen?) -> Self
