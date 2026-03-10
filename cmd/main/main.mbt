@@ -20,15 +20,17 @@ pub impl @macos.ApplicationHandler for App with window_event(
   _id,
   event,
 ) {
-  match event {
-    @core.WindowEvent::CloseRequested => event_loop.exit()
-    @core.WindowEvent::SurfaceResized(_) =>
-      match self.window {
-        Some(window) => window.request_redraw()
-        None => ()
-      }
-    @core.WindowEvent::RedrawRequested => println("redraw requested")
-    _ => ()
+  for compat_event in event.into_winit_events() {
+    match compat_event {
+      @core.WinitWindowEvent::CloseRequested => event_loop.exit()
+      @core.WinitWindowEvent::Resized(_) =>
+        match self.window {
+          Some(window) => window.request_redraw()
+          None => ()
+        }
+      @core.WinitWindowEvent::RedrawRequested => println("redraw requested")
+      _ => ()
+    }
   }
 }
 

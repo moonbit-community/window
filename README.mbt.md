@@ -14,6 +14,8 @@ native builds and focuses on `macos-arm64`.
   `RotationGesture`, `TouchpadPressure`,
   `SurfaceResized`, `ScaleFactorChanged`, `ThemeChanged`,
   `Occluded`, `RedrawRequested`
+- `winit`-style compatibility projections are available through
+  `WindowEvent::into_winit_events()` and `DeviceEvent::into_winit_event()`
 - Event loop support: `run_app`, `EventLoopProxy::wake_up()`,
   `ControlFlow::{Poll, Wait, WaitUntil}`, `EventLoop::system_theme`,
   `EventLoop::listen_device_events` (accepted as a no-op on macOS), and
@@ -120,14 +122,17 @@ pub impl @macos.ApplicationHandler for App with window_event(
   _id,
   event,
 ) {
-  match event {
-    @core.WindowEvent::CloseRequested => event_loop.exit()
-    @core.WindowEvent::SurfaceResized(_) =>
-      match self.window {
-        Some(window) => window.request_redraw()
-        None => ()
-      }
-    @core.WindowEvent::RedrawRequested => println("redraw requested")
+  for compat_event in event.into_winit_events() {
+    match compat_event {
+      @core.WinitWindowEvent::CloseRequested => event_loop.exit()
+      @core.WinitWindowEvent::Resized(_) =>
+        match self.window {
+          Some(window) => window.request_redraw()
+          None => ()
+        }
+      @core.WinitWindowEvent::RedrawRequested => println("redraw requested")
+      _ => ()
+    }
   }
 }
 
@@ -137,8 +142,33 @@ fn main {
 }
 ```
 
+You can still match the richer native event surface directly when you need
+macOS-specific pointer, drag, or gesture details:
+
+```mbt nocheck
+///|
+pub impl @macos.ApplicationHandler for App with window_event(
+  self,
+  event_loop,
+  _id,
+  event,
+) {
+  match event {
+    @core.WindowEvent::PointerMoved(_, position, _, _) =>
+      println("pointer moved: \{position}")
+    @core.WindowEvent::DragEntered(paths, position) =>
+      println("drag entered at \{position}: \{paths}")
+    @core.WindowEvent::CloseRequested => event_loop.exit()
+    _ => ()
+  }
+}
+```
+
 ## Notes
 
 - `ControlFlow::WaitUntil` takes an absolute monotonic timestamp (milliseconds)
 - `ApplicationHandler` methods receive `ActiveEventLoop` (currently an alias
   of `EventLoop`)
+- `WindowEvent::into_winit_events()` can expand one richer event into multiple
+  compatibility events, for example when a single drag enter contains multiple
+  file paths
