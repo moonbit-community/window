@@ -34,6 +34,16 @@ pub fn EventLoop::primary_monitor(_self : EventLoop) -> @core.MonitorHandle? {
 }
 
 ///|
+pub fn monitor_ns_screen(monitor : @core.MonitorHandle) -> UInt64? {
+  let screen_handle = monitor_screen_handle(monitor.native_id())
+  if screen_handle == (0 : Int).to_uint64() {
+    None
+  } else {
+    Some(screen_handle)
+  }
+}
+
+///|
 pub fn EventLoop::rwh_06_handle(_self : EventLoop) -> UInt64 {
   display_handle()
 }
@@ -1341,6 +1351,18 @@ fn option_as_alt_from_native(option_as_alt : Int) -> @core.OptionAsAlt {
 }
 
 ///|
+fn activation_policy_to_native(
+  activation_policy : @core.ActivationPolicy?,
+) -> Int {
+  match activation_policy {
+    Some(@core.ActivationPolicy::Regular) => 0
+    Some(@core.ActivationPolicy::Accessory) => 1
+    Some(@core.ActivationPolicy::Prohibited) => 2
+    None => -1
+  }
+}
+
+///|
 fn optional_text_from_native(bytes : Bytes) -> String? {
   if bytes.length() == 0 {
     None
@@ -1775,10 +1797,26 @@ pub type ActiveEventLoop = EventLoop
 
 ///|
 pub fn EventLoop::new() -> EventLoop {
+  EventLoop::new_with_platform_attributes(
+    @core.PlatformEventLoopAttributes::default(),
+  )
+}
+
+///|
+pub fn EventLoop::new_with_platform_attributes(
+  attributes : @core.PlatformEventLoopAttributes,
+) -> EventLoop {
   guard backend_available() else {
     abort("macos backend is unavailable on this target")
   }
   reset_proxy_wake_state()
+  set_application_activation_policy(
+    activation_policy_to_native(attributes.activation_policy()),
+  )
+  set_application_default_menu(attributes.default_menu())
+  set_application_activate_ignoring_other_apps(
+    attributes.activate_ignoring_other_apps(),
+  )
   {
     control_flow_: @core.ControlFlow::Wait,
     exit_requested: false,
@@ -1821,7 +1859,23 @@ pub fn EventLoop::create_window(
     raw_id,
     attributes.platform_attributes().borderless_game(),
   )
+  set_window_accepts_first_mouse(
+    raw_id,
+    attributes.platform_attributes().accepts_first_mouse(),
+  )
+  set_window_disallow_hidpi(
+    raw_id,
+    attributes.platform_attributes().disallow_hidpi(),
+  )
+  set_window_fullsize_content_view(
+    raw_id,
+    attributes.platform_attributes().fullsize_content_view(),
+  )
   set_window_has_shadow(raw_id, attributes.platform_attributes().has_shadow())
+  set_window_movable_by_window_background(
+    raw_id,
+    attributes.platform_attributes().movable_by_window_background(),
+  )
   set_window_option_as_alt(
     raw_id,
     option_as_alt_to_native(attributes.platform_attributes().option_as_alt()),
@@ -1830,6 +1884,22 @@ pub fn EventLoop::create_window(
     Some(identifier) => set_window_tabbing_identifier(raw_id, identifier)
     None => ()
   }
+  set_window_title_hidden(
+    raw_id,
+    attributes.platform_attributes().title_hidden(),
+  )
+  set_window_titlebar_hidden(
+    raw_id,
+    attributes.platform_attributes().titlebar_hidden(),
+  )
+  set_window_titlebar_buttons_hidden(
+    raw_id,
+    attributes.platform_attributes().titlebar_buttons_hidden(),
+  )
+  set_window_titlebar_transparent(
+    raw_id,
+    attributes.platform_attributes().titlebar_transparent(),
+  )
   set_window_theme(raw_id, theme_to_native(attributes.theme()))
   set_window_content_protected(raw_id, attributes.content_protected())
   set_window_blur(raw_id, attributes.blur())

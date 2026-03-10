@@ -9,6 +9,8 @@ import {
 // Values
 pub fn backend_available() -> Bool
 
+pub fn monitor_ns_screen(@core.MonitorHandle) -> UInt64?
+
 pub fn native_backend_available() -> Bool
 
 pub fn native_create_window(Int, Int, Bool, Bool, Bool, Bool, Bytes, UInt64) -> Int
@@ -65,6 +67,7 @@ pub fn EventLoop::hide_application(Self) -> Unit
 pub fn EventLoop::hide_other_applications(Self) -> Unit
 pub fn EventLoop::listen_device_events(Self, @core.DeviceEvents) -> Unit
 pub fn EventLoop::new() -> Self
+pub fn EventLoop::new_with_platform_attributes(@core.PlatformEventLoopAttributes) -> Self
 pub fn EventLoop::owned_display_handle(Self) -> UInt64
 pub fn EventLoop::primary_monitor(Self) -> @core.MonitorHandle?
 pub fn[A : ApplicationHandler] EventLoop::run_app(Self, A) -> Unit

@@ -405,22 +405,86 @@ pub(all) enum OptionAsAlt {
 
 ///|
 pub struct PlatformWindowAttributes {
+  priv mut accepts_first_mouse : Bool
+  priv mut disallow_hidpi : Bool
+  priv mut fullsize_content_view : Bool
   priv mut has_shadow : Bool
+  priv mut movable_by_window_background : Bool
   priv mut simple_fullscreen : Bool?
   priv mut borderless_game : Bool
   priv mut option_as_alt : OptionAsAlt
   priv mut tabbing_identifier : String?
+  priv mut title_hidden : Bool
+  priv mut titlebar_hidden : Bool
+  priv mut titlebar_buttons_hidden : Bool
+  priv mut titlebar_transparent : Bool
 } derive(Eq, Show)
 
 ///|
 pub fn PlatformWindowAttributes::default() -> PlatformWindowAttributes {
   {
+    accepts_first_mouse: true,
+    disallow_hidpi: false,
+    fullsize_content_view: false,
     has_shadow: true,
+    movable_by_window_background: false,
     simple_fullscreen: None,
     borderless_game: false,
     option_as_alt: OptionAsAlt::None,
     tabbing_identifier: None,
+    title_hidden: false,
+    titlebar_hidden: false,
+    titlebar_buttons_hidden: false,
+    titlebar_transparent: false,
   }
+}
+
+///|
+pub fn PlatformWindowAttributes::with_accepts_first_mouse(
+  self : PlatformWindowAttributes,
+  accepts_first_mouse : Bool,
+) -> PlatformWindowAttributes {
+  self.accepts_first_mouse = accepts_first_mouse
+  self
+}
+
+///|
+pub fn PlatformWindowAttributes::accepts_first_mouse(
+  self : PlatformWindowAttributes,
+) -> Bool {
+  self.accepts_first_mouse
+}
+
+///|
+pub fn PlatformWindowAttributes::with_disallow_hidpi(
+  self : PlatformWindowAttributes,
+  disallow_hidpi : Bool,
+) -> PlatformWindowAttributes {
+  self.disallow_hidpi = disallow_hidpi
+  self
+}
+
+///|
+pub fn PlatformWindowAttributes::disallow_hidpi(
+  self : PlatformWindowAttributes,
+) -> Bool {
+  self.disallow_hidpi
+}
+
+///|
+pub fn PlatformWindowAttributes::with_fullsize_content_view(
+  self : PlatformWindowAttributes,
+  fullsize_content_view : Bool,
+) -> PlatformWindowAttributes {
+  self.fullsize_content_view = fullsize_content_view
+  self
+}
+
+///|
+pub fn PlatformWindowAttributes::fullsize_content_view(
+  self : PlatformWindowAttributes,
+) -> Bool {
+  self.fullsize_content_view
 }
 
 ///|
@@ -437,6 +501,22 @@ pub fn PlatformWindowAttributes::has_shadow(
   self : PlatformWindowAttributes,
 ) -> Bool {
   self.has_shadow
+}
+
+///|
+pub fn PlatformWindowAttributes::with_movable_by_window_background(
+  self : PlatformWindowAttributes,
+  movable_by_window_background : Bool,
+) -> PlatformWindowAttributes {
+  self.movable_by_window_background = movable_by_window_background
+  self
+}
+
+///|
+pub fn PlatformWindowAttributes::movable_by_window_background(
+  self : PlatformWindowAttributes,
+) -> Bool {
+  self.movable_by_window_background
 }
 
 ///|
@@ -501,6 +581,70 @@ pub fn PlatformWindowAttributes::tabbing_identifier(
   self : PlatformWindowAttributes,
 ) -> String? {
   self.tabbing_identifier
+}
+
+///|
+pub fn PlatformWindowAttributes::with_title_hidden(
+  self : PlatformWindowAttributes,
+  title_hidden : Bool,
+) -> PlatformWindowAttributes {
+  self.title_hidden = title_hidden
+  self
+}
+
+///|
+pub fn PlatformWindowAttributes::title_hidden(
+  self : PlatformWindowAttributes,
+) -> Bool {
+  self.title_hidden
+}
+
+///|
+pub fn PlatformWindowAttributes::with_titlebar_hidden(
+  self : PlatformWindowAttributes,
+  titlebar_hidden : Bool,
+) -> PlatformWindowAttributes {
+  self.titlebar_hidden = titlebar_hidden
+  self
+}
+
+///|
+pub fn PlatformWindowAttributes::titlebar_hidden(
+  self : PlatformWindowAttributes,
+) -> Bool {
+  self.titlebar_hidden
+}
+
+///|
+pub fn PlatformWindowAttributes::with_titlebar_buttons_hidden(
+  self : PlatformWindowAttributes,
+  titlebar_buttons_hidden : Bool,
+) -> PlatformWindowAttributes {
+  self.titlebar_buttons_hidden = titlebar_buttons_hidden
+  self
+}
+
+///|
+pub fn PlatformWindowAttributes::titlebar_buttons_hidden(
+  self : PlatformWindowAttributes,
+) -> Bool {
+  self.titlebar_buttons_hidden
+}
+
+///|
+pub fn PlatformWindowAttributes::with_titlebar_transparent(
+  self : PlatformWindowAttributes,
+  titlebar_transparent : Bool,
+) -> PlatformWindowAttributes {
+  self.titlebar_transparent = titlebar_transparent
+  self
+}
+
+///|
+pub fn PlatformWindowAttributes::titlebar_transparent(
+  self : PlatformWindowAttributes,
+) -> Bool {
+  self.titlebar_transparent
 }
 
 ///|

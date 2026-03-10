@@ -59,6 +59,25 @@ fn allows_automatic_window_tabbing() -> Bool {
 }
 
 ///|
+fn set_application_activation_policy(activation_policy : Int) -> Unit {
+  native_set_application_activation_policy(activation_policy)
+}
+
+///|
+fn set_application_default_menu(default_menu : Bool) -> Unit {
+  native_set_application_default_menu(default_menu)
+}
+
+///|
+fn set_application_activate_ignoring_other_apps(
+  activate_ignoring_other_apps : Bool,
+) -> Unit {
+  native_set_application_activate_ignoring_other_apps(
+    activate_ignoring_other_apps,
+  )
+}
+
+///|
 fn window_title(window_id : Int) -> Bytes {
   native_window_title_utf8(window_id)
 }
@@ -76,6 +95,11 @@ fn monitor_id_at(index : Int) -> UInt64 {
 ///|
 fn primary_monitor_id() -> UInt64 {
   native_primary_monitor_id()
+}
+
+///|
+fn monitor_screen_handle(monitor_id : UInt64) -> UInt64 {
+  native_monitor_screen_handle(monitor_id)
 }
 
 ///|
@@ -690,6 +714,63 @@ fn set_window_exclusive_fullscreen(
 }
 
 ///|
+fn set_window_accepts_first_mouse(
+  window_id : Int,
+  accepts_first_mouse : Bool,
+) -> Unit {
+  native_window_set_accepts_first_mouse(window_id, accepts_first_mouse)
+}
+
+///|
+fn set_window_disallow_hidpi(window_id : Int, disallow_hidpi : Bool) -> Unit {
+  native_window_set_disallow_hidpi(window_id, disallow_hidpi)
+}
+
+///|
+fn set_window_movable_by_window_background(
+  window_id : Int,
+  movable_by_window_background : Bool,
+) -> Unit {
+  native_window_set_movable_by_window_background(
+    window_id, movable_by_window_background,
+  )
+}
+
+///|
+fn set_window_titlebar_transparent(
+  window_id : Int,
+  titlebar_transparent : Bool,
+) -> Unit {
+  native_window_set_titlebar_transparent(window_id, titlebar_transparent)
+}
+
+///|
+fn set_window_title_hidden(window_id : Int, title_hidden : Bool) -> Unit {
+  native_window_set_title_hidden(window_id, title_hidden)
+}
+
+///|
+fn set_window_titlebar_hidden(window_id : Int, titlebar_hidden : Bool) -> Unit {
+  native_window_set_titlebar_hidden(window_id, titlebar_hidden)
+}
+
+///|
+fn set_window_titlebar_buttons_hidden(
+  window_id : Int,
+  titlebar_buttons_hidden : Bool,
+) -> Unit {
+  native_window_set_titlebar_buttons_hidden(window_id, titlebar_buttons_hidden)
+}
+
+///|
+fn set_window_fullsize_content_view(
+  window_id : Int,
+  fullsize_content_view : Bool,
+) -> Unit {
+  native_window_set_fullsize_content_view(window_id, fullsize_content_view)
+}
+
+///|
 fn set_window_has_shadow(window_id : Int, has_shadow : Bool) -> Unit {
   native_window_set_has_shadow(window_id, has_shadow)
 }
@@ -1051,6 +1132,19 @@ extern "C" fn native_set_allows_automatic_window_tabbing(
 extern "C" fn native_allows_automatic_window_tabbing() -> Bool = "mbw_event_loop_allows_automatic_window_tabbing"
 
 ///|
+extern "C" fn native_set_application_activation_policy(
+  activation_policy : Int,
+) -> Unit = "mbw_application_set_activation_policy"
+
+///|
+extern "C" fn native_set_application_default_menu(default_menu : Bool) -> Unit = "mbw_application_set_default_menu"
+
+///|
+extern "C" fn native_set_application_activate_ignoring_other_apps(
+  activate_ignoring_other_apps : Bool,
+) -> Unit = "mbw_application_set_activate_ignoring_other_apps"
+
+///|
 extern "C" fn native_window_title_utf8(window_id : Int) -> Bytes = "mbw_window_title_utf8"
 
 ///|
@@ -1061,6 +1155,9 @@ extern "C" fn native_monitor_id_at(index : Int) -> UInt64 = "mbw_monitor_id_at"
 
 ///|
 extern "C" fn native_primary_monitor_id() -> UInt64 = "mbw_primary_monitor_id"
+
+///|
+extern "C" fn native_monitor_screen_handle(monitor_id : UInt64) -> UInt64 = "mbw_monitor_screen_handle"
 
 ///|
 extern "C" fn native_window_current_monitor_id(window_id : Int) -> UInt64 = "mbw_window_current_monitor_id"
@@ -1451,6 +1548,54 @@ extern "C" fn native_window_set_exclusive_fullscreen(
   bit_depth : Int,
   refresh_rate_millihertz : Int,
 ) -> Bool = "mbw_window_set_exclusive_fullscreen"
+
+///|
+extern "C" fn native_window_set_accepts_first_mouse(
+  window_id : Int,
+  accepts_first_mouse : Bool,
+) -> Unit = "mbw_window_set_accepts_first_mouse"
+
+///|
+extern "C" fn native_window_set_disallow_hidpi(
+  window_id : Int,
+  disallow_hidpi : Bool,
+) -> Unit = "mbw_window_set_disallow_hidpi"
+
+///|
+extern "C" fn native_window_set_movable_by_window_background(
+  window_id : Int,
+  movable_by_window_background : Bool,
+) -> Unit = "mbw_window_set_movable_by_window_background"
+
+///|
+extern "C" fn native_window_set_titlebar_transparent(
+  window_id : Int,
+  titlebar_transparent : Bool,
+) -> Unit = "mbw_window_set_titlebar_transparent"
+
+///|
+extern "C" fn native_window_set_title_hidden(
+  window_id : Int,
+  title_hidden : Bool,
+) -> Unit = "mbw_window_set_title_hidden"
+
+///|
+extern "C" fn native_window_set_titlebar_hidden(
+  window_id : Int,
+  titlebar_hidden : Bool,
+) -> Unit = "mbw_window_set_titlebar_hidden"
+
+///|
+extern "C" fn native_window_set_titlebar_buttons_hidden(
+  window_id : Int,
+  titlebar_buttons_hidden : Bool,
+) -> Unit = "mbw_window_set_titlebar_buttons_hidden"
+
+///|
+extern "C" fn native_window_set_fullsize_content_view(
+  window_id : Int,
+  fullsize_content_view : Bool,
+) -> Unit = "mbw_window_set_fullsize_content_view"
 
 ///|
 extern "C" fn native_window_set_has_shadow(

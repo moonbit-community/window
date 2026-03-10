@@ -123,11 +123,19 @@ typedef struct mbw_window {
   int minimize_button_enabled;
   int maximize_button_enabled;
   int blur;
+  int accepts_first_mouse;
+  int disallow_hidpi;
+  int fullsize_content_view;
   int has_shadow;
+  int movable_by_window_background;
   int document_edited;
   int option_as_alt;
   int borderless_game;
   int simple_fullscreen;
+  int title_hidden;
+  int titlebar_hidden;
+  int titlebar_buttons_hidden;
+  int titlebar_transparent;
   int simple_fullscreen_saved_frame_valid;
   double simple_fullscreen_saved_frame_x;
   double simple_fullscreen_saved_frame_y;
@@ -483,10 +491,13 @@ typedef int32_t (*mbw_cgs_set_window_blur_radius_fn)(
 #define MBW_NSWINDOW_STYLE_MASK_MINIATURIZABLE (1UL << 2)
 #define MBW_NSWINDOW_STYLE_MASK_RESIZABLE (1UL << 3)
 #define MBW_NSWINDOW_STYLE_MASK_FULLSCREEN (1UL << 14)
+#define MBW_NSWINDOW_STYLE_MASK_FULLSIZE_CONTENT_VIEW (1UL << 15)
 #define MBW_NSAPPLICATION_PRESENTATION_AUTO_HIDE_DOCK (1UL << 0)
 #define MBW_NSAPPLICATION_PRESENTATION_HIDE_DOCK (1UL << 1)
 #define MBW_NSAPPLICATION_PRESENTATION_AUTO_HIDE_MENU_BAR (1UL << 2)
 #define MBW_NSAPPLICATION_PRESENTATION_HIDE_MENU_BAR (1UL << 3)
+#define MBW_NSWINDOW_TITLE_VISIBLE ((mbw_nsinteger_t)0)
+#define MBW_NSWINDOW_TITLE_HIDDEN ((mbw_nsinteger_t)1)
 #define MBW_NSWINDOW_OCCLUSION_STATE_VISIBLE (1UL << 1)
 #define MBW_NSEVENT_PHASE_BEGAN (1UL << 0)
 #define MBW_NSEVENT_PHASE_CHANGED (1UL << 2)
@@ -520,10 +531,19 @@ typedef int32_t (*mbw_cgs_set_window_blur_radius_fn)(
 #define MBW_NS_REQUEST_USER_ATTENTION_INFORMATIONAL ((mbw_nsinteger_t)10)
 #define MBW_NSDRAG_OPERATION_NONE ((mbw_nsuint_t)0)
 #define MBW_NSDRAG_OPERATION_COPY ((mbw_nsuint_t)1)
+#define MBW_NSEVENT_MODIFIER_FLAG_OPTION (1UL << 19)
+#define MBW_NSEVENT_MODIFIER_FLAG_COMMAND (1UL << 20)
+#define MBW_ACTIVATION_POLICY_DEFAULT (-1)
+#define MBW_ACTIVATION_POLICY_REGULAR 0
+#define MBW_ACTIVATION_POLICY_ACCESSORY 1
+#define MBW_ACTIVATION_POLICY_PROHIBITED 2
 
 static bool g_bootstrap_done = false;
 static bool g_bootstrap_ok = false;
 static id g_ns_app = nil;
+static int g_activation_policy = MBW_ACTIVATION_POLICY_DEFAULT;
+static int g_default_menu = 1;
+static int g_activate_ignoring_other_apps = 1;
 static Class g_window_delegate_class = Nil;
 static Class g_content_view_class = Nil;
 static bool g_blur_api_lookup_done = false;
@@ -549,7 +569,12 @@ static int mbw_window_theme_kind(mbw_window_t *window);
 static int mbw_window_occluded(mbw_window_t *window);
 #if defined(__APPLE__)
 static id mbw_shared_application(void);
+static void mbw_app_apply_configuration(id app);
+static void mbw_app_apply_default_menu(id app);
+static void mbw_app_clear_default_menu(id app);
 static void mbw_window_apply_style_mask(mbw_window_t *window, mbw_nsuint_t style_mask);
+static mbw_nsuint_t mbw_window_style_mask(mbw_window_t *window);
+static void mbw_window_apply_titlebar_button_visibility(mbw_window_t *window);
 static id mbw_window_screen(mbw_window_t *window);
 static void mbw_window_clear_simple_fullscreen(
   mbw_window_t *window,
@@ -1795,6 +1820,13 @@ static mbw_bool_t mbw_content_view_accepts_first_responder(id self, SEL _cmd) {
   return YES;
 }
 
+static mbw_bool_t mbw_content_view_accepts_first_mouse(id self, SEL _cmd, id event) {
+  (void)_cmd;
+  (void)event;
+  mbw_window_t *window = mbw_view_window(self);
+  return (!window || window->accepts_first_mouse) ? YES : NO;
+}
+
 static void mbw_content_view_queue_ime(
   id self,
   int ime_kind,
@@ -2709,6 +2741,11 @@ static Class mbw_get_content_view_class(void) {
     "c@:");
   class_addMethod(
     view_class,
+    mbw_sel("acceptsFirstMouse:"),
+    (IMP)mbw_content_view_accepts_first_mouse,
+    "c@:@");
+  class_addMethod(
+    view_class,
     mbw_sel("insertText:replacementRange:"),
     (IMP)mbw_content_view_insert_text,
     "v@:@{_NSRange=QQ}{_NSRange=QQ}");
@@ -3040,10 +3077,8 @@ static bool mbw_bootstrap_app(void) {
   if (!app) {
     return false;
   }
-  ((void(*)(id, SEL, long))objc_msgSend)(app, mbw_sel("setActivationPolicy:"), 0L);
   mbw_msg_void(app, "finishLaunching");
-  ((void(*)(id, SEL, mbw_bool_t))objc_msgSend)(
-    app, mbw_sel("activateIgnoringOtherApps:"), YES);
+  mbw_app_apply_configuration(app);
 
   g_ns_app = app;
   g_bootstrap_ok = true;
@@ -3200,6 +3235,217 @@ static id mbw_shared_application(void) {
   return ((id(*)(id, SEL))objc_msgSend)((id)app_class, mbw_sel("sharedApplication"));
 }
 
+static int mbw_application_is_bundled(void) {
+  Class bundle_class = objc_getClass("NSBundle");
+  if (!bundle_class) {
+    return 0;
+  }
+  id main_bundle = ((id(*)(id, SEL))objc_msgSend)(
+    (id)bundle_class,
+    mbw_sel("mainBundle"));
+  if (!main_bundle) {
+    return 0;
+  }
+  id bundle_identifier = ((id(*)(id, SEL))objc_msgSend)(
+    main_bundle,
+    mbw_sel("bundleIdentifier"));
+  return bundle_identifier ? 1 : 0;
+}
+
+static id mbw_app_menu_item(
+  id title,
+  const char *selector_name,
+  const char *key_equivalent_utf8,
+  mbw_nsuint_t key_modifier_mask,
+  int explicit_key_modifier_mask
+) {
+  Class menu_item_class = objc_getClass("NSMenuItem");
+  if (!menu_item_class) {
+    return nil;
+  }
+  id allocated = mbw_msg_id((id)menu_item_class, "alloc");
+  if (!allocated) {
+    return nil;
+  }
+  id key_equivalent = mbw_make_nsstring(key_equivalent_utf8 ? key_equivalent_utf8 : "");
+  id item =
+    ((id(*)(id, SEL, id, SEL, id))objc_msgSend)(
+      allocated,
+      mbw_sel("initWithTitle:action:keyEquivalent:"),
+      title ? title : mbw_make_nsstring(""),
+      selector_name ? mbw_sel(selector_name) : (SEL)0,
+      key_equivalent);
+  if (item && explicit_key_modifier_mask) {
+    ((void(*)(id, SEL, mbw_nsuint_t))objc_msgSend)(
+      item,
+      mbw_sel("setKeyEquivalentModifierMask:"),
+      key_modifier_mask);
+  }
+  return item;
+}
+
+static void mbw_app_clear_default_menu(id app) {
+  if (!app) {
+    return;
+  }
+  ((void(*)(id, SEL, id))objc_msgSend)(app, mbw_sel("setServicesMenu:"), nil);
+  ((void(*)(id, SEL, id))objc_msgSend)(app, mbw_sel("setMainMenu:"), nil);
+}
+
+static void mbw_app_apply_default_menu(id app) {
+  if (!app) {
+    return;
+  }
+  Class menu_class = objc_getClass("NSMenu");
+  Class menu_item_class = objc_getClass("NSMenuItem");
+  Class process_info_class = objc_getClass("NSProcessInfo");
+  if (!menu_class || !menu_item_class) {
+    return;
+  }
+
+  id menubar = mbw_msg_id((id)menu_class, "new");
+  id app_menu_item = mbw_msg_id((id)menu_item_class, "new");
+  id app_menu = mbw_msg_id((id)menu_class, "new");
+  id services_menu = mbw_msg_id((id)menu_class, "new");
+  if (!menubar || !app_menu_item || !app_menu || !services_menu) {
+    return;
+  }
+
+  id process_name = nil;
+  if (process_info_class) {
+    id process_info = ((id(*)(id, SEL))objc_msgSend)(
+      (id)process_info_class,
+      mbw_sel("processInfo"));
+    if (process_info) {
+      process_name = ((id(*)(id, SEL))objc_msgSend)(
+        process_info,
+        mbw_sel("processName"));
+    }
+  }
+
+  id about_title = mbw_make_nsstring("About ");
+  if (about_title && process_name) {
+    about_title = ((id(*)(id, SEL, id))objc_msgSend)(
+      about_title,
+      mbw_sel("stringByAppendingString:"),
+      process_name);
+  }
+  id hide_title = mbw_make_nsstring("Hide ");
+  if (hide_title && process_name) {
+    hide_title = ((id(*)(id, SEL, id))objc_msgSend)(
+      hide_title,
+      mbw_sel("stringByAppendingString:"),
+      process_name);
+  }
+  id quit_title = mbw_make_nsstring("Quit ");
+  if (quit_title && process_name) {
+    quit_title = ((id(*)(id, SEL, id))objc_msgSend)(
+      quit_title,
+      mbw_sel("stringByAppendingString:"),
+      process_name);
+  }
+
+  id about_item = mbw_app_menu_item(
+    about_title,
+    "orderFrontStandardAboutPanel:",
+    "",
+    0,
+    0);
+  id services_item = mbw_app_menu_item(mbw_make_nsstring("Services"), NULL, "", 0, 0);
+  id hide_item = mbw_app_menu_item(hide_title, "hide:", "h", 0, 0);
+  id hide_others_item = mbw_app_menu_item(
+    mbw_make_nsstring("Hide Others"),
+    "hideOtherApplications:",
+    "h",
+    MBW_NSEVENT_MODIFIER_FLAG_OPTION | MBW_NSEVENT_MODIFIER_FLAG_COMMAND,
+    1);
+  id show_all_item = mbw_app_menu_item(
+    mbw_make_nsstring("Show All"),
+    "unhideAllApplications:",
+    "",
+    0,
+    0);
+  id quit_item = mbw_app_menu_item(quit_title, "terminate:", "q", 0, 0);
+  id separator_before_services = ((id(*)(id, SEL))objc_msgSend)(
+    (id)menu_item_class,
+    mbw_sel("separatorItem"));
+  id separator_before_quit = ((id(*)(id, SEL))objc_msgSend)(
+    (id)menu_item_class,
+    mbw_sel("separatorItem"));
+
+  ((void(*)(id, SEL, id))objc_msgSend)(menubar, mbw_sel("addItem:"), app_menu_item);
+  ((void(*)(id, SEL, id))objc_msgSend)(app_menu, mbw_sel("addItem:"), about_item);
+  ((void(*)(id, SEL, id))objc_msgSend)(
+    app_menu,
+    mbw_sel("addItem:"),
+    separator_before_services);
+  ((void(*)(id, SEL, id))objc_msgSend)(services_item, mbw_sel("setSubmenu:"), services_menu);
+  ((void(*)(id, SEL, id))objc_msgSend)(app_menu, mbw_sel("addItem:"), services_item);
+  ((void(*)(id, SEL, id))objc_msgSend)(app_menu, mbw_sel("addItem:"), hide_item);
+  ((void(*)(id, SEL, id))objc_msgSend)(app_menu, mbw_sel("addItem:"), hide_others_item);
+  ((void(*)(id, SEL, id))objc_msgSend)(app_menu, mbw_sel("addItem:"), show_all_item);
+  ((void(*)(id, SEL, id))objc_msgSend)(
+    app_menu,
+    mbw_sel("addItem:"),
+    separator_before_quit);
+  ((void(*)(id, SEL, id))objc_msgSend)(app_menu, mbw_sel("addItem:"), quit_item);
+  ((void(*)(id, SEL, id))objc_msgSend)(app_menu_item, mbw_sel("setSubmenu:"), app_menu);
+  ((void(*)(id, SEL, id))objc_msgSend)(app, mbw_sel("setServicesMenu:"), services_menu);
+  ((void(*)(id, SEL, id))objc_msgSend)(app, mbw_sel("setMainMenu:"), menubar);
+}
+
+static void mbw_app_apply_configuration(id app) {
+  if (!app) {
+    return;
+  }
+  if (g_activation_policy == MBW_ACTIVATION_POLICY_REGULAR) {
+    ((void(*)(id, SEL, long))objc_msgSend)(app, mbw_sel("setActivationPolicy:"), 0L);
+  } else if (g_activation_policy == MBW_ACTIVATION_POLICY_ACCESSORY) {
+    ((void(*)(id, SEL, long))objc_msgSend)(app, mbw_sel("setActivationPolicy:"), 1L);
+  } else if (g_activation_policy == MBW_ACTIVATION_POLICY_PROHIBITED) {
+    ((void(*)(id, SEL, long))objc_msgSend)(app, mbw_sel("setActivationPolicy:"), 2L);
+  } else if (!mbw_application_is_bundled()) {
+    ((void(*)(id, SEL, long))objc_msgSend)(app, mbw_sel("setActivationPolicy:"), 0L);
+  }
+  ((void(*)(id, SEL, mbw_bool_t))objc_msgSend)(
+    app,
+    mbw_sel("activateIgnoringOtherApps:"),
+    g_activate_ignoring_other_apps ? YES : NO);
+  if (g_default_menu) {
+    mbw_app_apply_default_menu(app);
+  } else {
+    mbw_app_clear_default_menu(app);
+  }
+}
+
+static mbw_nsuint_t mbw_window_style_mask(mbw_window_t *window) {
+  if (!window) {
+    return 0;
+  }
+  mbw_nsuint_t style_mask = 0;
+  if (!window->decorated || window->titlebar_hidden) {
+    style_mask = MBW_NSWINDOW_STYLE_MASK_MINIATURIZABLE;
+    if (window->resizable) {
+      style_mask |= MBW_NSWINDOW_STYLE_MASK_RESIZABLE;
+    }
+  } else {
+    style_mask = MBW_NSWINDOW_STYLE_MASK_TITLED;
+    if (window->close_button_enabled) {
+      style_mask |= MBW_NSWINDOW_STYLE_MASK_CLOSABLE;
+    }
+    if (window->minimize_button_enabled) {
+      style_mask |= MBW_NSWINDOW_STYLE_MASK_MINIATURIZABLE;
+    }
+    if (window->resizable) {
+      style_mask |= MBW_NSWINDOW_STYLE_MASK_RESIZABLE;
+    }
+  }
+  if (window->fullsize_content_view) {
+    style_mask |= MBW_NSWINDOW_STYLE_MASK_FULLSIZE_CONTENT_VIEW;
+  }
+  return style_mask;
+}
+
 static void mbw_window_apply_style_mask(mbw_window_t *window, mbw_nsuint_t style_mask) {
   if (!window || !window->window) {
     return;
@@ -3213,6 +3459,38 @@ static void mbw_window_apply_style_mask(mbw_window_t *window, mbw_nsuint_t style
       (id)window->window,
       mbw_sel("makeFirstResponder:"),
       (id)window->content_view);
+  }
+  mbw_window_apply_titlebar_button_visibility(window);
+}
+
+static void mbw_window_apply_titlebar_button_visibility(mbw_window_t *window) {
+  if (!window || !window->window) {
+    return;
+  }
+  id close_button = ((id(*)(id, SEL, mbw_nsinteger_t))objc_msgSend)(
+    (id)window->window, mbw_sel("standardWindowButton:"), MBW_NSWINDOW_BUTTON_CLOSE);
+  id minimize_button = ((id(*)(id, SEL, mbw_nsinteger_t))objc_msgSend)(
+    (id)window->window, mbw_sel("standardWindowButton:"), MBW_NSWINDOW_BUTTON_MINIMIZE);
+  id maximize_button = ((id(*)(id, SEL, mbw_nsinteger_t))objc_msgSend)(
+    (id)window->window, mbw_sel("standardWindowButton:"), MBW_NSWINDOW_BUTTON_MAXIMIZE);
+  mbw_bool_t hidden = window->titlebar_buttons_hidden ? YES : NO;
+  if (close_button) {
+    ((void(*)(id, SEL, mbw_bool_t))objc_msgSend)(
+      close_button,
+      mbw_sel("setHidden:"),
+      hidden);
+  }
+  if (minimize_button) {
+    ((void(*)(id, SEL, mbw_bool_t))objc_msgSend)(
+      minimize_button,
+      mbw_sel("setHidden:"),
+      hidden);
+  }
+  if (maximize_button) {
+    ((void(*)(id, SEL, mbw_bool_t))objc_msgSend)(
+      maximize_button,
+      mbw_sel("setHidden:"),
+      hidden);
   }
 }
 
@@ -3832,6 +4110,42 @@ bool mbw_event_loop_wait_millis(int timeout_ms) {
 #endif
 }
 
+void mbw_application_set_activation_policy(int activation_policy) {
+  g_activation_policy = activation_policy;
+#if defined(__APPLE__)
+  if (g_ns_app) {
+    mbw_app_apply_configuration(g_ns_app);
+  }
+#endif
+}
+
+void mbw_application_set_default_menu(bool default_menu) {
+  g_default_menu = default_menu ? 1 : 0;
+#if defined(__APPLE__)
+  if (g_ns_app) {
+    if (g_default_menu) {
+      mbw_app_apply_default_menu(g_ns_app);
+    } else {
+      mbw_app_clear_default_menu(g_ns_app);
+    }
+  }
+#endif
+}
+
+void mbw_application_set_activate_ignoring_other_apps(
+  bool activate_ignoring_other_apps
+) {
+  g_activate_ignoring_other_apps = activate_ignoring_other_apps ? 1 : 0;
+#if defined(__APPLE__)
+  if (g_ns_app) {
+    ((void(*)(id, SEL, mbw_bool_t))objc_msgSend)(
+      g_ns_app,
+      mbw_sel("activateIgnoringOtherApps:"),
+      g_activate_ignoring_other_apps ? YES : NO);
+  }
+#endif
+}
+
 void mbw_event_loop_hide_application(void) {
 #if defined(__APPLE__)
   if (!g_ns_app && !mbw_bootstrap_app()) {
@@ -3973,11 +4287,19 @@ int mbw_window_create_utf8(
   window->minimize_button_enabled = 1;
   window->maximize_button_enabled = 1;
   window->blur = 0;
+  window->accepts_first_mouse = 1;
+  window->disallow_hidpi = 0;
+  window->fullsize_content_view = 0;
   window->has_shadow = 1;
+  window->movable_by_window_background = 0;
   window->document_edited = 0;
   window->option_as_alt = MBW_OPTION_AS_ALT_NONE;
   window->borderless_game = 0;
   window->simple_fullscreen = 0;
+  window->title_hidden = 0;
+  window->titlebar_hidden = 0;
+  window->titlebar_buttons_hidden = 0;
+  window->titlebar_transparent = 0;
   window->simple_fullscreen_saved_frame_valid = 0;
   window->simple_fullscreen_saved_style_valid = 0;
   window->simple_fullscreen_saved_presentation_valid = 0;
@@ -4010,13 +4332,7 @@ int mbw_window_create_utf8(
         .origin = {0.0, 0.0},
         .size = {(double)window->width, (double)window->height},
       };
-      mbw_nsuint_t style_mask = 0;
-      if (decorated) {
-        style_mask |= (1UL << 0) | (1UL << 1) | (1UL << 2);
-      }
-      if (resizable) {
-        style_mask |= (1UL << 3);
-      }
+      mbw_nsuint_t style_mask = mbw_window_style_mask(window);
       id ns_window =
         ((id(*)(id, SEL, mbw_rect_t, mbw_nsuint_t, mbw_nsuint_t, mbw_bool_t))objc_msgSend)(
           allocated,
@@ -4092,6 +4408,16 @@ int mbw_window_create_utf8(
         window->content_view = content_view
           ? (void *)content_view
           : (void *)mbw_msg_id(ns_window, "contentView");
+        if (window->content_view &&
+            ((mbw_bool_t(*)(id, SEL, SEL))objc_msgSend)(
+              (id)window->content_view,
+              mbw_sel("respondsToSelector:"),
+              mbw_sel("setWantsBestResolutionOpenGLSurface:"))) {
+          ((void(*)(id, SEL, mbw_bool_t))objc_msgSend)(
+            (id)window->content_view,
+            mbw_sel("setWantsBestResolutionOpenGLSurface:"),
+            YES);
+        }
         Class delegate_class = mbw_get_window_delegate_class();
         if (delegate_class) {
           id delegate = mbw_msg_id((id)delegate_class, "new");
@@ -4541,6 +4867,16 @@ uint64_t mbw_primary_monitor_id(void) {
 #if defined(__APPLE__)
   return (uint64_t)CGMainDisplayID();
 #else
+  return 0;
+#endif
+}
+
+uint64_t mbw_monitor_screen_handle(uint64_t monitor_id) {
+#if defined(__APPLE__)
+  id screen = mbw_screen_for_display_id((uint32_t)monitor_id);
+  return (uint64_t)(uintptr_t)screen;
+#else
+  (void)monitor_id;
   return 0;
 #endif
 }
@@ -6000,6 +6336,163 @@ bool mbw_test_window_has_icon(int window_id) {
   return window ? window->has_icon != 0 : false;
 }
 
+int mbw_test_application_activation_policy(void) {
+#if defined(__APPLE__)
+  if (g_ns_app) {
+    return (int)((mbw_nsinteger_t(*)(id, SEL))objc_msgSend)(
+      g_ns_app,
+      mbw_sel("activationPolicy"));
+  }
+#endif
+  return g_activation_policy;
+}
+
+bool mbw_test_application_has_main_menu(void) {
+#if defined(__APPLE__)
+  if (g_ns_app) {
+    return ((id(*)(id, SEL))objc_msgSend)(g_ns_app, mbw_sel("mainMenu")) != nil;
+  }
+#endif
+  return false;
+}
+
+bool mbw_test_application_activate_ignoring_other_apps(void) {
+  return g_activate_ignoring_other_apps != 0;
+}
+
+bool mbw_test_window_accepts_first_mouse(int window_id) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  if (!window) {
+    return false;
+  }
+#if defined(__APPLE__)
+  if (window->content_view) {
+    return ((mbw_bool_t(*)(id, SEL, id))objc_msgSend)(
+      (id)window->content_view,
+      mbw_sel("acceptsFirstMouse:"),
+      nil) != 0;
+  }
+#endif
+  return window->accepts_first_mouse != 0;
+}
+
+bool mbw_test_window_disallow_hidpi(int window_id) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  if (!window) {
+    return false;
+  }
+#if defined(__APPLE__)
+  if (window->content_view &&
+      ((mbw_bool_t(*)(id, SEL, SEL))objc_msgSend)(
+        (id)window->content_view,
+        mbw_sel("respondsToSelector:"),
+        mbw_sel("wantsBestResolutionOpenGLSurface"))) {
+    return ((mbw_bool_t(*)(id, SEL))objc_msgSend)(
+      (id)window->content_view,
+      mbw_sel("wantsBestResolutionOpenGLSurface")) == 0;
+  }
+#endif
+  return window->disallow_hidpi != 0;
+}
+
+bool mbw_test_window_movable_by_window_background(int window_id) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  if (!window) {
+    return false;
+  }
+#if defined(__APPLE__)
+  if (window->window) {
+    return ((mbw_bool_t(*)(id, SEL))objc_msgSend)(
+      (id)window->window,
+      mbw_sel("isMovableByWindowBackground")) != 0;
+  }
+#endif
+  return window->movable_by_window_background != 0;
+}
+
+bool mbw_test_window_titlebar_transparent(int window_id) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  if (!window) {
+    return false;
+  }
+#if defined(__APPLE__)
+  if (window->window) {
+    return ((mbw_bool_t(*)(id, SEL))objc_msgSend)(
+      (id)window->window,
+      mbw_sel("titlebarAppearsTransparent")) != 0;
+  }
+#endif
+  return window->titlebar_transparent != 0;
+}
+
+bool mbw_test_window_title_hidden(int window_id) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  if (!window) {
+    return false;
+  }
+#if defined(__APPLE__)
+  if (window->window) {
+    return ((mbw_nsinteger_t(*)(id, SEL))objc_msgSend)(
+      (id)window->window,
+      mbw_sel("titleVisibility")) == MBW_NSWINDOW_TITLE_HIDDEN;
+  }
+#endif
+  return window->title_hidden != 0;
+}
+
+bool mbw_test_window_titlebar_hidden(int window_id) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  if (!window) {
+    return false;
+  }
+#if defined(__APPLE__)
+  if (window->window) {
+    mbw_nsuint_t style_mask = ((mbw_nsuint_t(*)(id, SEL))objc_msgSend)(
+      (id)window->window,
+      mbw_sel("styleMask"));
+    return (style_mask & MBW_NSWINDOW_STYLE_MASK_TITLED) == 0;
+  }
+#endif
+  return window->titlebar_hidden != 0;
+}
+
+bool mbw_test_window_titlebar_buttons_hidden(int window_id) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  if (!window) {
+    return false;
+  }
+#if defined(__APPLE__)
+  if (window->window) {
+    id close_button = ((id(*)(id, SEL, mbw_nsinteger_t))objc_msgSend)(
+      (id)window->window,
+      mbw_sel("standardWindowButton:"),
+      MBW_NSWINDOW_BUTTON_CLOSE);
+    if (close_button) {
+      return ((mbw_bool_t(*)(id, SEL))objc_msgSend)(
+        close_button,
+        mbw_sel("isHidden")) != 0;
+    }
+  }
+#endif
+  return window->titlebar_buttons_hidden != 0;
+}
+
+bool mbw_test_window_fullsize_content_view(int window_id) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  if (!window) {
+    return false;
+  }
+#if defined(__APPLE__)
+  if (window->window) {
+    mbw_nsuint_t style_mask = ((mbw_nsuint_t(*)(id, SEL))objc_msgSend)(
+      (id)window->window,
+      mbw_sel("styleMask"));
+    return (style_mask & MBW_NSWINDOW_STYLE_MASK_FULLSIZE_CONTENT_VIEW) != 0;
+  }
+#endif
+  return window->fullsize_content_view != 0;
+}
+
 void mbw_test_window_queue_destroyed(int window_id) {
   mbw_window_t *window = mbw_find_window(window_id);
   if (!window) {
@@ -6095,19 +6588,6 @@ void mbw_window_set_resizable(int window_id, bool resizable) {
     return;
   }
   window->resizable = resizable ? 1 : 0;
-#if defined(__APPLE__)
-  if (window->window) {
-    mbw_nsuint_t style_mask = 0;
-    if (window->decorated) {
-      style_mask |= (1UL << 0) | (1UL << 1) | (1UL << 2);
-    }
-    if (window->resizable) {
-      style_mask |= (1UL << 3);
-    }
-    ((void(*)(id, SEL, mbw_nsuint_t))objc_msgSend)(
-      (id)window->window, mbw_sel("setStyleMask:"), style_mask);
-  }
-#endif
   mbw_window_set_enabled_buttons(
     window_id,
     window->close_button_enabled != 0,
@@ -6121,19 +6601,6 @@ void mbw_window_set_decorations(int window_id, bool decorated) {
     return;
   }
   window->decorated = decorated ? 1 : 0;
-#if defined(__APPLE__)
-  if (window->window) {
-    mbw_nsuint_t style_mask = 0;
-    if (window->decorated) {
-      style_mask |= (1UL << 0) | (1UL << 1) | (1UL << 2);
-    }
-    if (window->resizable) {
-      style_mask |= (1UL << 3);
-    }
-    ((void(*)(id, SEL, mbw_nsuint_t))objc_msgSend)(
-      (id)window->window, mbw_sel("setStyleMask:"), style_mask);
-  }
-#endif
   mbw_window_set_enabled_buttons(
     window_id,
     window->close_button_enabled != 0,
@@ -6156,6 +6623,7 @@ void mbw_window_set_enabled_buttons(
   window->maximize_button_enabled = maximize ? 1 : 0;
 #if defined(__APPLE__)
   if (window->window) {
+    mbw_window_apply_style_mask(window, mbw_window_style_mask(window));
     id close_button = ((id(*)(id, SEL, mbw_nsinteger_t))objc_msgSend)(
       (id)window->window, mbw_sel("standardWindowButton:"), MBW_NSWINDOW_BUTTON_CLOSE);
     id minimize_button = ((id(*)(id, SEL, mbw_nsinteger_t))objc_msgSend)(
@@ -6578,6 +7046,128 @@ void mbw_window_set_blur(int window_id, bool blur) {
     mbw_apply_blur_radius(window, window->blur ? 80 : 0);
   }
 #endif
+}
+
+void mbw_window_set_accepts_first_mouse(int window_id, bool accepts_first_mouse) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  if (!window) {
+    return;
+  }
+  window->accepts_first_mouse = accepts_first_mouse ? 1 : 0;
+}
+
+void mbw_window_set_disallow_hidpi(int window_id, bool disallow_hidpi) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  if (!window) {
+    return;
+  }
+  window->disallow_hidpi = disallow_hidpi ? 1 : 0;
+#if defined(__APPLE__)
+  if (window->content_view &&
+      ((mbw_bool_t(*)(id, SEL, SEL))objc_msgSend)(
+        (id)window->content_view,
+        mbw_sel("respondsToSelector:"),
+        mbw_sel("setWantsBestResolutionOpenGLSurface:"))) {
+    ((void(*)(id, SEL, mbw_bool_t))objc_msgSend)(
+      (id)window->content_view,
+      mbw_sel("setWantsBestResolutionOpenGLSurface:"),
+      disallow_hidpi ? NO : YES);
+  }
+#endif
+}
+
+void mbw_window_set_movable_by_window_background(
+  int window_id,
+  bool movable_by_window_background
+) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  if (!window) {
+    return;
+  }
+  window->movable_by_window_background = movable_by_window_background ? 1 : 0;
+#if defined(__APPLE__)
+  if (window->window) {
+    ((void(*)(id, SEL, mbw_bool_t))objc_msgSend)(
+      (id)window->window,
+      mbw_sel("setMovableByWindowBackground:"),
+      movable_by_window_background ? YES : NO);
+  }
+#endif
+}
+
+void mbw_window_set_titlebar_transparent(int window_id, bool titlebar_transparent) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  if (!window) {
+    return;
+  }
+  window->titlebar_transparent = titlebar_transparent ? 1 : 0;
+#if defined(__APPLE__)
+  if (window->window) {
+    ((void(*)(id, SEL, mbw_bool_t))objc_msgSend)(
+      (id)window->window,
+      mbw_sel("setTitlebarAppearsTransparent:"),
+      titlebar_transparent ? YES : NO);
+  }
+#endif
+}
+
+void mbw_window_set_title_hidden(int window_id, bool title_hidden) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  if (!window) {
+    return;
+  }
+  window->title_hidden = title_hidden ? 1 : 0;
+#if defined(__APPLE__)
+  if (window->window) {
+    ((void(*)(id, SEL, mbw_nsinteger_t))objc_msgSend)(
+      (id)window->window,
+      mbw_sel("setTitleVisibility:"),
+      title_hidden ? MBW_NSWINDOW_TITLE_HIDDEN : MBW_NSWINDOW_TITLE_VISIBLE);
+  }
+#endif
+}
+
+void mbw_window_set_titlebar_hidden(int window_id, bool titlebar_hidden) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  if (!window) {
+    return;
+  }
+  window->titlebar_hidden = titlebar_hidden ? 1 : 0;
+  mbw_window_set_enabled_buttons(
+    window_id,
+    window->close_button_enabled != 0,
+    window->minimize_button_enabled != 0,
+    window->maximize_button_enabled != 0);
+}
+
+void mbw_window_set_titlebar_buttons_hidden(
+  int window_id,
+  bool titlebar_buttons_hidden
+) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  if (!window) {
+    return;
+  }
+  window->titlebar_buttons_hidden = titlebar_buttons_hidden ? 1 : 0;
+#if defined(__APPLE__)
+  mbw_window_apply_titlebar_button_visibility(window);
+#endif
+}
+
+void mbw_window_set_fullsize_content_view(
+  int window_id,
+  bool fullsize_content_view
+) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  if (!window) {
+    return;
+  }
+  window->fullsize_content_view = fullsize_content_view ? 1 : 0;
+  mbw_window_set_enabled_buttons(
+    window_id,
+    window->close_button_enabled != 0,
+    window->minimize_button_enabled != 0,
+    window->maximize_button_enabled != 0);
 }
 
 void mbw_window_set_has_shadow(int window_id, bool has_shadow) {

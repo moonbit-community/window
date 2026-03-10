@@ -1,4 +1,39 @@
 ///|
+extern "C" fn application_activation_policy_for_test() -> Int = "mbw_test_application_activation_policy"
+
+///|
+extern "C" fn application_has_main_menu_for_test() -> Bool = "mbw_test_application_has_main_menu"
+
+///|
+extern "C" fn application_activate_ignoring_other_apps_for_test() -> Bool = "mbw_test_application_activate_ignoring_other_apps"
+
+///|
+extern "C" fn window_accepts_first_mouse_for_test(window_id : Int) -> Bool = "mbw_test_window_accepts_first_mouse"
+
+///|
+extern "C" fn window_disallow_hidpi_for_test(window_id : Int) -> Bool = "mbw_test_window_disallow_hidpi"
+
+///|
+extern "C" fn window_movable_by_window_background_for_test(
+  window_id : Int,
+) -> Bool = "mbw_test_window_movable_by_window_background"
+
+///|
+extern "C" fn window_titlebar_transparent_for_test(window_id : Int) -> Bool = "mbw_test_window_titlebar_transparent"
+
+///|
+extern "C" fn window_title_hidden_for_test(window_id : Int) -> Bool = "mbw_test_window_title_hidden"
+
+///|
+extern "C" fn window_titlebar_hidden_for_test(window_id : Int) -> Bool = "mbw_test_window_titlebar_hidden"
+
+///|
+extern "C" fn window_titlebar_buttons_hidden_for_test(window_id : Int) -> Bool = "mbw_test_window_titlebar_buttons_hidden"
+
+///|
+extern "C" fn window_fullsize_content_view_for_test(window_id : Int) -> Bool = "mbw_test_window_fullsize_content_view"
+
+///|
 struct LifecycleCallbacksApp {
   can_create_surfaces_called : Ref[Bool]
   destroy_surfaces_called : Ref[Bool]
@@ -62,6 +97,60 @@ test "system theme and device event policy APIs are callable" {
   let _ = event_loop.system_theme()
   assert_eq(event_loop.owned_display_handle(), event_loop.rwh_06_handle())
   assert_eq(event_loop.display_handle(), event_loop.rwh_06_handle())
+}
+
+///|
+test "monitor ns_screen exposes the Cocoa screen handle when available" {
+  let event_loop = EventLoop::new()
+  match event_loop.primary_monitor() {
+    Some(monitor) => assert_true(monitor_ns_screen(monitor) is Some(_))
+    None => ()
+  }
+}
+
+///|
+test "platform event loop attributes apply activation and menu configuration" {
+  let event_loop = EventLoop::new_with_platform_attributes(
+    @core.PlatformEventLoopAttributes::default()
+    .with_activation_policy(@core.ActivationPolicy::Accessory)
+    .with_default_menu(false)
+    .with_activate_ignoring_other_apps(false),
+  )
+  let _ = event_loop.create_window(
+    @core.WindowAttributes::default().with_visible(false),
+  )
+  assert_eq(application_activation_policy_for_test(), 1)
+  assert_false(application_has_main_menu_for_test())
+  assert_false(application_activate_ignoring_other_apps_for_test())
+}
+
+///|
+test "macos creation-only platform window attributes apply at creation time" {
+  let event_loop = EventLoop::new()
+  let window = event_loop.create_window(
+    @core.WindowAttributes::default()
+    .with_visible(false)
+    .with_platform_attributes(
+      @core.PlatformWindowAttributes::default()
+      .with_accepts_first_mouse(false)
+      .with_disallow_hidpi(true)
+      .with_fullsize_content_view(true)
+      .with_movable_by_window_background(true)
+      .with_title_hidden(true)
+      .with_titlebar_hidden(true)
+      .with_titlebar_buttons_hidden(true)
+      .with_titlebar_transparent(true),
+    ),
+  )
+  let raw_id = window.id().into_raw()
+  assert_false(window_accepts_first_mouse_for_test(raw_id))
+  assert_true(window_disallow_hidpi_for_test(raw_id))
+  assert_true(window_movable_by_window_background_for_test(raw_id))
+  assert_true(window_titlebar_transparent_for_test(raw_id))
+  assert_true(window_title_hidden_for_test(raw_id))
+  assert_true(window_titlebar_hidden_for_test(raw_id))
+  assert_true(window_titlebar_buttons_hidden_for_test(raw_id))
+  assert_true(window_fullsize_content_view_for_test(raw_id))
 }
 
 ///|

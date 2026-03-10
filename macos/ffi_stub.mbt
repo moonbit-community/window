@@ -59,6 +59,23 @@ fn allows_automatic_window_tabbing() -> Bool {
 }
 
 ///|
+fn set_application_activation_policy(_activation_policy : Int) -> Unit {
+  ()
+}
+
+///|
+fn set_application_default_menu(_default_menu : Bool) -> Unit {
+  ()
+}
+
+///|
+fn set_application_activate_ignoring_other_apps(
+  _activate_ignoring_other_apps : Bool,
+) -> Unit {
+  ()
+}
+
+///|
 fn window_title(_window_id : Int) -> Bytes {
   Bytes::make(0, (0 : Int).to_byte())
 }
@@ -75,6 +92,11 @@ fn monitor_id_at(_index : Int) -> UInt64 {
 
 ///|
 fn primary_monitor_id() -> UInt64 {
+  (0 : Int).to_uint64()
+}
+
+///|
+fn monitor_screen_handle(_monitor_id : UInt64) -> UInt64 {
   (0 : Int).to_uint64()
 }
 
@@ -685,6 +707,64 @@ fn set_window_exclusive_fullscreen(
   _refresh_rate_millihertz : Int,
 ) -> Bool {
   false
+}
+
+///|
+fn set_window_accepts_first_mouse(
+  _window_id : Int,
+  _accepts_first_mouse : Bool,
+) -> Unit {
+  ()
+}
+
+///|
+fn set_window_disallow_hidpi(_window_id : Int, _disallow_hidpi : Bool) -> Unit {
+  ()
+}
+
+///|
+fn set_window_movable_by_window_background(
+  _window_id : Int,
+  _movable_by_window_background : Bool,
+) -> Unit {
+  ()
+}
+
+///|
+fn set_window_titlebar_transparent(
+  _window_id : Int,
+  _titlebar_transparent : Bool,
+) -> Unit {
+  ()
+}
+
+///|
+fn set_window_title_hidden(_window_id : Int, _title_hidden : Bool) -> Unit {
+  ()
+}
+
+///|
+fn set_window_titlebar_hidden(
+  _window_id : Int,
+  _titlebar_hidden : Bool,
+) -> Unit {
+  ()
+}
+
+///|
+fn set_window_titlebar_buttons_hidden(
+  _window_id : Int,
+  _titlebar_buttons_hidden : Bool,
+) -> Unit {
+  ()
+}
+
+///|
+fn set_window_fullsize_content_view(
+  _window_id : Int,
+  _fullsize_content_view : Bool,
+) -> Unit {
+  ()
 }
 
 ///|
