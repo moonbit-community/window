@@ -1,5 +1,19 @@
 ///|
-fn physical_key_from_scancode(scancode : Int) -> @core.PhysicalKey {
+fn extra_function_key_from_text(text : String?) -> @core.PhysicalKey? {
+  match text {
+    Some("\u{f718}") => Some(@core.PhysicalKey::Code(@core.KeyCode::F21))
+    Some("\u{f719}") => Some(@core.PhysicalKey::Code(@core.KeyCode::F22))
+    Some("\u{f71a}") => Some(@core.PhysicalKey::Code(@core.KeyCode::F23))
+    Some("\u{f71b}") => Some(@core.PhysicalKey::Code(@core.KeyCode::F24))
+    _ => None
+  }
+}
+
+///|
+fn physical_key_from_scancode(
+  scancode : Int,
+  text_with_all_modifiers : String?,
+) -> @core.PhysicalKey {
   let code = match scancode {
     0x00 => Some(@core.KeyCode::KeyA)
     0x01 => Some(@core.KeyCode::KeyS)
@@ -127,7 +141,11 @@ fn physical_key_from_scancode(scancode : Int) -> @core.PhysicalKey {
   match code {
     Some(code) => @core.PhysicalKey::Code(code)
     None =>
-      @core.PhysicalKey::Unidentified(@core.NativeKeyCode::MacOS(scancode))
+      match extra_function_key_from_text(text_with_all_modifiers) {
+        Some(key) => key
+        None =>
+          @core.PhysicalKey::Unidentified(@core.NativeKeyCode::MacOS(scancode))
+      }
   }
 }
 
@@ -217,10 +235,15 @@ fn named_key_from_code(code : @core.KeyCode) -> @core.NamedKey? {
     @core.KeyCode::F18 => Some(@core.NamedKey::F18)
     @core.KeyCode::F19 => Some(@core.NamedKey::F19)
     @core.KeyCode::F20 => Some(@core.NamedKey::F20)
+    @core.KeyCode::F21 => Some(@core.NamedKey::F21)
+    @core.KeyCode::F22 => Some(@core.NamedKey::F22)
+    @core.KeyCode::F23 => Some(@core.NamedKey::F23)
+    @core.KeyCode::F24 => Some(@core.NamedKey::F24)
     @core.KeyCode::Insert => Some(@core.NamedKey::Insert)
     @core.KeyCode::Home => Some(@core.NamedKey::Home)
     @core.KeyCode::PageUp => Some(@core.NamedKey::PageUp)
     @core.KeyCode::Delete => Some(@core.NamedKey::Delete)
+    @core.KeyCode::Help => Some(@core.NamedKey::Help)
     @core.KeyCode::End => Some(@core.NamedKey::End)
     @core.KeyCode::PageDown => Some(@core.NamedKey::PageDown)
     @core.KeyCode::ArrowLeft => Some(@core.NamedKey::ArrowLeft)
@@ -546,7 +569,9 @@ fn create_key_event(
   let normalized_text_without_modifiers = normalized_native_text(
     text_without_modifiers,
   )
-  let physical_key = physical_key_from_scancode(scancode)
+  let physical_key = physical_key_from_scancode(
+    scancode, normalized_text_with_all_modifiers,
+  )
   let key_without_modifiers = key_without_modifiers_from_scancode(
     scancode, physical_key, normalized_text_without_modifiers,
   )

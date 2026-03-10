@@ -49,3 +49,16 @@ test "key to_text follows winit semantics for text carrying keys" {
   assert_eq(Key::Named(NamedKey::Escape).to_text(), Some("\u{1b}"))
   assert_eq(Key::Named(NamedKey::F20).to_text(), None)
 }
+
+///|
+test "extended function and help key variants are available" {
+  assert_eq(
+    PhysicalKey::from_key_code(KeyCode::F21),
+    PhysicalKey::Code(KeyCode::F21),
+  )
+  assert_eq(
+    PhysicalKey::from_key_code(KeyCode::F24),
+    PhysicalKey::Code(KeyCode::F24),
+  )
+  assert_eq(Key::from_named(NamedKey::Help), Key::Named(NamedKey::Help))
+}

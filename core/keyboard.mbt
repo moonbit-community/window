@@ -119,6 +119,10 @@ pub(all) enum KeyCode {
   Numpad6
   Numpad7
   F20
+  F21
+  F22
+  F23
+  F24
   Numpad8
   Numpad9
   IntlYen
@@ -144,6 +148,7 @@ pub(all) enum KeyCode {
   Home
   PageUp
   Delete
+  Help
   F4
   End
   F2
@@ -216,6 +221,10 @@ pub(all) enum NamedKey {
   F18
   F19
   F20
+  F21
+  F22
+  F23
+  F24
   Insert
   Home
   PageUp
