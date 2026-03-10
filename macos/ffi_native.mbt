@@ -631,7 +631,7 @@ fn drag_resize_window(window_id : Int, direction : Int) -> Bool {
 }
 
 ///|
-fn show_window_menu(window_id : Int, x : Int, y : Int) -> Unit {
+fn show_window_menu(window_id : Int, x : Int, y : Int) -> Bool {
   native_window_show_window_menu(window_id, x, y)
 }
 
@@ -1276,7 +1276,7 @@ extern "C" fn native_window_show_window_menu(
   window_id : Int,
   x : Int,
   y : Int,
-) -> Unit = "mbw_window_show_window_menu"
+) -> Bool = "mbw_window_show_window_menu"
 
 ///|
 extern "C" fn native_window_set_transparent(

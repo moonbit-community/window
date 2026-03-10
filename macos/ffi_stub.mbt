@@ -631,8 +631,8 @@ fn drag_resize_window(_window_id : Int, _direction : Int) -> Bool {
 }
 
 ///|
-fn show_window_menu(_window_id : Int, _x : Int, _y : Int) -> Unit {
-  ()
+fn show_window_menu(_window_id : Int, _x : Int, _y : Int) -> Bool {
+  false
 }
 
 ///|

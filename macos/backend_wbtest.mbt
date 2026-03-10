@@ -569,6 +569,7 @@ struct WindowAuxiliaryApiApp {
   drag_resize_started : Ref[Bool]
   drag_window_started : Ref[Bool]
   safe_area : Ref[@dpi.PhysicalInsets?]
+  show_window_menu_supported : Ref[Bool]
   title_after_update : Ref[String?]
   title_initial : Ref[String?]
 }
@@ -1771,7 +1772,13 @@ impl ApplicationHandler for WindowAuxiliaryApiApp with can_create_surfaces(
   } catch {
     _ => false
   }
-  window.show_window_menu(@dpi.PhysicalPosition::new(8, 8))
+  self.show_window_menu_supported.val = try {
+    window.show_window_menu(@dpi.PhysicalPosition::new(8, 8))
+    true
+  } catch {
+    @core.RequestError::NotSupported(_) => false
+    _ => false
+  }
   window.request_user_attention(Some(@core.UserAttentionType::Informational))
   window.request_user_attention(Some(@core.UserAttentionType::Critical))
   window.request_user_attention(None)
@@ -2985,11 +2992,13 @@ test "window auxiliary api methods are available on macos" {
   let cursor_grab_confined = Ref::new(true)
   let drag_window_started = Ref::new(true)
   let drag_resize_started = Ref::new(true)
+  let show_window_menu_supported = Ref::new(true)
   let app : WindowAuxiliaryApiApp = {
     cursor_grab_confined,
     drag_resize_started,
     drag_window_started,
     safe_area,
+    show_window_menu_supported,
     title_after_update,
     title_initial,
   }
@@ -3008,6 +3017,7 @@ test "window auxiliary api methods are available on macos" {
   assert_true(cursor_grab_confined.val)
   let _ = drag_window_started.val
   assert_false(drag_resize_started.val)
+  assert_false(show_window_menu_supported.val)
 }
 
 ///|

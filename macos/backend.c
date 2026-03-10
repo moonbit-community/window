@@ -5740,11 +5740,12 @@ bool mbw_window_drag_resize_window(int window_id, int direction) {
   return false;
 }
 
-void mbw_window_show_window_menu(int window_id, int x, int y) {
+bool mbw_window_show_window_menu(int window_id, int x, int y) {
   mbw_window_t *window = mbw_find_window(window_id);
   (void)window;
   (void)x;
   (void)y;
+  return false;
 }
 
 void mbw_window_set_window_level(int window_id, int level) {

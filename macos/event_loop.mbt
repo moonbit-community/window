@@ -355,8 +355,14 @@ pub fn Window::drag_resize_window(
 pub fn Window::show_window_menu(
   self : Window,
   position : @dpi.PhysicalPosition,
-) -> Unit {
-  show_window_menu(self.id.into_raw(), position.x(), position.y())
+) -> Unit raise @core.RequestError {
+  if show_window_menu(self.id.into_raw(), position.x(), position.y()) {
+    ()
+  } else {
+    raise @core.RequestError::NotSupported(
+      "show_window_menu is not supported on macOS",
+    )
+  }
 }
 
 ///|
