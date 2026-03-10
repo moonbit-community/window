@@ -5,6 +5,8 @@ fn extra_function_key_from_text(text : String?) -> @core.PhysicalKey? {
     Some("\u{f719}") => Some(@core.PhysicalKey::Code(@core.KeyCode::F22))
     Some("\u{f71a}") => Some(@core.PhysicalKey::Code(@core.KeyCode::F23))
     Some("\u{f71b}") => Some(@core.PhysicalKey::Code(@core.KeyCode::F24))
+    Some("\u{f727}") => Some(@core.PhysicalKey::Code(@core.KeyCode::Insert))
+    Some("\u{f746}") => Some(@core.PhysicalKey::Code(@core.KeyCode::Help))
     _ => None
   }
 }
@@ -138,11 +140,11 @@ fn physical_key_from_scancode(
     0x7F => Some(@core.KeyCode::Power)
     _ => None
   }
-  match code {
-    Some(code) => @core.PhysicalKey::Code(code)
+  match extra_function_key_from_text(text_with_all_modifiers) {
+    Some(key) => key
     None =>
-      match extra_function_key_from_text(text_with_all_modifiers) {
-        Some(key) => key
+      match code {
+        Some(code) => @core.PhysicalKey::Code(code)
         None =>
           @core.PhysicalKey::Unidentified(@core.NativeKeyCode::MacOS(scancode))
       }

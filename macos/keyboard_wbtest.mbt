@@ -80,3 +80,38 @@ test "create_key_event keeps macos power scancode unidentified" {
   )
   assert_eq(event.text(), None)
 }
+
+///|
+test "create_key_event distinguishes help and insert private function-key text" {
+  let insert_event = create_key_event(
+    0x72,
+    @core.ElementState::Pressed,
+    false,
+    @core.Modifiers::default(),
+    Some("\u{f727}"),
+    Some("\u{f727}"),
+    Some("\u{f727}"),
+  )
+  assert_eq(
+    insert_event.physical_key(),
+    @core.PhysicalKey::Code(@core.KeyCode::Insert),
+  )
+  assert_eq(
+    insert_event.logical_key(),
+    @core.Key::Named(@core.NamedKey::Insert),
+  )
+  let help_event = create_key_event(
+    0x72,
+    @core.ElementState::Pressed,
+    false,
+    @core.Modifiers::default(),
+    Some("\u{f746}"),
+    Some("\u{f746}"),
+    Some("\u{f746}"),
+  )
+  assert_eq(
+    help_event.physical_key(),
+    @core.PhysicalKey::Code(@core.KeyCode::Help),
+  )
+  assert_eq(help_event.logical_key(), @core.Key::Named(@core.NamedKey::Help))
+}
