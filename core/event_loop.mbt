@@ -6,10 +6,34 @@ pub(all) enum ControlFlow {
 } derive(Eq, Show)
 
 ///|
+pub fn ControlFlow::default() -> ControlFlow {
+  ControlFlow::Wait
+}
+
+///|
 pub(all) enum DeviceEvents {
   Always
   WhenFocused
   Never
+} derive(Eq, Show)
+
+///|
+pub fn DeviceEvents::default() -> DeviceEvents {
+  DeviceEvents::WhenFocused
+}
+
+///|
+pub(all) enum PumpStatus {
+  Continue
+  Exit(Int)
+} derive(Eq, Show)
+
+///|
+pub(all) suberror EventLoopError {
+  RecreationAttempt
+  ExitFailure(Int)
+  NotSupported
+  Os
 } derive(Eq, Show)
 
 ///|
@@ -18,6 +42,11 @@ pub(all) enum ActivationPolicy {
   Accessory
   Prohibited
 } derive(Eq, Show)
+
+///|
+pub fn ActivationPolicy::default() -> ActivationPolicy {
+  ActivationPolicy::Regular
+}
 
 ///|
 pub struct PlatformEventLoopAttributes {

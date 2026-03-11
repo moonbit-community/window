@@ -13,11 +13,15 @@ pub fn monitor_ns_screen(@core.MonitorHandle) -> UInt64?
 
 pub fn native_backend_available() -> Bool
 
-pub fn native_create_window(Int, Int, Bool, Bool, Bool, Bool, Bytes, UInt64) -> Int
+pub fn native_create_window(Int, Int, Bool, Bool, Bool, Bool, Bool, Bytes, UInt64) -> Int
+
+pub fn native_event_loop_is_running() -> Bool
 
 pub fn native_event_loop_peek_proxy_wake_up() -> Bool
 
 pub fn native_event_loop_reset_proxy() -> Unit
+
+pub fn native_event_loop_set_running(Bool) -> Unit
 
 pub fn native_event_loop_take_proxy_wake_up() -> Bool
 
@@ -47,15 +51,45 @@ pub fn native_window_take_surface_resized(Int) -> Bool
 
 pub fn native_window_width(Int) -> Int
 
+pub fn ns_screen(@core.MonitorHandle) -> UInt64?
+
+pub fn physicalkey_to_scancode(@core.PhysicalKey) -> Int?
+
+pub fn scancode_to_physicalkey(Int) -> @core.PhysicalKey
+
 // Errors
 
 // Types and methods
-#alias(ActiveEventLoop)
+pub struct ActiveEventLoop {
+  // private fields
+}
+pub fn ActiveEventLoop::allows_automatic_window_tabbing(Self) -> Bool
+pub fn ActiveEventLoop::available_monitors(Self) -> Array[@core.MonitorHandle]
+pub fn ActiveEventLoop::control_flow(Self) -> @core.ControlFlow
+pub fn ActiveEventLoop::create_custom_cursor(Self, @core.CustomCursorSource) -> @core.CustomCursor raise @core.RequestError
+pub fn ActiveEventLoop::create_proxy(Self) -> EventLoopProxy
+pub fn ActiveEventLoop::create_window(Self, @core.WindowAttributes) -> Window
+pub fn ActiveEventLoop::display_handle(Self) -> UInt64
+pub fn ActiveEventLoop::exit(Self) -> Unit
+pub fn ActiveEventLoop::exiting(Self) -> Bool
+pub fn ActiveEventLoop::hide_application(Self) -> Unit
+pub fn ActiveEventLoop::hide_other_applications(Self) -> Unit
+pub fn ActiveEventLoop::listen_device_events(Self, @core.DeviceEvents) -> Unit
+pub fn ActiveEventLoop::owned_display_handle(Self) -> UInt64
+pub fn ActiveEventLoop::primary_monitor(Self) -> @core.MonitorHandle?
+pub fn ActiveEventLoop::rwh_06_handle(Self) -> UInt64
+pub fn ActiveEventLoop::set_allows_automatic_window_tabbing(Self, Bool) -> Unit
+pub fn ActiveEventLoop::set_control_flow(Self, @core.ControlFlow) -> Unit
+pub fn ActiveEventLoop::system_theme(Self) -> @core.Theme?
+pub fn ActiveEventLoop::try_create_window(Self, @core.WindowAttributes) -> Window raise @core.RequestError
+pub impl Show for ActiveEventLoop
+
 pub struct EventLoop {
   // private fields
 }
 pub fn EventLoop::allows_automatic_window_tabbing(Self) -> Bool
 pub fn EventLoop::available_monitors(Self) -> Array[@core.MonitorHandle]
+pub fn EventLoop::builder() -> EventLoopBuilder
 pub fn EventLoop::control_flow(Self) -> @core.ControlFlow
 pub fn EventLoop::create_custom_cursor(Self, @core.CustomCursorSource) -> @core.CustomCursor raise @core.RequestError
 pub fn EventLoop::create_proxy(Self) -> EventLoopProxy
@@ -70,12 +104,36 @@ pub fn EventLoop::new() -> Self
 pub fn EventLoop::new_with_platform_attributes(@core.PlatformEventLoopAttributes) -> Self
 pub fn EventLoop::owned_display_handle(Self) -> UInt64
 pub fn EventLoop::primary_monitor(Self) -> @core.MonitorHandle?
+pub fn[A : ApplicationHandler] EventLoop::pump_app_events(Self, Int?, A) -> @core.PumpStatus
 pub fn[A : ApplicationHandler] EventLoop::run_app(Self, A) -> Unit
+pub fn[A : ApplicationHandler] EventLoop::run_app_on_demand(Self, A) -> Unit
 pub fn EventLoop::rwh_06_handle(Self) -> UInt64
 pub fn EventLoop::set_allows_automatic_window_tabbing(Self, Bool) -> Unit
 pub fn EventLoop::set_control_flow(Self, @core.ControlFlow) -> Unit
 pub fn EventLoop::system_theme(Self) -> @core.Theme?
+pub fn EventLoop::try_create_window(Self, @core.WindowAttributes) -> Window raise @core.RequestError
+pub fn EventLoop::try_new() -> Self raise @core.EventLoopError
+pub fn EventLoop::try_new_with_platform_attributes(@core.PlatformEventLoopAttributes) -> Self raise @core.EventLoopError
+pub fn[A : ApplicationHandler] EventLoop::try_pump_app_events(Self, Int?, A) -> @core.PumpStatus raise @core.EventLoopError
+pub fn[A : ApplicationHandler] EventLoop::try_run_app(Self, A) -> Unit raise @core.EventLoopError
+pub fn[A : ApplicationHandler] EventLoop::try_run_app_on_demand(Self, A) -> Unit raise @core.EventLoopError
+pub fn EventLoop::window_target(Self) -> ActiveEventLoop
 pub impl Show for EventLoop
+
+pub struct EventLoopBuilder {
+  // private fields
+}
+pub fn EventLoopBuilder::build(Self) -> EventLoop
+pub fn EventLoopBuilder::default() -> Self
+pub fn EventLoopBuilder::new() -> Self
+pub fn EventLoopBuilder::platform_attributes(Self) -> @core.PlatformEventLoopAttributes
+pub fn EventLoopBuilder::try_build(Self) -> EventLoop raise @core.EventLoopError
+pub fn EventLoopBuilder::with_activate_ignoring_other_apps(Self, Bool) -> Self
+pub fn EventLoopBuilder::with_activation_policy(Self, @core.ActivationPolicy) -> Self
+pub fn EventLoopBuilder::with_default_menu(Self, Bool) -> Self
+pub fn EventLoopBuilder::with_platform_attributes(Self, @core.PlatformEventLoopAttributes) -> Self
+pub impl Eq for EventLoopBuilder
+pub impl Show for EventLoopBuilder
 
 pub struct EventLoopProxy {
   // private fields
@@ -128,7 +186,7 @@ pub fn Window::min_inner_size(Self) -> @dpi.PhysicalSize?
 pub fn Window::min_surface_size(Self) -> @dpi.PhysicalSize?
 pub fn Window::num_tabs(Self) -> Int
 pub fn Window::option_as_alt(Self) -> @core.OptionAsAlt
-pub fn Window::outer_position(Self) -> @dpi.PhysicalPosition
+pub fn Window::outer_position(Self) -> @dpi.PhysicalPosition raise @core.RequestError
 pub fn Window::outer_size(Self) -> @dpi.PhysicalSize
 pub fn Window::pre_present_notify(Self) -> Unit
 pub fn Window::primary_monitor(Self) -> @core.MonitorHandle?
@@ -151,7 +209,7 @@ pub fn Window::set_borderless_game(Self, Bool) -> Unit
 pub fn Window::set_content_protected(Self, Bool) -> Unit
 pub fn Window::set_cursor(Self, @core.Cursor) -> Unit
 pub fn Window::set_cursor_grab(Self, @core.CursorGrabMode) -> Unit raise @core.RequestError
-pub fn Window::set_cursor_hittest(Self, Bool) -> Unit
+pub fn Window::set_cursor_hittest(Self, Bool) -> Unit raise @core.RequestError
 pub fn Window::set_cursor_icon(Self, @core.CursorIcon) -> Unit
 pub fn Window::set_cursor_position(Self, @dpi.Position) -> Unit raise @core.RequestError
 pub fn Window::set_cursor_visible(Self, Bool) -> Unit
@@ -161,7 +219,7 @@ pub fn Window::set_enabled_buttons(Self, @core.WindowButtons) -> Unit
 pub fn Window::set_fullscreen(Self, @core.Fullscreen?) -> Unit
 pub fn Window::set_has_shadow(Self, Bool) -> Unit
 pub fn Window::set_ime_allowed(Self, Bool) -> Unit
-pub fn Window::set_ime_cursor_area(Self, @dpi.PhysicalPosition, @dpi.PhysicalSize) -> Unit
+pub fn Window::set_ime_cursor_area(Self, @dpi.Position, @dpi.Size) -> Unit
 pub fn Window::set_ime_hints(Self, @core.ImeHint) -> Unit
 pub fn Window::set_ime_purpose(Self, @core.ImePurpose) -> Unit
 pub fn Window::set_ime_surrounding_text(Self, @core.ImeSurroundingText?) -> Unit
@@ -181,6 +239,7 @@ pub fn Window::set_tabbing_identifier(Self, String) -> Unit
 pub fn Window::set_theme(Self, @core.Theme?) -> Unit
 pub fn Window::set_title(Self, String) -> Unit
 pub fn Window::set_transparent(Self, Bool) -> Unit
+pub fn Window::set_unified_titlebar(Self, Bool) -> Unit
 pub fn Window::set_visible(Self, Bool) -> Unit
 pub fn Window::set_window_icon(Self, @core.Icon?) -> Unit
 pub fn Window::set_window_level(Self, @core.WindowLevel) -> Unit
@@ -192,25 +251,30 @@ pub fn Window::surface_size(Self) -> @dpi.PhysicalSize
 pub fn Window::tabbing_identifier(Self) -> String
 pub fn Window::theme(Self) -> @core.Theme?
 pub fn Window::title(Self) -> String
+pub fn Window::unified_titlebar(Self) -> Bool
 pub fn Window::window_handle(Self) -> UInt64
 pub fn Window::window_level(Self) -> @core.WindowLevel
 pub impl Eq for Window
 pub impl Show for Window
 
 // Type aliases
+pub using @core {type PlatformEventLoopAttributes as PlatformSpecificEventLoopAttributes}
+
+pub using @core {type PlatformWindowAttributes as WindowAttributesMacOS}
 
 // Traits
 pub(open) trait ApplicationHandler {
-  new_events(Self, EventLoop, @core.StartCause) -> Unit = _
-  resumed(Self, EventLoop) -> Unit = _
-  can_create_surfaces(Self, EventLoop) -> Unit = _
-  proxy_wake_up(Self, EventLoop) -> Unit = _
-  window_event(Self, EventLoop, @core.WindowId, @core.WindowEvent) -> Unit = _
-  device_event(Self, EventLoop, @core.DeviceId?, @core.DeviceEvent) -> Unit = _
-  about_to_wait(Self, EventLoop) -> Unit = _
-  suspended(Self, EventLoop) -> Unit = _
-  destroy_surfaces(Self, EventLoop) -> Unit = _
-  memory_warning(Self, EventLoop) -> Unit = _
+  new_events(Self, ActiveEventLoop, @core.StartCause) -> Unit = _
+  resumed(Self, ActiveEventLoop) -> Unit = _
+  can_create_surfaces(Self, ActiveEventLoop) -> Unit = _
+  proxy_wake_up(Self, ActiveEventLoop) -> Unit = _
+  window_event(Self, ActiveEventLoop, @core.WindowId, @core.WindowEvent) -> Unit = _
+  device_event(Self, ActiveEventLoop, @core.DeviceId?, @core.DeviceEvent) -> Unit = _
+  about_to_wait(Self, ActiveEventLoop) -> Unit = _
+  suspended(Self, ActiveEventLoop) -> Unit = _
+  destroy_surfaces(Self, ActiveEventLoop) -> Unit = _
+  memory_warning(Self, ActiveEventLoop) -> Unit = _
+  standard_key_binding(Self, ActiveEventLoop, @core.WindowId, String) -> Unit = _
   macos_handler(Self) -> Bool = _
 }
 

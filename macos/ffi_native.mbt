@@ -9,6 +9,16 @@ fn reset_proxy_wake_state() -> Unit {
 }
 
 ///|
+fn set_event_loop_running(running : Bool) -> Unit {
+  native_event_loop_set_running(running)
+}
+
+///|
+fn event_loop_running() -> Bool {
+  native_event_loop_is_running()
+}
+
+///|
 fn runtime_now_ms() -> Int64 {
   native_runtime_now_ms()
 }
@@ -293,6 +303,11 @@ fn window_document_edited(window_id : Int) -> Bool {
 ///|
 fn window_is_borderless_game(window_id : Int) -> Bool {
   native_window_is_borderless_game(window_id)
+}
+
+///|
+fn window_unified_titlebar(window_id : Int) -> Bool {
+  native_window_unified_titlebar(window_id)
 }
 
 ///|
@@ -786,6 +801,14 @@ fn set_window_borderless_game(window_id : Int, borderless_game : Bool) -> Unit {
 }
 
 ///|
+fn set_window_unified_titlebar(
+  window_id : Int,
+  unified_titlebar : Bool,
+) -> Unit {
+  native_window_set_unified_titlebar(window_id, unified_titlebar)
+}
+
+///|
 fn set_window_tabbing_identifier(window_id : Int, identifier : String) -> Unit {
   let identifier_bytes = @utf8.encode(identifier[:], bom=false)
   native_window_set_tabbing_identifier_utf8(
@@ -874,7 +897,7 @@ fn set_window_cursor_visible(window_id : Int, visible : Bool) -> Unit {
 }
 
 ///|
-fn set_window_cursor_hittest(window_id : Int, hittest : Bool) -> Unit {
+fn set_window_cursor_hittest(window_id : Int, hittest : Bool) -> Bool {
   native_window_set_cursor_hittest(window_id, hittest)
 }
 
@@ -987,6 +1010,7 @@ fn create_window(
   active : Bool,
   resizable : Bool,
   decorations : Bool,
+  panel : Bool,
   title : String,
 ) -> Int {
   let title_bytes = @utf8.encode(title[:], bom=false)
@@ -997,6 +1021,7 @@ fn create_window(
     active,
     resizable,
     decorations,
+    panel,
     title_bytes,
     title_bytes.length().to_uint64(),
   )
@@ -1018,6 +1043,12 @@ pub extern "C" fn native_backend_available() -> Bool = "mbw_backend_available"
 
 ///|
 pub extern "C" fn native_event_loop_reset_proxy() -> Unit = "mbw_event_loop_reset_proxy"
+
+///|
+pub extern "C" fn native_event_loop_set_running(running : Bool) -> Unit = "mbw_event_loop_set_running"
+
+///|
+pub extern "C" fn native_event_loop_is_running() -> Bool = "mbw_event_loop_is_running"
 
 ///|
 pub extern "C" fn native_event_loop_take_proxy_wake_up() -> Bool = "mbw_event_loop_take_proxy_wake_up"
@@ -1046,6 +1077,7 @@ pub extern "C" fn native_create_window(
   active : Bool,
   resizable : Bool,
   decorations : Bool,
+  panel : Bool,
   title : Bytes,
   title_len : UInt64,
 ) -> Int = "mbw_window_create_utf8"
@@ -1294,6 +1326,9 @@ extern "C" fn native_window_document_edited(window_id : Int) -> Bool = "mbw_wind
 
 ///|
 extern "C" fn native_window_is_borderless_game(window_id : Int) -> Bool = "mbw_window_is_borderless_game"
+
+///|
+extern "C" fn native_window_unified_titlebar(window_id : Int) -> Bool = "mbw_window_unified_titlebar"
 
 ///|
 extern "C" fn native_window_tabbing_identifier_utf8(window_id : Int) -> Bytes = "mbw_window_tabbing_identifier_utf8"
@@ -1579,6 +1614,12 @@ extern "C" fn native_window_set_titlebar_transparent(
 ) -> Unit = "mbw_window_set_titlebar_transparent"
 
 ///|
+extern "C" fn native_window_set_unified_titlebar(
+  window_id : Int,
+  unified_titlebar : Bool,
+) -> Unit = "mbw_window_set_unified_titlebar"
+
+///|
 extern "C" fn native_window_set_title_hidden(
   window_id : Int,
   title_hidden : Bool,
@@ -1694,7 +1735,7 @@ extern "C" fn native_window_set_cursor_visible(
 extern "C" fn native_window_set_cursor_hittest(
   window_id : Int,
   hittest : Bool,
-) -> Unit = "mbw_window_set_cursor_hittest"
+) -> Bool = "mbw_window_set_cursor_hittest"
 
 ///|
 extern "C" fn native_window_set_cursor_position(

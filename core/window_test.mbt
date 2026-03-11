@@ -38,6 +38,8 @@ test "window attributes follow winit defaults" {
   assert_false(attrs.platform_attributes().titlebar_hidden())
   assert_false(attrs.platform_attributes().titlebar_buttons_hidden())
   assert_false(attrs.platform_attributes().titlebar_transparent())
+  assert_false(attrs.platform_attributes().unified_titlebar())
+  assert_false(attrs.platform_attributes().panel())
   assert_eq(attrs.ime_hints(), ImeHint::none())
   assert_eq(attrs.ime_purpose(), ImePurpose::Normal)
   assert_eq(attrs.window_level(), WindowLevel::Normal)
@@ -75,7 +77,9 @@ test "window attributes builders update fields" {
       .with_title_hidden(true)
       .with_titlebar_hidden(true)
       .with_titlebar_buttons_hidden(true)
-      .with_titlebar_transparent(true),
+      .with_titlebar_transparent(true)
+      .with_unified_titlebar(true)
+      .with_panel(true),
     )
     .with_ime_hints(
       ImeHint::completion()
@@ -146,6 +150,8 @@ test "window attributes builders update fields" {
   assert_true(attrs.platform_attributes().titlebar_hidden())
   assert_true(attrs.platform_attributes().titlebar_buttons_hidden())
   assert_true(attrs.platform_attributes().titlebar_transparent())
+  assert_true(attrs.platform_attributes().unified_titlebar())
+  assert_true(attrs.platform_attributes().panel())
   assert_eq(
     attrs.ime_hints(),
     ImeHint::completion()
@@ -158,6 +164,11 @@ test "window attributes builders update fields" {
   assert_eq(attrs.window_icon(), Some(icon))
   assert_true(attrs.maximized())
   assert_true(attrs.transparent())
+}
+
+///|
+test "option-as-alt default value matches appkit extension defaults" {
+  assert_eq(OptionAsAlt::default(), OptionAsAlt::None)
 }
 
 ///|
@@ -297,10 +308,7 @@ test "ime capability and request models are constructible" {
   assert_eq(enable_request.capabilities(), capabilities_for_enable)
   assert_eq(enable_request.request_data(), request_data)
   assert_eq(enable_request.into_raw(), (capabilities_for_enable, request_data))
-  assert_eq(
-    enable_request.into_request(),
-    ImeRequest::EnableRequest(enable_request),
-  )
+  assert_eq(enable_request.into_request(), ImeRequest::Enable(enable_request))
   assert_eq(request_data.into_request(), ImeRequest::Update(request_data))
   assert_true(ImeEnableRequest::new(capabilities, request_data) is None)
   assert_true(
@@ -308,8 +316,8 @@ test "ime capability and request models are constructible" {
     is Some(_),
   )
   assert_eq(
-    ImeRequest::Enable(capabilities_for_enable),
-    ImeRequest::Enable(capabilities_for_enable),
+    ImeRequest::Enable(enable_request),
+    ImeRequest::Enable(enable_request),
   )
   assert_eq(ImeRequest::Disable, ImeRequest::Disable)
   assert_eq(
@@ -342,6 +350,8 @@ test "ime capability and request models are constructible" {
   assert_true(anchor_out_of_range)
   let ime_error_show = "\{ImeRequestError::NotSupported}"
   assert_true(ime_error_show.length() > 0)
+  let request_error_show = "\{RequestError::Os}"
+  assert_true(request_error_show.length() > 0)
 }
 
 ///|

@@ -180,14 +180,13 @@ pub fn ImeCapabilities::surrounding_text(self : ImeCapabilities) -> Bool {
 
 ///|
 pub(all) enum ImeRequest {
-  Enable(ImeCapabilities)
-  EnableRequest(ImeEnableRequest)
+  Enable(ImeEnableRequest)
   Update(ImeRequestData)
   Disable
   SetAllowed(Bool)
   SetHintAndPurpose(ImeHint, ImePurpose)
   SetPurpose(ImePurpose)
-  SetCursorArea(@dpi.PhysicalPosition, @dpi.PhysicalSize)
+  SetCursorArea(@dpi.Position, @dpi.Size)
   SetSurroundingText(ImeSurroundingText?)
 } derive(Eq, Show)
 
@@ -200,8 +199,9 @@ pub(all) suberror ImeRequestError {
 
 ///|
 pub(all) suberror RequestError {
-  NotSupported(String)
-  Ignored(String)
+  NotSupported
+  Ignored
+  Os
 } derive(Show)
 
 ///|
@@ -404,6 +404,11 @@ pub(all) enum OptionAsAlt {
 } derive(Eq, Show)
 
 ///|
+pub fn OptionAsAlt::default() -> OptionAsAlt {
+  OptionAsAlt::None
+}
+
+///|
 pub struct PlatformWindowAttributes {
   priv mut accepts_first_mouse : Bool
   priv mut disallow_hidpi : Bool
@@ -418,6 +423,8 @@ pub struct PlatformWindowAttributes {
   priv mut titlebar_hidden : Bool
   priv mut titlebar_buttons_hidden : Bool
   priv mut titlebar_transparent : Bool
+  priv mut unified_titlebar : Bool
+  priv mut panel : Bool
 } derive(Eq, Show)
 
 ///|
@@ -436,6 +443,8 @@ pub fn PlatformWindowAttributes::default() -> PlatformWindowAttributes {
     titlebar_hidden: false,
     titlebar_buttons_hidden: false,
     titlebar_transparent: false,
+    unified_titlebar: false,
+    panel: false,
   }
 }
 
@@ -645,6 +654,36 @@ pub fn PlatformWindowAttributes::titlebar_transparent(
   self : PlatformWindowAttributes,
 ) -> Bool {
   self.titlebar_transparent
+}
+
+///|
+pub fn PlatformWindowAttributes::with_unified_titlebar(
+  self : PlatformWindowAttributes,
+  unified_titlebar : Bool,
+) -> PlatformWindowAttributes {
+  self.unified_titlebar = unified_titlebar
+  self
+}
+
+///|
+pub fn PlatformWindowAttributes::unified_titlebar(
+  self : PlatformWindowAttributes,
+) -> Bool {
+  self.unified_titlebar
+}
+
+///|
+pub fn PlatformWindowAttributes::with_panel(
+  self : PlatformWindowAttributes,
+  panel : Bool,
+) -> PlatformWindowAttributes {
+  self.panel = panel
+  self
+}
+
+///|
+pub fn PlatformWindowAttributes::panel(self : PlatformWindowAttributes) -> Bool {
+  self.panel
 }
 
 ///|

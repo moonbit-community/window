@@ -11,13 +11,11 @@ This repository currently targets the smallest useful `macos-arm64` slice first:
 - `dpi` value types and scale helpers
 - core window/event/control-flow data structures
 - a macOS backend that can create a window, poll AppKit events, and run a minimal `run_app` loop
+- event loop APIs: `run_app`, `run_app_on_demand`, `pump_app_events`, `EventLoopProxy::wake_up`, and `EventLoop::builder` with macOS startup attributes
 - `ApplicationHandler::new_events` with `StartCause::{Init, Poll, WaitCancelled, ResumeTimeReached}`
-- `EventLoopProxy::wake_up()` wired into `WaitUntil` wake-ups
 - `WindowEvent::{CloseRequested, Destroyed, Focused, KeyboardInput, ModifiersChanged, Moved, PointerMoved, PointerEntered, PointerLeft, PointerButton, MouseWheel, SurfaceResized, ScaleFactorChanged, ThemeChanged, Occluded, RedrawRequested}`
 - hidden macOS windows remain alive, while close requests now come from an `NSWindowDelegate`
 
 Known deltas against upstream `winit`:
 
 - Only the macOS backend is implemented.
-- `ActiveEventLoop` is currently a type alias of `EventLoop` in this port.
-- `KeyboardInput` now prefers native AppKit text payloads for logical/text reconstruction and keeps the US scancode map only as fallback.

@@ -9,6 +9,16 @@ fn reset_proxy_wake_state() -> Unit {
 }
 
 ///|
+fn set_event_loop_running(_running : Bool) -> Unit {
+  ()
+}
+
+///|
+fn event_loop_running() -> Bool {
+  false
+}
+
+///|
 fn runtime_now_ms() -> Int64 {
   0L
 }
@@ -290,6 +300,11 @@ fn window_document_edited(_window_id : Int) -> Bool {
 
 ///|
 fn window_is_borderless_game(_window_id : Int) -> Bool {
+  false
+}
+
+///|
+fn window_unified_titlebar(_window_id : Int) -> Bool {
   false
 }
 
@@ -786,6 +801,14 @@ fn set_window_borderless_game(
 }
 
 ///|
+fn set_window_unified_titlebar(
+  _window_id : Int,
+  _unified_titlebar : Bool,
+) -> Unit {
+  ()
+}
+
+///|
 fn set_window_tabbing_identifier(
   _window_id : Int,
   _identifier : String,
@@ -859,8 +882,8 @@ fn set_window_cursor_visible(_window_id : Int, _visible : Bool) -> Unit {
 }
 
 ///|
-fn set_window_cursor_hittest(_window_id : Int, _hittest : Bool) -> Unit {
-  ()
+fn set_window_cursor_hittest(_window_id : Int, _hittest : Bool) -> Bool {
+  true
 }
 
 ///|
@@ -965,6 +988,7 @@ fn create_window(
   _active : Bool,
   _resizable : Bool,
   _decorations : Bool,
+  _panel : Bool,
   _title : String,
 ) -> Int {
   abort("macos backend requires the native target")

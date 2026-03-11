@@ -9,9 +9,15 @@ import {
 // Values
 pub fn create_event_loop() -> @macos.EventLoop
 
+pub fn create_event_loop_builder() -> @macos.EventLoopBuilder
+
 pub fn create_event_loop_with_platform_attributes(@core.PlatformEventLoopAttributes) -> @macos.EventLoop
 
 pub fn default_control_flow() -> @core.ControlFlow
+
+pub fn try_create_event_loop() -> @macos.EventLoop raise @core.EventLoopError
+
+pub fn try_create_event_loop_with_platform_attributes(@core.PlatformEventLoopAttributes) -> @macos.EventLoop raise @core.EventLoopError
 
 // Errors
 

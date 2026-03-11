@@ -34,6 +34,12 @@ extern "C" fn window_titlebar_buttons_hidden_for_test(window_id : Int) -> Bool =
 extern "C" fn window_fullsize_content_view_for_test(window_id : Int) -> Bool = "mbw_test_window_fullsize_content_view"
 
 ///|
+extern "C" fn window_unified_titlebar_for_test(window_id : Int) -> Bool = "mbw_test_window_unified_titlebar"
+
+///|
+extern "C" fn window_is_panel_for_test(window_id : Int) -> Bool = "mbw_test_window_is_panel"
+
+///|
 extern "C" fn window_tabbing_mode_for_test(window_id : Int) -> Int = "mbw_test_window_tabbing_mode"
 
 ///|
@@ -42,6 +48,20 @@ extern "C" fn queue_pointer_moved_for_test(
   x : Double,
   y : Double,
 ) -> Unit = "mbw_test_window_queue_pointer_moved"
+
+///|
+#borrow(action)
+extern "C" fn queue_standard_key_binding_for_test(
+  window_id : Int,
+  action : Bytes,
+  action_len : Int,
+) -> Unit = "mbw_test_window_queue_standard_key_binding"
+
+///|
+extern "C" fn runtime_now_set_for_test(ms : Int64) -> Unit = "mbw_runtime_now_ms_set_for_test"
+
+///|
+extern "C" fn runtime_now_clear_for_test() -> Unit = "mbw_runtime_now_ms_clear_for_test"
 
 ///|
 struct LifecycleCallbacksApp {
@@ -56,6 +76,43 @@ struct DeviceEventsPolicyApp {
   policy : @core.DeviceEvents
   device_event_seen : Ref[Bool]
   window_event_seen : Ref[Bool]
+}
+
+///|
+struct StandardKeyBindingApp {
+  action : Ref[String?]
+}
+
+///|
+struct RunOnDemandApp {
+  runs : Ref[Int]
+}
+
+///|
+struct PumpExitApp {
+  init_count : Ref[Int]
+  poll_count : Ref[Int]
+}
+
+///|
+struct PumpContinueApp {
+  init_count : Ref[Int]
+  poll_count : Ref[Int]
+}
+
+///|
+struct ProxyWakePreRunApp {
+  wake_seen : Ref[Bool]
+}
+
+///|
+struct ProxyWakeDuringRunApp {
+  wake_seen : Ref[Bool]
+}
+
+///|
+struct PumpCauseApp {
+  latest_cause : Ref[@core.StartCause?]
 }
 
 ///|
@@ -139,6 +196,142 @@ impl ApplicationHandler for DeviceEventsPolicyApp with device_event(
 }
 
 ///|
+impl ApplicationHandler for StandardKeyBindingApp with can_create_surfaces(
+  _self,
+  event_loop,
+) {
+  let window = event_loop.create_window(
+    @core.WindowAttributes::default().with_visible(false),
+  )
+  let action = @utf8.encode("moveForward:"[:], bom=false)
+  queue_standard_key_binding_for_test(
+    window.id().into_raw(),
+    action,
+    action.length(),
+  )
+}
+
+///|
+impl ApplicationHandler for StandardKeyBindingApp with standard_key_binding(
+  self,
+  event_loop,
+  _window_id,
+  action,
+) {
+  self.action.val = Some(action)
+  event_loop.exit()
+}
+
+///|
+impl ApplicationHandler for StandardKeyBindingApp with about_to_wait(
+  _self,
+  event_loop,
+) {
+  event_loop.exit()
+}
+
+///|
+impl ApplicationHandler for StandardKeyBindingApp with macos_handler(_self) {
+  true
+}
+
+///|
+impl ApplicationHandler for RunOnDemandApp with can_create_surfaces(
+  self,
+  event_loop,
+) {
+  self.runs.val = self.runs.val + 1
+  event_loop.exit()
+}
+
+///|
+impl ApplicationHandler for PumpExitApp with new_events(self, event_loop, cause) {
+  match cause {
+    @core.StartCause::Init => self.init_count.val = self.init_count.val + 1
+    @core.StartCause::Poll => {
+      self.poll_count.val = self.poll_count.val + 1
+      event_loop.exit()
+    }
+    _ => ()
+  }
+}
+
+///|
+impl ApplicationHandler for PumpContinueApp with new_events(
+  self,
+  _event_loop,
+  cause,
+) {
+  match cause {
+    @core.StartCause::Init => self.init_count.val = self.init_count.val + 1
+    @core.StartCause::Poll => self.poll_count.val = self.poll_count.val + 1
+    _ => ()
+  }
+}
+
+///|
+impl ApplicationHandler for ProxyWakePreRunApp with can_create_surfaces(
+  _self,
+  _event_loop,
+) {
+  ()
+}
+
+///|
+impl ApplicationHandler for ProxyWakePreRunApp with proxy_wake_up(
+  self,
+  _event_loop,
+) {
+  self.wake_seen.val = true
+}
+
+///|
+impl ApplicationHandler for ProxyWakePreRunApp with about_to_wait(
+  _self,
+  event_loop,
+) {
+  event_loop.exit()
+}
+
+///|
+impl ApplicationHandler for ProxyWakeDuringRunApp with can_create_surfaces(
+  _self,
+  event_loop,
+) {
+  let proxy = event_loop.create_proxy()
+  proxy.wake_up()
+}
+
+///|
+impl ApplicationHandler for ProxyWakeDuringRunApp with proxy_wake_up(
+  self,
+  event_loop,
+) {
+  self.wake_seen.val = true
+  event_loop.exit()
+}
+
+///|
+impl ApplicationHandler for ProxyWakeDuringRunApp with about_to_wait(
+  _self,
+  event_loop,
+) {
+  event_loop.exit()
+}
+
+///|
+impl ApplicationHandler for PumpCauseApp with new_events(
+  self,
+  _event_loop,
+  cause,
+) {
+  match cause {
+    @core.StartCause::Init => ()
+    _ => self.latest_cause.val = Some(cause)
+  }
+}
+
+///|
 fn run_device_events_policy(policy : @core.DeviceEvents) -> (Bool, Bool) {
   let app : DeviceEventsPolicyApp = {
     policy,
@@ -151,7 +344,7 @@ fn run_device_events_policy(policy : @core.DeviceEvents) -> (Bool, Bool) {
 }
 
 ///|
-test "run_app dispatches lifecycle callbacks on startup and shutdown" {
+test "run_app dispatches macos lifecycle without resumed/suspended hooks" {
   let app : LifecycleCallbacksApp = {
     can_create_surfaces_called: Ref::new(false),
     destroy_surfaces_called: Ref::new(false),
@@ -160,10 +353,10 @@ test "run_app dispatches lifecycle callbacks on startup and shutdown" {
   }
   let event_loop = EventLoop::new()
   event_loop.run_app(app)
-  assert_true(app.resumed_called.val)
   assert_true(app.can_create_surfaces_called.val)
-  assert_true(app.destroy_surfaces_called.val)
-  assert_true(app.suspended_called.val)
+  assert_false(app.resumed_called.val)
+  assert_false(app.destroy_surfaces_called.val)
+  assert_false(app.suspended_called.val)
 }
 
 ///|
@@ -176,21 +369,75 @@ test "system theme and device event policy APIs are callable" {
 }
 
 ///|
-test "device events are suppressed when policy is never" {
+test "event loop window_target exposes active-event-loop APIs" {
+  let event_loop = EventLoop::new()
+  let active = event_loop.window_target()
+  assert_eq(active.control_flow(), @core.ControlFlow::Wait)
+  active.set_control_flow(@core.ControlFlow::Poll)
+  assert_eq(event_loop.control_flow(), @core.ControlFlow::Poll)
+  assert_eq(active.rwh_06_handle(), event_loop.rwh_06_handle())
+  assert_eq(active.owned_display_handle(), event_loop.owned_display_handle())
+  let _ = active.available_monitors()
+}
+
+///|
+test "try_new and try_build expose raise-based event-loop constructors" {
+  let event_loop_from_new = Some(EventLoop::try_new()) catch { _ => None }
+  assert_true(event_loop_from_new is Some(_))
+
+  let event_loop_from_builder = Some(EventLoop::builder().try_build()) catch {
+    _ => None
+  }
+  assert_true(event_loop_from_builder is Some(_))
+
+  let event_loop_from_platform_attributes = Some(
+    EventLoop::try_new_with_platform_attributes(
+      @core.PlatformEventLoopAttributes::default(),
+    ),
+  ) catch {
+    _ => None
+  }
+  assert_true(event_loop_from_platform_attributes is Some(_))
+}
+
+///|
+test "event loop builder default mirrors new constructor" {
+  let from_default = EventLoopBuilder::default().build()
+  let from_new = EventLoopBuilder::new().build()
+  assert_eq(from_default.control_flow(), from_new.control_flow())
+}
+
+///|
+test "try_create_window exposes raise-based window creation API" {
+  let event_loop = try! EventLoop::try_new()
+  let window = try! event_loop.try_create_window(
+    @core.WindowAttributes::default().with_visible(false),
+  )
+  assert_true(window.id().into_raw() > 0)
+
+  let active = event_loop.window_target()
+  let active_window = try! active.try_create_window(
+    @core.WindowAttributes::default().with_visible(false),
+  )
+  assert_true(active_window.id().into_raw() > 0)
+}
+
+///|
+test "device events remain delivered when policy is never on macos" {
   let (window_event_seen, device_event_seen) = run_device_events_policy(
     @core.DeviceEvents::Never,
   )
   assert_true(window_event_seen)
-  assert_false(device_event_seen)
+  assert_true(device_event_seen)
 }
 
 ///|
-test "device events are suppressed for unfocused windows by default policy" {
+test "device events remain delivered when policy is when-focused on macos" {
   let (window_event_seen, device_event_seen) = run_device_events_policy(
     @core.DeviceEvents::WhenFocused,
   )
   assert_true(window_event_seen)
-  assert_false(device_event_seen)
+  assert_true(device_event_seen)
 }
 
 ///|
@@ -203,10 +450,174 @@ test "device events are delivered when policy is always" {
 }
 
 ///|
+test "standard key binding callback is delivered when handler is enabled" {
+  let action = Ref::new(None)
+  let app : StandardKeyBindingApp = { action, }
+  let event_loop = EventLoop::new()
+  event_loop.run_app(app)
+  assert_eq(action.val, Some("moveForward:"))
+}
+
+///|
+test "run_app_on_demand can re-enter the same event loop instance" {
+  let runs = Ref::new(0)
+  let app : RunOnDemandApp = { runs, }
+  let event_loop = EventLoop::new()
+  event_loop.run_app_on_demand(app)
+  event_loop.run_app_on_demand(app)
+  assert_eq(runs.val, 2)
+}
+
+///|
+test "try_run_app and try_run_app_on_demand expose raise-based runner APIs" {
+  let lifecycle_app : LifecycleCallbacksApp = {
+    can_create_surfaces_called: Ref::new(false),
+    destroy_surfaces_called: Ref::new(false),
+    resumed_called: Ref::new(false),
+    suspended_called: Ref::new(false),
+  }
+  let lifecycle_loop = try! EventLoop::try_new()
+  let run_ok = try {
+    lifecycle_loop.try_run_app(lifecycle_app)
+    true
+  } catch {
+    _ => false
+  }
+  assert_true(run_ok)
+  assert_true(lifecycle_app.can_create_surfaces_called.val)
+
+  let runs = Ref::new(0)
+  let on_demand_app : RunOnDemandApp = { runs, }
+  let on_demand_loop = try! EventLoop::try_new()
+  let first_ok = try {
+    on_demand_loop.try_run_app_on_demand(on_demand_app)
+    true
+  } catch {
+    _ => false
+  }
+  let second_ok = try {
+    on_demand_loop.try_run_app_on_demand(on_demand_app)
+    true
+  } catch {
+    _ => false
+  }
+  assert_true(first_ok)
+  assert_true(second_ok)
+  assert_eq(runs.val, 2)
+}
+
+///|
+test "try_pump_app_events exposes raise-based pump API" {
+  let init_count = Ref::new(0)
+  let poll_count = Ref::new(0)
+  let app : PumpContinueApp = { init_count, poll_count }
+  let event_loop = try! EventLoop::try_new()
+  event_loop.set_control_flow(@core.ControlFlow::Poll)
+  let status = try! event_loop.try_pump_app_events(Some(0), app)
+  assert_eq(status, @core.PumpStatus::Continue)
+  assert_eq(init_count.val, 1)
+  assert_eq(poll_count.val, 1)
+  event_loop.exit()
+  let cleanup_status = try! event_loop.try_pump_app_events(Some(0), app)
+  assert_eq(cleanup_status, @core.PumpStatus::Exit(0))
+}
+
+///|
+test "pump_app_events returns continue for non-exiting app state" {
+  let init_count = Ref::new(0)
+  let poll_count = Ref::new(0)
+  let app : PumpContinueApp = { init_count, poll_count }
+  let event_loop = EventLoop::new()
+  event_loop.set_control_flow(@core.ControlFlow::Poll)
+  let status = event_loop.pump_app_events(Some(0), app)
+  assert_eq(status, @core.PumpStatus::Continue)
+  assert_eq(init_count.val, 1)
+  assert_eq(poll_count.val, 1)
+  event_loop.exit()
+  let cleanup_status = event_loop.pump_app_events(Some(0), app)
+  assert_eq(cleanup_status, @core.PumpStatus::Exit(0))
+}
+
+///|
+test "pump_app_events reports exit when app requests shutdown" {
+  let init_count = Ref::new(0)
+  let poll_count = Ref::new(0)
+  let app : PumpExitApp = { init_count, poll_count }
+  let event_loop = EventLoop::new()
+  event_loop.set_control_flow(@core.ControlFlow::Poll)
+  let status = event_loop.pump_app_events(Some(0), app)
+  assert_eq(status, @core.PumpStatus::Exit(0))
+  assert_eq(init_count.val, 1)
+  assert_eq(poll_count.val, 1)
+}
+
+///|
+test "event loop proxy wake_up before run is ignored on macos" {
+  let wake_seen = Ref::new(false)
+  let app : ProxyWakePreRunApp = { wake_seen, }
+  let event_loop = EventLoop::new()
+  let proxy = event_loop.create_proxy()
+  proxy.wake_up()
+  event_loop.run_app(app)
+  assert_false(wake_seen.val)
+}
+
+///|
+test "event loop proxy wake_up during run dispatches callback" {
+  let wake_seen = Ref::new(false)
+  let app : ProxyWakeDuringRunApp = { wake_seen, }
+  let event_loop = EventLoop::new()
+  event_loop.run_app(app)
+  assert_true(wake_seen.val)
+}
+
+///|
+test "pump_app_events timeout is capped by wait-until control flow" {
+  runtime_now_set_for_test(1000L)
+  let latest_cause = Ref::new(None)
+  let app : PumpCauseApp = { latest_cause, }
+  let event_loop = EventLoop::new()
+  event_loop.set_control_flow(@core.ControlFlow::WaitUntil(1010L))
+  let status = event_loop.pump_app_events(Some(5), app)
+  assert_eq(status, @core.PumpStatus::Continue)
+  assert_eq(
+    latest_cause.val,
+    Some(@core.StartCause::WaitCancelled(1000L, Some(1010L))),
+  )
+  event_loop.exit()
+  let cleanup_status = event_loop.pump_app_events(Some(0), app)
+  assert_eq(cleanup_status, @core.PumpStatus::Exit(0))
+  runtime_now_clear_for_test()
+}
+
+///|
+test "pump_app_events reports resume-time-reached at wait-until deadline" {
+  runtime_now_set_for_test(1000L)
+  let latest_cause = Ref::new(None)
+  let app : PumpCauseApp = { latest_cause, }
+  let event_loop = EventLoop::new()
+  event_loop.set_control_flow(@core.ControlFlow::WaitUntil(1010L))
+  let status = event_loop.pump_app_events(Some(50), app)
+  assert_eq(status, @core.PumpStatus::Continue)
+  assert_eq(
+    latest_cause.val,
+    Some(@core.StartCause::ResumeTimeReached(1000L, 1010L)),
+  )
+  event_loop.exit()
+  let cleanup_status = event_loop.pump_app_events(Some(0), app)
+  assert_eq(cleanup_status, @core.PumpStatus::Exit(0))
+  runtime_now_clear_for_test()
+}
+
+///|
 test "monitor ns_screen exposes the Cocoa screen handle when available" {
   let event_loop = EventLoop::new()
   match event_loop.primary_monitor() {
-    Some(monitor) => assert_true(monitor_ns_screen(monitor) is Some(_))
+    Some(monitor) => {
+      let handle = monitor_ns_screen(monitor)
+      assert_true(handle is Some(_))
+      assert_eq(ns_screen(monitor), handle)
+    }
     None => ()
   }
 }
@@ -228,6 +639,36 @@ test "platform event loop attributes apply activation and menu configuration" {
 }
 
 ///|
+test "upstream appkit type aliases map to core platform attributes" {
+  let loop_attrs = PlatformSpecificEventLoopAttributes::default()
+    .with_default_menu(false)
+    .with_activate_ignoring_other_apps(false)
+  assert_false(loop_attrs.default_menu())
+  assert_false(loop_attrs.activate_ignoring_other_apps())
+
+  let window_attrs = WindowAttributesMacOS::default()
+    .with_panel(true)
+    .with_unified_titlebar(true)
+  assert_true(window_attrs.panel())
+  assert_true(window_attrs.unified_titlebar())
+}
+
+///|
+test "event loop builder macos extensions apply activation and menu configuration" {
+  let event_loop = EventLoop::builder()
+    .with_activation_policy(@core.ActivationPolicy::Prohibited)
+    .with_default_menu(true)
+    .with_activate_ignoring_other_apps(false)
+    .build()
+  let _ = event_loop.create_window(
+    @core.WindowAttributes::default().with_visible(false),
+  )
+  assert_eq(application_activation_policy_for_test(), 2)
+  assert_true(application_has_main_menu_for_test())
+  assert_false(application_activate_ignoring_other_apps_for_test())
+}
+
+///|
 test "macos creation-only platform window attributes apply at creation time" {
   let event_loop = EventLoop::new()
   let window = event_loop.create_window(
@@ -242,7 +683,8 @@ test "macos creation-only platform window attributes apply at creation time" {
       .with_title_hidden(true)
       .with_titlebar_hidden(true)
       .with_titlebar_buttons_hidden(true)
-      .with_titlebar_transparent(true),
+      .with_titlebar_transparent(true)
+      .with_panel(true),
     ),
   )
   let raw_id = window.id().into_raw()
@@ -254,6 +696,25 @@ test "macos creation-only platform window attributes apply at creation time" {
   assert_true(window_titlebar_hidden_for_test(raw_id))
   assert_true(window_titlebar_buttons_hidden_for_test(raw_id))
   assert_true(window_fullsize_content_view_for_test(raw_id))
+  assert_true(window_is_panel_for_test(raw_id))
+}
+
+///|
+test "window unified titlebar can be updated at runtime" {
+  let event_loop = EventLoop::new()
+  let window = event_loop.create_window(
+    @core.WindowAttributes::default()
+    .with_visible(false)
+    .with_platform_attributes(
+      @core.PlatformWindowAttributes::default().with_unified_titlebar(true),
+    ),
+  )
+  let raw_id = window.id().into_raw()
+  assert_true(window.unified_titlebar())
+  assert_true(window_unified_titlebar_for_test(raw_id))
+  window.set_unified_titlebar(false)
+  assert_false(window.unified_titlebar())
+  assert_false(window_unified_titlebar_for_test(raw_id))
 }
 
 ///|
@@ -284,6 +745,38 @@ test "winit-compatible window aliases reuse macos surface APIs" {
   assert_eq(window.max_inner_size(), Some(@dpi.PhysicalSize::new(800, 600)))
   window.set_cursor_icon(@core.CursorIcon::Pointer)
   assert_eq(window.cursor(), @core.Cursor::Icon(@core.CursorIcon::Pointer))
+}
+
+///|
+test "set_cursor_hittest supports request-error style API on macos" {
+  let event_loop = EventLoop::new()
+  let window = event_loop.create_window(
+    @core.WindowAttributes::default().with_visible(false),
+  )
+  let first_ok = try {
+    window.set_cursor_hittest(false)
+    true
+  } catch {
+    _ => false
+  }
+  let second_ok = try {
+    window.set_cursor_hittest(true)
+    true
+  } catch {
+    _ => false
+  }
+  assert_true(first_ok)
+  assert_true(second_ok)
+}
+
+///|
+test "outer_position supports request-error style API on macos" {
+  let event_loop = EventLoop::new()
+  let window = event_loop.create_window(
+    @core.WindowAttributes::default().with_visible(false),
+  )
+  let position = Some(window.outer_position()) catch { _ => None }
+  assert_true(position is Some(_))
 }
 
 ///|
@@ -328,7 +821,7 @@ test "create_custom_cursor reports not supported for animation sources" {
     event_loop.create_custom_cursor(animated) |> ignore
     false
   } catch {
-    @core.RequestError::NotSupported(_) => true
+    @core.RequestError::NotSupported => true
     _ => false
   }
   assert_true(not_supported)

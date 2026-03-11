@@ -152,6 +152,28 @@ fn physical_key_from_scancode(
 }
 
 ///|
+pub fn scancode_to_physicalkey(scancode : Int) -> @core.PhysicalKey {
+  physical_key_from_scancode(scancode, None)
+}
+
+///|
+pub fn physicalkey_to_scancode(physical_key : @core.PhysicalKey) -> Int? {
+  match physical_key {
+    @core.PhysicalKey::Unidentified(_) => None
+    _ => {
+      let mut scancode = 0
+      while scancode <= 0x7F {
+        if scancode_to_physicalkey(scancode) == physical_key {
+          return Some(scancode)
+        }
+        scancode = scancode + 1
+      }
+      None
+    }
+  }
+}
+
+///|
 fn key_location_from_physical_key(key : @core.PhysicalKey) -> @core.KeyLocation {
   match key {
     @core.PhysicalKey::Code(@core.KeyCode::MetaLeft) => @core.KeyLocation::Left
@@ -260,150 +282,6 @@ fn named_key_from_code(code : @core.KeyCode) -> @core.NamedKey? {
 }
 
 ///|
-fn key_without_modifiers_char(scancode : Int) -> String? {
-  match scancode {
-    0x00 => Some("a")
-    0x01 => Some("s")
-    0x02 => Some("d")
-    0x03 => Some("f")
-    0x04 => Some("h")
-    0x05 => Some("g")
-    0x06 => Some("z")
-    0x07 => Some("x")
-    0x08 => Some("c")
-    0x09 => Some("v")
-    0x0B => Some("b")
-    0x0C => Some("q")
-    0x0D => Some("w")
-    0x0E => Some("e")
-    0x0F => Some("r")
-    0x10 => Some("y")
-    0x11 => Some("t")
-    0x12 => Some("1")
-    0x13 => Some("2")
-    0x14 => Some("3")
-    0x15 => Some("4")
-    0x16 => Some("6")
-    0x17 => Some("5")
-    0x18 => Some("=")
-    0x19 => Some("9")
-    0x1A => Some("7")
-    0x1B => Some("-")
-    0x1C => Some("8")
-    0x1D => Some("0")
-    0x1E => Some("]")
-    0x1F => Some("o")
-    0x20 => Some("u")
-    0x21 => Some("[")
-    0x22 => Some("i")
-    0x23 => Some("p")
-    0x25 => Some("l")
-    0x26 => Some("j")
-    0x27 => Some("'")
-    0x28 => Some("k")
-    0x29 => Some(";")
-    0x2A => Some("\\")
-    0x2B => Some(",")
-    0x2C => Some("/")
-    0x2D => Some("n")
-    0x2E => Some("m")
-    0x2F => Some(".")
-    0x31 => Some(" ")
-    0x32 => Some("`")
-    0x41 => Some(".")
-    0x43 => Some("*")
-    0x45 => Some("+")
-    0x4B => Some("/")
-    0x4E => Some("-")
-    0x51 => Some("=")
-    0x52 => Some("0")
-    0x53 => Some("1")
-    0x54 => Some("2")
-    0x55 => Some("3")
-    0x56 => Some("4")
-    0x57 => Some("5")
-    0x58 => Some("6")
-    0x59 => Some("7")
-    0x5B => Some("8")
-    0x5C => Some("9")
-    0x5F => Some(",")
-    _ => None
-  }
-}
-
-///|
-fn shifted_char(scancode : Int) -> String? {
-  match scancode {
-    0x00 => Some("A")
-    0x01 => Some("S")
-    0x02 => Some("D")
-    0x03 => Some("F")
-    0x04 => Some("H")
-    0x05 => Some("G")
-    0x06 => Some("Z")
-    0x07 => Some("X")
-    0x08 => Some("C")
-    0x09 => Some("V")
-    0x0B => Some("B")
-    0x0C => Some("Q")
-    0x0D => Some("W")
-    0x0E => Some("E")
-    0x0F => Some("R")
-    0x10 => Some("Y")
-    0x11 => Some("T")
-    0x12 => Some("!")
-    0x13 => Some("@")
-    0x14 => Some("#")
-    0x15 => Some("$")
-    0x16 => Some("^")
-    0x17 => Some("%")
-    0x18 => Some("+")
-    0x19 => Some("(")
-    0x1A => Some("&")
-    0x1B => Some("_")
-    0x1C => Some("*")
-    0x1D => Some(")")
-    0x1E => Some("}")
-    0x1F => Some("O")
-    0x20 => Some("U")
-    0x21 => Some("{")
-    0x22 => Some("I")
-    0x23 => Some("P")
-    0x25 => Some("L")
-    0x26 => Some("J")
-    0x27 => Some("\"")
-    0x28 => Some("K")
-    0x29 => Some(":")
-    0x2A => Some("|")
-    0x2B => Some("<")
-    0x2C => Some("?")
-    0x2D => Some("N")
-    0x2E => Some("M")
-    0x2F => Some(">")
-    0x31 => Some(" ")
-    0x32 => Some("~")
-    0x41 => Some(".")
-    0x43 => Some("*")
-    0x45 => Some("+")
-    0x4B => Some("/")
-    0x4E => Some("-")
-    0x51 => Some("=")
-    0x52 => Some("0")
-    0x53 => Some("1")
-    0x54 => Some("2")
-    0x55 => Some("3")
-    0x56 => Some("4")
-    0x57 => Some("5")
-    0x58 => Some("6")
-    0x59 => Some("7")
-    0x5B => Some("8")
-    0x5C => Some("9")
-    0x5F => Some(",")
-    _ => None
-  }
-}
-
-///|
 fn normalized_native_text(text : String?) -> String? {
   match text {
     Some(text) => if text.length() == 0 { None } else { Some(text) }
@@ -448,12 +326,7 @@ fn key_without_modifiers_from_scancode(
         None =>
           match key_from_native_text(text_without_modifiers) {
             Some(key) => key
-            None =>
-              match key_without_modifiers_char(scancode) {
-                Some(character) => @core.Key::Character(character)
-                None =>
-                  @core.Key::Unidentified(@core.NativeKey::MacOS(scancode))
-              }
+            None => @core.Key::Unidentified(@core.NativeKey::MacOS(scancode))
           }
       }
     @core.PhysicalKey::Unidentified(@core.NativeKeyCode::MacOS(code)) =>
@@ -471,7 +344,6 @@ fn key_without_modifiers_from_scancode(
 
 ///|
 fn logical_key_from_scancode(
-  scancode : Int,
   physical_key : @core.PhysicalKey,
   state : @core.ElementState,
   modifiers : @core.Modifiers,
@@ -500,17 +372,7 @@ fn logical_key_from_scancode(
                     text_without_modifiers, state,
                   ) {
                   Some(key) => key
-                  None => {
-                    let fallback_character = if modifiers.shift_key() {
-                      shifted_char(scancode)
-                    } else {
-                      key_without_modifiers_char(scancode)
-                    }
-                    match fallback_character {
-                      Some(character) => @core.Key::Character(character)
-                      None => key_without_modifiers
-                    }
-                  }
+                  None => key_without_modifiers
                 }
             }
           }
@@ -578,7 +440,7 @@ fn create_key_event(
     scancode, physical_key, normalized_text_without_modifiers,
   )
   let logical_key = logical_key_from_scancode(
-    scancode, physical_key, state, modifiers, key_without_modifiers, normalized_text_with_all_modifiers,
+    physical_key, state, modifiers, key_without_modifiers, normalized_text_with_all_modifiers,
     normalized_text_ignoring_modifiers, normalized_text_without_modifiers,
   )
   let text = match state {

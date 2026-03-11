@@ -115,3 +115,29 @@ test "create_key_event distinguishes help and insert private function-key text" 
   )
   assert_eq(help_event.logical_key(), @core.Key::Named(@core.NamedKey::Help))
 }
+
+///|
+test "scancode_to_physicalkey follows appkit mapping and unidentified fallback" {
+  assert_eq(
+    scancode_to_physicalkey(0x24),
+    @core.PhysicalKey::Code(@core.KeyCode::Enter),
+  )
+  assert_eq(
+    scancode_to_physicalkey(0x123),
+    @core.PhysicalKey::Unidentified(@core.NativeKeyCode::MacOS(0x123)),
+  )
+}
+
+///|
+test "physicalkey_to_scancode returns known appkit scan code for physical key" {
+  assert_eq(
+    physicalkey_to_scancode(@core.PhysicalKey::Code(@core.KeyCode::ArrowLeft)),
+    Some(0x7B),
+  )
+  assert_eq(
+    physicalkey_to_scancode(
+      @core.PhysicalKey::Unidentified(@core.NativeKeyCode::MacOS(0x7B)),
+    ),
+    None,
+  )
+}

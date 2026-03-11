@@ -16,11 +16,22 @@ native builds and focuses on `macos-arm64`.
   `Occluded`, `RedrawRequested`
 - `winit`-style compatibility projections are available through
   `WindowEvent::into_winit_events()` and `DeviceEvent::into_winit_event()`
-- Event loop support: `run_app`, `EventLoopProxy::wake_up()`,
+- Event loop support: `run_app`, `run_app_on_demand`, `pump_app_events`,
+  `try_run_app`, `try_run_app_on_demand`, `try_pump_app_events`,
+  `EventLoopProxy::wake_up()`,
   `ControlFlow::{Poll, Wait, WaitUntil}`, `EventLoop::system_theme`,
-  `EventLoop::listen_device_events` (accepted as a no-op on macOS), and
-  lifecycle callbacks (`resumed`, `can_create_surfaces`,
-  `destroy_surfaces`, `suspended`, `device_event`)
+  `EventLoop::listen_device_events` (accepted as a no-op on macOS),
+  `EventLoop::window_target`,
+  `EventLoop::builder`, and
+  `EventLoopBuilder::{with_activation_policy, with_default_menu,
+  with_activate_ignoring_other_apps, build, try_build}`,
+  `EventLoop::{new, try_new, new_with_platform_attributes,
+  try_new_with_platform_attributes}`, and
+  callback dispatch for `new_events`, `can_create_surfaces`, `about_to_wait`,
+  `window_event`, `device_event`, `proxy_wake_up`, and
+  `standard_key_binding` (when `macos_handler()` is enabled); on macOS,
+  `resumed` / `destroy_surfaces` / `suspended` are currently not emitted, with
+  `PumpStatus::{Continue, Exit(code)}`
 - Runtime window control currently includes surface and frame sizing
   (`surface_size`, `outer_size`, `surface_position`, `safe_area`,
   `request_surface_size`,
@@ -34,15 +45,17 @@ native builds and focuses on `macos-arm64`.
   `set_cursor_position`, `set_cursor_grab`, `set_cursor_visible`,
   `is_cursor_visible`, `set_cursor_hittest`, `is_cursor_hittest`, `set_blur`,
   `set_transparent`, `set_decorations`, `set_window_level`,
-  `request_user_attention`), raw handle bridge (`rwh_06_window_handle`,
+  `set_unified_titlebar`, `unified_titlebar`, `request_user_attention`), raw
+  handle bridge (`rwh_06_window_handle`,
   `rwh_06_display_handle`), visibility and
   capability flags (`set_visible`, `set_resizable`, `set_enabled_buttons`,
   `set_content_protected`), and IME control (`set_ime_purpose`,
   `set_ime_hints`, `set_ime_allowed`, `set_ime_cursor_area`,
   `set_ime_surrounding_text`, `ime_hints`, `ime_surrounding_text`,
-  `request_ime_update`, `ime_capabilities`). Additional compatibility shims
+  `request_ime_update`, `ime_capabilities`), plus raise-based
+  `try_create_window`. Additional compatibility shims
   include `pre_present_notify`, `reset_dead_keys`, `drag_window`,
-  `drag_resize_window`, and `show_window_menu`.
+  `drag_resize_window` (NotSupported on macOS), and `show_window_menu`.
 - Monitor APIs are available on macOS via `EventLoop::{available_monitors,
   primary_monitor}` and `Window::{available_monitors, primary_monitor,
   current_monitor}`; monitor handles include native id, name, position,
@@ -52,22 +65,26 @@ native builds and focuses on `macos-arm64`.
   icon/visibility/hittest, blur/transparency/decorations/content protection,
   enabled buttons, window level, IME purpose, optional `parent_window`
   (native handle), and
-  macOS platform attributes (such as `simple_fullscreen`).
+  macOS platform attributes (such as `simple_fullscreen` and
+  `unified_titlebar`, `panel`).
 - `Fullscreen` supports both `Borderless(MonitorHandle?)` and
   `Exclusive(MonitorHandle, VideoMode)` payloads in the core API.
 - Current keyboard support is macOS-first and now prefers native
   `NSEvent` text (`characters` / `charactersIgnoringModifiers`) for
   `logical_key` and `text`; `key_without_modifiers` uses Carbon
-  `UCKeyTranslate` and falls back to scancode mapping when needed. Dead keys
-  are surfaced as `Key::Dead` when applicable.
-- Basic IME events are bridged from AppKit text input (`Enabled`, `Preedit`,
-  `Commit`, `Disabled`), and IME update requests cover purpose, allowed state,
-  hint/purpose pairs, cursor area, and surrounding text; `ImePurpose` includes `Normal`,
-  `Password`, `Terminal`, `Number`, `Phone`, `Url`, `Email`, `Pin`, `Date`,
-  `Time`, and `DateTime`.
+  `UCKeyTranslate`. Dead keys are surfaced as `Key::Dead` when applicable.
+- macOS scancode bridge helpers are available as
+  `physicalkey_to_scancode` / `scancode_to_physicalkey`.
+- IME events are bridged from AppKit text input (`Enabled`, `Preedit`,
+  `Commit`, `DeleteSurrounding`, `Disabled`), and IME update requests cover
+  purpose, allowed state, hint/purpose pairs, cursor area, and surrounding
+  text; `ImePurpose` includes `Normal`, `Password`, `Terminal`, `Number`,
+  `Phone`, `Url`, `Email`, `Pin`, `Date`, `Time`, and `DateTime`.
 - API errors use MoonBit `raise` with typed errors (for example
   `@core.BadIcon`, `@core.ImeSurroundingTextError`,
-  `@core.ImeRequestError`, `@core.RequestError`) rather than `Result`.
+  `@core.ImeRequestError`, `@core.RequestError`) rather than `Result`; this
+  includes APIs like `outer_position`, `set_cursor_hittest`,
+  `set_cursor_position`, and `set_cursor_grab`.
 - `EventLoop::create_custom_cursor` supports both RGBA and URL cursor sources
   on macOS; URL inputs accept regular URL strings and local file paths.
   Animation cursor sources are part of the API and currently raise
@@ -167,8 +184,14 @@ pub impl @macos.ApplicationHandler for App with window_event(
 ## Notes
 
 - `ControlFlow::WaitUntil` takes an absolute monotonic timestamp (milliseconds)
-- `ApplicationHandler` methods receive `ActiveEventLoop` (currently an alias
-  of `EventLoop`)
+- `pump_app_events(timeout_ms, app)` uses millisecond timeout:
+  `Some(0)` is non-blocking; `None` follows current `ControlFlow`
+- Use `EventLoop::builder()` when you need macOS startup attributes
+  (`activation_policy`, default menu creation, activate-ignoring-other-apps)
+- `ApplicationHandler` methods receive `ActiveEventLoop`, matching winit's
+  active-loop callback shape
+- Upstream AppKit type names are available as aliases:
+  `WindowAttributesMacOS` and `PlatformSpecificEventLoopAttributes`
 - `WindowEvent::into_winit_events()` can expand one richer event into multiple
   compatibility events, for example when a single drag enter contains multiple
   file paths

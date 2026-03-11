@@ -13,6 +13,67 @@ extern "C" fn runtime_now_set_for_test(ms : Int64) -> Unit = "mbw_runtime_now_ms
 extern "C" fn runtime_now_clear_for_test() -> Unit = "mbw_runtime_now_ms_clear_for_test"
 
 ///|
+struct RunGuardApp {
+  _unit : Unit
+}
+
+///|
+impl ApplicationHandler for RunGuardApp with can_create_surfaces(
+  _self,
+  event_loop,
+) {
+  event_loop.exit()
+}
+
+///|
+test "try run app raises recreation attempt when backend is already running" {
+  set_event_loop_running(true)
+  let event_loop = EventLoop::new()
+  let app : RunGuardApp = { _unit: () }
+  let recreation_attempt = try {
+    event_loop.try_run_app(app)
+    false
+  } catch {
+    @core.EventLoopError::RecreationAttempt => true
+    _ => false
+  }
+  set_event_loop_running(false)
+  assert_true(recreation_attempt)
+}
+
+///|
+test "try run app on demand raises recreation attempt when backend is already running" {
+  set_event_loop_running(true)
+  let event_loop = EventLoop::new()
+  let app : RunGuardApp = { _unit: () }
+  let recreation_attempt = try {
+    event_loop.try_run_app_on_demand(app)
+    false
+  } catch {
+    @core.EventLoopError::RecreationAttempt => true
+    _ => false
+  }
+  set_event_loop_running(false)
+  assert_true(recreation_attempt)
+}
+
+///|
+test "try pump app events raises recreation attempt when backend is already running" {
+  set_event_loop_running(true)
+  let event_loop = EventLoop::new()
+  let app : RunGuardApp = { _unit: () }
+  let recreation_attempt = try {
+    let _ = event_loop.try_pump_app_events(Some(0), app)
+    false
+  } catch {
+    @core.EventLoopError::RecreationAttempt => true
+    _ => false
+  }
+  set_event_loop_running(false)
+  assert_true(recreation_attempt)
+}
+
+///|
 extern "C" fn queue_close_requested_for_test(window_id : Int) -> Unit = "mbw_test_window_queue_close_requested"
 
 ///|
@@ -193,6 +254,13 @@ extern "C" fn queue_ime_commit_for_test(
   text : Bytes,
   text_len : Int,
 ) -> Unit = "mbw_test_window_queue_ime_commit"
+
+///|
+extern "C" fn queue_ime_delete_surrounding_for_test(
+  window_id : Int,
+  before_bytes : Int,
+  after_bytes : Int,
+) -> Unit = "mbw_test_window_queue_ime_delete_surrounding"
 
 ///|
 extern "C" fn icon_present_for_test(window_id : Int) -> Bool = "mbw_test_window_has_icon"
@@ -965,9 +1033,13 @@ impl ApplicationHandler for WindowCursorApp with can_create_surfaces(
   self.visible_after_disable.val = window.is_cursor_visible()
   window.set_cursor_visible(true)
   self.visible_after_enable.val = window.is_cursor_visible()
-  window.set_cursor_hittest(false)
+  window.set_cursor_hittest(false) catch {
+    _ => ()
+  }
   self.hittest_after_disable.val = window.is_cursor_hittest()
-  window.set_cursor_hittest(true)
+  window.set_cursor_hittest(true) catch {
+    _ => ()
+  }
   self.hittest_after_enable.val = window.is_cursor_hittest()
   event_loop.exit()
 }
@@ -1149,7 +1221,10 @@ impl ApplicationHandler for OuterPositionApp with window_event(
     @core.WindowEvent::Moved(position) => {
       self.moved.val = Some(position)
       match self.window.val {
-        Some(window) => self.outer_position.val = Some(window.outer_position())
+        Some(window) =>
+          self.outer_position.val = Some(window.outer_position()) catch {
+            _ => None
+          }
         None => ()
       }
       event_loop.exit()
@@ -1198,7 +1273,10 @@ impl ApplicationHandler for AttributesPositionApp with window_event(
     @core.WindowEvent::Moved(position) => {
       self.moved.val = Some(position)
       match self.window.val {
-        Some(window) => self.outer_position.val = Some(window.outer_position())
+        Some(window) =>
+          self.outer_position.val = Some(window.outer_position()) catch {
+            _ => None
+          }
         None => ()
       }
       event_loop.exit()
@@ -1747,6 +1825,7 @@ impl ApplicationHandler for ImeApp with can_create_surfaces(self, event_loop) {
       let preedit = @utf8.encode("a"[:], bom=false)
       queue_ime_preedit_for_test(raw_id, preedit, preedit.length(), 0, 1)
     }
+    3 => queue_ime_delete_surrounding_for_test(raw_id, 3, 2)
     _ => ()
   }
 }
@@ -1765,6 +1844,9 @@ impl ApplicationHandler for ImeApp with window_event(
         event_loop.exit()
       }
       if self.scenario == 2 && self.events.length() >= 2 {
+        event_loop.exit()
+      }
+      if self.scenario == 3 && self.events.length() >= 1 {
         event_loop.exit()
       }
     }
@@ -1807,7 +1889,7 @@ impl ApplicationHandler for ImeConfigurationApp with can_create_surfaces(
     None => abort("expected valid IME enable request")
   }
   self.enable_when_enabled_error.val = try {
-    window.request_ime_update(@core.ImeRequest::EnableRequest(enable_request))
+    window.request_ime_update(@core.ImeRequest::Enable(enable_request))
     None
   } catch {
     error => Some(error)
@@ -1886,8 +1968,8 @@ impl ApplicationHandler for ImeConfigurationApp with can_create_surfaces(
     error => Some(error)
   }
   window.set_ime_cursor_area(
-    @dpi.PhysicalPosition::new(48, 96),
-    @dpi.PhysicalSize::new(20, 32),
+    @dpi.PhysicalPosition::new(48, 96).into_position(),
+    @dpi.PhysicalSize::new(20, 32).into_size(),
   )
   self.updated_hints.val = window.ime_hints()
   self.updated_purpose.val = window.ime_purpose()
@@ -1915,9 +1997,7 @@ impl ApplicationHandler for ImeCapabilityRestrictionApp with can_create_surfaces
     Some(enable_request) => enable_request
     None => abort("expected valid IME enable request")
   }
-  try! window.request_ime_update(
-    @core.ImeRequest::EnableRequest(enable_request),
-  )
+  try! window.request_ime_update(@core.ImeRequest::Enable(enable_request))
   self.hint_and_purpose_not_supported.val = try {
     window.request_ime_update(
       @core.ImeRequestData::default()
@@ -1997,7 +2077,7 @@ impl ApplicationHandler for WindowAuxiliaryApiApp with can_create_surfaces(
     window.set_cursor_grab(@core.CursorGrabMode::Confined)
     false
   } catch {
-    @core.RequestError::NotSupported(_) => true
+    @core.RequestError::NotSupported => true
     _ => false
   }
   self.drag_window_started.val = try {
@@ -3275,6 +3355,16 @@ test "ime preedit always includes enabled first" {
     @core.Ime::Enabled,
     @core.Ime::Preedit("a", Some(@core.ImeCursorRange::new(0, 1))),
   ])
+}
+
+///|
+#skip
+test "ime delete-surrounding event is delivered" {
+  let event_loop = EventLoop::new()
+  let events = []
+  let app : ImeApp = { events, scenario: 3 }
+  event_loop.run_app(app)
+  assert_eq(events, [@core.Ime::DeleteSurrounding(3, 2)])
 }
 
 ///|

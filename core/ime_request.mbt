@@ -265,5 +265,5 @@ pub fn ImeEnableRequest::into_raw(
 
 ///|
 pub fn ImeEnableRequest::into_request(self : ImeEnableRequest) -> ImeRequest {
-  ImeRequest::EnableRequest(self)
+  ImeRequest::Enable(self)
 }
