@@ -11,6 +11,5 @@ options(
     "backend_wbtest.mbt": [ "native" ],
     "event_loop_test.mbt": [ "native" ],
     "ffi_native.mbt": [ "native" ],
-    "ffi_stub.mbt": [ "not", "native" ],
   },
 )
