@@ -1,0 +1,52 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  native-macos:
+    runs-on: macos-14
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Set up MoonBit
+        run: |
+          curl -fsSL https://cli.moonbitlang.com/install/unix.sh | bash
+          echo "$HOME/.moon/bin" >> $GITHUB_PATH
+
+      - name: Install dependencies
+        run: |
+          moon version --all
+          moon update
+
+      - name: Check formatting
+        run: moon fmt --check
+
+      - name: Type check (native)
+        run: moon check --target native
+
+      - name: Run tests
+        run: moon test
+
+      - name: Build library (native)
+        run: moon build --target native
+
+      - name: Build examples (native)
+        run: |
+          for pkg in \
+            examples/application \
+            examples/child_window \
+            examples/control_flow \
+            examples/dnd \
+            examples/ime \
+            examples/pump_events \
+            examples/run_on_demand \
+            examples/window \
+            examples/x11_embed
+          do
+            moon build "$pkg" --target native
+          done
