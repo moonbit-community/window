@@ -1,5 +1,4 @@
 ///|
-#skip
 test "macos backend is available on native" {
   assert_true(backend_available())
   let event_loop = EventLoop::new()
@@ -2356,7 +2355,6 @@ impl ApplicationHandler for ProxyWakeWithoutWindowApp with proxy_wake_up(
 }
 
 ///|
-#skip
 test "event loop proxy wake up is delivered" {
   let wake_seen = Ref::new(false)
   let event_loop = EventLoop::new()
@@ -2365,7 +2363,6 @@ test "event loop proxy wake up is delivered" {
 }
 
 ///|
-#skip
 test "event loop keeps running without windows and can be woken by proxy" {
   let event_loop = EventLoop::new()
   let about_to_wait_count = Ref::new(0)
@@ -2382,7 +2379,6 @@ test "event loop keeps running without windows and can be woken by proxy" {
 }
 
 ///|
-#skip
 test "new events reports init then wait-until timeout" {
   let event_loop = EventLoop::new()
   let app = { causes: [] }
@@ -2398,7 +2394,6 @@ test "new events reports init then wait-until timeout" {
 }
 
 ///|
-#skip
 test "new events reports wait-until cancellation when proxy wakes" {
   let event_loop = EventLoop::new()
   let app = {
@@ -2418,7 +2413,6 @@ test "new events reports wait-until cancellation when proxy wakes" {
 }
 
 ///|
-#skip
 test "wait blocks on native wake source until proxy wake arrives" {
   let event_loop = EventLoop::new()
   let app = {
@@ -2436,7 +2430,6 @@ test "wait blocks on native wake source until proxy wake arrives" {
 }
 
 ///|
-#skip
 test "focused events are delivered" {
   let event_loop = EventLoop::new()
   let app = { focused_values: [] }
@@ -2445,7 +2438,6 @@ test "focused events are delivered" {
 }
 
 ///|
-#skip
 test "focus_window updates focus state and has_focus" {
   let event_loop = EventLoop::new()
   let has_focus = Ref::new(None)
@@ -2456,7 +2448,6 @@ test "focus_window updates focus state and has_focus" {
 }
 
 ///|
-#skip
 test "focus_window is ignored for hidden windows" {
   let event_loop = EventLoop::new()
   let focused_event = Ref::new(None)
@@ -2469,7 +2460,6 @@ test "focus_window is ignored for hidden windows" {
 }
 
 ///|
-#skip
 test "focus_window is ignored for minimized windows" {
   let event_loop = EventLoop::new()
   let focused_event = Ref::new(None)
@@ -2482,7 +2472,6 @@ test "focus_window is ignored for minimized windows" {
 }
 
 ///|
-#skip
 test "window attributes active=false keeps window unfocused" {
   let event_loop = EventLoop::new()
   let has_focus = Ref::new(None)
@@ -2493,7 +2482,6 @@ test "window attributes active=false keeps window unfocused" {
 }
 
 ///|
-#skip
 test "window minimize and maximize state can be controlled" {
   let event_loop = EventLoop::new()
   let minimized_after_enable = Ref::new(None)
@@ -2514,7 +2502,6 @@ test "window minimize and maximize state can be controlled" {
 }
 
 ///|
-#skip
 test "window fullscreen state can be controlled" {
   let event_loop = EventLoop::new()
   let fullscreen_initial = Ref::new(None)
@@ -2537,7 +2524,6 @@ test "window fullscreen state can be controlled" {
 }
 
 ///|
-#skip
 test "window fullscreen roundtrip keeps exclusive and targeted borderless modes" {
   let event_loop = EventLoop::new()
   let has_monitor = Ref::new(false)
@@ -2561,7 +2547,6 @@ test "window fullscreen roundtrip keeps exclusive and targeted borderless modes"
 }
 
 ///|
-#skip
 test "window decorations can be configured at create and runtime" {
   let event_loop = EventLoop::new()
   let decorated_initial = Ref::new(true)
@@ -2579,7 +2564,6 @@ test "window decorations can be configured at create and runtime" {
 }
 
 ///|
-#skip
 test "window level can be configured at create and runtime" {
   let event_loop = EventLoop::new()
   let level_initial = Ref::new(None)
@@ -2591,7 +2575,6 @@ test "window level can be configured at create and runtime" {
 }
 
 ///|
-#skip
 test "window attributes maximized applies at creation time" {
   let event_loop = EventLoop::new()
   let maximized = Ref::new(false)
@@ -2601,7 +2584,6 @@ test "window attributes maximized applies at creation time" {
 }
 
 ///|
-#skip
 test "window platform simple fullscreen applies at creation time" {
   let event_loop = EventLoop::new()
   let native_fullscreen = Ref::new(true)
@@ -2616,7 +2598,6 @@ test "window platform simple fullscreen applies at creation time" {
 }
 
 ///|
-#skip
 test "window transparency can be configured at create and runtime" {
   let event_loop = EventLoop::new()
   let transparent_initial = Ref::new(false)
@@ -2634,7 +2615,6 @@ test "window transparency can be configured at create and runtime" {
 }
 
 ///|
-#skip
 test "window blur can be configured at create and runtime" {
   let event_loop = EventLoop::new()
   let blur_initial = Ref::new(false)
@@ -2652,7 +2632,6 @@ test "window blur can be configured at create and runtime" {
 }
 
 ///|
-#skip
 test "window cursor can be configured at create and runtime" {
   let event_loop = EventLoop::new()
   let cursor_initial = Ref::new(None)
@@ -2697,7 +2676,6 @@ test "window cursor can be configured at create and runtime" {
 }
 
 ///|
-#skip
 test "window icon can be configured at create and runtime" {
   let event_loop = EventLoop::new()
   let icon_initial = Ref::new(false)
@@ -2715,7 +2693,6 @@ test "window icon can be configured at create and runtime" {
 }
 
 ///|
-#skip
 test "window visibility and resizable getters reflect runtime updates" {
   let event_loop = EventLoop::new()
   let visible_initial = Ref::new(None)
@@ -2742,7 +2719,6 @@ test "window visibility and resizable getters reflect runtime updates" {
 }
 
 ///|
-#skip
 test "window content protection can be configured at create and runtime" {
   let event_loop = EventLoop::new()
   let protected_initial = Ref::new(false)
@@ -2760,7 +2736,6 @@ test "window content protection can be configured at create and runtime" {
 }
 
 ///|
-#skip
 test "window enabled buttons can be configured at create and runtime" {
   let event_loop = EventLoop::new()
   let close_initial = Ref::new(true)
@@ -2787,7 +2762,6 @@ test "window enabled buttons can be configured at create and runtime" {
 }
 
 ///|
-#skip
 test "window surface resize increments can be configured at create and runtime" {
   let event_loop = EventLoop::new()
   let increments_initial = Ref::new(None)
@@ -2805,7 +2779,6 @@ test "window surface resize increments can be configured at create and runtime" 
 }
 
 ///|
-#skip
 test "window redraw requests are delivered" {
   let event_loop = EventLoop::new()
   let redraw_requested = Ref::new(false)
@@ -2814,7 +2787,6 @@ test "window redraw requests are delivered" {
 }
 
 ///|
-#skip
 test "moved events are delivered" {
   let event_loop = EventLoop::new()
   let moved = Ref::new(None)
@@ -2824,7 +2796,6 @@ test "moved events are delivered" {
 }
 
 ///|
-#skip
 test "window outer position can be set and read" {
   let event_loop = EventLoop::new()
   let moved = Ref::new(None)
@@ -2837,7 +2808,6 @@ test "window outer position can be set and read" {
 }
 
 ///|
-#skip
 test "window outer size reports frame dimensions" {
   let event_loop = EventLoop::new()
   let outer_size = Ref::new(None)
@@ -2859,7 +2829,6 @@ test "window outer size reports frame dimensions" {
 }
 
 ///|
-#skip
 test "window attributes position applies at creation time" {
   let event_loop = EventLoop::new()
   let moved = Ref::new(None)
@@ -2872,7 +2841,6 @@ test "window attributes position applies at creation time" {
 }
 
 ///|
-#skip
 test "window request surface size delivers resized event" {
   let event_loop = EventLoop::new()
   let request_result = Ref::new(None)
@@ -2892,7 +2860,6 @@ test "window request surface size delivers resized event" {
 }
 
 ///|
-#skip
 test "window min surface size clamps resize requests" {
   let event_loop = EventLoop::new()
   let min_surface_size = Ref::new(None)
@@ -2912,7 +2879,6 @@ test "window min surface size clamps resize requests" {
 }
 
 ///|
-#skip
 test "window max surface size clamps resize requests" {
   let event_loop = EventLoop::new()
   let max_surface_size = Ref::new(None)
@@ -2932,7 +2898,6 @@ test "window max surface size clamps resize requests" {
 }
 
 ///|
-#skip
 test "window attributes max surface size applies at creation time" {
   let event_loop = EventLoop::new()
   let resized = Ref::new(None)
@@ -2945,7 +2910,6 @@ test "window attributes max surface size applies at creation time" {
 }
 
 ///|
-#skip
 test "pointer moved events are delivered" {
   let event_loop = EventLoop::new()
   let moved = Ref::new(None)
@@ -2955,7 +2919,6 @@ test "pointer moved events are delivered" {
 }
 
 ///|
-#skip
 test "pointer entered and left events are delivered" {
   let event_loop = EventLoop::new()
   let entered = Ref::new(None)
@@ -2966,7 +2929,6 @@ test "pointer entered and left events are delivered" {
 }
 
 ///|
-#skip
 test "pointer button events report state position and button" {
   let event_loop = EventLoop::new()
   let state = Ref::new(None)
@@ -2982,7 +2944,6 @@ test "pointer button events report state position and button" {
 }
 
 ///|
-#skip
 test "drag events are delivered with paths and positions" {
   let event_loop = EventLoop::new()
   let entered_paths = Ref::new(None)
@@ -3021,7 +2982,6 @@ test "drag events are delivered with paths and positions" {
 }
 
 ///|
-#skip
 test "drag left can omit pointer position" {
   let event_loop = EventLoop::new()
   let left_position = Ref::new(Some(@dpi.PhysicalPositionF64::new(1.0, 1.0)))
@@ -3031,7 +2991,6 @@ test "drag left can omit pointer position" {
 }
 
 ///|
-#skip
 test "gesture events are delivered" {
   let event_loop = EventLoop::new()
   let double_tap_seen = Ref::new(false)
@@ -3067,7 +3026,6 @@ test "gesture events are delivered" {
 }
 
 ///|
-#skip
 test "mouse wheel events deliver pixel deltas and phase" {
   let event_loop = EventLoop::new()
   let delta = Ref::new(None)
@@ -3085,7 +3043,6 @@ test "mouse wheel events deliver pixel deltas and phase" {
 }
 
 ///|
-#skip
 test "modifiers changed events are delivered" {
   let event_loop = EventLoop::new()
   let modifiers = Ref::new(None)
@@ -3094,7 +3051,6 @@ test "modifiers changed events are delivered" {
 }
 
 ///|
-#skip
 test "focus loss resets modifiers" {
   let event_loop = EventLoop::new()
   let modifiers_events = []
@@ -3106,7 +3062,6 @@ test "focus loss resets modifiers" {
 }
 
 ///|
-#skip
 test "keyboard input reports character keys" {
   let event_loop = EventLoop::new()
   let captured = Ref::new(None)
@@ -3116,8 +3071,8 @@ test "keyboard input reports character keys" {
     repeat: false,
     scancode: 0x00,
     state: 1,
-    text_with_all_modifiers: None,
-    text_ignoring_modifiers: None,
+    text_with_all_modifiers: Some("a"),
+    text_ignoring_modifiers: Some("a"),
   }
   event_loop.run_app(app)
   assert_eq(
@@ -3138,7 +3093,6 @@ test "keyboard input reports character keys" {
 }
 
 ///|
-#skip
 test "keyboard input applies shift and repeat" {
   let event_loop = EventLoop::new()
   let captured = Ref::new(None)
@@ -3148,8 +3102,8 @@ test "keyboard input applies shift and repeat" {
     repeat: true,
     scancode: 0x00,
     state: 1,
-    text_with_all_modifiers: None,
-    text_ignoring_modifiers: None,
+    text_with_all_modifiers: Some("A"),
+    text_ignoring_modifiers: Some("a"),
   }
   event_loop.run_app(app)
   assert_eq(
@@ -3170,7 +3124,6 @@ test "keyboard input applies shift and repeat" {
 }
 
 ///|
-#skip
 test "keyboard input reports modifier keys with side information" {
   let event_loop = EventLoop::new()
   let captured = Ref::new(None)
@@ -3202,7 +3155,6 @@ test "keyboard input reports modifier keys with side information" {
 }
 
 ///|
-#skip
 test "keyboard input reports key release without text" {
   let event_loop = EventLoop::new()
   let captured = Ref::new(None)
@@ -3234,7 +3186,6 @@ test "keyboard input reports key release without text" {
 }
 
 ///|
-#skip
 test "keyboard input prefers native event text when provided" {
   let event_loop = EventLoop::new()
   let captured = Ref::new(None)
@@ -3266,7 +3217,6 @@ test "keyboard input prefers native event text when provided" {
 }
 
 ///|
-#skip
 test "keyboard input emits dead key when only ignoring-modifier text is present" {
   let event_loop = EventLoop::new()
   let captured = Ref::new(None)
@@ -3298,7 +3248,6 @@ test "keyboard input emits dead key when only ignoring-modifier text is present"
 }
 
 ///|
-#skip
 test "keyboard input with control prefers ignoring-modifier logical text" {
   let event_loop = EventLoop::new()
   let captured = Ref::new(None)
@@ -3330,7 +3279,6 @@ test "keyboard input with control prefers ignoring-modifier logical text" {
 }
 
 ///|
-#skip
 test "ime preedit commit and disabled events are delivered" {
   let event_loop = EventLoop::new()
   let events = []
@@ -3345,7 +3293,6 @@ test "ime preedit commit and disabled events are delivered" {
 }
 
 ///|
-#skip
 test "ime preedit always includes enabled first" {
   let event_loop = EventLoop::new()
   let events = []
@@ -3358,7 +3305,6 @@ test "ime preedit always includes enabled first" {
 }
 
 ///|
-#skip
 test "ime delete-surrounding event is delivered" {
   let event_loop = EventLoop::new()
   let events = []
@@ -3368,7 +3314,6 @@ test "ime delete-surrounding event is delivered" {
 }
 
 ///|
-#skip
 test "window ime configuration updates native state" {
   let event_loop = EventLoop::new()
   let cursor_when_disabled_error = Ref::new(None)
@@ -3450,7 +3395,6 @@ test "window ime configuration updates native state" {
 }
 
 ///|
-#skip
 test "ime request updates respect negotiated capabilities" {
   let event_loop = EventLoop::new()
   let hint_and_purpose_not_supported = Ref::new(false)
@@ -3471,7 +3415,6 @@ test "ime request updates respect negotiated capabilities" {
 }
 
 ///|
-#skip
 test "window auxiliary api methods are available on macos" {
   let event_loop = EventLoop::new()
   let title_initial = Ref::new(None)
@@ -3506,7 +3449,6 @@ test "window auxiliary api methods are available on macos" {
 }
 
 ///|
-#skip
 test "monitor api returns available primary and current monitor handles" {
   let event_loop = EventLoop::new()
   let available_monitor_count = Ref::new(0)
@@ -3578,7 +3520,6 @@ test "monitor api returns available primary and current monitor handles" {
 }
 
 ///|
-#skip
 test "scale factor changes can request a replacement surface size" {
   let event_loop = EventLoop::new()
   let seen_scale_factor = Ref::new(None)
@@ -3589,7 +3530,6 @@ test "scale factor changes can request a replacement surface size" {
 }
 
 ///|
-#skip
 test "theme changed events update the readable window theme" {
   let event_loop = EventLoop::new()
   let window = Ref::new(None)
@@ -3601,7 +3541,6 @@ test "theme changed events update the readable window theme" {
 }
 
 ///|
-#skip
 test "window theme can be configured at create and runtime" {
   let event_loop = EventLoop::new()
   let initial_theme = Ref::new(None)
@@ -3612,7 +3551,6 @@ test "window theme can be configured at create and runtime" {
 }
 
 ///|
-#skip
 test "occluded events are delivered" {
   let event_loop = EventLoop::new()
   let window = Ref::new(None)
@@ -3624,7 +3562,6 @@ test "occluded events are delivered" {
 }
 
 ///|
-#skip
 test "close requested is delivered when the backend queues it" {
   let event_loop = EventLoop::new()
   let close_requested_seen = Ref::new(false)
@@ -3633,7 +3570,6 @@ test "close requested is delivered when the backend queues it" {
 }
 
 ///|
-#skip
 test "destroyed is delivered when the event loop exits" {
   let event_loop = EventLoop::new()
   let destroyed_seen = Ref::new(false)
