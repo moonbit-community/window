@@ -5,12 +5,6 @@ import {
 }
 
 options(
-  link: {
-    "native": {
-      "cc-link-flags": "-framework AppKit -framework Foundation -framework CoreGraphics -framework Carbon -lobjc",
-      "stub-cc-link-flags": "-framework AppKit -framework Foundation -framework CoreGraphics -framework Carbon -lobjc",
-    },
-  },
   "native-stub": [ "backend.c" ],
   targets: {
     "backend_wbtest.mbt": [ "native" ],

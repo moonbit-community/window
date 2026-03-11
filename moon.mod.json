@@ -6,5 +6,6 @@
   "repository": "https://github.com/moonbit-community/window.git",
   "license": "Apache-2.0",
   "keywords": ["windowing", "winit", "macos", "appkit", "gui"],
-  "description": "A MoonBit port of winit with a native macOS event loop and windowing backend."
+  "description": "A MoonBit port of winit with a native macOS event loop and windowing backend.",
+  "--moonbit-unstable-prebuild": "build.js"
 }

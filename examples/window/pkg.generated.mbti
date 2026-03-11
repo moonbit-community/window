@@ -1,0 +1,20 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "Milky2018/window/examples/window"
+
+import {
+  "Milky2018/window/core",
+  "Milky2018/window/macos",
+}
+
+// Values
+
+// Errors
+
+// Types and methods
+type App
+pub impl @macos.ApplicationHandler for App
+
+// Type aliases
+
+// Traits
+

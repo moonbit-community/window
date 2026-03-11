@@ -109,6 +109,26 @@ native builds and focuses on `macos-arm64`.
 moon add Milky2018/window
 ```
 
+## Examples
+
+The upstream `winit/examples` set is ported under `examples/*`:
+
+- `examples/application`
+- `examples/child_window`
+- `examples/control_flow`
+- `examples/dnd`
+- `examples/ime`
+- `examples/pump_events`
+- `examples/run_on_demand`
+- `examples/window`
+- `examples/x11_embed` (kept as an X11-only compatibility note on macOS)
+
+Run an example with:
+
+```bash
+moon run examples/window --target native
+```
+
 ## Example
 
 ```mbt nocheck
@@ -186,6 +206,9 @@ pub impl @macos.ApplicationHandler for App with window_event(
 - `ControlFlow::WaitUntil` takes an absolute monotonic timestamp (milliseconds)
 - `pump_app_events(timeout_ms, app)` uses millisecond timeout:
   `Some(0)` is non-blocking; `None` follows current `ControlFlow`
+- Native link flags for AppKit/CoreGraphics are injected by module prebuild
+  metadata, so downstream apps do not need to repeat macOS framework flags in
+  their own `moon.pkg`
 - Use `EventLoop::builder()` when you need macOS startup attributes
   (`activation_policy`, default menu creation, activate-ignoring-other-apps)
 - `ApplicationHandler` methods receive `ActiveEventLoop`, matching winit's

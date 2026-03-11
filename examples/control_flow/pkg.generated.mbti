@@ -1,0 +1,24 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "Milky2018/window/examples/control_flow"
+
+import {
+  "Milky2018/window/core",
+  "Milky2018/window/macos",
+}
+
+// Values
+
+// Errors
+
+// Types and methods
+type ControlFlowDemo
+pub impl @macos.ApplicationHandler for ControlFlowDemo
+
+type Mode
+pub impl Eq for Mode
+pub impl Show for Mode
+
+// Type aliases
+
+// Traits
+

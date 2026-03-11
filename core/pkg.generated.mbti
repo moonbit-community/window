@@ -3,6 +3,7 @@ package "Milky2018/window/core"
 
 import {
   "Milky2018/window/dpi",
+  "moonbitlang/core/ref",
 }
 
 // Values
@@ -1270,7 +1271,7 @@ pub impl Eq for StartCause
 pub impl Show for StartCause
 
 pub struct SurfaceSizeWriter {
-  size : Ref[@dpi.PhysicalSize]
+  size : @ref.Ref[@dpi.PhysicalSize]
 }
 pub fn SurfaceSizeWriter::new(@dpi.PhysicalSize) -> Self
 pub fn SurfaceSizeWriter::request_surface_size(Self, @dpi.PhysicalSize) -> Unit
