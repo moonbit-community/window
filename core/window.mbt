@@ -101,9 +101,9 @@ pub fn ImeHint::bits(self : ImeHint) -> Int {
 
 ///|
 pub(all) suberror ImeSurroundingTextError {
-  TextTooLong(Int)
-  CursorOutOfRange(Int, Int)
-  AnchorOutOfRange(Int, Int)
+  TextTooLong
+  CursorBadPosition
+  AnchorBadPosition
 } derive(Show)
 
 ///|
@@ -119,15 +119,22 @@ pub fn ImeSurroundingText::new(
   cursor : Int,
   anchor : Int,
 ) -> ImeSurroundingText raise ImeSurroundingTextError {
-  let byte_len = text.length()
+  let utf8_bytes = @utf8.encode(text[:], bom=false)
+  let byte_len = utf8_bytes.length()
   if byte_len > 4000 {
-    raise ImeSurroundingTextError::TextTooLong(byte_len)
+    raise ImeSurroundingTextError::TextTooLong
   }
   if cursor < 0 || cursor > byte_len {
-    raise ImeSurroundingTextError::CursorOutOfRange(cursor, byte_len)
+    raise ImeSurroundingTextError::CursorBadPosition
   }
   if anchor < 0 || anchor > byte_len {
-    raise ImeSurroundingTextError::AnchorOutOfRange(anchor, byte_len)
+    raise ImeSurroundingTextError::AnchorBadPosition
+  }
+  let _ = @utf8.decode(utf8_bytes[:cursor], ignore_bom=false) catch {
+    _ => raise ImeSurroundingTextError::CursorBadPosition
+  }
+  let _ = @utf8.decode(utf8_bytes[:anchor], ignore_bom=false) catch {
+    _ => raise ImeSurroundingTextError::AnchorBadPosition
   }
   { text, cursor, anchor }
 }
@@ -183,11 +190,6 @@ pub(all) enum ImeRequest {
   Enable(ImeEnableRequest)
   Update(ImeRequestData)
   Disable
-  SetAllowed(Bool)
-  SetHintAndPurpose(ImeHint, ImePurpose)
-  SetPurpose(ImePurpose)
-  SetCursorArea(@dpi.Position, @dpi.Size)
-  SetSurroundingText(ImeSurroundingText?)
 } derive(Eq, Show)
 
 ///|

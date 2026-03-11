@@ -317,23 +317,11 @@ test "ime capability and request models are constructible" {
     ImeRequest::Enable(enable_request),
   )
   assert_eq(ImeRequest::Disable, ImeRequest::Disable)
-  assert_eq(
-    ImeRequest::SetHintAndPurpose(hints, ImePurpose::Email),
-    ImeRequest::SetHintAndPurpose(hints, ImePurpose::Email),
-  )
-  assert_eq(
-    ImeRequest::SetPurpose(ImePurpose::DateTime),
-    ImeRequest::SetPurpose(ImePurpose::DateTime),
-  )
-  assert_eq(
-    ImeRequest::SetSurroundingText(Some(surrounding)),
-    ImeRequest::SetSurroundingText(Some(surrounding)),
-  )
   let cursor_out_of_range = try {
     ImeSurroundingText::new("abc", -1, 0) |> ignore
     false
   } catch {
-    ImeSurroundingTextError::CursorOutOfRange(-1, 3) => true
+    ImeSurroundingTextError::CursorBadPosition => true
     _ => false
   }
   assert_true(cursor_out_of_range)
@@ -341,10 +329,26 @@ test "ime capability and request models are constructible" {
     ImeSurroundingText::new("abc", 1, 8) |> ignore
     false
   } catch {
-    ImeSurroundingTextError::AnchorOutOfRange(8, 3) => true
+    ImeSurroundingTextError::AnchorBadPosition => true
     _ => false
   }
   assert_true(anchor_out_of_range)
+  let cursor_bad_boundary = try {
+    ImeSurroundingText::new("你好", 1, 0) |> ignore
+    false
+  } catch {
+    ImeSurroundingTextError::CursorBadPosition => true
+    _ => false
+  }
+  assert_true(cursor_bad_boundary)
+  let anchor_bad_boundary = try {
+    ImeSurroundingText::new("你好", 0, 1) |> ignore
+    false
+  } catch {
+    ImeSurroundingTextError::AnchorBadPosition => true
+    _ => false
+  }
+  assert_true(anchor_bad_boundary)
   let ime_error_show = "\{ImeRequestError::NotSupported}"
   assert_true(ime_error_show.length() > 0)
   let request_error_show = "\{RequestError::Os}"

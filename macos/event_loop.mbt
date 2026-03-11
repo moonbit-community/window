@@ -925,58 +925,6 @@ pub fn Window::request_ime_update(
       self.set_ime_allowed(false)
       ()
     }
-    @core.ImeRequest::SetAllowed(allowed) =>
-      if allowed {
-        if self.ime_allowed() {
-          raise @core.ImeRequestError::AlreadyEnabled
-        } else {
-          self.set_ime_allowed(true)
-          if self.ime_capabilities_state is None {
-            self.ime_capabilities_state = Some(default_ime_capabilities())
-          }
-          ()
-        }
-      } else {
-        self.set_ime_allowed(false)
-        ()
-      }
-    @core.ImeRequest::SetHintAndPurpose(hints, purpose) =>
-      if self.ime_allowed() == false {
-        raise @core.ImeRequestError::NotEnabled
-      } else if self.ime_supports_hint_and_purpose() == false {
-        raise @core.ImeRequestError::NotSupported
-      } else {
-        self.set_ime_hints(hints)
-        self.set_ime_purpose(purpose)
-        ()
-      }
-    @core.ImeRequest::SetPurpose(purpose) =>
-      if self.ime_allowed() == false {
-        raise @core.ImeRequestError::NotEnabled
-      } else if self.ime_supports_hint_and_purpose() == false {
-        raise @core.ImeRequestError::NotSupported
-      } else {
-        self.set_ime_purpose(purpose)
-        ()
-      }
-    @core.ImeRequest::SetCursorArea(position, size) =>
-      if self.ime_allowed() == false {
-        raise @core.ImeRequestError::NotEnabled
-      } else if self.ime_supports_cursor_area() == false {
-        raise @core.ImeRequestError::NotSupported
-      } else {
-        self.set_ime_cursor_area(position, size)
-        ()
-      }
-    @core.ImeRequest::SetSurroundingText(surrounding_text) =>
-      if self.ime_allowed() == false {
-        raise @core.ImeRequestError::NotEnabled
-      } else if self.ime_supports_surrounding_text() == false {
-        raise @core.ImeRequestError::NotSupported
-      } else {
-        self.set_ime_surrounding_text(surrounding_text)
-        ()
-      }
   }
 }
 

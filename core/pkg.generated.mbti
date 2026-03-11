@@ -46,9 +46,9 @@ pub(all) suberror ImeRequestError {
 pub impl Show for ImeRequestError
 
 pub(all) suberror ImeSurroundingTextError {
-  TextTooLong(Int)
-  CursorOutOfRange(Int, Int)
-  AnchorOutOfRange(Int, Int)
+  TextTooLong
+  CursorBadPosition
+  AnchorBadPosition
 }
 pub impl Show for ImeSurroundingTextError
 
@@ -354,11 +354,6 @@ pub(all) enum ImeRequest {
   Enable(ImeEnableRequest)
   Update(ImeRequestData)
   Disable
-  SetAllowed(Bool)
-  SetHintAndPurpose(ImeHint, ImePurpose)
-  SetPurpose(ImePurpose)
-  SetCursorArea(@dpi.Position, @dpi.Size)
-  SetSurroundingText(ImeSurroundingText?)
 }
 pub impl Eq for ImeRequest
 pub impl Show for ImeRequest

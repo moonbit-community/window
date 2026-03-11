@@ -1870,7 +1870,9 @@ impl ApplicationHandler for ImeConfigurationApp with can_create_surfaces(
   }
   self.request_purpose_ok.val = try {
     window.request_ime_update(
-      @core.ImeRequest::SetPurpose(@core.ImePurpose::DateTime),
+      @core.ImeRequestData::default()
+      .with_hint_and_purpose(@core.ImeHint::none(), @core.ImePurpose::DateTime)
+      .into_request(),
     )
     true
   } catch {
@@ -1900,12 +1902,8 @@ impl ApplicationHandler for ImeConfigurationApp with can_create_surfaces(
     _ => false
   }
   self.surrounding_text_after_request.val = window.ime_surrounding_text()
-  let clear_surrounding_ok = try {
-    window.request_ime_update(@core.ImeRequest::SetSurroundingText(None))
-    true
-  } catch {
-    _ => false
-  }
+  window.set_ime_surrounding_text(None)
+  let clear_surrounding_ok = true
   self.request_surrounding_ok.val = self.request_surrounding_ok.val &&
     clear_surrounding_ok
   self.surrounding_text_after_clear.val = window.ime_surrounding_text()
@@ -1988,7 +1986,9 @@ impl ApplicationHandler for ImeCapabilityRestrictionApp with can_create_surfaces
   }
   self.purpose_not_supported.val = try {
     window.request_ime_update(
-      @core.ImeRequest::SetPurpose(@core.ImePurpose::Date),
+      @core.ImeRequestData::default()
+      .with_hint_and_purpose(@core.ImeHint::none(), @core.ImePurpose::Date)
+      .into_request(),
     )
     false
   } catch {
