@@ -367,6 +367,7 @@ test "system theme and device event policy APIs are callable" {
   let event_loop = EventLoop::new()
   event_loop.listen_device_events(@core.DeviceEvents::Always)
   let _ = event_loop.system_theme()
+  assert_eq(event_loop.rwh_06_handle(), (1 : Int).to_uint64())
   assert_eq(event_loop.owned_display_handle(), event_loop.rwh_06_handle())
   assert_eq(event_loop.display_handle(), event_loop.rwh_06_handle())
 }
@@ -838,6 +839,7 @@ test "parent window attribute accepts native window handles" {
   )
   let parent_raw_id = parent.id().into_raw()
   let parent_handle = parent.rwh_06_window_handle()
+  assert_eq(parent.rwh_06_display_handle(), (1 : Int).to_uint64())
   assert_eq(parent_handle, window_content_view_handle_for_test(parent_raw_id))
   assert_eq(parent.display_handle(), parent.rwh_06_display_handle())
   assert_eq(parent.window_handle(), parent_handle)
@@ -850,7 +852,36 @@ test "parent window attribute accepts native window handles" {
   let child_raw_id = child.id().into_raw()
   let child_handle = child.rwh_06_window_handle()
   assert_eq(child_handle, window_content_view_handle_for_test(child_raw_id))
+  assert_eq(child.rwh_06_display_handle(), (1 : Int).to_uint64())
   assert_true(child_handle > (0 : Int).to_uint64())
+}
+
+///|
+test "try_create_window raises os when parent window handle is invalid" {
+  let event_loop = EventLoop::new()
+  let result = Some(
+    event_loop.try_create_window(
+      @core.WindowAttributes::default()
+      .with_visible(false)
+      .with_parent_window(
+        Some(@core.ParentWindow::from_raw((0 : Int).to_uint64())),
+      ),
+    ),
+  ) catch {
+    error => {
+      let is_os = match error {
+        @core.RequestError::Os => true
+        _ => false
+      }
+      assert_true(is_os)
+      None
+    }
+  }
+  assert_eq(result, None)
+  let window = event_loop.create_window(
+    @core.WindowAttributes::default().with_visible(false),
+  )
+  assert_true(window.rwh_06_window_handle() > (0 : Int).to_uint64())
 }
 
 ///|
@@ -887,24 +918,6 @@ test "borderless game flag can be configured at create and runtime" {
   assert_false(window.is_borderless_game())
   window.set_borderless_game(true)
   assert_true(window.is_borderless_game())
-}
-
-///|
-test "simple fullscreen attribute applies at creation time without native fullscreen state" {
-  let event_loop = EventLoop::new()
-  let window = event_loop.create_window(
-    @core.WindowAttributes::default()
-    .with_visible(false)
-    .with_platform_attributes(
-      @core.PlatformWindowAttributes::default().with_simple_fullscreen(
-        Some(true),
-      ),
-    ),
-  )
-  assert_true(window.simple_fullscreen())
-  assert_false(window.is_fullscreen())
-  assert_eq(window.fullscreen(), None)
-  assert_true(window.set_simple_fullscreen(false))
 }
 
 ///|

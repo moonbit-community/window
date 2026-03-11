@@ -2191,8 +2191,10 @@ pub fn EventLoop::try_create_window(
   guard raw_id > 0 else { raise @core.RequestError::Ignored }
   match attributes.parent_window() {
     Some(parent_window) => {
-      let _ = set_parent_window(raw_id, parent_window.into_raw())
-      ()
+      guard set_parent_window(raw_id, parent_window.into_raw()) else {
+        close_window(raw_id)
+        raise @core.RequestError::Os
+      }
     }
     None => ()
   }
@@ -2345,10 +2347,6 @@ pub fn EventLoop::try_create_window(
       set_window_position(raw_id, physical_position.x(), physical_position.y())
     }
     None => ()
-  }
-  if attributes.fullscreen() is None &&
-    attributes.platform_attributes().simple_fullscreen() == Some(true) {
-    ignore(set_window_simple_fullscreen(raw_id, true))
   }
   self.window_ids.push(raw_id)
   {

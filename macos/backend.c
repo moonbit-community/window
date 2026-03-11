@@ -5000,7 +5000,8 @@ uint64_t mbw_display_handle(void) {
   if (!mbw_bootstrap_app() || !g_ns_app) {
     return 0;
   }
-  return (uint64_t)(uintptr_t)g_ns_app;
+  // AppKit display handles in raw-window-handle are marker handles with no payload.
+  return (uint64_t)1;
 #else
   return 0;
 #endif

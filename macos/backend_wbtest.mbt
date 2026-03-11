@@ -418,12 +418,6 @@ struct AttributesMaximizedApp {
 }
 
 ///|
-struct AttributesSimpleFullscreenApp {
-  native_fullscreen : Ref[Bool]
-  simple_fullscreen : Ref[Bool]
-}
-
-///|
 struct WindowTransparentApp {
   transparent_after_disable : Ref[Bool]
   transparent_after_enable : Ref[Bool]
@@ -957,25 +951,6 @@ impl ApplicationHandler for AttributesMaximizedApp with can_create_surfaces(
     @core.WindowAttributes::default().with_visible(false).with_maximized(true),
   )
   self.maximized.val = window.is_maximized()
-  event_loop.exit()
-}
-
-///|
-impl ApplicationHandler for AttributesSimpleFullscreenApp with can_create_surfaces(
-  self,
-  event_loop,
-) {
-  let window = event_loop.create_window(
-    @core.WindowAttributes::default()
-    .with_visible(false)
-    .with_platform_attributes(
-      @core.PlatformWindowAttributes::default().with_simple_fullscreen(
-        Some(true),
-      ),
-    ),
-  )
-  self.native_fullscreen.val = window.is_fullscreen()
-  self.simple_fullscreen.val = window.simple_fullscreen()
   event_loop.exit()
 }
 
@@ -2584,20 +2559,6 @@ test "window attributes maximized applies at creation time" {
   let app : AttributesMaximizedApp = { maximized, }
   event_loop.run_app(app)
   assert_true(maximized.val)
-}
-
-///|
-test "window platform simple fullscreen applies at creation time" {
-  let event_loop = EventLoop::new()
-  let native_fullscreen = Ref::new(true)
-  let simple_fullscreen = Ref::new(false)
-  let app : AttributesSimpleFullscreenApp = {
-    native_fullscreen,
-    simple_fullscreen,
-  }
-  event_loop.run_app(app)
-  assert_false(native_fullscreen.val)
-  assert_true(simple_fullscreen.val)
 }
 
 ///|

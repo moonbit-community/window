@@ -415,7 +415,6 @@ pub struct PlatformWindowAttributes {
   priv mut fullsize_content_view : Bool
   priv mut has_shadow : Bool
   priv mut movable_by_window_background : Bool
-  priv mut simple_fullscreen : Bool?
   priv mut borderless_game : Bool
   priv mut option_as_alt : OptionAsAlt
   priv mut tabbing_identifier : String?
@@ -435,7 +434,6 @@ pub fn PlatformWindowAttributes::default() -> PlatformWindowAttributes {
     fullsize_content_view: false,
     has_shadow: true,
     movable_by_window_background: false,
-    simple_fullscreen: None,
     borderless_game: false,
     option_as_alt: OptionAsAlt::None,
     tabbing_identifier: None,
@@ -526,22 +524,6 @@ pub fn PlatformWindowAttributes::movable_by_window_background(
   self : PlatformWindowAttributes,
 ) -> Bool {
   self.movable_by_window_background
-}
-
-///|
-pub fn PlatformWindowAttributes::with_simple_fullscreen(
-  self : PlatformWindowAttributes,
-  simple_fullscreen : Bool?,
-) -> PlatformWindowAttributes {
-  self.simple_fullscreen = simple_fullscreen
-  self
-}
-
-///|
-pub fn PlatformWindowAttributes::simple_fullscreen(
-  self : PlatformWindowAttributes,
-) -> Bool? {
-  self.simple_fullscreen
 }
 
 ///|

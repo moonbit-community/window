@@ -1188,7 +1188,6 @@ pub fn PlatformWindowAttributes::has_shadow(Self) -> Bool
 pub fn PlatformWindowAttributes::movable_by_window_background(Self) -> Bool
 pub fn PlatformWindowAttributes::option_as_alt(Self) -> OptionAsAlt
 pub fn PlatformWindowAttributes::panel(Self) -> Bool
-pub fn PlatformWindowAttributes::simple_fullscreen(Self) -> Bool?
 pub fn PlatformWindowAttributes::tabbing_identifier(Self) -> String?
 pub fn PlatformWindowAttributes::title_hidden(Self) -> Bool
 pub fn PlatformWindowAttributes::titlebar_buttons_hidden(Self) -> Bool
@@ -1203,7 +1202,6 @@ pub fn PlatformWindowAttributes::with_has_shadow(Self, Bool) -> Self
 pub fn PlatformWindowAttributes::with_movable_by_window_background(Self, Bool) -> Self
 pub fn PlatformWindowAttributes::with_option_as_alt(Self, OptionAsAlt) -> Self
 pub fn PlatformWindowAttributes::with_panel(Self, Bool) -> Self
-pub fn PlatformWindowAttributes::with_simple_fullscreen(Self, Bool?) -> Self
 pub fn PlatformWindowAttributes::with_tabbing_identifier(Self, String) -> Self
 pub fn PlatformWindowAttributes::with_title_hidden(Self, Bool) -> Self
 pub fn PlatformWindowAttributes::with_titlebar_buttons_hidden(Self, Bool) -> Self
