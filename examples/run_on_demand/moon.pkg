@@ -6,5 +6,6 @@ import {
 
 options(
   "is-main": true,
-  targets: { "main.mbt": [ "native" ], "main_stub.mbt": [ "not", "native" ] },
+  "supported-targets": "native",
+  targets: { "main.mbt": [ "native" ] },
 )

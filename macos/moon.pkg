@@ -6,6 +6,7 @@ import {
 
 options(
   "native-stub": [ "backend.c" ],
+  "supported-targets": "native",
   targets: {
     "backend_wbtest.mbt": [ "native" ],
     "event_loop_test.mbt": [ "native" ],

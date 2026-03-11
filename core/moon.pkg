@@ -4,5 +4,6 @@ import {
 }
 
 options(
+  "supported-targets": "native",
   targets: { },
 )

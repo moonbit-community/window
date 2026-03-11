@@ -4,9 +4,6 @@ import {
 }
 
 options(
-  targets: {
-    "window.mbt": [ "native" ],
-    "window_stub.mbt": [ "not", "native" ],
-    "window_test.mbt": [ "native" ],
-  },
+  "supported-targets": "native",
+  targets: { "window.mbt": [ "native" ], "window_test.mbt": [ "native" ] },
 )
