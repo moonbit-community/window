@@ -4480,7 +4480,7 @@ int mbw_window_create_utf8(
   window->ime_just_committed = 0;
   window->ime_cursor_start = -1;
   window->ime_cursor_end = -1;
-  window->ime_allowed = 1;
+  window->ime_allowed = 0;
   window->ime_purpose = MBW_IME_PURPOSE_NORMAL;
   window->ime_hints = 0;
   window->ime_cursor_area_x = 0;

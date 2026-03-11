@@ -821,10 +821,8 @@ pub fn Window::set_ime_allowed(self : Window, allowed : Bool) -> Unit {
 
 ///|
 fn Window::set_ime_allowed_raw(self : Window, allowed : Bool) -> Unit {
-  self.ime_capabilities_state = if allowed {
-    Some(default_ime_capabilities())
-  } else {
-    None
+  if allowed == false {
+    self.ime_capabilities_state = None
   }
   set_ime_allowed(self.id.into_raw(), allowed)
 }
@@ -940,34 +938,31 @@ fn Window::apply_ime_request_data(
     raise @core.ImeRequestError::NotEnabled
   }
   if request_data.has_hint_and_purpose() {
-    if self.ime_supports_hint_and_purpose() == false {
-      raise @core.ImeRequestError::NotSupported
-    }
-    match request_data.hint_and_purpose() {
-      Some((hints, purpose)) => {
-        self.set_ime_hints(hints)
-        self.set_ime_purpose_raw(purpose)
+    if self.ime_supports_hint_and_purpose() {
+      match request_data.hint_and_purpose() {
+        Some((hints, purpose)) => {
+          self.set_ime_hints(hints)
+          self.set_ime_purpose_raw(purpose)
+        }
+        None => ()
       }
-      None => ()
     }
   }
   if request_data.has_cursor_area() {
-    if self.ime_supports_cursor_area() == false {
-      raise @core.ImeRequestError::NotSupported
-    }
-    match request_data.cursor_area() {
-      Some((position, size)) => self.set_ime_cursor_area_raw(position, size)
-      None => ()
+    if self.ime_supports_cursor_area() {
+      match request_data.cursor_area() {
+        Some((position, size)) => self.set_ime_cursor_area_raw(position, size)
+        None => ()
+      }
     }
   }
   if request_data.has_surrounding_text() {
-    if self.ime_supports_surrounding_text() == false {
-      raise @core.ImeRequestError::NotSupported
-    }
-    match request_data.surrounding_text() {
-      Some(surrounding_text) =>
-        self.set_ime_surrounding_text(Some(surrounding_text))
-      None => ()
+    if self.ime_supports_surrounding_text() {
+      match request_data.surrounding_text() {
+        Some(surrounding_text) =>
+          self.set_ime_surrounding_text(Some(surrounding_text))
+        None => ()
+      }
     }
   }
 }
@@ -2370,7 +2365,7 @@ pub fn EventLoop::try_create_window(
     id: @core.WindowId::from_raw(raw_id),
     cursor_state,
     fullscreen_state: initial_fullscreen_state(attributes),
-    ime_capabilities_state: Some(default_ime_capabilities()),
+    ime_capabilities_state: None,
   }
 }
 
@@ -2408,11 +2403,6 @@ fn initial_fullscreen_state(
   attributes : @core.WindowAttributes,
 ) -> @core.Fullscreen? {
   attributes.fullscreen()
-}
-
-///|
-fn default_ime_capabilities() -> @core.ImeCapabilities {
-  @core.ImeCapabilities::new(true, true, true)
 }
 
 ///|

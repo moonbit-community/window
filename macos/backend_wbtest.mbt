@@ -649,10 +649,10 @@ struct ImeConfigurationApp {
 
 ///|
 struct ImeCapabilityRestrictionApp {
-  cursor_not_supported : Ref[Bool]
-  hint_and_purpose_not_supported : Ref[Bool]
-  purpose_not_supported : Ref[Bool]
-  surrounding_not_supported : Ref[Bool]
+  cursor_ignored : Ref[Bool]
+  hint_and_purpose_ignored : Ref[Bool]
+  purpose_ignored : Ref[Bool]
+  surrounding_ignored : Ref[Bool]
 }
 
 ///|
@@ -1862,6 +1862,7 @@ impl ApplicationHandler for ImeConfigurationApp with can_create_surfaces(
     Some(enable_request) => enable_request
     None => abort("expected valid IME enable request")
   }
+  try! window.request_ime_update(@core.ImeRequest::Enable(enable_request))
   self.enable_when_enabled_error.val = try {
     window.request_ime_update(@core.ImeRequest::Enable(enable_request))
     None
@@ -1970,7 +1971,7 @@ impl ApplicationHandler for ImeCapabilityRestrictionApp with can_create_surfaces
     None => abort("expected valid IME enable request")
   }
   try! window.request_ime_update(@core.ImeRequest::Enable(enable_request))
-  self.hint_and_purpose_not_supported.val = try {
+  self.hint_and_purpose_ignored.val = try {
     window.request_ime_update(
       @core.ImeRequestData::default()
       .with_hint_and_purpose(
@@ -1979,23 +1980,22 @@ impl ApplicationHandler for ImeCapabilityRestrictionApp with can_create_surfaces
       )
       .into_request(),
     )
-    false
+    window.ime_hints() == @core.ImeHint::none() &&
+    window.ime_purpose() == @core.ImePurpose::Normal
   } catch {
-    @core.ImeRequestError::NotSupported => true
     _ => false
   }
-  self.purpose_not_supported.val = try {
+  self.purpose_ignored.val = try {
     window.request_ime_update(
       @core.ImeRequestData::default()
       .with_hint_and_purpose(@core.ImeHint::none(), @core.ImePurpose::Date)
       .into_request(),
     )
-    false
+    window.ime_purpose() == @core.ImePurpose::Normal
   } catch {
-    @core.ImeRequestError::NotSupported => true
     _ => false
   }
-  self.cursor_not_supported.val = try {
+  self.cursor_ignored.val = try {
     window.request_ime_update(
       @core.ImeRequestData::default()
       .with_cursor_area(
@@ -2004,20 +2004,19 @@ impl ApplicationHandler for ImeCapabilityRestrictionApp with can_create_surfaces
       )
       .into_request(),
     )
-    false
+    window.ime_cursor_area_position() == @dpi.PhysicalPosition::new(0, 0) &&
+    window.ime_cursor_area_size() == @dpi.PhysicalSize::new(1, 1)
   } catch {
-    @core.ImeRequestError::NotSupported => true
     _ => false
   }
-  self.surrounding_not_supported.val = try {
+  self.surrounding_ignored.val = try {
     window.request_ime_update(
       @core.ImeRequestData::default()
       .with_surrounding_text(surrounding_text)
       .into_request(),
     )
-    false
+    window.ime_surrounding_text() is None
   } catch {
-    @core.ImeRequestError::NotSupported => true
     _ => false
   }
   event_loop.exit()
@@ -3317,10 +3316,7 @@ test "window ime configuration updates native state" {
     updated_purpose,
   }
   event_loop.run_app(app)
-  assert_eq(
-    ime_capabilities.val,
-    Some(@core.ImeCapabilities::new(true, true, true)),
-  )
+  assert_eq(ime_capabilities.val, None)
   assert_eq(
     initial_hints.val,
     @core.ImeHint::completion().union(@core.ImeHint::spellcheck()),
@@ -3359,23 +3355,23 @@ test "window ime configuration updates native state" {
 }
 
 ///|
-test "ime request updates respect negotiated capabilities" {
+test "ime request updates ignore fields without negotiated capabilities" {
   let event_loop = EventLoop::new()
-  let hint_and_purpose_not_supported = Ref::new(false)
-  let purpose_not_supported = Ref::new(false)
-  let cursor_not_supported = Ref::new(false)
-  let surrounding_not_supported = Ref::new(false)
+  let hint_and_purpose_ignored = Ref::new(false)
+  let purpose_ignored = Ref::new(false)
+  let cursor_ignored = Ref::new(false)
+  let surrounding_ignored = Ref::new(false)
   let app : ImeCapabilityRestrictionApp = {
-    cursor_not_supported,
-    hint_and_purpose_not_supported,
-    purpose_not_supported,
-    surrounding_not_supported,
+    cursor_ignored,
+    hint_and_purpose_ignored,
+    purpose_ignored,
+    surrounding_ignored,
   }
   event_loop.run_app(app)
-  assert_true(hint_and_purpose_not_supported.val)
-  assert_true(purpose_not_supported.val)
-  assert_true(cursor_not_supported.val)
-  assert_true(surrounding_not_supported.val)
+  assert_true(hint_and_purpose_ignored.val)
+  assert_true(purpose_ignored.val)
+  assert_true(cursor_ignored.val)
+  assert_true(surrounding_ignored.val)
 }
 
 ///|
