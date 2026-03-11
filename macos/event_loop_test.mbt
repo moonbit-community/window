@@ -34,6 +34,9 @@ extern "C" fn window_titlebar_buttons_hidden_for_test(window_id : Int) -> Bool =
 extern "C" fn window_fullsize_content_view_for_test(window_id : Int) -> Bool = "mbw_test_window_fullsize_content_view"
 
 ///|
+extern "C" fn window_content_view_handle_for_test(window_id : Int) -> UInt64 = "mbw_test_window_content_view_handle"
+
+///|
 extern "C" fn window_unified_titlebar_for_test(window_id : Int) -> Bool = "mbw_test_window_unified_titlebar"
 
 ///|
@@ -833,7 +836,9 @@ test "parent window attribute accepts native window handles" {
   let parent = event_loop.create_window(
     @core.WindowAttributes::default().with_visible(false),
   )
+  let parent_raw_id = parent.id().into_raw()
   let parent_handle = parent.rwh_06_window_handle()
+  assert_eq(parent_handle, window_content_view_handle_for_test(parent_raw_id))
   assert_eq(parent.display_handle(), parent.rwh_06_display_handle())
   assert_eq(parent.window_handle(), parent_handle)
   let child = event_loop.create_window(
@@ -842,7 +847,10 @@ test "parent window attribute accepts native window handles" {
     .with_parent_window(Some(@core.ParentWindow::from_raw(parent_handle))),
   )
   assert_true(parent_handle > (0 : Int).to_uint64())
-  assert_true(child.rwh_06_window_handle() > (0 : Int).to_uint64())
+  let child_raw_id = child.id().into_raw()
+  let child_handle = child.rwh_06_window_handle()
+  assert_eq(child_handle, window_content_view_handle_for_test(child_raw_id))
+  assert_true(child_handle > (0 : Int).to_uint64())
 }
 
 ///|

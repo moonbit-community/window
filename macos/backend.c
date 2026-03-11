@@ -5027,7 +5027,16 @@ uint64_t mbw_window_handle(int window_id) {
     return 0;
   }
 #if defined(__APPLE__)
-  return window->window ? (uint64_t)(uintptr_t)window->window : 0;
+  id content_view = window->content_view
+    ? (id)window->content_view
+    : nil;
+  if (!content_view && window->window) {
+    content_view = mbw_msg_id((id)window->window, "contentView");
+    if (content_view) {
+      window->content_view = (void *)content_view;
+    }
+  }
+  return content_view ? (uint64_t)(uintptr_t)content_view : 0;
 #else
   return 0;
 #endif
@@ -6789,6 +6798,24 @@ bool mbw_test_window_fullsize_content_view(int window_id) {
   return window->fullsize_content_view != 0;
 }
 
+uint64_t mbw_test_window_content_view_handle(int window_id) {
+  mbw_window_t *window = mbw_find_window(window_id);
+  if (!window) {
+    return 0;
+  }
+#if defined(__APPLE__)
+  id content_view = window->content_view
+    ? (id)window->content_view
+    : nil;
+  if (!content_view && window->window) {
+    content_view = mbw_msg_id((id)window->window, "contentView");
+  }
+  return content_view ? (uint64_t)(uintptr_t)content_view : 0;
+#else
+  return 0;
+#endif
+}
+
 bool mbw_test_window_unified_titlebar(int window_id) {
   return mbw_window_unified_titlebar(window_id);
 }
@@ -8005,7 +8032,11 @@ bool mbw_window_set_parent_window(int window_id, uint64_t parent_window_handle) 
     return false;
   }
 #if defined(__APPLE__)
-  id parent_window = (id)(uintptr_t)parent_window_handle;
+  id parent_view = (id)(uintptr_t)parent_window_handle;
+  if (!parent_view) {
+    return false;
+  }
+  id parent_window = mbw_msg_id(parent_view, "window");
   if (!parent_window) {
     return false;
   }
