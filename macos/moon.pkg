@@ -1,7 +1,7 @@
 import {
   "moonbitlang/core/encoding/utf8",
-  "Milky2018/window/core" @core,
-  "Milky2018/window/dpi" @dpi,
+  "Milky2018/window/core",
+  "Milky2018/window/dpi",
 }
 
 options(

@@ -1,7 +1,7 @@
 import {
-  "Milky2018/window/core" @core,
-  "Milky2018/window/dpi" @dpi,
-  "Milky2018/window/macos" @macos,
+  "Milky2018/window/core",
+  "Milky2018/window/dpi",
+  "Milky2018/window/macos",
 }
 
 options(

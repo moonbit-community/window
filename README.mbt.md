@@ -133,8 +133,8 @@ moon run examples/window --target native
 
 ```mbt nocheck
 import {
-  "Milky2018/window/core" @core,
-  "Milky2018/window/macos" @macos,
+  "Milky2018/window/core",
+  "Milky2018/window/macos",
 }
 
 struct App {

@@ -1,6 +1,6 @@
 import {
-  "moonbitlang/core/math" @math,
-  "Milky2018/window/dpi" @dpi,
+  "moonbitlang/core/math",
+  "Milky2018/window/dpi",
 }
 
 options(
