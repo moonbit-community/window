@@ -2139,14 +2139,17 @@ impl ApplicationHandler for ScaleFactorApp with window_event(
   event,
 ) {
   match event {
-    @core.WindowEvent::ScaleFactorChanged(scale_factor, writer) => {
-      self.seen_scale_factor.val = Some(scale_factor)
-      writer.request_surface_size(@dpi.PhysicalSize::new(1200, 900))
-    }
-    @core.WindowEvent::SurfaceResized(size) => {
-      self.resized.val = Some(size)
-      event_loop.exit()
-    }
+    @core.WindowEvent::ScaleFactorChanged(scale_factor, writer) =>
+      if scale_factor == 2.0 {
+        self.seen_scale_factor.val = Some(scale_factor)
+        writer.request_surface_size(@dpi.PhysicalSize::new(1200, 900))
+      }
+    @core.WindowEvent::SurfaceResized(size) =>
+      if self.seen_scale_factor.val == Some(2.0) &&
+        size == @dpi.PhysicalSize::new(1200, 900) {
+        self.resized.val = Some(size)
+        event_loop.exit()
+      }
     _ => ()
   }
 }
