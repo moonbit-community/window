@@ -853,7 +853,7 @@ pub fn WindowAttributes::default() -> WindowAttributes {
     parent_window: None,
     platform_attributes: PlatformWindowAttributes::default(),
     position: None,
-    surface_size: Some(@dpi.PhysicalSize::new(800, 600).into_size()),
+    surface_size: None,
     surface_resize_increments: None,
     theme: None,
     window_icon: None,

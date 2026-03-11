@@ -16,10 +16,7 @@ test "window attributes follow winit defaults" {
   assert_true(default_buttons.minimize())
   assert_true(default_buttons.maximize())
   assert_eq(attrs.fullscreen(), None)
-  assert_eq(
-    attrs.surface_size(),
-    Some(@dpi.PhysicalSize::new(800, 600).into_size()),
-  )
+  assert_eq(attrs.surface_size(), None)
   assert_eq(attrs.surface_resize_increments(), None)
   assert_eq(attrs.min_surface_size(), None)
   assert_eq(attrs.max_surface_size(), None)
