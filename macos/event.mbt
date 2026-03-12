@@ -1,4 +1,7 @@
 ///|
+// Port target: winit-reference/winit-appkit/src/event.rs
+
+///|
 fn extra_function_key_from_text(text : String?) -> @core.PhysicalKey? {
   match text {
     Some("\u{f718}") => Some(@core.PhysicalKey::Code(@core.KeyCode::F21))
@@ -465,4 +468,69 @@ fn create_key_event(
     text,
     text_with_all_modifiers,
   )
+}
+
+///|
+fn element_state_from_native(state : Int) -> @core.ElementState? {
+  match state {
+    1 => Some(@core.ElementState::Pressed)
+    2 => Some(@core.ElementState::Released)
+    _ => None
+  }
+}
+
+///|
+fn mouse_button_from_native(button : Int) -> @core.MouseButton? {
+  @core.MouseButton::try_from_u8(button)
+}
+
+///|
+fn button_source_from_native(button : Int) -> @core.ButtonSource {
+  match mouse_button_from_native(button) {
+    Some(mouse) => @core.ButtonSource::Mouse(mouse)
+    None => @core.ButtonSource::Unknown(button)
+  }
+}
+
+///|
+fn pointer_source_from_native(source : Int) -> @core.PointerSource {
+  match source {
+    1 => @core.PointerSource::Mouse
+    _ => @core.PointerSource::Unknown
+  }
+}
+
+///|
+fn pointer_kind_from_native(kind : Int) -> @core.PointerKind {
+  match kind {
+    1 => @core.PointerKind::Mouse
+    _ => @core.PointerKind::Unknown
+  }
+}
+
+///|
+fn scroll_delta_from_native(
+  kind : Int,
+  x : Double,
+  y : Double,
+) -> @core.MouseScrollDelta? {
+  match kind {
+    1 => Some(@core.MouseScrollDelta::LineDelta(x, y))
+    2 =>
+      Some(
+        @core.MouseScrollDelta::PixelDelta(@dpi.PhysicalPositionF64::new(x, y)),
+      )
+    _ => None
+  }
+}
+
+///|
+fn touch_phase_from_native(phase : Int) -> @core.TouchPhase? {
+  match phase {
+    1 => Some(@core.TouchPhase::Started)
+    2 => Some(@core.TouchPhase::Moved)
+    3 => Some(@core.TouchPhase::Ended)
+    4 => Some(@core.TouchPhase::Cancelled)
+    _ => None
+  }
 }

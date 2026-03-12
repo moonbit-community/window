@@ -7,7 +7,119 @@ import {
 }
 
 // Values
+pub fn allows_automatic_window_tabbing_macos(ActiveEventLoop) -> Bool
+
+pub fn app_state_clear_exit() -> Unit
+
+pub fn app_state_control_flow() -> @core.ControlFlow
+
+pub fn app_state_control_flow_timeout_ms() -> Int64?
+
+pub fn[A : ApplicationHandler] app_state_dispatch_about_to_wait(A, ActiveEventLoop) -> Bool
+
+pub fn[A : ApplicationHandler] app_state_dispatch_init_events(A, ActiveEventLoop) -> Unit
+
+pub fn app_state_effective_wait_timeout_ms() -> Int64?
+
+pub fn app_state_exit() -> Unit
+
+pub fn app_state_exiting() -> Bool
+
+pub fn[A : ApplicationHandler] app_state_handle_redraw(A, ActiveEventLoop, @core.WindowId) -> Bool
+
+pub fn app_state_handler_in_use() -> Bool
+
+pub fn app_state_handler_ready() -> Bool
+
+pub fn app_state_has_pending_redraws() -> Bool
+
+pub fn app_state_internal_exit() -> Unit
+
+pub fn app_state_is_launched() -> Bool
+
+pub fn app_state_is_running() -> Bool
+
+pub fn app_state_next_waker_instant_ms() -> Int64?
+
+pub fn app_state_prepare_wait_cycle(Int64) -> Unit
+
+pub fn app_state_queue_close_window(Int) -> Unit
+
+pub fn app_state_queue_destroyed_window(Int) -> Unit
+
+pub fn app_state_queue_proxy_wake_up() -> Unit
+
+pub fn app_state_set_control_flow(@core.ControlFlow) -> Unit
+
+pub fn app_state_set_handler_in_use(Bool) -> Unit
+
+pub fn app_state_set_launched(Bool) -> Unit
+
+pub fn app_state_set_next_waker_instant_ms(Int64?) -> Unit
+
+pub fn app_state_set_running(Bool) -> Unit
+
+pub fn app_state_set_start_time_ms(Int64?) -> Unit
+
+pub fn app_state_set_stop_after_wait(Bool) -> Unit
+
+pub fn app_state_set_stop_before_wait(Bool) -> Unit
+
+pub fn app_state_set_stop_on_launch(Bool) -> Unit
+
+pub fn app_state_set_stop_on_redraw(Bool) -> Unit
+
+pub fn app_state_set_wait_timeout_ms(Int64?) -> Unit
+
+pub fn app_state_start_time_ms() -> Int64?
+
+pub fn app_state_stop_after_wait() -> Bool
+
+pub fn app_state_stop_before_wait() -> Bool
+
+pub fn app_state_stop_on_launch() -> Bool
+
+pub fn app_state_stop_on_redraw() -> Bool
+
+pub fn app_state_take_all_close_windows() -> Array[Int]
+
+pub fn app_state_take_all_destroyed_windows() -> Array[Int]
+
+pub fn app_state_take_all_redraws() -> Array[Int]
+
+pub fn app_state_take_close_window(Int) -> Bool
+
+pub fn app_state_take_destroyed_window(Int) -> Bool
+
+pub fn app_state_take_proxy_wake_up() -> Bool
+
+pub fn app_state_wait_timeout_ms() -> Int64?
+
 pub fn backend_available() -> Bool
+
+pub fn create_observer(String) -> NotificationObserver
+
+pub fn default_platform_specific_event_loop_attributes() -> @core.PlatformEventLoopAttributes
+
+pub fn default_platform_specific_window_attributes() -> @core.PlatformWindowAttributes
+
+pub fn[A : ApplicationHandler] dispatch_device_button(A, ActiveEventLoop, Int, @core.ElementState) -> Unit
+
+pub fn[A : ApplicationHandler] dispatch_device_pointer_motion(A, ActiveEventLoop, Double, Double) -> Unit
+
+pub fn hide_application_macos(ActiveEventLoop) -> Unit
+
+pub fn hide_other_applications_macos(ActiveEventLoop) -> Unit
+
+pub fn initialize_default_menu(Bool) -> Unit
+
+pub fn install_application_event_hook() -> Unit
+
+pub fn[A : ApplicationHandler] maybe_dispatch_device_event(A, ActiveEventLoop, Int, Int, Double, Double) -> Bool
+
+pub fn min_timeout_ms(Int64?, Int64?) -> Int64?
+
+pub fn monitor_handle_ns_screen(@core.MonitorHandle) -> UInt64?
 
 pub fn monitor_ns_screen(@core.MonitorHandle) -> UInt64?
 
@@ -41,15 +153,13 @@ pub fn native_sleep_millis(Int) -> Unit
 
 pub fn native_window_height(Int) -> Int
 
-pub fn native_window_request_redraw(Int) -> Unit
-
 pub fn native_window_take_close_requested(Int) -> Bool
-
-pub fn native_window_take_redraw_requested(Int) -> Bool
 
 pub fn native_window_take_surface_resized(Int) -> Bool
 
 pub fn native_window_width(Int) -> Int
+
+pub fn notification_center_notify(NotificationObserver) -> Unit
 
 pub fn ns_screen(@core.MonitorHandle) -> UInt64?
 
@@ -57,9 +167,18 @@ pub fn physicalkey_to_scancode(@core.PhysicalKey) -> Int?
 
 pub fn scancode_to_physicalkey(Int) -> @core.PhysicalKey
 
+pub fn set_allows_automatic_window_tabbing_macos(ActiveEventLoop, Bool) -> Unit
+
+pub fn with_activate_ignoring_other_apps_macos(EventLoopBuilder, Bool) -> EventLoopBuilder
+
+pub fn with_activation_policy_macos(EventLoopBuilder, @core.ActivationPolicy) -> EventLoopBuilder
+
+pub fn with_default_menu_macos(EventLoopBuilder, Bool) -> EventLoopBuilder
+
 // Errors
 
 // Types and methods
+#alias(ActiveEventLoopExtMacOS)
 pub struct ActiveEventLoop {
   // private fields
 }
@@ -83,6 +202,9 @@ pub fn ActiveEventLoop::set_control_flow(Self, @core.ControlFlow) -> Unit
 pub fn ActiveEventLoop::system_theme(Self) -> @core.Theme?
 pub fn ActiveEventLoop::try_create_window(Self, @core.WindowAttributes) -> Window raise @core.RequestError
 pub impl Show for ActiveEventLoop
+
+type AppStateRuntime
+pub impl Show for AppStateRuntime
 
 pub struct EventLoop {
   // private fields
@@ -120,6 +242,7 @@ pub fn[A : ApplicationHandler] EventLoop::try_run_app_on_demand(Self, A) -> Unit
 pub fn EventLoop::window_target(Self) -> ActiveEventLoop
 pub impl Show for EventLoop
 
+#alias(EventLoopBuilderExtMacOS)
 pub struct EventLoopBuilder {
   // private fields
 }
@@ -142,6 +265,51 @@ pub fn EventLoopProxy::wake_up(Self) -> Unit
 pub impl Eq for EventLoopProxy
 pub impl Show for EventLoopProxy
 
+pub struct EventLoopWaker {
+  start_instant_ms : Int64
+  mut next_fire_date_ms : Int64?
+}
+pub fn EventLoopWaker::is_stopped(Self) -> Bool
+pub fn EventLoopWaker::new() -> Self
+pub fn EventLoopWaker::next_fire_date_ms(Self) -> Int64?
+pub fn EventLoopWaker::start(Self) -> Unit
+pub fn EventLoopWaker::start_at(Self, Int64?) -> Unit
+pub fn EventLoopWaker::stop(Self) -> Unit
+pub impl Eq for EventLoopWaker
+pub impl Show for EventLoopWaker
+
+pub(all) struct KeyEquivalent {
+  key : String
+  masks : Int?
+}
+pub impl Eq for KeyEquivalent
+pub impl Show for KeyEquivalent
+
+pub(all) enum MenuAction {
+  About
+  Services
+  Hide
+  HideOthers
+  ShowAll
+  Quit
+  Separator
+}
+pub impl Eq for MenuAction
+pub impl Show for MenuAction
+
+pub(all) struct MenuItemDescriptor {
+  title : String
+  action : MenuAction
+  key_equivalent : KeyEquivalent?
+}
+pub impl Eq for MenuItemDescriptor
+pub impl Show for MenuItemDescriptor
+
+type NotificationObserver
+pub impl Eq for NotificationObserver
+pub impl Show for NotificationObserver
+
+#alias(WindowExtMacOS)
 pub struct Window {
   // private fields
 }
@@ -258,7 +426,17 @@ pub impl Eq for Window
 pub impl Show for Window
 
 // Type aliases
+pub using @core {type ActivationPolicy}
+
+pub using @core {type MonitorHandle as MonitorHandleExtMacOS}
+
+pub using @core {type OptionAsAlt}
+
 pub using @core {type PlatformEventLoopAttributes as PlatformSpecificEventLoopAttributes}
+
+pub using @core {type PlatformWindowAttributes as PlatformSpecificWindowAttributes}
+
+pub using @core {type PlatformWindowAttributes as WindowAttributesExtMacOS}
 
 pub using @core {type PlatformWindowAttributes as WindowAttributesMacOS}
 

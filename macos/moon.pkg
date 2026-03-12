@@ -5,11 +5,14 @@ import {
 }
 
 options(
-  "native-stub": [ "backend.c" ],
+  "native-stub": [ "ffi.c" ],
   "supported-targets": "native",
   targets: {
-    "backend_wbtest.mbt": [ "native" ],
+    "app_wbtest.mbt": [ "native" ],
     "event_loop_test.mbt": [ "native" ],
-    "ffi_native.mbt": [ "native" ],
+    "event_wbtest.mbt": [ "native" ],
+    "ffi.mbt": [ "native" ],
+    "ffi_wbtest.mbt": [ "native" ],
+    "monitor_wbtest.mbt": [ "native" ],
   },
 )
