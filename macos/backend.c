@@ -2532,39 +2532,18 @@ static void mbw_content_view_flags_changed(id self, SEL _cmd, id event) {
   if (!window || !event) {
     return;
   }
-  id effective_event = mbw_event_replace_option_as_alt(event, window->option_as_alt);
-  if (!effective_event) {
-    effective_event = event;
-  }
+  id effective_event = event;
   int scancode = (int)((mbw_nsinteger_t(*)(id, SEL))objc_msgSend)(
     effective_event,
     mbw_sel("keyCode"));
   int previous_modifiers = window->modifiers_state;
   int next_modifiers = mbw_event_modifiers_state(effective_event);
-  uint8_t text_with_all_modifiers[MBW_KEY_TEXT_CAP];
-  uint8_t text_ignoring_modifiers[MBW_KEY_TEXT_CAP];
-  uint8_t text_without_modifiers[MBW_KEY_TEXT_CAP];
-  int text_with_all_modifiers_len = mbw_event_nsstring_utf8(
-    effective_event,
-    "characters",
-    text_with_all_modifiers,
-    MBW_KEY_TEXT_CAP);
-  int text_ignoring_modifiers_len = mbw_event_nsstring_utf8(
-    effective_event,
-    "charactersIgnoringModifiers",
-    text_ignoring_modifiers,
-    MBW_KEY_TEXT_CAP);
-  int text_without_modifiers_len = mbw_modifierless_char_from_scancode(
-    scancode,
-    text_without_modifiers,
-    MBW_KEY_TEXT_CAP);
-  if (text_without_modifiers_len <= 0) {
-    text_without_modifiers_len = mbw_copy_utf8_slice(
-      text_ignoring_modifiers,
-      text_ignoring_modifiers_len,
-      text_without_modifiers,
-      MBW_KEY_TEXT_CAP);
-  }
+  uint8_t text_with_all_modifiers[MBW_KEY_TEXT_CAP] = { 0 };
+  uint8_t text_ignoring_modifiers[MBW_KEY_TEXT_CAP] = { 0 };
+  uint8_t text_without_modifiers[MBW_KEY_TEXT_CAP] = { 0 };
+  int text_with_all_modifiers_len = 0;
+  int text_ignoring_modifiers_len = 0;
+  int text_without_modifiers_len = 0;
   if (
     scancode == 0x38 ||
     scancode == 0x3C ||
