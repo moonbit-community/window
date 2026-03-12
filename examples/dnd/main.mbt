@@ -17,18 +17,8 @@ pub impl @macos.ApplicationHandler for Application with can_create_surfaces(
     "Drag and drop files on me",
   )
   let window = event_loop.create_window(window_attributes)
+  window.request_redraw()
   self.window = Some(window)
-}
-
-///|
-pub impl @macos.ApplicationHandler for Application with about_to_wait(
-  self,
-  _event_loop,
-) {
-  match self.window {
-    Some(window) => window.request_redraw()
-    None => ()
-  }
 }
 
 ///|
