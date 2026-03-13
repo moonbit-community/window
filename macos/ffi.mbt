@@ -184,6 +184,33 @@ fn native_window_set_content_size(
 }
 
 ///|
+fn native_window_set_min_content_size(
+  handle : UInt64,
+  width : Int,
+  height : Int,
+) -> Unit {
+  appkit_window_set_min_content_size(handle, width, height)
+}
+
+///|
+fn native_window_set_max_content_size(
+  handle : UInt64,
+  width : Int,
+  height : Int,
+) -> Unit {
+  appkit_window_set_max_content_size(handle, width, height)
+}
+
+///|
+fn native_window_set_resize_increments(
+  handle : UInt64,
+  width : Int,
+  height : Int,
+) -> Unit {
+  appkit_window_set_resize_increments(handle, width, height)
+}
+
+///|
 fn native_window_set_position(handle : UInt64, x : Int, y : Int) -> Unit {
   appkit_window_set_position(handle, x, y)
 }
@@ -196,6 +223,66 @@ fn native_window_content_width(handle : UInt64) -> Int {
 ///|
 fn native_window_content_height(handle : UInt64) -> Int {
   appkit_window_content_height(handle)
+}
+
+///|
+fn native_window_min_content_width(handle : UInt64) -> Int {
+  appkit_window_min_content_width(handle)
+}
+
+///|
+fn native_window_min_content_height(handle : UInt64) -> Int {
+  appkit_window_min_content_height(handle)
+}
+
+///|
+fn native_window_max_content_width(handle : UInt64) -> Int {
+  appkit_window_max_content_width(handle)
+}
+
+///|
+fn native_window_max_content_height(handle : UInt64) -> Int {
+  appkit_window_max_content_height(handle)
+}
+
+///|
+fn native_window_outer_width(handle : UInt64) -> Int {
+  appkit_window_outer_width(handle)
+}
+
+///|
+fn native_window_outer_height(handle : UInt64) -> Int {
+  appkit_window_outer_height(handle)
+}
+
+///|
+fn native_window_resize_increment_width(handle : UInt64) -> Int {
+  appkit_window_resize_increment_width(handle)
+}
+
+///|
+fn native_window_resize_increment_height(handle : UInt64) -> Int {
+  appkit_window_resize_increment_height(handle)
+}
+
+///|
+fn native_window_safe_area_top(handle : UInt64) -> Int {
+  appkit_window_safe_area_top(handle)
+}
+
+///|
+fn native_window_safe_area_left(handle : UInt64) -> Int {
+  appkit_window_safe_area_left(handle)
+}
+
+///|
+fn native_window_safe_area_bottom(handle : UInt64) -> Int {
+  appkit_window_safe_area_bottom(handle)
+}
+
+///|
+fn native_window_safe_area_right(handle : UInt64) -> Int {
+  appkit_window_safe_area_right(handle)
 }
 
 ///|
@@ -312,6 +399,55 @@ fn native_window_set_movable_by_background(
 }
 
 ///|
+fn native_window_set_accepts_first_mouse(
+  handle : UInt64,
+  accepts_first_mouse : Bool,
+) -> Unit {
+  appkit_window_set_accepts_first_mouse(
+    handle,
+    if accepts_first_mouse {
+      1
+    } else {
+      0
+    },
+  )
+}
+
+///|
+fn native_window_set_option_as_alt(
+  handle : UInt64,
+  option_as_alt : Int,
+) -> Unit {
+  appkit_window_set_option_as_alt(handle, option_as_alt)
+}
+
+///|
+fn native_window_set_ime_purpose(handle : UInt64, purpose : Int) -> Unit {
+  appkit_window_set_ime_purpose(handle, purpose)
+}
+
+///|
+fn native_window_set_ime_hints(handle : UInt64, hints : Int) -> Unit {
+  appkit_window_set_ime_hints(handle, hints)
+}
+
+///|
+fn native_window_set_ime_allowed(handle : UInt64, allowed : Bool) -> Unit {
+  appkit_window_set_ime_allowed(handle, if allowed { 1 } else { 0 })
+}
+
+///|
+fn native_window_set_ime_cursor_area(
+  handle : UInt64,
+  x : Int,
+  y : Int,
+  width : Int,
+  height : Int,
+) -> Unit {
+  appkit_window_set_ime_cursor_area(handle, x, y, width, height)
+}
+
+///|
 fn native_window_set_titlebar_transparent(
   handle : UInt64,
   transparent : Bool,
@@ -392,6 +528,11 @@ fn native_window_set_enabled_buttons(
       0
     },
   )
+}
+
+///|
+fn native_window_set_blur(handle : UInt64, blur : Bool) -> Unit {
+  appkit_window_set_blur(handle, if blur { 1 } else { 0 })
 }
 
 ///|
@@ -509,6 +650,11 @@ fn native_window_show_window_menu(handle : UInt64, x : Int, y : Int) -> Bool {
 }
 
 ///|
+fn native_window_current_monitor_id(handle : UInt64) -> UInt64 {
+  appkit_window_current_monitor_id(handle)
+}
+
+///|
 fn native_window_theme(handle : UInt64) -> Int {
   appkit_window_theme(handle)
 }
@@ -521,6 +667,61 @@ fn native_event_loop_wake_up_appkit() -> Unit {
 ///|
 fn native_event_loop_wait_millis(timeout_ms : Int) -> Bool {
   appkit_event_loop_wait_millis(timeout_ms) != 0
+}
+
+///|
+fn native_application_presentation_options() -> UInt64 {
+  appkit_application_presentation_options()
+}
+
+///|
+fn native_set_application_presentation_options(options : UInt64) -> Unit {
+  appkit_set_application_presentation_options(options)
+}
+
+///|
+fn native_find_display_mode_handle(
+  monitor_id : UInt64,
+  width : Int,
+  height : Int,
+  bit_depth : Int,
+  refresh_rate_millihertz : Int,
+) -> UInt64 {
+  native_monitor_find_display_mode_handle(
+    monitor_id.to_uint(),
+    width,
+    height,
+    bit_depth,
+    refresh_rate_millihertz,
+  )
+}
+
+///|
+fn native_copy_current_display_mode_handle(monitor_id : UInt64) -> UInt64 {
+  native_monitor_copy_current_display_mode_handle(monitor_id.to_uint())
+}
+
+///|
+fn native_release_display_mode_handle(mode_handle : UInt64) -> Unit {
+  native_monitor_release_display_mode_handle(mode_handle)
+}
+
+///|
+fn native_capture_display(monitor_id : UInt64) -> Bool {
+  native_monitor_capture_display(monitor_id.to_uint()) != 0
+}
+
+///|
+fn native_set_display_mode_handle(
+  monitor_id : UInt64,
+  mode_handle : UInt64,
+) -> Bool {
+  native_monitor_set_display_mode_handle(monitor_id.to_uint(), mode_handle) != 0
+}
+
+///|
+fn native_release_display_capture(monitor_id : UInt64) -> Bool {
+  native_monitor_release_display_capture(monitor_id.to_uint()) != 0
 }
 
 ///|
@@ -625,6 +826,27 @@ extern "C" fn appkit_window_set_content_size(
 ) -> Unit = "mbw_window_set_content_size"
 
 ///|
+extern "C" fn appkit_window_set_min_content_size(
+  handle : UInt64,
+  width : Int,
+  height : Int,
+) -> Unit = "mbw_window_set_min_content_size"
+
+///|
+extern "C" fn appkit_window_set_max_content_size(
+  handle : UInt64,
+  width : Int,
+  height : Int,
+) -> Unit = "mbw_window_set_max_content_size"
+
+///|
+extern "C" fn appkit_window_set_resize_increments(
+  handle : UInt64,
+  width : Int,
+  height : Int,
+) -> Unit = "mbw_window_set_resize_increments"
+
+///|
 extern "C" fn appkit_window_set_position(
   handle : UInt64,
   x : Int,
@@ -636,6 +858,42 @@ extern "C" fn appkit_window_content_width(handle : UInt64) -> Int = "mbw_window_
 
 ///|
 extern "C" fn appkit_window_content_height(handle : UInt64) -> Int = "mbw_window_content_height"
+
+///|
+extern "C" fn appkit_window_min_content_width(handle : UInt64) -> Int = "mbw_window_min_content_width"
+
+///|
+extern "C" fn appkit_window_min_content_height(handle : UInt64) -> Int = "mbw_window_min_content_height"
+
+///|
+extern "C" fn appkit_window_max_content_width(handle : UInt64) -> Int = "mbw_window_max_content_width"
+
+///|
+extern "C" fn appkit_window_max_content_height(handle : UInt64) -> Int = "mbw_window_max_content_height"
+
+///|
+extern "C" fn appkit_window_outer_width(handle : UInt64) -> Int = "mbw_window_outer_width"
+
+///|
+extern "C" fn appkit_window_outer_height(handle : UInt64) -> Int = "mbw_window_outer_height"
+
+///|
+extern "C" fn appkit_window_resize_increment_width(handle : UInt64) -> Int = "mbw_window_resize_increment_width"
+
+///|
+extern "C" fn appkit_window_resize_increment_height(handle : UInt64) -> Int = "mbw_window_resize_increment_height"
+
+///|
+extern "C" fn appkit_window_safe_area_top(handle : UInt64) -> Int = "mbw_window_safe_area_top"
+
+///|
+extern "C" fn appkit_window_safe_area_left(handle : UInt64) -> Int = "mbw_window_safe_area_left"
+
+///|
+extern "C" fn appkit_window_safe_area_bottom(handle : UInt64) -> Int = "mbw_window_safe_area_bottom"
+
+///|
+extern "C" fn appkit_window_safe_area_right(handle : UInt64) -> Int = "mbw_window_safe_area_right"
 
 ///|
 extern "C" fn appkit_window_x(handle : UInt64) -> Int = "mbw_window_x"
@@ -722,6 +980,42 @@ extern "C" fn appkit_window_set_movable_by_window_background(
 ) -> Unit = "mbw_window_set_movable_by_window_background"
 
 ///|
+extern "C" fn appkit_window_set_accepts_first_mouse(
+  handle : UInt64,
+  accepts_first_mouse : Int,
+) -> Unit = "mbw_window_set_accepts_first_mouse"
+
+///|
+extern "C" fn appkit_window_set_option_as_alt(
+  handle : UInt64,
+  option_as_alt : Int,
+) -> Unit = "mbw_window_set_option_as_alt"
+
+///|
+extern "C" fn appkit_window_set_ime_purpose(
+  handle : UInt64,
+  purpose : Int,
+) -> Unit = "mbw_window_set_ime_purpose"
+
+///|
+extern "C" fn appkit_window_set_ime_hints(handle : UInt64, hints : Int) -> Unit = "mbw_window_set_ime_hints"
+
+///|
+extern "C" fn appkit_window_set_ime_allowed(
+  handle : UInt64,
+  allowed : Int,
+) -> Unit = "mbw_window_set_ime_allowed"
+
+///|
+extern "C" fn appkit_window_set_ime_cursor_area(
+  handle : UInt64,
+  x : Int,
+  y : Int,
+  width : Int,
+  height : Int,
+) -> Unit = "mbw_window_set_ime_cursor_area"
+
+///|
 extern "C" fn appkit_window_set_titlebar_transparent(
   handle : UInt64,
   transparent : Int,
@@ -764,6 +1058,9 @@ extern "C" fn appkit_window_set_enabled_buttons(
   minimize : Int,
   maximize : Int,
 ) -> Unit = "mbw_window_set_enabled_buttons"
+
+///|
+extern "C" fn appkit_window_set_blur(handle : UInt64, blur : Int) -> Unit = "mbw_window_set_blur"
 
 ///|
 extern "C" fn appkit_window_request_user_attention(request_type : Int) -> Unit = "mbw_window_request_user_attention"
@@ -859,6 +1156,9 @@ extern "C" fn appkit_window_show_window_menu(
 ) -> Int = "mbw_window_show_window_menu"
 
 ///|
+extern "C" fn appkit_window_current_monitor_id(handle : UInt64) -> UInt64 = "mbw_window_current_monitor_id"
+
+///|
 extern "C" fn appkit_window_theme(handle : UInt64) -> Int = "mbw_window_theme"
 
 ///|
@@ -866,3 +1166,42 @@ extern "C" fn appkit_event_loop_wake_up() -> Unit = "mbw_event_loop_wake_up"
 
 ///|
 extern "C" fn appkit_event_loop_wait_millis(timeout_ms : Int) -> Int = "mbw_event_loop_wait_millis"
+
+///|
+extern "C" fn appkit_application_presentation_options() -> UInt64 = "mbw_application_presentation_options"
+
+///|
+extern "C" fn appkit_set_application_presentation_options(
+  options : UInt64,
+) -> Unit = "mbw_set_application_presentation_options"
+
+///|
+extern "C" fn native_monitor_find_display_mode_handle(
+  monitor_id : UInt,
+  width : Int,
+  height : Int,
+  bit_depth : Int,
+  refresh_rate_millihertz : Int,
+) -> UInt64 = "mbw_find_display_mode_handle"
+
+///|
+extern "C" fn native_monitor_copy_current_display_mode_handle(
+  monitor_id : UInt,
+) -> UInt64 = "mbw_copy_current_display_mode_handle"
+
+///|
+extern "C" fn native_monitor_release_display_mode_handle(
+  mode_handle : UInt64,
+) -> Unit = "mbw_release_display_mode_handle"
+
+///|
+extern "C" fn native_monitor_capture_display(monitor_id : UInt) -> Int = "mbw_capture_display"
+
+///|
+extern "C" fn native_monitor_set_display_mode_handle(
+  monitor_id : UInt,
+  mode_handle : UInt64,
+) -> Int = "mbw_set_display_mode_handle"
+
+///|
+extern "C" fn native_monitor_release_display_capture(monitor_id : UInt) -> Int = "mbw_release_display_capture"

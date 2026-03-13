@@ -3,6 +3,7 @@
 #import <Foundation/Foundation.h>
 #import <moonbit.h>
 #import <stdint.h>
+#include <dlfcn.h>
 
 typedef void (*mbw_window_event_trampoline_t)(void *closure, int32_t kind, int32_t raw_id,
                                               int32_t arg0, int32_t arg1, int32_t arg2,
@@ -16,6 +17,18 @@ static void *g_lifecycle_closure = NULL;
 static BOOL g_app_initialized = NO;
 static BOOL g_cursor_hidden = NO;
 
+@interface MBWContentView : NSView
+@property(nonatomic, assign) BOOL acceptsFirstMouseEnabled;
+@property(nonatomic, assign) int32_t optionAsAlt;
+@property(nonatomic, assign) int32_t imePurpose;
+@property(nonatomic, assign) int32_t imeHints;
+@property(nonatomic, assign) BOOL imeAllowed;
+@property(nonatomic, assign) int32_t imeCursorX;
+@property(nonatomic, assign) int32_t imeCursorY;
+@property(nonatomic, assign) int32_t imeCursorWidth;
+@property(nonatomic, assign) int32_t imeCursorHeight;
+@end
+
 @interface MBWWindowDelegate : NSObject <NSWindowDelegate>
 @property(nonatomic, assign) int32_t rawId;
 @property(nonatomic, assign) BOOL allowClose;
@@ -24,7 +37,17 @@ static BOOL g_cursor_hidden = NO;
 @interface MBWWindowBox : NSObject
 @property(nonatomic, strong) NSWindow *window;
 @property(nonatomic, strong) MBWWindowDelegate *delegate;
+@property(nonatomic, strong) MBWContentView *contentView;
 @property(nonatomic, assign) int32_t rawId;
+@end
+
+@implementation MBWContentView
+
+- (BOOL)acceptsFirstMouse:(NSEvent *)event {
+  (void)event;
+  return self.acceptsFirstMouseEnabled;
+}
+
 @end
 
 @implementation MBWWindowDelegate
@@ -242,9 +265,23 @@ uint64_t mbw_create_window(int32_t raw_id, int32_t width, int32_t height, int32_
   delegate.allowClose = NO;
   window.delegate = delegate;
 
+  MBWContentView *content_view = [[MBWContentView alloc] initWithFrame:window.contentView.bounds];
+  content_view.acceptsFirstMouseEnabled = NO;
+  content_view.optionAsAlt = 0;
+  content_view.imePurpose = 0;
+  content_view.imeHints = 0;
+  content_view.imeAllowed = NO;
+  content_view.imeCursorX = 0;
+  content_view.imeCursorY = 0;
+  content_view.imeCursorWidth = 1;
+  content_view.imeCursorHeight = 1;
+  content_view.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
+  window.contentView = content_view;
+
   MBWWindowBox *box = [[MBWWindowBox alloc] init];
   box.window = window;
   box.delegate = delegate;
+  box.contentView = content_view;
   box.rawId = raw_id;
 
   if (visible) {
@@ -349,6 +386,38 @@ void mbw_window_set_content_size(uint64_t handle, int32_t width, int32_t height)
 }
 
 MOONBIT_FFI_EXPORT
+void mbw_window_set_min_content_size(uint64_t handle, int32_t width, int32_t height) {
+  MBWWindowBox *box = mbw_window_box_from_handle(handle);
+  if (box == nil || box.window == nil) {
+    return;
+  }
+  NSSize size = NSMakeSize((CGFloat)(width > 0 ? width : 0), (CGFloat)(height > 0 ? height : 0));
+  [box.window setContentMinSize:size];
+}
+
+MOONBIT_FFI_EXPORT
+void mbw_window_set_max_content_size(uint64_t handle, int32_t width, int32_t height) {
+  MBWWindowBox *box = mbw_window_box_from_handle(handle);
+  if (box == nil || box.window == nil) {
+    return;
+  }
+  NSSize size =
+      NSMakeSize((CGFloat)(width > 0 ? width : CGFLOAT_MAX), (CGFloat)(height > 0 ? height : CGFLOAT_MAX));
+  [box.window setContentMaxSize:size];
+}
+
+MOONBIT_FFI_EXPORT
+void mbw_window_set_resize_increments(uint64_t handle, int32_t width, int32_t height) {
+  MBWWindowBox *box = mbw_window_box_from_handle(handle);
+  if (box == nil || box.window == nil) {
+    return;
+  }
+  CGFloat x = (CGFloat)(width > 0 ? width : 1);
+  CGFloat y = (CGFloat)(height > 0 ? height : 1);
+  [box.window setContentResizeIncrements:NSMakeSize(x, y)];
+}
+
+MOONBIT_FFI_EXPORT
 void mbw_window_set_position(uint64_t handle, int32_t x, int32_t y) {
   MBWWindowBox *box = mbw_window_box_from_handle(handle);
   if (box == nil || box.window == nil) {
@@ -375,6 +444,161 @@ int32_t mbw_window_content_height(uint64_t handle) {
   }
   NSRect contentRect = [box.window contentRectForFrameRect:box.window.frame];
   return (int32_t)contentRect.size.height;
+}
+
+MOONBIT_FFI_EXPORT
+int32_t mbw_window_min_content_width(uint64_t handle) {
+  MBWWindowBox *box = mbw_window_box_from_handle(handle);
+  if (box == nil || box.window == nil) {
+    return 0;
+  }
+  NSSize min_size = box.window.contentMinSize;
+  return min_size.width > 0 ? (int32_t)min_size.width : 0;
+}
+
+MOONBIT_FFI_EXPORT
+int32_t mbw_window_min_content_height(uint64_t handle) {
+  MBWWindowBox *box = mbw_window_box_from_handle(handle);
+  if (box == nil || box.window == nil) {
+    return 0;
+  }
+  NSSize min_size = box.window.contentMinSize;
+  return min_size.height > 0 ? (int32_t)min_size.height : 0;
+}
+
+MOONBIT_FFI_EXPORT
+int32_t mbw_window_max_content_width(uint64_t handle) {
+  MBWWindowBox *box = mbw_window_box_from_handle(handle);
+  if (box == nil || box.window == nil) {
+    return 0;
+  }
+  NSSize max_size = box.window.contentMaxSize;
+  return max_size.width >= (CGFloat)(CGFLOAT_MAX / 2.0) ? 0 : (int32_t)max_size.width;
+}
+
+MOONBIT_FFI_EXPORT
+int32_t mbw_window_max_content_height(uint64_t handle) {
+  MBWWindowBox *box = mbw_window_box_from_handle(handle);
+  if (box == nil || box.window == nil) {
+    return 0;
+  }
+  NSSize max_size = box.window.contentMaxSize;
+  return max_size.height >= (CGFloat)(CGFLOAT_MAX / 2.0) ? 0 : (int32_t)max_size.height;
+}
+
+MOONBIT_FFI_EXPORT
+int32_t mbw_window_outer_width(uint64_t handle) {
+  MBWWindowBox *box = mbw_window_box_from_handle(handle);
+  if (box == nil || box.window == nil) {
+    return 0;
+  }
+  return (int32_t)box.window.frame.size.width;
+}
+
+MOONBIT_FFI_EXPORT
+int32_t mbw_window_outer_height(uint64_t handle) {
+  MBWWindowBox *box = mbw_window_box_from_handle(handle);
+  if (box == nil || box.window == nil) {
+    return 0;
+  }
+  return (int32_t)box.window.frame.size.height;
+}
+
+MOONBIT_FFI_EXPORT
+int32_t mbw_window_resize_increment_width(uint64_t handle) {
+  MBWWindowBox *box = mbw_window_box_from_handle(handle);
+  if (box == nil || box.window == nil) {
+    return 0;
+  }
+  NSSize increments = box.window.contentResizeIncrements;
+  return increments.width > 1 ? (int32_t)increments.width : 0;
+}
+
+MOONBIT_FFI_EXPORT
+int32_t mbw_window_resize_increment_height(uint64_t handle) {
+  MBWWindowBox *box = mbw_window_box_from_handle(handle);
+  if (box == nil || box.window == nil) {
+    return 0;
+  }
+  NSSize increments = box.window.contentResizeIncrements;
+  return increments.height > 1 ? (int32_t)increments.height : 0;
+}
+
+MOONBIT_FFI_EXPORT
+int32_t mbw_window_safe_area_top(uint64_t handle) {
+  MBWWindowBox *box = mbw_window_box_from_handle(handle);
+  if (box == nil || box.window == nil || box.window.contentView == nil) {
+    return 0;
+  }
+  NSView *view = box.window.contentView;
+  if (![view respondsToSelector:@selector(safeAreaInsets)]) {
+    return 0;
+  }
+  NSEdgeInsets insets = view.safeAreaInsets;
+  return (int32_t)insets.top;
+}
+
+MOONBIT_FFI_EXPORT
+int32_t mbw_window_safe_area_left(uint64_t handle) {
+  MBWWindowBox *box = mbw_window_box_from_handle(handle);
+  if (box == nil || box.window == nil || box.window.contentView == nil) {
+    return 0;
+  }
+  NSView *view = box.window.contentView;
+  if (![view respondsToSelector:@selector(safeAreaInsets)]) {
+    return 0;
+  }
+  NSEdgeInsets insets = view.safeAreaInsets;
+  return (int32_t)insets.left;
+}
+
+MOONBIT_FFI_EXPORT
+int32_t mbw_window_safe_area_bottom(uint64_t handle) {
+  MBWWindowBox *box = mbw_window_box_from_handle(handle);
+  if (box == nil || box.window == nil || box.window.contentView == nil) {
+    return 0;
+  }
+  NSView *view = box.window.contentView;
+  if (![view respondsToSelector:@selector(safeAreaInsets)]) {
+    return 0;
+  }
+  NSEdgeInsets insets = view.safeAreaInsets;
+  return (int32_t)insets.bottom;
+}
+
+MOONBIT_FFI_EXPORT
+int32_t mbw_window_safe_area_right(uint64_t handle) {
+  MBWWindowBox *box = mbw_window_box_from_handle(handle);
+  if (box == nil || box.window == nil || box.window.contentView == nil) {
+    return 0;
+  }
+  NSView *view = box.window.contentView;
+  if (![view respondsToSelector:@selector(safeAreaInsets)]) {
+    return 0;
+  }
+  NSEdgeInsets insets = view.safeAreaInsets;
+  return (int32_t)insets.right;
+}
+
+MOONBIT_FFI_EXPORT
+uint64_t mbw_window_current_monitor_id(uint64_t handle) {
+  MBWWindowBox *box = mbw_window_box_from_handle(handle);
+  if (box == nil || box.window == nil) {
+    return 0;
+  }
+  NSScreen *screen = box.window.screen;
+  if (screen == nil) {
+    screen = [NSScreen mainScreen];
+  }
+  if (screen == nil) {
+    return 0;
+  }
+  NSDictionary *description = [screen deviceDescription];
+  NSNumber *number = [description objectForKey:@"NSScreenNumber"];
+  if (number == nil) {
+    return 0;
+  }
+  return (uint64_t)[number unsignedIntValue];
 }
 
 MOONBIT_FFI_EXPORT
@@ -589,6 +813,64 @@ void mbw_window_set_movable_by_window_background(uint64_t handle, int32_t movabl
 }
 
 MOONBIT_FFI_EXPORT
+void mbw_window_set_accepts_first_mouse(uint64_t handle, int32_t accepts_first_mouse) {
+  MBWWindowBox *box = mbw_window_box_from_handle(handle);
+  if (box == nil || box.contentView == nil) {
+    return;
+  }
+  box.contentView.acceptsFirstMouseEnabled = accepts_first_mouse ? YES : NO;
+}
+
+MOONBIT_FFI_EXPORT
+void mbw_window_set_option_as_alt(uint64_t handle, int32_t option_as_alt) {
+  MBWWindowBox *box = mbw_window_box_from_handle(handle);
+  if (box == nil || box.contentView == nil) {
+    return;
+  }
+  box.contentView.optionAsAlt = option_as_alt;
+}
+
+MOONBIT_FFI_EXPORT
+void mbw_window_set_ime_purpose(uint64_t handle, int32_t purpose) {
+  MBWWindowBox *box = mbw_window_box_from_handle(handle);
+  if (box == nil || box.contentView == nil) {
+    return;
+  }
+  box.contentView.imePurpose = purpose;
+}
+
+MOONBIT_FFI_EXPORT
+void mbw_window_set_ime_hints(uint64_t handle, int32_t hints) {
+  MBWWindowBox *box = mbw_window_box_from_handle(handle);
+  if (box == nil || box.contentView == nil) {
+    return;
+  }
+  box.contentView.imeHints = hints;
+}
+
+MOONBIT_FFI_EXPORT
+void mbw_window_set_ime_allowed(uint64_t handle, int32_t allowed) {
+  MBWWindowBox *box = mbw_window_box_from_handle(handle);
+  if (box == nil || box.contentView == nil) {
+    return;
+  }
+  box.contentView.imeAllowed = allowed ? YES : NO;
+}
+
+MOONBIT_FFI_EXPORT
+void mbw_window_set_ime_cursor_area(uint64_t handle, int32_t x, int32_t y, int32_t width,
+                                    int32_t height) {
+  MBWWindowBox *box = mbw_window_box_from_handle(handle);
+  if (box == nil || box.contentView == nil) {
+    return;
+  }
+  box.contentView.imeCursorX = x;
+  box.contentView.imeCursorY = y;
+  box.contentView.imeCursorWidth = width > 0 ? width : 1;
+  box.contentView.imeCursorHeight = height > 0 ? height : 1;
+}
+
+MOONBIT_FFI_EXPORT
 void mbw_window_set_titlebar_transparent(uint64_t handle, int32_t transparent) {
   MBWWindowBox *box = mbw_window_box_from_handle(handle);
   if (box == nil || box.window == nil) {
@@ -701,6 +983,28 @@ void mbw_window_set_enabled_buttons(uint64_t handle, int32_t close, int32_t mini
   if (zoom_button != nil) {
     zoom_button.enabled = maximize ? YES : NO;
   }
+}
+
+MOONBIT_FFI_EXPORT
+void mbw_window_set_blur(uint64_t handle, int32_t blur) {
+  MBWWindowBox *box = mbw_window_box_from_handle(handle);
+  if (box == nil || box.window == nil) {
+    return;
+  }
+
+  typedef int32_t (*mbw_cgs_main_connection_id_t)(void);
+  typedef int32_t (*mbw_cgs_set_blur_t)(int32_t, int32_t, int32_t);
+
+  mbw_cgs_main_connection_id_t main_connection =
+      (mbw_cgs_main_connection_id_t)dlsym(RTLD_DEFAULT, "CGSMainConnectionID");
+  mbw_cgs_set_blur_t set_blur = (mbw_cgs_set_blur_t)dlsym(
+      RTLD_DEFAULT, "CGSSetWindowBackgroundBlurRadius");
+  if (main_connection == NULL || set_blur == NULL) {
+    return;
+  }
+
+  int32_t radius = blur ? 80 : 0;
+  (void)set_blur(main_connection(), (int32_t)box.window.windowNumber, radius);
 }
 
 MOONBIT_FFI_EXPORT
@@ -935,6 +1239,20 @@ int32_t mbw_window_theme(uint64_t handle) {
     return 1;
   }
   return 0;
+}
+
+MOONBIT_FFI_EXPORT
+uint64_t mbw_application_presentation_options(void) {
+  mbw_ensure_app_initialized();
+  NSApplication *app = [NSApplication sharedApplication];
+  return (uint64_t)app.presentationOptions;
+}
+
+MOONBIT_FFI_EXPORT
+void mbw_set_application_presentation_options(uint64_t options) {
+  mbw_ensure_app_initialized();
+  NSApplication *app = [NSApplication sharedApplication];
+  app.presentationOptions = (NSApplicationPresentationOptions)options;
 }
 
 MOONBIT_FFI_EXPORT
