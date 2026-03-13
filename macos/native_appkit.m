@@ -40,6 +40,13 @@ static BOOL g_app_initialized = NO;
 static BOOL g_cursor_hidden = NO;
 static id g_application_observer = nil;
 
+typedef NS_ENUM(int32_t, MBWImeState) {
+  MBWImeStateDisabled = 0,
+  MBWImeStateGround = 1,
+  MBWImeStatePreedit = 2,
+  MBWImeStateCommitted = 3,
+};
+
 static void mbw_emit_lifecycle(int32_t kind);
 
 @interface MBWContentView : NSView <NSTextInputClient, NSDraggingDestination>
@@ -55,7 +62,9 @@ static void mbw_emit_lifecycle(int32_t kind);
 @property(nonatomic, assign) int32_t rawId;
 @property(nonatomic, strong) NSTrackingArea *trackingArea;
 @property(nonatomic, copy) NSString *markedText;
-@property(nonatomic, assign) BOOL imeActive;
+@property(nonatomic, copy) NSString *inputSource;
+@property(nonatomic, assign) BOOL forwardKeyToApp;
+@property(nonatomic, assign) MBWImeState imeState;
 - (void)mbw_emitTextInputWithKind:(int32_t)kind
                                 x:(double)x
                                 y:(double)y
@@ -223,6 +232,35 @@ static void mbw_emit_lifecycle(int32_t kind);
   return @"";
 }
 
+- (NSString *)mbw_currentInputSource {
+  NSTextInputContext *input_context = [self inputContext];
+  if (input_context == nil) {
+    return @"";
+  }
+
+  id source = [input_context selectedKeyboardInputSource];
+  if ([source isKindOfClass:[NSString class]]) {
+    return (NSString *)source;
+  }
+  if ([source respondsToSelector:@selector(description)]) {
+    NSString *description = [source description];
+    return description == nil ? @"" : description;
+  }
+  return @"";
+}
+
+- (BOOL)mbw_isImeEnabled {
+  return self.imeState != MBWImeStateDisabled;
+}
+
+- (BOOL)mbw_isControlString:(NSString *)text {
+  if (text == nil || text.length == 0) {
+    return NO;
+  }
+  NSCharacterSet *control = [NSCharacterSet controlCharacterSet];
+  return [control characterIsMember:[text characterAtIndex:0]];
+}
+
 - (NSString *)mbw_dragPathsFromDraggingInfo:(id<NSDraggingInfo>)sender {
   NSPasteboard *pasteboard = [sender draggingPasteboard];
   if (pasteboard == nil) {
@@ -270,10 +308,11 @@ static void mbw_emit_lifecycle(int32_t kind);
 }
 
 - (void)mbw_emitImeEnabledIfNeeded {
-  if (!self.imeAllowed || self.imeActive) {
+  if (!self.imeAllowed || self.imeState != MBWImeStateDisabled) {
     return;
   }
-  self.imeActive = YES;
+  self.inputSource = [self mbw_currentInputSource];
+  self.imeState = MBWImeStateGround;
   [self mbw_emitTextInputWithKind:8
                                 x:0.0
                                 y:0.0
@@ -322,14 +361,24 @@ static void mbw_emit_lifecycle(int32_t kind);
 }
 
 - (void)mbw_emitKeyboard:(NSEvent *)event state:(int32_t)state {
+  int32_t repeat = 0;
+  int32_t scancode = 0;
+  if (event != nil && event.type == NSEventTypeKeyDown) {
+    repeat = event.isARepeat ? 1 : 0;
+    scancode = (int32_t)event.keyCode;
+  } else if (event != nil &&
+             (event.type == NSEventTypeKeyUp || event.type == NSEventTypeFlagsChanged)) {
+    scancode = (int32_t)event.keyCode;
+  }
+
   [self mbw_emitInputWithKind:7
                            x:0.0
                            y:0.0
                         state:state
                        button:0
                     modifiers:[self mbw_modifiers:event]
-                     scancode:(int32_t)event.keyCode
-                       repeat:(event.isARepeat ? 1 : 0)
+                     scancode:scancode
+                       repeat:repeat
                 pointerSource:0
                   pointerKind:0
               scrollDeltaKind:0
@@ -591,15 +640,58 @@ static void mbw_emit_lifecycle(int32_t kind);
 }
 
 - (void)keyDown:(NSEvent *)event {
-  [self mbw_emitKeyboard:event state:1];
+  if (self.imeAllowed && [self mbw_isImeEnabled]) {
+    NSString *current_input_source = [self mbw_currentInputSource];
+    NSString *previous_input_source = self.inputSource == nil ? @"" : self.inputSource;
+    if (![previous_input_source isEqualToString:current_input_source]) {
+      self.inputSource = current_input_source;
+      self.imeState = MBWImeStateDisabled;
+      [self mbw_emitTextInputWithKind:8
+                                    x:0.0
+                                    y:0.0
+                                 state:4
+                                  text:@""
+                           cursorStart:-1
+                             cursorEnd:-1
+                                  path:nil];
+    }
+  }
+
+  MBWImeState old_ime_state = self.imeState;
+  self.forwardKeyToApp = NO;
+
   if (self.imeAllowed) {
     NSArray<NSEvent *> *events = @[ event ];
     [self interpretKeyEvents:events];
+    if (self.imeState == MBWImeStateCommitted) {
+      self.markedText = @"";
+    }
+  }
+
+  BOOL had_ime_input = NO;
+  switch (self.imeState) {
+  case MBWImeStateCommitted:
+    self.imeState = MBWImeStateGround;
+    had_ime_input = YES;
+    break;
+  case MBWImeStatePreedit:
+    had_ime_input = YES;
+    break;
+  case MBWImeStateGround:
+  case MBWImeStateDisabled:
+    had_ime_input = old_ime_state != self.imeState;
+    break;
+  }
+
+  if (!had_ime_input || self.forwardKeyToApp) {
+    [self mbw_emitKeyboard:event state:1];
   }
 }
 
 - (void)keyUp:(NSEvent *)event {
-  [self mbw_emitKeyboard:event state:2];
+  if (self.imeState == MBWImeStateGround || self.imeState == MBWImeStateDisabled) {
+    [self mbw_emitKeyboard:event state:2];
+  }
 }
 
 - (void)flagsChanged:(NSEvent *)event {
@@ -656,9 +748,17 @@ static void mbw_emit_lifecycle(int32_t kind);
   int32_t cursor_start = -1;
   int32_t cursor_end = -1;
   if (selectedRange.location != NSNotFound) {
+    NSUInteger clamped_start = selectedRange.location <= text.length ? selectedRange.location : text.length;
     NSUInteger utf16_end = selectedRange.location + selectedRange.length;
-    cursor_start = [self mbw_utf8OffsetForUTF16Index:selectedRange.location inString:text];
-    cursor_end = [self mbw_utf8OffsetForUTF16Index:utf16_end inString:text];
+    NSUInteger clamped_end = utf16_end <= text.length ? utf16_end : text.length;
+    cursor_start = [self mbw_utf8OffsetForUTF16Index:clamped_start inString:text];
+    cursor_end = [self mbw_utf8OffsetForUTF16Index:clamped_end inString:text];
+  }
+
+  if (self.hasMarkedText) {
+    self.imeState = MBWImeStatePreedit;
+  } else {
+    self.imeState = MBWImeStateGround;
   }
 
   [self mbw_emitTextInputWithKind:8
@@ -676,7 +776,12 @@ static void mbw_emit_lifecycle(int32_t kind);
     return;
   }
   self.markedText = @"";
-  [self mbw_emitImeEnabledIfNeeded];
+
+  NSTextInputContext *input_context = [self inputContext];
+  if (input_context != nil) {
+    [input_context discardMarkedText];
+  }
+
   [self mbw_emitTextInputWithKind:8
                                 x:0.0
                                 y:0.0
@@ -685,6 +790,10 @@ static void mbw_emit_lifecycle(int32_t kind);
                        cursorStart:-1
                          cursorEnd:-1
                               path:nil];
+
+  if ([self mbw_isImeEnabled]) {
+    self.imeState = MBWImeStateGround;
+  }
 }
 
 - (NSArray<NSAttributedStringKey> *)validAttributesForMarkedText {
@@ -711,7 +820,7 @@ static void mbw_emit_lifecycle(int32_t kind);
                             (CGFloat)(self.imeCursorHeight > 0 ? self.imeCursorHeight : 1));
   NSRect in_window = [self convertRect:local toView:nil];
   if (self.window == nil) {
-    return in_window;
+    return NSZeroRect;
   }
   return [self.window convertRectToScreen:in_window];
 }
@@ -725,19 +834,38 @@ static void mbw_emit_lifecycle(int32_t kind);
   if (text == nil || text.length == 0) {
     return;
   }
-  [self mbw_emitImeEnabledIfNeeded];
-  self.markedText = @"";
-  [self mbw_emitTextInputWithKind:8
-                                x:0.0
-                                y:0.0
-                             state:3
-                              text:text
-                       cursorStart:-1
-                         cursorEnd:-1
-                              path:nil];
+
+  if (self.hasMarkedText && [self mbw_isImeEnabled] && ![self mbw_isControlString:text]) {
+    [self mbw_emitTextInputWithKind:8
+                                  x:0.0
+                                  y:0.0
+                               state:2
+                                text:@""
+                         cursorStart:-1
+                           cursorEnd:-1
+                                path:nil];
+    [self mbw_emitTextInputWithKind:8
+                                  x:0.0
+                                  y:0.0
+                               state:3
+                                text:text
+                         cursorStart:-1
+                           cursorEnd:-1
+                                path:nil];
+    self.imeState = MBWImeStateCommitted;
+  }
 }
 
 - (void)doCommandBySelector:(SEL)selector {
+  if (self.imeState == MBWImeStateCommitted) {
+    return;
+  }
+
+  self.forwardKeyToApp = YES;
+  if (self.hasMarkedText && self.imeState == MBWImeStatePreedit) {
+    self.imeState = MBWImeStateGround;
+  }
+
   NSString *action = NSStringFromSelector(selector);
   [self mbw_emitTextInputWithKind:18
                                 x:0.0
@@ -1250,7 +1378,9 @@ uint64_t mbw_create_window(int32_t raw_id, int32_t width, int32_t height, int32_
   content_view.imeCursorWidth = 1;
   content_view.imeCursorHeight = 1;
   content_view.markedText = @"";
-  content_view.imeActive = NO;
+  content_view.inputSource = [content_view mbw_currentInputSource];
+  content_view.forwardKeyToApp = NO;
+  content_view.imeState = MBWImeStateDisabled;
   content_view.rawId = raw_id;
   content_view.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
   [content_view registerForDraggedTypes:@[ NSPasteboardTypeFileURL ]];
@@ -1834,17 +1964,26 @@ void mbw_window_set_ime_allowed(uint64_t handle, int32_t allowed) {
     return;
   }
   BOOL next = allowed ? YES : NO;
-  if (!next && box.contentView.imeActive) {
-    [box.contentView mbw_emitTextInputWithKind:8
-                                             x:0.0
-                                             y:0.0
-                                          state:4
-                                           text:@""
-                                    cursorStart:-1
-                                      cursorEnd:-1
-                                           path:nil];
-    box.contentView.imeActive = NO;
+  if (!next) {
+    if (box.contentView.imeState != MBWImeStateDisabled) {
+      [box.contentView mbw_emitTextInputWithKind:8
+                                               x:0.0
+                                               y:0.0
+                                            state:4
+                                             text:@""
+                                      cursorStart:-1
+                                        cursorEnd:-1
+                                             path:nil];
+    }
+    box.contentView.imeState = MBWImeStateDisabled;
     box.contentView.markedText = @"";
+
+    NSTextInputContext *input_context = [box.contentView inputContext];
+    if (input_context != nil) {
+      [input_context discardMarkedText];
+    }
+  } else {
+    box.contentView.inputSource = [box.contentView mbw_currentInputSource];
   }
   box.contentView.imeAllowed = next;
 }
@@ -1860,6 +1999,11 @@ void mbw_window_set_ime_cursor_area(uint64_t handle, int32_t x, int32_t y, int32
   box.contentView.imeCursorY = y;
   box.contentView.imeCursorWidth = width > 0 ? width : 1;
   box.contentView.imeCursorHeight = height > 0 ? height : 1;
+
+  NSTextInputContext *input_context = [box.contentView inputContext];
+  if (input_context != nil) {
+    [input_context invalidateCharacterCoordinates];
+  }
 }
 
 MOONBIT_FFI_EXPORT
