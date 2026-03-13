@@ -1,11 +1,1004 @@
 ///|
 // Port target: winit-reference/winit-appkit/src/window_delegate.rs
+let next_synthetic_handle : Ref[UInt64] = Ref::new((1 : Int).to_uint64())
 
 ///|
-fn EventLoop::close_windows(self : EventLoop) -> Unit {
-  for raw_id in self.window_ids {
-    app_state_clear_window_redraw(raw_id)
-    close_window(raw_id)
+priv struct SyntheticWindow {
+  native_handle : UInt64
+  mut title : String
+  mut tabbing_identifier : String
+  mut width : Int
+  mut height : Int
+  mut visible : Bool
+  mut min_width : Int
+  mut min_height : Int
+  mut max_width : Int
+  mut max_height : Int
+  mut resize_increment_width : Int
+  mut resize_increment_height : Int
+  mut num_tabs : Int
+  mut disallow_hidpi : Bool
+  mut exclusive_display_id : UInt64
+}
+
+///|
+let synthetic_window_handles : Ref[Array[UInt64]] = Ref::new([])
+
+///|
+let synthetic_windows : Ref[Array[SyntheticWindow]] = Ref::new([])
+
+///|
+let synthetic_presentation_options : Ref[UInt64] = Ref::new(
+  (0 : Int).to_uint64(),
+)
+
+///|
+fn allocate_synthetic_handle() -> UInt64 {
+  let handle = next_synthetic_handle.val
+  next_synthetic_handle.val = handle + (1 : Int).to_uint64()
+  handle
+}
+
+///|
+fn synthetic_window_index(window_handle : UInt64) -> Int? {
+  synthetic_window_handles.val.search_by(handle => handle == window_handle)
+}
+
+///|
+fn synthetic_window(window_handle : UInt64) -> SyntheticWindow? {
+  match synthetic_window_index(window_handle) {
+    Some(index) => Some(synthetic_windows.val[index])
+    None => None
+  }
+}
+
+///|
+fn synthetic_native_handle(window_handle : UInt64) -> UInt64 {
+  match synthetic_window(window_handle) {
+    Some(window) => window.native_handle
+    None => (0 : Int).to_uint64()
+  }
+}
+
+///|
+fn synthetic_update_window(
+  window_handle : UInt64,
+  f : (SyntheticWindow) -> Unit,
+) -> Unit {
+  match synthetic_window_index(window_handle) {
+    Some(index) => {
+      let window = synthetic_windows.val[index]
+      f(window)
+      synthetic_windows.val[index] = window
+    }
+    None => ()
+  }
+}
+
+///|
+fn clamp_size(size : Int) -> Int {
+  if size <= 0 {
+    1
+  } else {
+    size
+  }
+}
+
+///|
+fn window_title(window_handle : UInt64) -> String {
+  match synthetic_window(window_handle) {
+    Some(window) => window.title
+    None => ""
+  }
+}
+
+///|
+fn window_tabbing_identifier(window_handle : UInt64) -> String {
+  match synthetic_window(window_handle) {
+    Some(window) => window.tabbing_identifier
+    None => ""
+  }
+}
+
+///|
+fn is_main_thread() -> Bool {
+  pthread_is_main_thread()
+}
+
+///|
+fn create_window(
+  raw_id : Int,
+  width : Int,
+  height : Int,
+  visible : Bool,
+  active : Bool,
+  resizable : Bool,
+  decorations : Bool,
+  panel : Bool,
+  title : String,
+) -> UInt64 {
+  let initial_width = clamp_size(width)
+  let initial_height = clamp_size(height)
+  let native_handle = native_create_window(
+    raw_id, initial_width, initial_height, visible, active, resizable, decorations,
+    panel, title,
+  )
+  if native_handle == (0 : Int).to_uint64() {
+    return (0 : Int).to_uint64()
+  }
+  let handle = allocate_synthetic_handle()
+  synthetic_window_handles.val.push(handle)
+  synthetic_windows.val.push({
+    native_handle,
+    title,
+    tabbing_identifier: "",
+    width: initial_width,
+    height: initial_height,
+    visible,
+    min_width: 0,
+    min_height: 0,
+    max_width: 0,
+    max_height: 0,
+    resize_increment_width: 0,
+    resize_increment_height: 0,
+    num_tabs: 1,
+    disallow_hidpi: false,
+    exclusive_display_id: (0 : Int).to_uint64(),
+  })
+  handle
+}
+
+///|
+fn close_window(window_handle : UInt64) -> Unit {
+  match synthetic_window_index(window_handle) {
+    Some(index) => {
+      let window = synthetic_windows.val[index]
+      native_close_window(window.native_handle)
+      ignore(synthetic_window_handles.val.remove(index))
+      ignore(synthetic_windows.val.remove(index))
+    }
+    None => ()
+  }
+}
+
+///|
+fn show_window(window_handle : UInt64, active : Bool) -> Unit {
+  synthetic_update_window(window_handle, fn(window) {
+    native_show_window(window.native_handle, active)
+    window.visible = true
+  })
+}
+
+///|
+fn native_set_visible(window_handle : UInt64, visible : Bool) -> Unit {
+  synthetic_update_window(window_handle, fn(window) {
+    native_window_set_visible(window.native_handle, visible)
+    window.visible = visible
+  })
+}
+
+///|
+fn native_set_resizable(window_handle : UInt64, resizable : Bool) -> Unit {
+  synthetic_update_window(window_handle, fn(window) {
+    native_window_set_resizable(window.native_handle, resizable)
+  })
+}
+
+///|
+fn set_title(window_handle : UInt64, title : String) -> Unit {
+  synthetic_update_window(window_handle, fn(window) {
+    native_window_set_title(window.native_handle, title)
+    window.title = title
+  })
+}
+
+///|
+fn focus_window(window_handle : UInt64) -> Unit {
+  synthetic_update_window(window_handle, fn(window) {
+    if window.visible {
+      native_window_focus(window.native_handle)
+    }
+  })
+}
+
+///|
+fn request_user_attention(window_handle : UInt64, request_type : Int) -> Unit {
+  let _ = window_handle
+  native_window_request_user_attention(request_type)
+}
+
+///|
+fn set_surface_size(window_handle : UInt64, width : Int, height : Int) -> Unit {
+  synthetic_update_window(window_handle, fn(window) {
+    window.width = clamp_size(width)
+    window.height = clamp_size(height)
+    native_window_set_content_size(
+      window.native_handle,
+      window.width,
+      window.height,
+    )
+  })
+}
+
+///|
+fn set_surface_resize_increments(
+  window_handle : UInt64,
+  width : Int,
+  height : Int,
+) -> Unit {
+  synthetic_update_window(window_handle, fn(window) {
+    window.resize_increment_width = if width > 0 { width } else { 0 }
+    window.resize_increment_height = if height > 0 { height } else { 0 }
+  })
+}
+
+///|
+fn set_min_surface_size(
+  window_handle : UInt64,
+  width : Int,
+  height : Int,
+) -> Unit {
+  synthetic_update_window(window_handle, fn(window) {
+    window.min_width = if width > 0 { width } else { 0 }
+    window.min_height = if height > 0 { height } else { 0 }
+  })
+}
+
+///|
+fn set_max_surface_size(
+  window_handle : UInt64,
+  width : Int,
+  height : Int,
+) -> Unit {
+  synthetic_update_window(window_handle, fn(window) {
+    window.max_width = if width > 0 { width } else { 0 }
+    window.max_height = if height > 0 { height } else { 0 }
+  })
+}
+
+///|
+fn set_window_position(window_handle : UInt64, x : Int, y : Int) -> Unit {
+  synthetic_update_window(window_handle, fn(window) {
+    native_window_set_position(window.native_handle, x, y)
+  })
+}
+
+///|
+fn set_window_outer_size(
+  window_handle : UInt64,
+  width : Int,
+  height : Int,
+) -> Unit {
+  set_surface_size(window_handle, width, height)
+}
+
+///|
+fn set_window_minimized(window_handle : UInt64, minimized : Bool) -> Unit {
+  synthetic_update_window(window_handle, fn(window) {
+    native_window_set_minimized(window.native_handle, minimized)
+  })
+}
+
+///|
+fn set_window_maximized(window_handle : UInt64, maximized : Bool) -> Unit {
+  synthetic_update_window(window_handle, fn(window) {
+    native_window_set_maximized(window.native_handle, maximized)
+  })
+}
+
+///|
+fn set_window_fullscreen(window_handle : UInt64, fullscreen : Bool) -> Unit {
+  synthetic_update_window(window_handle, fn(window) {
+    native_window_set_fullscreen(window.native_handle, fullscreen)
+  })
+}
+
+///|
+fn set_window_decorations(window_handle : UInt64, decorated : Bool) -> Unit {
+  synthetic_update_window(window_handle, fn(window) {
+    let style_mask = if decorated {
+      (0x1 : Int).to_uint64()
+    } else {
+      (0 : Int).to_uint64()
+    }
+    native_window_set_style_mask(window.native_handle, style_mask)
+  })
+}
+
+///|
+fn set_window_enabled_buttons(
+  window_handle : UInt64,
+  close : Bool,
+  minimize : Bool,
+  maximize : Bool,
+) -> Unit {
+  synthetic_update_window(window_handle, fn(window) {
+    native_window_set_enabled_buttons(
+      window.native_handle,
+      close,
+      minimize,
+      maximize,
+    )
+  })
+}
+
+///|
+fn set_window_blur(window_handle : UInt64, blur : Bool) -> Unit {
+  let _ = window_handle
+  let _ = blur
+}
+
+///|
+fn set_window_accepts_first_mouse(
+  window_handle : UInt64,
+  accepts_first_mouse : Bool,
+) -> Unit {
+  let _ = window_handle
+  let _ = accepts_first_mouse
+}
+
+///|
+fn set_window_disallow_hidpi(
+  window_handle : UInt64,
+  disallow_hidpi : Bool,
+) -> Unit {
+  synthetic_update_window(window_handle, fn(window) {
+    window.disallow_hidpi = disallow_hidpi
+  })
+}
+
+///|
+fn set_window_movable_by_window_background(
+  window_handle : UInt64,
+  movable_by_window_background : Bool,
+) -> Unit {
+  synthetic_update_window(window_handle, fn(window) {
+    native_window_set_movable_by_background(
+      window.native_handle,
+      movable_by_window_background,
+    )
+  })
+}
+
+///|
+fn set_window_titlebar_transparent(
+  window_handle : UInt64,
+  titlebar_transparent : Bool,
+) -> Unit {
+  synthetic_update_window(window_handle, fn(window) {
+    native_window_set_titlebar_transparent(
+      window.native_handle,
+      titlebar_transparent,
+    )
+  })
+}
+
+///|
+fn set_window_title_hidden(window_handle : UInt64, title_hidden : Bool) -> Unit {
+  synthetic_update_window(window_handle, fn(window) {
+    native_window_set_title_hidden(window.native_handle, title_hidden)
+  })
+}
+
+///|
+fn set_window_titlebar_hidden(
+  window_handle : UInt64,
+  titlebar_hidden : Bool,
+) -> Unit {
+  synthetic_update_window(window_handle, fn(window) {
+    native_window_set_titlebar_hidden(window.native_handle, titlebar_hidden)
+  })
+}
+
+///|
+fn set_window_titlebar_buttons_hidden(
+  window_handle : UInt64,
+  titlebar_buttons_hidden : Bool,
+) -> Unit {
+  synthetic_update_window(window_handle, fn(window) {
+    native_window_set_titlebar_buttons_hidden(
+      window.native_handle,
+      titlebar_buttons_hidden,
+    )
+  })
+}
+
+///|
+fn set_window_fullsize_content_view(
+  window_handle : UInt64,
+  fullsize_content_view : Bool,
+) -> Unit {
+  synthetic_update_window(window_handle, fn(window) {
+    native_window_set_fullsize_content_view(
+      window.native_handle,
+      fullsize_content_view,
+    )
+  })
+}
+
+///|
+fn set_window_has_shadow(window_handle : UInt64, has_shadow : Bool) -> Unit {
+  synthetic_update_window(window_handle, fn(window) {
+    native_window_set_has_shadow(window.native_handle, has_shadow)
+  })
+}
+
+///|
+fn set_window_document_edited(window_handle : UInt64, edited : Bool) -> Unit {
+  synthetic_update_window(window_handle, fn(window) {
+    native_window_set_document_edited(window.native_handle, edited)
+  })
+}
+
+///|
+fn set_window_borderless_game(
+  window_handle : UInt64,
+  borderless_game : Bool,
+) -> Unit {
+  let _ = window_handle
+  let _ = borderless_game
+}
+
+///|
+fn set_window_unified_titlebar(
+  window_handle : UInt64,
+  unified_titlebar : Bool,
+) -> Unit {
+  synthetic_update_window(window_handle, fn(window) {
+    native_window_set_unified_titlebar(window.native_handle, unified_titlebar)
+  })
+}
+
+///|
+fn set_window_tabbing_identifier(
+  window_handle : UInt64,
+  identifier : String,
+) -> Unit {
+  synthetic_update_window(window_handle, fn(window) {
+    native_window_set_tabbing_identifier(window.native_handle, identifier)
+    window.tabbing_identifier = identifier
+  })
+}
+
+///|
+fn set_window_tabbing_mode_preferred(window_handle : UInt64) -> Unit {
+  synthetic_update_window(window_handle, fn(window) {
+    native_window_set_tabbing_mode_preferred(window.native_handle)
+    if window.num_tabs <= 0 {
+      window.num_tabs = 1
+    }
+  })
+}
+
+///|
+fn select_window_next_tab(window_handle : UInt64) -> Unit {
+  synthetic_update_window(window_handle, fn(window) {
+    native_window_select_next_tab(window.native_handle)
+  })
+}
+
+///|
+fn select_window_previous_tab(window_handle : UInt64) -> Unit {
+  synthetic_update_window(window_handle, fn(window) {
+    native_window_select_previous_tab(window.native_handle)
+  })
+}
+
+///|
+fn select_window_tab_at_index(window_handle : UInt64, index : Int) -> Unit {
+  synthetic_update_window(window_handle, fn(window) {
+    native_window_select_tab_at_index(window.native_handle, index)
+    if index >= 0 && window.num_tabs <= index {
+      window.num_tabs = index + 1
+    }
+  })
+}
+
+///|
+fn set_window_option_as_alt(
+  window_handle : UInt64,
+  option_as_alt : Int,
+) -> Unit {
+  let _ = window_handle
+  let _ = option_as_alt
+}
+
+///|
+fn set_window_cursor(window_handle : UInt64, cursor : Int) -> Unit {
+  synthetic_update_window(window_handle, fn(window) {
+    native_window_set_cursor(window.native_handle, cursor)
+  })
+}
+
+///|
+fn set_window_custom_cursor(
+  window_handle : UInt64,
+  custom_cursor : UInt64,
+) -> Bool {
+  match synthetic_window(window_handle) {
+    Some(window) =>
+      native_window_set_custom_cursor(window.native_handle, custom_cursor)
+    None => false
+  }
+}
+
+///|
+fn set_parent_window(window_handle : UInt64, parent_window : UInt64) -> Bool {
+  let native_handle = synthetic_native_handle(window_handle)
+  let parent_handle = match synthetic_window(parent_window) {
+    Some(parent) => parent.native_handle
+    None => parent_window
+  }
+  if native_handle == (0 : Int).to_uint64() ||
+    parent_handle == (0 : Int).to_uint64() {
+    false
+  } else {
+    native_window_set_parent(native_handle, parent_handle)
+    true
+  }
+}
+
+///|
+fn set_window_cursor_visible(window_handle : UInt64, visible : Bool) -> Unit {
+  synthetic_update_window(window_handle, fn(window) {
+    native_window_set_cursor_visible(window.native_handle, visible)
+  })
+}
+
+///|
+fn set_window_cursor_hittest(window_handle : UInt64, hittest : Bool) -> Bool {
+  match synthetic_window(window_handle) {
+    Some(window) =>
+      native_window_set_cursor_hittest(window.native_handle, hittest)
+    None => false
+  }
+}
+
+///|
+fn set_cursor_position(window_handle : UInt64, x : Int, y : Int) -> Bool {
+  match synthetic_window(window_handle) {
+    Some(window) =>
+      native_window_set_cursor_position(window.native_handle, x, y)
+    None => false
+  }
+}
+
+///|
+fn set_cursor_grab(window_handle : UInt64, mode : Int) -> Bool {
+  match synthetic_window(window_handle) {
+    Some(window) => native_window_set_cursor_grab(window.native_handle, mode)
+    None => false
+  }
+}
+
+///|
+fn drag_window(window_handle : UInt64) -> Bool {
+  match synthetic_window(window_handle) {
+    Some(window) => native_window_drag_window(window.native_handle)
+    None => false
+  }
+}
+
+///|
+fn drag_resize_window(window_handle : UInt64, direction : Int) -> Bool {
+  match synthetic_window(window_handle) {
+    Some(window) =>
+      native_window_drag_resize_window(window.native_handle, direction)
+    None => false
+  }
+}
+
+///|
+fn show_window_menu(window_handle : UInt64, x : Int, y : Int) -> Bool {
+  match synthetic_window(window_handle) {
+    Some(window) => native_window_show_window_menu(window.native_handle, x, y)
+    None => false
+  }
+}
+
+///|
+fn set_window_transparent(window_handle : UInt64, transparent : Bool) -> Unit {
+  synthetic_update_window(window_handle, fn(window) {
+    native_window_set_transparent(window.native_handle, transparent)
+  })
+}
+
+///|
+fn set_window_level(window_handle : UInt64, level : Int) -> Unit {
+  synthetic_update_window(window_handle, fn(window) {
+    native_window_set_level(window.native_handle, level)
+  })
+}
+
+///|
+fn set_window_theme(window_handle : UInt64, theme : Int) -> Unit {
+  synthetic_update_window(window_handle, fn(window) {
+    native_window_set_theme(window.native_handle, theme)
+  })
+}
+
+///|
+fn set_window_content_protected(
+  window_handle : UInt64,
+  content_protected : Bool,
+) -> Unit {
+  synthetic_update_window(window_handle, fn(window) {
+    native_window_set_content_protected(window.native_handle, content_protected)
+  })
+}
+
+///|
+fn set_ime_purpose(window_handle : UInt64, purpose : Int) -> Unit {
+  let _ = window_handle
+  let _ = purpose
+}
+
+///|
+fn set_ime_hints(window_handle : UInt64, hints : Int) -> Unit {
+  let _ = window_handle
+  let _ = hints
+}
+
+///|
+fn set_ime_allowed(window_handle : UInt64, allowed : Bool) -> Unit {
+  let _ = window_handle
+  let _ = allowed
+}
+
+///|
+fn set_ime_cursor_area(
+  window_handle : UInt64,
+  x : Int,
+  y : Int,
+  width : Int,
+  height : Int,
+) -> Unit {
+  let _ = window_handle
+  let _ = x
+  let _ = y
+  let _ = width
+  let _ = height
+}
+
+///|
+fn native_window_width(window_handle : UInt64) -> Int {
+  let native_handle = synthetic_native_handle(window_handle)
+  if native_handle == (0 : Int).to_uint64() {
+    800
+  } else {
+    native_window_content_width(native_handle)
+  }
+}
+
+///|
+fn native_window_height(window_handle : UInt64) -> Int {
+  let native_handle = synthetic_native_handle(window_handle)
+  if native_handle == (0 : Int).to_uint64() {
+    600
+  } else {
+    native_window_content_height(native_handle)
+  }
+}
+
+///|
+fn window_min_surface_width(window_handle : UInt64) -> Int {
+  match synthetic_window(window_handle) {
+    Some(window) => window.min_width
+    None => 0
+  }
+}
+
+///|
+fn window_min_surface_height(window_handle : UInt64) -> Int {
+  match synthetic_window(window_handle) {
+    Some(window) => window.min_height
+    None => 0
+  }
+}
+
+///|
+fn window_max_surface_width(window_handle : UInt64) -> Int {
+  match synthetic_window(window_handle) {
+    Some(window) => window.max_width
+    None => 0
+  }
+}
+
+///|
+fn window_max_surface_height(window_handle : UInt64) -> Int {
+  match synthetic_window(window_handle) {
+    Some(window) => window.max_height
+    None => 0
+  }
+}
+
+///|
+fn window_outer_width(window_handle : UInt64) -> Int {
+  native_window_width(window_handle)
+}
+
+///|
+fn window_outer_height(window_handle : UInt64) -> Int {
+  native_window_height(window_handle)
+}
+
+///|
+fn window_surface_x(window_handle : UInt64) -> Int {
+  let native_handle = synthetic_native_handle(window_handle)
+  if native_handle == (0 : Int).to_uint64() {
+    0
+  } else {
+    native_window_x(native_handle)
+  }
+}
+
+///|
+fn window_surface_y(window_handle : UInt64) -> Int {
+  let native_handle = synthetic_native_handle(window_handle)
+  if native_handle == (0 : Int).to_uint64() {
+    0
+  } else {
+    native_window_y(native_handle)
+  }
+}
+
+///|
+fn window_safe_area_top(window_handle : UInt64) -> Int {
+  let _ = window_handle
+  0
+}
+
+///|
+fn window_safe_area_left(window_handle : UInt64) -> Int {
+  let _ = window_handle
+  0
+}
+
+///|
+fn window_safe_area_bottom(window_handle : UInt64) -> Int {
+  let _ = window_handle
+  0
+}
+
+///|
+fn window_safe_area_right(window_handle : UInt64) -> Int {
+  let _ = window_handle
+  0
+}
+
+///|
+fn window_resize_increment_width(window_handle : UInt64) -> Int {
+  match synthetic_window(window_handle) {
+    Some(window) => window.resize_increment_width
+    None => 0
+  }
+}
+
+///|
+fn window_resize_increment_height(window_handle : UInt64) -> Int {
+  match synthetic_window(window_handle) {
+    Some(window) => window.resize_increment_height
+    None => 0
+  }
+}
+
+///|
+fn window_x(window_handle : UInt64) -> Int {
+  window_surface_x(window_handle)
+}
+
+///|
+fn window_y(window_handle : UInt64) -> Int {
+  window_surface_y(window_handle)
+}
+
+///|
+fn window_theme(window_handle : UInt64) -> Int {
+  let native_handle = synthetic_native_handle(window_handle)
+  if native_handle == (0 : Int).to_uint64() {
+    0
+  } else {
+    native_window_theme(native_handle)
+  }
+}
+
+///|
+fn window_has_focus(window_handle : UInt64) -> Bool {
+  let native_handle = synthetic_native_handle(window_handle)
+  if native_handle == (0 : Int).to_uint64() {
+    false
+  } else {
+    native_window_has_focus(native_handle)
+  }
+}
+
+///|
+fn window_occluded(window_handle : UInt64) -> Bool {
+  let native_handle = synthetic_native_handle(window_handle)
+  if native_handle == (0 : Int).to_uint64() {
+    false
+  } else {
+    native_window_is_occluded(native_handle)
+  }
+}
+
+///|
+fn window_minimized(window_handle : UInt64) -> Bool {
+  let native_handle = synthetic_native_handle(window_handle)
+  if native_handle == (0 : Int).to_uint64() {
+    false
+  } else {
+    native_window_is_minimized(native_handle)
+  }
+}
+
+///|
+fn window_maximized(window_handle : UInt64) -> Bool {
+  let native_handle = synthetic_native_handle(window_handle)
+  if native_handle == (0 : Int).to_uint64() {
+    false
+  } else {
+    native_window_is_maximized(native_handle)
+  }
+}
+
+///|
+fn window_fullscreen(window_handle : UInt64) -> Bool {
+  let native_handle = synthetic_native_handle(window_handle)
+  if native_handle == (0 : Int).to_uint64() {
+    false
+  } else {
+    native_window_is_fullscreen(native_handle)
+  }
+}
+
+///|
+fn window_num_tabs(window_handle : UInt64) -> Int {
+  let native_handle = synthetic_native_handle(window_handle)
+  if native_handle == (0 : Int).to_uint64() {
+    1
+  } else {
+    native_window_num_tabs(native_handle)
+  }
+}
+
+///|
+fn window_style_mask_bits(window_handle : UInt64) -> UInt64 {
+  let native_handle = synthetic_native_handle(window_handle)
+  if native_handle == (0 : Int).to_uint64() {
+    (0 : Int).to_uint64()
+  } else {
+    native_window_style_mask(native_handle)
+  }
+}
+
+///|
+fn set_window_style_mask_bits(
+  window_handle : UInt64,
+  style_mask : UInt64,
+) -> Unit {
+  synthetic_update_window(window_handle, fn(window) {
+    native_window_set_style_mask(window.native_handle, style_mask)
+  })
+}
+
+///|
+fn clear_window_style_mask_bits(
+  window_handle : UInt64,
+  style_mask : UInt64,
+) -> Unit {
+  synthetic_update_window(window_handle, fn(window) {
+    native_window_clear_style_mask_bits(window.native_handle, style_mask)
+  })
+}
+
+///|
+fn set_window_movable(window_handle : UInt64, movable : Bool) -> Unit {
+  synthetic_update_window(window_handle, fn(window) {
+    native_window_set_movable(window.native_handle, movable)
+  })
+}
+
+///|
+fn application_presentation_options() -> UInt64 {
+  synthetic_presentation_options.val
+}
+
+///|
+fn set_application_presentation_options(options : UInt64) -> Unit {
+  synthetic_presentation_options.val = options
+}
+
+///|
+fn find_display_mode_handle(
+  monitor_id : UInt64,
+  width : Int,
+  height : Int,
+  bit_depth : Int,
+  refresh_rate_millihertz : Int,
+) -> UInt64 {
+  let _ = monitor_id
+  let _ = width
+  let _ = height
+  let _ = bit_depth
+  let _ = refresh_rate_millihertz
+  allocate_synthetic_handle()
+}
+
+///|
+fn copy_current_display_mode_handle(monitor_id : UInt64) -> UInt64 {
+  let _ = monitor_id
+  allocate_synthetic_handle()
+}
+
+///|
+fn release_display_mode_handle(mode_handle : UInt64) -> Unit {
+  let _ = mode_handle
+}
+
+///|
+fn capture_display(monitor_id : UInt64) -> Bool {
+  let _ = monitor_id
+  true
+}
+
+///|
+fn set_display_mode_handle(monitor_id : UInt64, mode_handle : UInt64) -> Bool {
+  let _ = monitor_id
+  let _ = mode_handle
+  true
+}
+
+///|
+fn release_display_capture(monitor_id : UInt64) -> Bool {
+  let _ = monitor_id
+  true
+}
+
+///|
+fn set_window_exclusive_runtime_state(
+  window_handle : UInt64,
+  exclusive_fullscreen : Bool,
+  display_id : UInt64,
+  saved_mode_handle : UInt64,
+) -> Unit {
+  let _ = exclusive_fullscreen
+  let _ = saved_mode_handle
+  synthetic_update_window(window_handle, fn(window) {
+    window.exclusive_display_id = display_id
+  })
+}
+
+///|
+fn window_current_monitor_id(window_handle : UInt64) -> UInt64 {
+  match synthetic_window(window_handle) {
+    Some(window) if window.exclusive_display_id != (0 : Int).to_uint64() =>
+      window.exclusive_display_id
+    _ => cg_main_display_id()
+  }
+}
+
+///|
+fn window_scale_factor(window_handle : UInt64) -> Double {
+  match synthetic_window(window_handle) {
+    Some(window) =>
+      if window.disallow_hidpi {
+        1.0
+      } else {
+        native_window_scale_factor(window.native_handle)
+      }
+    None => 1.0
+  }
+}
+
+///|
+fn destroyed_window_ids_contains(
+  destroyed_window_ids : Array[Int],
+  raw_id : Int,
+) -> Bool {
+  match destroyed_window_ids.search_by(id => id == raw_id) {
+    Some(_) => true
+    None => false
   }
 }
 
@@ -15,103 +1008,29 @@ fn[A : ApplicationHandler] EventLoop::dispatch_window_events(
   app : A,
 ) -> Unit {
   let active = self.as_active()
-  let mut polled = false
-  let remaining_window_ids : Array[Int] = []
-  for raw_id in self.window_ids {
-    if polled == false {
-      native_poll_window(raw_id)
-      polled = true
-    }
-    let window_id = @core.WindowId::from_raw(raw_id)
-    if take_moved(raw_id) {
-      app.window_event(
-        active,
-        window_id,
-        @core.WindowEvent::Moved(
-          @dpi.PhysicalPosition::new(
-            pending_move_x(raw_id),
-            pending_move_y(raw_id),
-          ),
-        ),
-      )
-    }
-    if take_focused_changed(raw_id) {
-      app.window_event(
-        active,
-        window_id,
-        @core.WindowEvent::Focused(pending_focused(raw_id)),
-      )
-    }
-    self.dispatch_input_events(app, raw_id, window_id)
-    if take_theme_changed(raw_id) {
-      match theme_from_native(pending_theme(raw_id)) {
-        Some(theme) =>
-          app.window_event(
-            active,
-            window_id,
-            @core.WindowEvent::ThemeChanged(theme),
-          )
-        None => ()
+  dispatch_deferred_callbacks(app, active)
+  let destroyed_window_ids = take_destroyed_window_ids()
+  if destroyed_window_ids.is_empty() == false {
+    let remaining_window_ids : Array[Int] = []
+    for raw_id in self.window_ids {
+      if destroyed_window_ids_contains(destroyed_window_ids, raw_id) == false {
+        remaining_window_ids.push(raw_id)
       }
     }
-    if take_occluded_changed(raw_id) {
-      app.window_event(
-        active,
-        window_id,
-        @core.WindowEvent::Occluded(pending_occluded(raw_id)),
-      )
-    }
-    if take_scale_factor_changed(raw_id) {
-      let scale_factor = pending_scale_factor(raw_id)
-      let suggested_size = @dpi.PhysicalSize::new(
-        pending_scale_width(raw_id),
-        pending_scale_height(raw_id),
-      )
-      let writer = @core.SurfaceSizeWriter::new(suggested_size)
-      app.window_event(
-        active,
-        window_id,
-        @core.WindowEvent::ScaleFactorChanged(scale_factor, writer),
-      )
-      let requested_size = writer.surface_size()
-      set_surface_size(raw_id, requested_size.width(), requested_size.height())
-    }
-    if native_window_take_surface_resized(raw_id) {
-      let size = @dpi.PhysicalSize::new(
-        native_window_width(raw_id),
-        native_window_height(raw_id),
-      )
-      app.window_event(
-        active,
-        window_id,
-        @core.WindowEvent::SurfaceResized(size),
-      )
-    }
-    if app_state_take_redraw(raw_id) {
-      app.window_event(active, window_id, @core.WindowEvent::RedrawRequested)
-    }
-    if native_window_take_close_requested(raw_id) {
-      app.window_event(active, window_id, @core.WindowEvent::CloseRequested)
-    }
-    let destroyed = take_destroyed(raw_id)
-    if destroyed {
-      app_state_clear_window_redraw(raw_id)
-      app.window_event(active, window_id, @core.WindowEvent::Destroyed)
-    }
-    if destroyed == false {
-      remaining_window_ids.push(raw_id)
-    }
+    self.window_ids = remaining_window_ids
   }
-  self.window_ids = remaining_window_ids
 }
 
 ///|
-pub fn EventLoop::try_create_window(
-  self : EventLoop,
+// Port target: window_delegate.rs::new
+fn new_window(
+  event_loop : EventLoop,
   attributes : @core.WindowAttributes,
 ) -> Window raise @core.RequestError {
   guard is_main_thread() else { raise @core.RequestError::Os }
-  let scale_factor = match self.primary_monitor() {
+  let raw_id = event_loop.next_window_id_
+  event_loop.next_window_id_ = raw_id + 1
+  let scale_factor = match event_loop.primary_monitor() {
     Some(monitor) => monitor.scale_factor()
     None => 1.0
   }
@@ -119,7 +1038,8 @@ pub fn EventLoop::try_create_window(
     Some(size) => size.to_physical(scale_factor)
     None => @dpi.PhysicalSize::new(800, 600)
   }
-  let raw_id = create_window(
+  let raw_window_handle = create_window(
+    raw_id,
     size.width(),
     size.height(),
     attributes.visible(),
@@ -129,91 +1049,100 @@ pub fn EventLoop::try_create_window(
     attributes.platform_attributes().panel(),
     attributes.title(),
   )
-  guard raw_id > 0 else { raise @core.RequestError::Ignored }
+  guard raw_window_handle != 0 else { raise @core.RequestError::Ignored }
   match attributes.parent_window() {
     Some(parent_window) => {
-      guard set_parent_window(raw_id, parent_window.into_raw()) else {
-        close_window(raw_id)
+      guard set_parent_window(raw_window_handle, parent_window.into_raw()) else {
+        close_window(raw_window_handle)
         raise @core.RequestError::Os
       }
     }
     None => ()
   }
   set_window_borderless_game(
-    raw_id,
+    raw_window_handle,
     attributes.platform_attributes().borderless_game(),
   )
   set_window_accepts_first_mouse(
-    raw_id,
+    raw_window_handle,
     attributes.platform_attributes().accepts_first_mouse(),
   )
   set_window_disallow_hidpi(
-    raw_id,
+    raw_window_handle,
     attributes.platform_attributes().disallow_hidpi(),
   )
   set_window_fullsize_content_view(
-    raw_id,
+    raw_window_handle,
     attributes.platform_attributes().fullsize_content_view(),
   )
-  set_window_has_shadow(raw_id, attributes.platform_attributes().has_shadow())
+  set_window_has_shadow(
+    raw_window_handle,
+    attributes.platform_attributes().has_shadow(),
+  )
   set_window_movable_by_window_background(
-    raw_id,
+    raw_window_handle,
     attributes.platform_attributes().movable_by_window_background(),
   )
   set_window_option_as_alt(
-    raw_id,
+    raw_window_handle,
     normalize_option_as_alt_native(
       option_as_alt_to_native(attributes.platform_attributes().option_as_alt()),
     ),
   )
   match attributes.platform_attributes().tabbing_identifier() {
     Some(identifier) => {
-      set_window_tabbing_identifier(raw_id, identifier)
-      set_window_tabbing_mode_preferred(raw_id)
+      set_window_tabbing_identifier(raw_window_handle, identifier)
+      set_window_tabbing_mode_preferred(raw_window_handle)
     }
     None => ()
   }
   set_window_title_hidden(
-    raw_id,
+    raw_window_handle,
     attributes.platform_attributes().title_hidden(),
   )
   set_window_titlebar_hidden(
-    raw_id,
+    raw_window_handle,
     attributes.platform_attributes().titlebar_hidden(),
   )
   set_window_titlebar_buttons_hidden(
-    raw_id,
+    raw_window_handle,
     attributes.platform_attributes().titlebar_buttons_hidden(),
   )
   set_window_titlebar_transparent(
-    raw_id,
+    raw_window_handle,
     attributes.platform_attributes().titlebar_transparent(),
   )
   set_window_unified_titlebar(
-    raw_id,
+    raw_window_handle,
     attributes.platform_attributes().unified_titlebar(),
   )
-  set_window_theme(raw_id, theme_to_native(attributes.theme()))
-  set_window_content_protected(raw_id, attributes.content_protected())
-  set_window_blur(raw_id, attributes.blur())
+  set_window_theme(raw_window_handle, theme_to_native(attributes.theme()))
+  set_window_content_protected(
+    raw_window_handle,
+    attributes.content_protected(),
+  )
+  set_window_blur(raw_window_handle, attributes.blur())
   let mut cursor_state = attributes.cursor()
   match attributes.cursor() {
     @core.Cursor::Icon(icon) =>
-      set_window_cursor(raw_id, cursor_icon_to_native(icon))
+      set_window_cursor(raw_window_handle, cursor_icon_to_native(icon))
     @core.Cursor::Custom(custom_cursor) =>
-      if set_window_custom_cursor(raw_id, custom_cursor.into_raw()) == false {
+      if set_window_custom_cursor(raw_window_handle, custom_cursor.into_raw()) ==
+        false {
         set_window_cursor(
-          raw_id,
+          raw_window_handle,
           cursor_icon_to_native(@core.CursorIcon::Default),
         )
         cursor_state = @core.Cursor::Icon(@core.CursorIcon::Default)
       }
   }
-  set_window_cursor_visible(raw_id, attributes.cursor_visible())
-  ignore(set_window_cursor_hittest(raw_id, attributes.cursor_hittest()))
+  set_window_cursor_visible(raw_window_handle, attributes.cursor_visible())
+  ignore(
+    set_window_cursor_hittest(raw_window_handle, attributes.cursor_hittest()),
+  )
   let enabled_buttons = attributes.enabled_buttons()
   set_window_enabled_buttons(
-    raw_id,
+    raw_window_handle,
     enabled_buttons.close(),
     enabled_buttons.minimize(),
     enabled_buttons.maximize(),
@@ -222,7 +1151,7 @@ pub fn EventLoop::try_create_window(
     Some(increments) => {
       let physical_increments = increments.to_physical(scale_factor)
       set_surface_resize_increments(
-        raw_id,
+        raw_window_handle,
         physical_increments.width(),
         physical_increments.height(),
       )
@@ -230,94 +1159,94 @@ pub fn EventLoop::try_create_window(
     None => ()
   }
   set_ime_purpose(
-    raw_id,
+    raw_window_handle,
     normalize_ime_purpose_native(
       ime_purpose_to_native(attributes.ime_purpose()),
     ),
   )
-  set_ime_hints(raw_id, normalize_ime_hints_bits(attributes.ime_hints().bits()))
+  set_ime_hints(
+    raw_window_handle,
+    normalize_ime_hints_bits(attributes.ime_hints().bits()),
+  )
   set_window_level(
-    raw_id,
+    raw_window_handle,
     normalize_window_level_native(
       window_level_to_native(attributes.window_level()),
     ),
   )
-  set_window_transparent(raw_id, attributes.transparent())
+  set_window_transparent(raw_window_handle, attributes.transparent())
   match attributes.fullscreen() {
     Some(@core.Fullscreen::Borderless(target_monitor)) => {
       match target_monitor {
         Some(monitor) =>
           set_window_position(
-            raw_id,
+            raw_window_handle,
             monitor.position().x(),
             monitor.position().y(),
           )
         None => ()
       }
-      set_window_fullscreen(raw_id, true)
+      set_window_fullscreen(raw_window_handle, true)
     }
-    Some(@core.Fullscreen::Exclusive(target_monitor, video_mode)) => {
-      let mode_size = video_mode.surface_size()
-      ignore(
-        set_window_exclusive_fullscreen(
-          raw_id,
-          target_monitor.native_id(),
-          mode_size.width(),
-          mode_size.height(),
-          match video_mode.bit_depth() {
-            Some(bit_depth) => bit_depth
-            None => 0
-          },
-          match video_mode.refresh_rate_millihertz() {
-            Some(refresh_rate) => refresh_rate
-            None => 0
-          },
-        ),
-      )
-    }
+    Some(@core.Fullscreen::Exclusive(_, _)) => ()
     None => ()
   }
   match attributes.min_surface_size() {
     Some(min_size) => {
       let physical_min = min_size.to_physical(scale_factor)
-      set_min_surface_size(raw_id, physical_min.width(), physical_min.height())
+      set_min_surface_size(
+        raw_window_handle,
+        physical_min.width(),
+        physical_min.height(),
+      )
     }
     None => ()
   }
   match attributes.max_surface_size() {
     Some(max_size) => {
       let physical_max = max_size.to_physical(scale_factor)
-      set_max_surface_size(raw_id, physical_max.width(), physical_max.height())
+      set_max_surface_size(
+        raw_window_handle,
+        physical_max.width(),
+        physical_max.height(),
+      )
     }
     None => ()
   }
   match attributes.position() {
     Some(position) => {
       let physical_position = position.to_physical(scale_factor)
-      set_window_position(raw_id, physical_position.x(), physical_position.y())
+      set_window_position(
+        raw_window_handle,
+        physical_position.x(),
+        physical_position.y(),
+      )
     }
     None => ()
   }
   if attributes.visible() {
-    show_window(raw_id, attributes.active())
+    show_window(raw_window_handle, attributes.active())
   }
   if attributes.maximized() {
-    set_window_maximized(raw_id, true)
+    set_window_maximized(raw_window_handle, true)
   }
-  self.window_ids.push(raw_id)
-  {
+  event_loop.window_ids.push(raw_id)
+  register_window_handle(raw_id, raw_window_handle)
+  let window : Window = {
     id: @core.WindowId::from_raw(raw_id),
+    raw_window_handle,
+    visible_state: attributes.visible(),
+    resizable_state: attributes.resizable(),
+    decorated_state: attributes.decorations(),
+    enabled_buttons_state: attributes.enabled_buttons(),
+    window_level_state: attributes.window_level(),
     cursor_state,
     fullscreen_state: initial_fullscreen_state(attributes),
     ime_capabilities_state: None,
     ime_cursor_area_position_state: @dpi.PhysicalPosition::new(0, 0),
     ime_cursor_area_size_state: @dpi.PhysicalSize::new(1, 1),
     ime_surrounding_text_state: None,
-    visible_state: attributes.visible(),
-    resizable_state: attributes.resizable(),
     content_protected_state: attributes.content_protected(),
-    decorated_state: attributes.decorations(),
-    enabled_buttons_state: attributes.enabled_buttons(),
     blur_state: attributes.blur(),
     has_shadow_state: attributes.platform_attributes().has_shadow(),
     document_edited_state: false,
@@ -327,243 +1256,263 @@ pub fn EventLoop::try_create_window(
     cursor_visible_state: attributes.cursor_visible(),
     cursor_hittest_state: attributes.cursor_hittest(),
     transparent_state: attributes.transparent(),
-    window_level_state: attributes.window_level(),
     ime_allowed_state: false,
     ime_purpose_state: attributes.ime_purpose(),
     ime_hints_state: attributes.ime_hints(),
+    simple_fullscreen_state: false,
+    simple_fullscreen_saved_style_mask_state: None,
+    simple_fullscreen_saved_presentation_options_state: None,
+    simple_fullscreen_saved_outer_position_state: None,
+    simple_fullscreen_saved_outer_size_state: None,
+    exclusive_fullscreen_state: false,
+    exclusive_fullscreen_display_id_state: None,
+    exclusive_fullscreen_saved_mode_state: None,
+    exclusive_fullscreen_saved_style_mask_state: None,
+    exclusive_fullscreen_saved_outer_position_state: None,
+    exclusive_fullscreen_saved_outer_size_state: None,
   }
-}
-
-///|
-pub fn Window::simple_fullscreen(self : Window) -> Bool {
-  window_simple_fullscreen(self.id.into_raw())
-}
-
-///|
-pub fn Window::set_simple_fullscreen(self : Window, fullscreen : Bool) -> Bool {
-  set_window_simple_fullscreen(self.id.into_raw(), fullscreen)
-}
-
-///|
-pub fn Window::set_borderless_game(
-  self : Window,
-  borderless_game : Bool,
-) -> Unit {
-  self.borderless_game_state = borderless_game
-  set_window_borderless_game(self.id.into_raw(), borderless_game)
-}
-
-///|
-pub fn Window::is_borderless_game(self : Window) -> Bool {
-  self.borderless_game_state
-}
-
-///|
-pub fn Window::set_unified_titlebar(
-  self : Window,
-  unified_titlebar : Bool,
-) -> Unit {
-  self.unified_titlebar_state = unified_titlebar
-  set_window_unified_titlebar(self.id.into_raw(), unified_titlebar)
-}
-
-///|
-pub fn Window::unified_titlebar(self : Window) -> Bool {
-  self.unified_titlebar_state
-}
-
-///|
-pub fn Window::set_tabbing_identifier(
-  self : Window,
-  identifier : String,
-) -> Unit {
-  set_window_tabbing_identifier(self.id.into_raw(), identifier)
-}
-
-///|
-pub fn Window::tabbing_identifier(self : Window) -> String {
-  text_from_native(window_tabbing_identifier(self.id.into_raw()))
-}
-
-///|
-pub fn Window::select_next_tab(self : Window) -> Unit {
-  select_window_next_tab(self.id.into_raw())
-}
-
-///|
-pub fn Window::select_previous_tab(self : Window) -> Unit {
-  select_window_previous_tab(self.id.into_raw())
-}
-
-///|
-pub fn Window::select_tab_at_index(self : Window, index : Int) -> Unit {
-  if index >= 0 {
-    select_window_tab_at_index(self.id.into_raw(), index)
+  match attributes.fullscreen() {
+    Some(@core.Fullscreen::Exclusive(target_monitor, video_mode)) =>
+      ignore(window.enter_exclusive_fullscreen(target_monitor, video_mode))
+    _ => ()
   }
+  window
 }
 
 ///|
-pub fn Window::num_tabs(self : Window) -> Int {
-  window_num_tabs(self.id.into_raw())
-}
-
-///|
-pub fn Window::set_decorations(self : Window, decorations : Bool) -> Unit {
-  self.toggle_window_decorations(decorations)
-}
-
-///|
-fn Window::toggle_window_decorations(self : Window, decorations : Bool) -> Unit {
-  self.decorated_state = decorations
-  set_window_decorations(self.id.into_raw(), decorations)
-}
-
-///|
-pub fn Window::set_enabled_buttons(
-  self : Window,
-  buttons : @core.WindowButtons,
-) -> Unit {
-  self.enabled_buttons_state = buttons
-  set_window_enabled_buttons(
-    self.id.into_raw(),
-    buttons.close(),
-    buttons.minimize(),
-    buttons.maximize(),
+pub fn Window::surface_size(self : Window) -> @dpi.PhysicalSize {
+  @dpi.PhysicalSize::new(
+    native_window_width(self.raw_window_handle),
+    native_window_height(self.raw_window_handle),
   )
 }
 
 ///|
-pub fn Window::set_blur(self : Window, blur : Bool) -> Unit {
-  self.blur_state = blur
-  set_window_blur(self.id.into_raw(), blur)
+pub fn Window::inner_size(self : Window) -> @dpi.PhysicalSize {
+  self.surface_size()
 }
 
 ///|
-pub fn Window::has_shadow(self : Window) -> Bool {
-  self.has_shadow_state
+pub fn Window::outer_size(self : Window) -> @dpi.PhysicalSize {
+  @dpi.PhysicalSize::new(
+    window_outer_width(self.raw_window_handle),
+    window_outer_height(self.raw_window_handle),
+  )
 }
 
 ///|
-pub fn Window::set_has_shadow(self : Window, has_shadow : Bool) -> Unit {
-  self.has_shadow_state = has_shadow
-  set_window_has_shadow(self.id.into_raw(), has_shadow)
+pub fn Window::surface_position(self : Window) -> @dpi.PhysicalPosition {
+  @dpi.PhysicalPosition::new(
+    window_surface_x(self.raw_window_handle),
+    window_surface_y(self.raw_window_handle),
+  )
 }
 
 ///|
-pub fn Window::set_cursor(self : Window, cursor : @core.Cursor) -> Unit {
-  let raw_id = self.id.into_raw()
-  match cursor {
-    @core.Cursor::Icon(icon) => {
-      set_window_cursor(raw_id, cursor_icon_to_native(icon))
-      self.cursor_state = cursor
+pub fn Window::inner_position(self : Window) -> @dpi.PhysicalPosition {
+  self.surface_position()
+}
+
+///|
+pub fn Window::safe_area(self : Window) -> @dpi.PhysicalInsets {
+  @dpi.PhysicalInsets::new(
+    window_safe_area_top(self.raw_window_handle),
+    window_safe_area_left(self.raw_window_handle),
+    window_safe_area_bottom(self.raw_window_handle),
+    window_safe_area_right(self.raw_window_handle),
+  )
+}
+
+///|
+pub fn Window::request_surface_size(
+  self : Window,
+  size : @dpi.Size,
+) -> @dpi.PhysicalSize? {
+  let physical_size = size.to_physical(self.scale_factor())
+  set_surface_size(
+    self.raw_window_handle,
+    physical_size.width(),
+    physical_size.height(),
+  )
+  None
+}
+
+///|
+pub fn Window::request_inner_size(
+  self : Window,
+  size : @dpi.Size,
+) -> @dpi.PhysicalSize? {
+  self.request_surface_size(size)
+}
+
+///|
+pub fn Window::set_surface_resize_increments(
+  self : Window,
+  size : @dpi.Size?,
+) -> Unit {
+  match size {
+    Some(size) => {
+      let physical_size = size.to_physical(self.scale_factor())
+      set_surface_resize_increments(
+        self.raw_window_handle,
+        physical_size.width(),
+        physical_size.height(),
+      )
     }
-    @core.Cursor::Custom(custom_cursor) =>
-      if set_window_custom_cursor(raw_id, custom_cursor.into_raw()) {
-        self.cursor_state = cursor
-      } else {
-        set_window_cursor(
-          raw_id,
-          cursor_icon_to_native(@core.CursorIcon::Default),
-        )
-        self.cursor_state = @core.Cursor::Icon(@core.CursorIcon::Default)
-      }
+    None => set_surface_resize_increments(self.raw_window_handle, 0, 0)
   }
 }
 
 ///|
-pub fn Window::set_cursor_icon(
-  self : Window,
-  cursor : @core.CursorIcon,
-) -> Unit {
-  self.set_cursor(@core.Cursor::Icon(cursor))
+pub fn Window::set_resize_increments(self : Window, size : @dpi.Size?) -> Unit {
+  self.set_surface_resize_increments(size)
 }
 
 ///|
-pub fn Window::set_cursor_visible(self : Window, visible : Bool) -> Unit {
-  self.cursor_visible_state = visible
-  set_window_cursor_visible(self.id.into_raw(), visible)
-}
-
-///|
-pub fn Window::set_cursor_hittest(
-  self : Window,
-  hittest : Bool,
-) -> Unit raise @core.RequestError {
-  if set_window_cursor_hittest(self.id.into_raw(), hittest) {
-    self.cursor_hittest_state = hittest
-    ()
+pub fn Window::surface_resize_increments(self : Window) -> @dpi.PhysicalSize? {
+  let width = window_resize_increment_width(self.raw_window_handle)
+  let height = window_resize_increment_height(self.raw_window_handle)
+  if width > 0 && height > 0 {
+    Some(@dpi.PhysicalSize::new(width, height))
   } else {
+    None
+  }
+}
+
+///|
+pub fn Window::resize_increments(self : Window) -> @dpi.PhysicalSize? {
+  self.surface_resize_increments()
+}
+
+///|
+pub fn Window::set_min_surface_size(self : Window, size : @dpi.Size?) -> Unit {
+  match size {
+    Some(size) => {
+      let physical_size = size.to_physical(self.scale_factor())
+      set_min_surface_size(
+        self.raw_window_handle,
+        physical_size.width(),
+        physical_size.height(),
+      )
+    }
+    None => set_min_surface_size(self.raw_window_handle, 0, 0)
+  }
+}
+
+///|
+pub fn Window::set_min_inner_size(self : Window, size : @dpi.Size?) -> Unit {
+  self.set_min_surface_size(size)
+}
+
+///|
+pub fn Window::set_max_surface_size(self : Window, size : @dpi.Size?) -> Unit {
+  match size {
+    Some(size) => {
+      let physical_size = size.to_physical(self.scale_factor())
+      set_max_surface_size(
+        self.raw_window_handle,
+        physical_size.width(),
+        physical_size.height(),
+      )
+    }
+    None => set_max_surface_size(self.raw_window_handle, 0, 0)
+  }
+}
+
+///|
+pub fn Window::set_max_inner_size(self : Window, size : @dpi.Size?) -> Unit {
+  self.set_max_surface_size(size)
+}
+
+///|
+pub fn Window::min_surface_size(self : Window) -> @dpi.PhysicalSize? {
+  let width = window_min_surface_width(self.raw_window_handle)
+  let height = window_min_surface_height(self.raw_window_handle)
+  if width > 0 && height > 0 {
+    Some(@dpi.PhysicalSize::new(width, height))
+  } else {
+    None
+  }
+}
+
+///|
+pub fn Window::min_inner_size(self : Window) -> @dpi.PhysicalSize? {
+  self.min_surface_size()
+}
+
+///|
+pub fn Window::max_surface_size(self : Window) -> @dpi.PhysicalSize? {
+  let width = window_max_surface_width(self.raw_window_handle)
+  let height = window_max_surface_height(self.raw_window_handle)
+  if width > 0 && height > 0 {
+    Some(@dpi.PhysicalSize::new(width, height))
+  } else {
+    None
+  }
+}
+
+///|
+pub fn Window::max_inner_size(self : Window) -> @dpi.PhysicalSize? {
+  self.max_surface_size()
+}
+
+///|
+pub fn Window::outer_position(
+  self : Window,
+) -> @dpi.PhysicalPosition raise @core.RequestError {
+  let raw_id = self.raw_window_handle
+  if raw_id == (0 : Int).to_uint64() {
     raise @core.RequestError::Ignored
   }
+  @dpi.PhysicalPosition::new(window_x(raw_id), window_y(raw_id))
 }
 
 ///|
-pub fn Window::set_cursor_position(
+pub fn Window::set_outer_position(
   self : Window,
   position : @dpi.Position,
-) -> Unit raise @core.RequestError {
-  let physical_position = position.to_physical(self.scale_factor())
-  if set_cursor_position(
-      self.id.into_raw(),
-      physical_position.x(),
-      physical_position.y(),
-    ) {
-    ()
-  } else {
-    raise @core.RequestError::Ignored
-  }
-}
-
-///|
-pub fn Window::set_cursor_grab(
-  self : Window,
-  mode : @core.CursorGrabMode,
-) -> Unit raise @core.RequestError {
-  if mode is @core.CursorGrabMode::Confined {
-    raise @core.RequestError::NotSupported
-  }
-  if set_cursor_grab(self.id.into_raw(), cursor_grab_mode_to_native(mode)) {
-    ()
-  } else {
-    raise @core.RequestError::Ignored
-  }
-}
-
-///|
-pub fn Window::drag_window(self : Window) -> Unit raise @core.RequestError {
-  if drag_window(self.id.into_raw()) {
-    ()
-  } else {
-    raise @core.RequestError::Ignored
-  }
-}
-
-///|
-pub fn Window::drag_resize_window(
-  self : Window,
-  direction : @core.ResizeDirection,
-) -> Unit raise @core.RequestError {
-  if drag_resize_window(
-      self.id.into_raw(),
-      resize_direction_to_native(direction),
-    ) {
-    ()
-  } else {
-    raise @core.RequestError::NotSupported
-  }
-}
-
-///|
-pub fn Window::show_window_menu(
-  self : Window,
-  position : @dpi.Position,
 ) -> Unit {
   let physical_position = position.to_physical(self.scale_factor())
-  let _ = show_window_menu(
-    self.id.into_raw(),
+  set_window_position(
+    self.raw_window_handle,
     physical_position.x(),
     physical_position.y(),
   )
+}
+
+///|
+pub fn Window::focus_window(self : Window) -> Unit {
+  let raw_id = self.raw_window_handle
+  let is_minimized = window_minimized(raw_id)
+  let is_visible = self.visible_state
+  if is_minimized == false && is_visible {
+    focus_window(raw_id)
+  }
+}
+
+///|
+pub fn Window::has_focus(self : Window) -> Bool {
+  window_has_focus(self.raw_window_handle)
+}
+
+///|
+pub fn Window::set_minimized(self : Window, minimized : Bool) -> Unit {
+  set_window_minimized(self.raw_window_handle, minimized)
+}
+
+///|
+pub fn Window::is_minimized(self : Window) -> Bool? {
+  Some(window_minimized(self.raw_window_handle))
+}
+
+///|
+pub fn Window::set_maximized(self : Window, maximized : Bool) -> Unit {
+  set_window_maximized(self.raw_window_handle, maximized)
+}
+
+///|
+pub fn Window::is_maximized(self : Window) -> Bool {
+  window_maximized(self.raw_window_handle)
 }
 
 ///|
@@ -582,24 +1531,9 @@ pub fn Window::is_blurred(self : Window) -> Bool {
 }
 
 ///|
-pub fn Window::cursor(self : Window) -> @core.Cursor {
-  self.cursor_state
-}
-
-///|
-pub fn Window::is_cursor_visible(self : Window) -> Bool {
-  self.cursor_visible_state
-}
-
-///|
-pub fn Window::is_cursor_hittest(self : Window) -> Bool {
-  self.cursor_hittest_state
-}
-
-///|
 pub fn Window::set_transparent(self : Window, transparent : Bool) -> Unit {
   self.transparent_state = transparent
-  set_window_transparent(self.id.into_raw(), transparent)
+  set_window_transparent(self.raw_window_handle, transparent)
 }
 
 ///|
@@ -614,7 +1548,7 @@ pub fn Window::set_window_level(
 ) -> Unit {
   self.window_level_state = level
   set_window_level(
-    self.id.into_raw(),
+    self.raw_window_handle,
     normalize_window_level_native(window_level_to_native(level)),
   )
 }
@@ -625,281 +1559,13 @@ pub fn Window::window_level(self : Window) -> @core.WindowLevel {
 }
 
 ///|
-pub fn Window::set_ime_purpose(
-  self : Window,
-  purpose : @core.ImePurpose,
-) -> Unit {
-  match self.ime_capabilities() {
-    Some(capabilities) =>
-      if capabilities.hint_and_purpose() {
-        let _ = self.request_ime_update(
-          @core.ImeRequestData::default()
-          .with_hint_and_purpose(@core.ImeHint::none(), purpose)
-          .into_request(),
-        ) catch {
-          _ => ()
-        }
-      }
-    None => ()
-  }
-}
-
-///|
-fn Window::set_ime_purpose_raw(
-  self : Window,
-  purpose : @core.ImePurpose,
-) -> Unit {
-  self.ime_purpose_state = purpose
-  set_ime_purpose(
-    self.id.into_raw(),
-    normalize_ime_purpose_native(ime_purpose_to_native(purpose)),
-  )
-}
-
-///|
-pub fn Window::set_ime_hints(self : Window, hints : @core.ImeHint) -> Unit {
-  self.ime_hints_state = hints
-  set_ime_hints(self.id.into_raw(), normalize_ime_hints_bits(hints.bits()))
-}
-
-///|
-pub fn Window::set_ime_allowed(self : Window, allowed : Bool) -> Unit {
-  let request : @core.ImeRequest? = if allowed {
-    let capabilities = @core.ImeCapabilities::default()
-      .with_hint_and_purpose()
-      .with_cursor_area()
-    let request_data = @core.ImeRequestData::default()
-      .with_hint_and_purpose(@core.ImeHint::none(), @core.ImePurpose::Normal)
-      .with_cursor_area(
-        @dpi.LogicalPosition::new(0.0, 0.0).into_position(),
-        @dpi.LogicalSize::new(0.0, 0.0).into_size(),
-      )
-    match @core.ImeEnableRequest::new(capabilities, request_data) {
-      Some(enable_request) => Some(@core.ImeRequest::Enable(enable_request))
-      None => None
-    }
-  } else {
-    Some(@core.ImeRequest::Disable)
-  }
-  match request {
-    Some(request) => {
-      let _ = self.request_ime_update(request) catch { _ => () }
-      ()
-    }
-    None => ()
-  }
-}
-
-///|
-fn Window::set_ime_allowed_raw(self : Window, allowed : Bool) -> Unit {
-  self.ime_allowed_state = allowed
-  if allowed == false {
-    self.ime_capabilities_state = None
-    self.ime_surrounding_text_state = None
-  }
-  set_ime_allowed(self.id.into_raw(), allowed)
-}
-
-///|
-pub fn Window::ime_allowed(self : Window) -> Bool {
-  self.ime_allowed_state
-}
-
-///|
-pub fn Window::set_ime_cursor_area(
-  self : Window,
-  position : @dpi.Position,
-  size : @dpi.Size,
-) -> Unit {
-  match self.ime_capabilities() {
-    Some(capabilities) =>
-      if capabilities.cursor_area() {
-        let _ = self.request_ime_update(
-          @core.ImeRequestData::default()
-          .with_cursor_area(position, size)
-          .into_request(),
-        ) catch {
-          _ => ()
-        }
-      }
-    None => ()
-  }
-}
-
-///|
-fn Window::set_ime_cursor_area_raw(
-  self : Window,
-  position : @dpi.Position,
-  size : @dpi.Size,
-) -> Unit {
-  let scale_factor = self.scale_factor()
-  let physical_position = position.to_physical(scale_factor)
-  let physical_size = size.to_physical(scale_factor)
-  let width = if physical_size.width() > 0 { physical_size.width() } else { 1 }
-  let height = if physical_size.height() > 0 {
-    physical_size.height()
-  } else {
-    1
-  }
-  self.ime_cursor_area_position_state = physical_position
-  self.ime_cursor_area_size_state = @dpi.PhysicalSize::new(width, height)
-  set_ime_cursor_area(
-    self.id.into_raw(),
-    physical_position.x(),
-    physical_position.y(),
-    width,
-    height,
-  )
-}
-
-///|
-pub fn Window::set_ime_surrounding_text(
-  self : Window,
-  surrounding_text : @core.ImeSurroundingText?,
-) -> Unit {
-  match surrounding_text {
-    Some(surrounding_text) => {
-      set_ime_surrounding_text(
-        self.id.into_raw(),
-        surrounding_text.text(),
-        surrounding_text.cursor(),
-        surrounding_text.anchor(),
-      )
-      self.ime_surrounding_text_state = Some(surrounding_text)
-    }
-    None => {
-      clear_ime_surrounding_text(self.id.into_raw())
-      self.ime_surrounding_text_state = None
-    }
-  }
-}
-
-///|
-pub fn Window::ime_cursor_area_position(self : Window) -> @dpi.PhysicalPosition {
-  self.ime_cursor_area_position_state
-}
-
-///|
-pub fn Window::ime_cursor_area_size(self : Window) -> @dpi.PhysicalSize {
-  self.ime_cursor_area_size_state
-}
-
-///|
-pub fn Window::ime_surrounding_text(self : Window) -> @core.ImeSurroundingText? {
-  self.ime_surrounding_text_state
-}
-
-///|
-pub fn Window::ime_purpose(self : Window) -> @core.ImePurpose {
-  self.ime_purpose_state
-}
-
-///|
-pub fn Window::ime_hints(self : Window) -> @core.ImeHint {
-  self.ime_hints_state
-}
-
-///|
-fn Window::apply_ime_request_data(
-  self : Window,
-  request_data : @core.ImeRequestData,
-) -> Unit raise @core.ImeRequestError {
-  if self.ime_allowed() == false {
-    raise @core.ImeRequestError::NotEnabled
-  }
-  if request_data.has_hint_and_purpose() {
-    if self.ime_supports_hint_and_purpose() {
-      match request_data.hint_and_purpose() {
-        Some((hints, purpose)) => {
-          self.set_ime_hints(hints)
-          self.set_ime_purpose_raw(purpose)
-        }
-        None => ()
-      }
-    }
-  }
-  if request_data.has_cursor_area() {
-    if self.ime_supports_cursor_area() {
-      match request_data.cursor_area() {
-        Some((position, size)) => self.set_ime_cursor_area_raw(position, size)
-        None => ()
-      }
-    }
-  }
-  if request_data.has_surrounding_text() {
-    if self.ime_supports_surrounding_text() {
-      match request_data.surrounding_text() {
-        Some(surrounding_text) =>
-          self.set_ime_surrounding_text(Some(surrounding_text))
-        None => ()
-      }
-    }
-  }
-}
-
-///|
-pub fn Window::request_ime_update(
-  self : Window,
-  request : @core.ImeRequest,
-) -> Unit raise @core.ImeRequestError {
-  match request {
-    @core.ImeRequest::Enable(enable_request) =>
-      if self.ime_allowed() {
-        raise @core.ImeRequestError::AlreadyEnabled
-      } else {
-        let capabilities = enable_request.capabilities()
-        let request_data = enable_request.request_data()
-        self.set_ime_allowed_raw(true)
-        self.ime_capabilities_state = Some(capabilities)
-        self.apply_ime_request_data(request_data)
-      }
-    @core.ImeRequest::Update(request_data) =>
-      self.apply_ime_request_data(request_data)
-    @core.ImeRequest::Disable => {
-      self.set_ime_allowed_raw(false)
-      ()
-    }
-  }
-}
-
-///|
-pub fn Window::ime_capabilities(self : Window) -> @core.ImeCapabilities? {
-  self.ime_capabilities_state
-}
-
-///|
-fn Window::ime_supports_hint_and_purpose(self : Window) -> Bool {
-  match self.ime_capabilities_state {
-    Some(capabilities) => capabilities.hint_and_purpose()
-    None => true
-  }
-}
-
-///|
-fn Window::ime_supports_cursor_area(self : Window) -> Bool {
-  match self.ime_capabilities_state {
-    Some(capabilities) => capabilities.cursor_area()
-    None => true
-  }
-}
-
-///|
-fn Window::ime_supports_surrounding_text(self : Window) -> Bool {
-  match self.ime_capabilities_state {
-    Some(capabilities) => capabilities.surrounding_text()
-    None => true
-  }
-}
-
-///|
 pub fn Window::scale_factor(self : Window) -> Double {
-  window_scale_factor(self.id.into_raw())
+  window_scale_factor(self.raw_window_handle)
 }
 
 ///|
 pub fn Window::request_redraw(self : Window) -> Unit {
-  app_state_queue_redraw(self.id.into_raw())
-  native_event_loop_wake_up()
+  queue_redraw(self.id.into_raw())
 }
 
 ///|
@@ -914,17 +1580,12 @@ pub fn Window::reset_dead_keys(_self : Window) -> Unit {
 
 ///|
 pub fn Window::set_title(self : Window, title : String) -> Unit {
-  set_title(self.id.into_raw(), title)
+  set_title(self.raw_window_handle, title)
 }
 
 ///|
 pub fn Window::title(self : Window) -> String {
-  text_from_native(window_title(self.id.into_raw()))
-}
-
-///|
-pub fn Window::set_theme(self : Window, theme : @core.Theme?) -> Unit {
-  set_window_theme(self.id.into_raw(), theme_to_appearance(theme))
+  window_title(self.raw_window_handle)
 }
 
 ///|
@@ -941,13 +1602,13 @@ pub fn Window::set_content_protected(
   content_protected : Bool,
 ) -> Unit {
   self.content_protected_state = content_protected
-  set_window_content_protected(self.id.into_raw(), content_protected)
+  set_window_content_protected(self.raw_window_handle, content_protected)
 }
 
 ///|
 pub fn Window::set_visible(self : Window, visible : Bool) -> Unit {
   self.visible_state = visible
-  native_set_visible(self.id.into_raw(), visible)
+  native_set_visible(self.raw_window_handle, visible)
 }
 
 ///|
@@ -958,7 +1619,7 @@ pub fn Window::is_visible(self : Window) -> Bool? {
 ///|
 pub fn Window::set_resizable(self : Window, resizable : Bool) -> Unit {
   self.resizable_state = resizable
-  native_set_resizable(self.id.into_raw(), resizable)
+  native_set_resizable(self.raw_window_handle, resizable)
 }
 
 ///|
@@ -979,7 +1640,7 @@ pub fn Window::is_document_edited(self : Window) -> Bool {
 ///|
 pub fn Window::set_document_edited(self : Window, edited : Bool) -> Unit {
   self.document_edited_state = edited
-  set_window_document_edited(self.id.into_raw(), edited)
+  set_window_document_edited(self.raw_window_handle, edited)
 }
 
 ///|
@@ -989,7 +1650,7 @@ pub fn Window::set_option_as_alt(
 ) -> Unit {
   self.option_as_alt_state = option_as_alt
   set_window_option_as_alt(
-    self.id.into_raw(),
+    self.raw_window_handle,
     normalize_option_as_alt_native(option_as_alt_to_native(option_as_alt)),
   )
 }
@@ -1005,27 +1666,475 @@ pub fn Window::request_user_attention(
   request_type : @core.UserAttentionType?,
 ) -> Unit {
   request_user_attention(
-    self.id.into_raw(),
+    self.raw_window_handle,
     user_attention_type_to_native(request_type),
   )
 }
 
 ///|
+pub fn Window::current_monitor(self : Window) -> @core.MonitorHandle? {
+  let monitor_id = window_current_monitor_id(self.raw_window_handle)
+  if monitor_id == (0 : Int).to_uint64() {
+    None
+  } else {
+    monitor_from_native_id(monitor_id)
+  }
+}
+
+///|
+pub fn Window::available_monitors(self : Window) -> Array[@core.MonitorHandle] {
+  let _ = self
+  available_monitors()
+}
+
+///|
+pub fn Window::primary_monitor(self : Window) -> @core.MonitorHandle? {
+  let _ = self
+  Some(primary_monitor())
+}
+
+///|
+pub fn Window::set_fullscreen(
+  self : Window,
+  fullscreen : @core.Fullscreen?,
+) -> Unit {
+  if self.simple_fullscreen() {
+    ()
+  } else {
+    self.fullscreen_state = fullscreen
+    let raw_id = self.raw_window_handle
+    match fullscreen {
+      None =>
+        if self.exclusive_fullscreen_state {
+          ignore(self.exit_exclusive_fullscreen())
+        } else {
+          set_window_fullscreen(raw_id, false)
+        }
+      Some(@core.Fullscreen::Borderless(target_monitor)) => {
+        if self.exclusive_fullscreen_state {
+          ignore(self.exit_exclusive_fullscreen())
+        }
+        match target_monitor {
+          Some(monitor) =>
+            set_window_position(
+              raw_id,
+              monitor.position().x(),
+              monitor.position().y(),
+            )
+          None => ()
+        }
+        set_window_fullscreen(raw_id, true)
+      }
+      Some(@core.Fullscreen::Exclusive(target_monitor, video_mode)) => {
+        if self.exclusive_fullscreen_state {
+          ignore(self.exit_exclusive_fullscreen())
+        }
+        if window_fullscreen(raw_id) && !self.exclusive_fullscreen_state {
+          set_window_fullscreen(raw_id, false)
+        }
+        ignore(self.enter_exclusive_fullscreen(target_monitor, video_mode))
+      }
+    }
+  }
+}
+
+///|
+pub fn Window::fullscreen(self : Window) -> @core.Fullscreen? {
+  let raw_id = self.raw_window_handle
+  if self.exclusive_fullscreen_state {
+    match self.fullscreen_state {
+      Some(fullscreen) => Some(fullscreen)
+      None => None
+    }
+  } else if window_fullscreen(raw_id) {
+    match self.fullscreen_state {
+      Some(fullscreen) => Some(fullscreen)
+      None => None
+    }
+  } else {
+    self.fullscreen_state = None
+    None
+  }
+}
+
+///|
+pub fn Window::is_fullscreen(self : Window) -> Bool {
+  if self.exclusive_fullscreen_state {
+    true
+  } else {
+    window_fullscreen(self.raw_window_handle)
+  }
+}
+
+///|
+pub fn Window::simple_fullscreen(self : Window) -> Bool {
+  self.simple_fullscreen_state
+}
+
+///|
+pub fn Window::set_simple_fullscreen(self : Window, fullscreen : Bool) -> Bool {
+  let raw_id = self.raw_window_handle
+  if self.is_fullscreen() {
+    return false
+  }
+  if fullscreen == self.simple_fullscreen_state {
+    return false
+  }
+  if fullscreen {
+    let outer_position = Some(self.outer_position()) catch { _ => None }
+    let current_monitor = self.current_monitor()
+    match outer_position {
+      Some(saved_outer_position) =>
+        match current_monitor {
+          Some(monitor) => {
+            self.simple_fullscreen_saved_style_mask_state = Some(
+              window_style_mask_bits(raw_id),
+            )
+            self.simple_fullscreen_saved_presentation_options_state = Some(
+              application_presentation_options(),
+            )
+            self.simple_fullscreen_saved_outer_position_state = Some(
+              saved_outer_position,
+            )
+            self.simple_fullscreen_saved_outer_size_state = Some(
+              self.outer_size(),
+            )
+            self.simple_fullscreen_state = true
+            set_application_presentation_options(
+              simple_fullscreen_presentation_options(self.borderless_game_state),
+            )
+            clear_window_style_mask_bits(
+              raw_id,
+              fullscreen_removed_style_bits(),
+            )
+            set_window_position(
+              raw_id,
+              monitor.position().x(),
+              monitor.position().y(),
+            )
+            set_window_outer_size(
+              raw_id,
+              monitor.surface_size().width(),
+              monitor.surface_size().height(),
+            )
+            set_window_movable(raw_id, false)
+            true
+          }
+          None => false
+        }
+      None => false
+    }
+  } else {
+    let saved_style_mask = self.simple_fullscreen_saved_style_mask_state
+    let saved_presentation_options = self.simple_fullscreen_saved_presentation_options_state
+    let saved_outer_position = self.simple_fullscreen_saved_outer_position_state
+    let saved_outer_size = self.simple_fullscreen_saved_outer_size_state
+    self.simple_fullscreen_state = false
+    self.simple_fullscreen_saved_style_mask_state = None
+    self.simple_fullscreen_saved_presentation_options_state = None
+    self.simple_fullscreen_saved_outer_position_state = None
+    self.simple_fullscreen_saved_outer_size_state = None
+    match saved_presentation_options {
+      Some(options) => set_application_presentation_options(options)
+      None => ()
+    }
+    match saved_outer_position {
+      Some(position) => set_window_position(raw_id, position.x(), position.y())
+      None => ()
+    }
+    match saved_outer_size {
+      Some(size) => set_window_outer_size(raw_id, size.width(), size.height())
+      None => ()
+    }
+    set_window_movable(raw_id, true)
+    match saved_style_mask {
+      Some(style_mask) => set_window_style_mask_bits(raw_id, style_mask)
+      None => ()
+    }
+    true
+  }
+}
+
+///|
+fn Window::enter_exclusive_fullscreen(
+  self : Window,
+  target_monitor : @core.MonitorHandle,
+  video_mode : @core.VideoMode,
+) -> Bool {
+  let raw_id = self.raw_window_handle
+  let saved_outer_position = Some(self.outer_position()) catch { _ => None }
+  let saved_style_mask = window_style_mask_bits(raw_id)
+  let saved_outer_size = self.outer_size()
+  match saved_outer_position {
+    Some(saved_outer_position) => {
+      let display_id = target_monitor.native_id()
+      let mode_size = video_mode.surface_size()
+      let target_mode = find_display_mode_handle(
+        display_id,
+        mode_size.width(),
+        mode_size.height(),
+        match video_mode.bit_depth() {
+          Some(bit_depth) => bit_depth
+          None => 0
+        },
+        match video_mode.refresh_rate_millihertz() {
+          Some(refresh_rate) => refresh_rate
+          None => 0
+        },
+      )
+      if target_mode == (0 : Int).to_uint64() {
+        return false
+      }
+      let saved_mode = copy_current_display_mode_handle(display_id)
+      if saved_mode == (0 : Int).to_uint64() {
+        release_display_mode_handle(target_mode)
+        return false
+      }
+      if capture_display(display_id) == false {
+        release_display_mode_handle(target_mode)
+        release_display_mode_handle(saved_mode)
+        return false
+      }
+      if set_display_mode_handle(display_id, target_mode) == false {
+        ignore(release_display_capture(display_id))
+        release_display_mode_handle(target_mode)
+        release_display_mode_handle(saved_mode)
+        return false
+      }
+      release_display_mode_handle(target_mode)
+      self.exclusive_fullscreen_state = true
+      self.exclusive_fullscreen_display_id_state = Some(display_id)
+      self.exclusive_fullscreen_saved_mode_state = Some(saved_mode)
+      self.exclusive_fullscreen_saved_style_mask_state = Some(saved_style_mask)
+      self.exclusive_fullscreen_saved_outer_position_state = Some(
+        saved_outer_position,
+      )
+      self.exclusive_fullscreen_saved_outer_size_state = Some(saved_outer_size)
+      set_window_exclusive_runtime_state(raw_id, true, display_id, saved_mode)
+      clear_window_style_mask_bits(raw_id, fullscreen_removed_style_bits())
+      set_window_position(
+        raw_id,
+        target_monitor.position().x(),
+        target_monitor.position().y(),
+      )
+      set_window_outer_size(
+        raw_id,
+        target_monitor.surface_size().width(),
+        target_monitor.surface_size().height(),
+      )
+      set_window_movable(raw_id, false)
+      true
+    }
+    None => false
+  }
+}
+
+///|
+fn Window::exit_exclusive_fullscreen(self : Window) -> Bool {
+  if self.exclusive_fullscreen_state == false {
+    return false
+  }
+  let raw_id = self.raw_window_handle
+  let saved_display_id = self.exclusive_fullscreen_display_id_state
+  let saved_mode = self.exclusive_fullscreen_saved_mode_state
+  let saved_style_mask = self.exclusive_fullscreen_saved_style_mask_state
+  let saved_outer_position = self.exclusive_fullscreen_saved_outer_position_state
+  let saved_outer_size = self.exclusive_fullscreen_saved_outer_size_state
+  self.exclusive_fullscreen_state = false
+  self.exclusive_fullscreen_display_id_state = None
+  self.exclusive_fullscreen_saved_mode_state = None
+  self.exclusive_fullscreen_saved_style_mask_state = None
+  self.exclusive_fullscreen_saved_outer_position_state = None
+  self.exclusive_fullscreen_saved_outer_size_state = None
+  match saved_display_id {
+    Some(display_id) =>
+      match saved_mode {
+        Some(saved_mode) => {
+          ignore(set_display_mode_handle(display_id, saved_mode))
+          ignore(release_display_capture(display_id))
+          release_display_mode_handle(saved_mode)
+        }
+        None => ignore(release_display_capture(display_id))
+      }
+    None =>
+      match saved_mode {
+        Some(saved_mode) => release_display_mode_handle(saved_mode)
+        None => ()
+      }
+  }
+  set_window_exclusive_runtime_state(
+    raw_id,
+    false,
+    (0 : Int).to_uint64(),
+    (0 : Int).to_uint64(),
+  )
+  match saved_style_mask {
+    Some(style_mask) => set_window_style_mask_bits(raw_id, style_mask)
+    None => ()
+  }
+  match saved_outer_position {
+    Some(position) => set_window_position(raw_id, position.x(), position.y())
+    None => ()
+  }
+  match saved_outer_size {
+    Some(size) => set_window_outer_size(raw_id, size.width(), size.height())
+    None => ()
+  }
+  set_window_movable(raw_id, true)
+  true
+}
+
+///|
+fn fullscreen_removed_style_bits() -> UInt64 {
+  (13 : Int).to_uint64()
+}
+
+///|
+fn simple_fullscreen_presentation_options(borderless_game : Bool) -> UInt64 {
+  if borderless_game {
+    (10 : Int).to_uint64()
+  } else {
+    (5 : Int).to_uint64()
+  }
+}
+
+///|
+pub fn Window::set_borderless_game(
+  self : Window,
+  borderless_game : Bool,
+) -> Unit {
+  self.borderless_game_state = borderless_game
+  set_window_borderless_game(self.raw_window_handle, borderless_game)
+}
+
+///|
+pub fn Window::is_borderless_game(self : Window) -> Bool {
+  self.borderless_game_state
+}
+
+///|
+pub fn Window::set_unified_titlebar(
+  self : Window,
+  unified_titlebar : Bool,
+) -> Unit {
+  self.unified_titlebar_state = unified_titlebar
+  set_window_unified_titlebar(self.raw_window_handle, unified_titlebar)
+}
+
+///|
+pub fn Window::unified_titlebar(self : Window) -> Bool {
+  self.unified_titlebar_state
+}
+
+///|
+pub fn Window::set_tabbing_identifier(
+  self : Window,
+  identifier : String,
+) -> Unit {
+  set_window_tabbing_identifier(self.raw_window_handle, identifier)
+}
+
+///|
+pub fn Window::tabbing_identifier(self : Window) -> String {
+  window_tabbing_identifier(self.raw_window_handle)
+}
+
+///|
+pub fn Window::select_next_tab(self : Window) -> Unit {
+  select_window_next_tab(self.raw_window_handle)
+}
+
+///|
+pub fn Window::select_previous_tab(self : Window) -> Unit {
+  select_window_previous_tab(self.raw_window_handle)
+}
+
+///|
+pub fn Window::select_tab_at_index(self : Window, index : Int) -> Unit {
+  if index >= 0 {
+    select_window_tab_at_index(self.raw_window_handle, index)
+  }
+}
+
+///|
+pub fn Window::num_tabs(self : Window) -> Int {
+  window_num_tabs(self.raw_window_handle)
+}
+
+///|
+pub fn Window::set_decorations(self : Window, decorations : Bool) -> Unit {
+  self.toggle_window_decorations(decorations)
+}
+
+///|
+fn Window::toggle_window_decorations(self : Window, decorations : Bool) -> Unit {
+  self.decorated_state = decorations
+  set_window_decorations(self.raw_window_handle, decorations)
+}
+
+///|
+pub fn Window::set_enabled_buttons(
+  self : Window,
+  buttons : @core.WindowButtons,
+) -> Unit {
+  self.enabled_buttons_state = buttons
+  set_window_enabled_buttons(
+    self.raw_window_handle,
+    buttons.close(),
+    buttons.minimize(),
+    buttons.maximize(),
+  )
+}
+
+///|
+pub fn Window::set_blur(self : Window, blur : Bool) -> Unit {
+  self.blur_state = blur
+  set_window_blur(self.raw_window_handle, blur)
+}
+
+///|
+pub fn Window::has_shadow(self : Window) -> Bool {
+  self.has_shadow_state
+}
+
+///|
+pub fn Window::set_has_shadow(self : Window, has_shadow : Bool) -> Unit {
+  self.has_shadow_state = has_shadow
+  set_window_has_shadow(self.raw_window_handle, has_shadow)
+}
+
+///|
+pub fn Window::set_theme(self : Window, theme : @core.Theme?) -> Unit {
+  set_window_theme(self.raw_window_handle, theme_to_appearance(theme))
+}
+
+///|
 pub fn Window::theme(self : Window) -> @core.Theme? {
-  theme_from_native(window_appearance(self.id.into_raw()))
+  appearance_to_theme(window_appearance(self.raw_window_handle))
 }
 
 ///|
 pub fn Window::is_occluded(self : Window) -> Bool {
-  window_occluded(self.id.into_raw())
+  window_occluded(self.raw_window_handle)
 }
 
 ///|
-fn window_appearance(window_id : Int) -> Int {
-  window_theme(window_id)
+fn window_appearance(window_handle : UInt64) -> Int {
+  window_theme(window_handle)
 }
 
 ///|
 fn theme_to_appearance(theme : @core.Theme?) -> Int {
   theme_to_native(theme)
+}
+
+///|
+fn dark_appearance_name() -> String {
+  "Dark"
+}
+
+///|
+fn appearance_to_theme(appearance : Int) -> @core.Theme? {
+  let _ = dark_appearance_name()
+  theme_from_native(appearance)
 }

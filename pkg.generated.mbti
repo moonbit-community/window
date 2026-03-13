@@ -1,23 +1,7 @@
 // Generated using `moon info`, DON'T EDIT IT
 package "Milky2018/window"
 
-import {
-  "Milky2018/window/core",
-  "Milky2018/window/macos",
-}
-
 // Values
-pub fn create_event_loop() -> @macos.EventLoop
-
-pub fn create_event_loop_builder() -> @macos.EventLoopBuilder
-
-pub fn create_event_loop_with_platform_attributes(@core.PlatformEventLoopAttributes) -> @macos.EventLoop
-
-pub fn default_control_flow() -> @core.ControlFlow
-
-pub fn try_create_event_loop() -> @macos.EventLoop raise @core.EventLoopError
-
-pub fn try_create_event_loop_with_platform_attributes(@core.PlatformEventLoopAttributes) -> @macos.EventLoop raise @core.EventLoopError
 
 // Errors
 

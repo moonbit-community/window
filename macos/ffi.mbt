@@ -1,898 +1,107 @@
 ///|
 // Port target: winit-reference/winit-appkit/src/ffi.rs
-// Note: this file is wider than upstream ffi.rs because the current native backend
-// consolidates AppKit/CF/Carbon entry points that upstream spreads across files.
+// MoonBit adaptation:
+// 1. Raw pointer-like values are represented as UInt64.
+// 2. kTISPropertyUnicodeKeyLayoutData is modeled by creating a CFString key.
 
 ///|
-// Thin wrappers by upstream ownership: event_loop.rs / app.rs / menu.rs.
-
-///|
-pub fn backend_available() -> Bool {
-  native_backend_available()
+fn cg_display_create_uuid_from_display_id(display_id : UInt64) -> UInt64 {
+  native_cg_display_create_uuid_from_display_id(display_id.to_uint())
 }
 
 ///|
-fn is_main_thread() -> Bool {
-  native_is_main_thread()
+fn cg_main_display_id() -> UInt64 {
+  native_cg_main_display_id().to_uint64()
 }
 
 ///|
-fn reset_proxy_wake_state() -> Unit {
-  native_event_loop_reset_proxy()
+fn cg_display_model_number(display_id : UInt64) -> Int {
+  native_cg_display_model_number(display_id.to_uint()).reinterpret_as_int()
 }
 
 ///|
-fn set_event_loop_running(running : Bool) -> Unit {
-  native_event_loop_set_running(running)
+fn cg_display_pixels_wide(display_id : UInt64) -> Int {
+  native_cg_display_pixels_wide(display_id.to_uint()).to_int()
 }
 
 ///|
-fn event_loop_running() -> Bool {
-  native_event_loop_is_running()
+fn cg_display_pixels_high(display_id : UInt64) -> Int {
+  native_cg_display_pixels_high(display_id.to_uint()).to_int()
 }
 
 ///|
-fn runtime_now_ms() -> Int64 {
-  native_runtime_now_ms()
+fn cg_display_get_display_id_from_uuid(uuid : UInt64) -> UInt64 {
+  native_cg_display_get_display_id_from_uuid(uuid).to_uint64()
 }
 
 ///|
-fn window_theme(window_id : Int) -> Int {
-  native_window_theme(window_id)
+fn cf_release(cf_type : UInt64) -> Unit {
+  if cf_type != (0 : Int).to_uint64() {
+    native_cf_release(cf_type)
+  }
 }
 
 ///|
-fn display_handle() -> UInt64 {
-  native_display_handle()
+fn pthread_is_main_thread() -> Bool {
+  native_pthread_main_np() != 0
 }
 
 ///|
-fn window_display_handle(window_id : Int) -> UInt64 {
-  native_window_display_handle(window_id)
+fn cg_active_display_count() -> Int {
+  let count = native_cg_active_display_count()
+  if count < 0 {
+    0
+  } else {
+    count
+  }
 }
 
 ///|
-fn window_handle(window_id : Int) -> UInt64 {
-  native_window_handle(window_id)
+fn cg_active_display_id_at(index : Int) -> UInt64 {
+  native_cg_active_display_id_at(index).to_uint64()
 }
 
 ///|
-fn system_theme() -> Int {
-  native_system_theme()
+fn cg_display_bounds_x(display_id : UInt64) -> Int {
+  native_cg_display_bounds_x(display_id.to_uint())
 }
 
 ///|
-fn hide_application() -> Unit {
-  native_hide_application()
+fn cg_display_bounds_y(display_id : UInt64) -> Int {
+  native_cg_display_bounds_y(display_id.to_uint())
 }
 
 ///|
-fn hide_other_applications() -> Unit {
-  native_hide_other_applications()
+fn cg_display_scale_factor(display_id : UInt64) -> Double {
+  let factor = native_cg_display_scale_factor(display_id.to_uint())
+  if factor > 0.0 {
+    factor
+  } else {
+    1.0
+  }
 }
 
 ///|
-fn set_allows_automatic_window_tabbing(enabled : Bool) -> Unit {
-  native_set_allows_automatic_window_tabbing(enabled)
-}
-
-///|
-fn allows_automatic_window_tabbing() -> Bool {
-  native_allows_automatic_window_tabbing()
-}
-
-///|
-fn set_application_activation_policy(activation_policy : Int) -> Unit {
-  native_set_application_activation_policy(activation_policy)
-}
-
-///|
-fn set_application_default_menu(default_menu : Bool) -> Unit {
-  native_set_application_default_menu(default_menu)
-}
-
-///|
-fn set_application_activate_ignoring_other_apps(
-  activate_ignoring_other_apps : Bool,
+fn native_install_window_event_callback(
+  call_closure : FuncRef[
+    ((Int, Int, Int, Int, Int, Double) -> Unit, Int, Int, Int, Int, Int, Double) -> Unit,
+  ],
+  callback : (Int, Int, Int, Int, Int, Double) -> Unit,
 ) -> Unit {
-  native_set_application_activate_ignoring_other_apps(
-    activate_ignoring_other_apps,
-  )
+  appkit_install_window_event_callback(call_closure, callback)
 }
 
 ///|
-fn window_title(window_id : Int) -> Bytes {
-  native_window_title_utf8(window_id)
-}
-
-///|
-// Thin wrappers by upstream ownership: monitor.rs.
-fn available_monitor_count() -> Int {
-  native_monitor_count()
-}
-
-///|
-fn monitor_id_at(index : Int) -> UInt64 {
-  native_monitor_id_at(index)
-}
-
-///|
-fn primary_monitor_id() -> UInt64 {
-  native_primary_monitor_id()
-}
-
-///|
-fn monitor_normalize_id(monitor_id : UInt64) -> UInt64 {
-  native_monitor_normalize_id(monitor_id)
-}
-
-///|
-fn monitor_screen_handle(monitor_id : UInt64) -> UInt64 {
-  native_monitor_screen_handle(monitor_id)
-}
-
-///|
-fn window_current_monitor_id(window_id : Int) -> UInt64 {
-  native_window_current_monitor_id(window_id)
-}
-
-///|
-fn monitor_name(monitor_id : UInt64) -> Bytes {
-  native_monitor_name_utf8(monitor_id)
-}
-
-///|
-fn monitor_position_x(monitor_id : UInt64) -> Int {
-  native_monitor_position_x(monitor_id)
-}
-
-///|
-fn monitor_position_y(monitor_id : UInt64) -> Int {
-  native_monitor_position_y(monitor_id)
-}
-
-///|
-fn monitor_width(monitor_id : UInt64) -> Int {
-  native_monitor_width(monitor_id)
-}
-
-///|
-fn monitor_height(monitor_id : UInt64) -> Int {
-  native_monitor_height(monitor_id)
-}
-
-///|
-fn monitor_scale_factor(monitor_id : UInt64) -> Double {
-  native_monitor_scale_factor(monitor_id)
-}
-
-///|
-fn monitor_video_mode_count(monitor_id : UInt64) -> Int {
-  native_monitor_video_mode_count(monitor_id)
-}
-
-///|
-fn monitor_video_mode_width(monitor_id : UInt64, index : Int) -> Int {
-  native_monitor_video_mode_width(monitor_id, index)
-}
-
-///|
-fn monitor_video_mode_height(monitor_id : UInt64, index : Int) -> Int {
-  native_monitor_video_mode_height(monitor_id, index)
-}
-
-///|
-fn monitor_video_mode_bit_depth(monitor_id : UInt64, index : Int) -> Int {
-  native_monitor_video_mode_bit_depth(monitor_id, index)
-}
-
-///|
-fn monitor_video_mode_refresh_rate_millihertz(
-  monitor_id : UInt64,
-  index : Int,
-) -> Int {
-  native_monitor_video_mode_refresh_rate_millihertz(monitor_id, index)
-}
-
-///|
-fn monitor_current_video_mode_index(monitor_id : UInt64) -> Int {
-  native_monitor_current_video_mode_index(monitor_id)
-}
-
-///|
-fn window_scale_factor(window_id : Int) -> Double {
-  native_window_scale_factor(window_id)
-}
-
-///|
-// Thin wrappers by upstream ownership: window_delegate.rs (window state events).
-fn take_moved(window_id : Int) -> Bool {
-  native_window_take_moved(window_id)
-}
-
-///|
-fn pending_move_x(window_id : Int) -> Int {
-  native_window_pending_move_x(window_id)
-}
-
-///|
-fn pending_move_y(window_id : Int) -> Int {
-  native_window_pending_move_y(window_id)
-}
-
-///|
-fn take_destroyed(window_id : Int) -> Bool {
-  native_window_take_destroyed(window_id)
-}
-
-///|
-fn take_focused_changed(window_id : Int) -> Bool {
-  native_window_take_focused_changed(window_id)
-}
-
-///|
-fn pending_focused(window_id : Int) -> Bool {
-  native_window_pending_focused(window_id)
-}
-
-///|
-fn window_has_focus(window_id : Int) -> Bool {
-  native_window_has_focus(window_id)
-}
-
-///|
-fn window_occluded(window_id : Int) -> Bool {
-  native_window_occluded(window_id)
-}
-
-///|
-fn window_minimized(window_id : Int) -> Bool {
-  native_window_minimized(window_id)
-}
-
-///|
-fn window_maximized(window_id : Int) -> Bool {
-  native_window_maximized(window_id)
-}
-
-///|
-fn window_fullscreen(window_id : Int) -> Bool {
-  native_window_fullscreen(window_id)
-}
-
-///|
-fn window_simple_fullscreen(window_id : Int) -> Bool {
-  native_window_simple_fullscreen(window_id)
-}
-
-///|
-fn window_is_exclusive_fullscreen(window_id : Int) -> Bool {
-  native_window_is_exclusive_fullscreen(window_id)
-}
-
-///|
-fn window_tabbing_identifier(window_id : Int) -> Bytes {
-  native_window_tabbing_identifier_utf8(window_id)
-}
-
-///|
-fn window_num_tabs(window_id : Int) -> Int {
-  native_window_num_tabs(window_id)
-}
-
-///|
-fn take_scale_factor_changed(window_id : Int) -> Bool {
-  native_window_take_scale_factor_changed(window_id)
-}
-
-///|
-fn pending_scale_factor(window_id : Int) -> Double {
-  native_window_pending_scale_factor(window_id)
-}
-
-///|
-fn pending_scale_width(window_id : Int) -> Int {
-  native_window_pending_scale_width(window_id)
-}
-
-///|
-fn pending_scale_height(window_id : Int) -> Int {
-  native_window_pending_scale_height(window_id)
-}
-
-///|
-fn window_resize_increment_width(window_id : Int) -> Int {
-  native_window_resize_increment_width(window_id)
-}
-
-///|
-fn window_resize_increment_height(window_id : Int) -> Int {
-  native_window_resize_increment_height(window_id)
-}
-
-///|
-fn take_theme_changed(window_id : Int) -> Bool {
-  native_window_take_theme_changed(window_id)
-}
-
-///|
-fn pending_theme(window_id : Int) -> Int {
-  native_window_pending_theme(window_id)
-}
-
-///|
-fn take_occluded_changed(window_id : Int) -> Bool {
-  native_window_take_occluded_changed(window_id)
-}
-
-///|
-fn pending_occluded(window_id : Int) -> Bool {
-  native_window_pending_occluded(window_id)
-}
-
-///|
-// Thin wrappers by upstream ownership: view.rs / event.rs (input payload extraction).
-fn take_input_event(window_id : Int) -> Bool {
-  native_window_take_input_event(window_id)
-}
-
-///|
-fn input_event_kind(window_id : Int) -> Int {
-  native_window_input_event_kind(window_id)
-}
-
-///|
-fn input_event_x(window_id : Int) -> Double {
-  native_window_input_event_x(window_id)
-}
-
-///|
-fn input_event_y(window_id : Int) -> Double {
-  native_window_input_event_y(window_id)
-}
-
-///|
-fn input_event_state(window_id : Int) -> Int {
-  native_window_input_event_state(window_id)
-}
-
-///|
-fn input_event_button(window_id : Int) -> Int {
-  native_window_input_event_button(window_id)
-}
-
-///|
-fn input_event_pointer_source(window_id : Int) -> Int {
-  native_window_input_event_pointer_source(window_id)
-}
-
-///|
-fn input_event_pointer_kind(window_id : Int) -> Int {
-  native_window_input_event_pointer_kind(window_id)
-}
-
-///|
-fn input_event_scroll_delta_kind(window_id : Int) -> Int {
-  native_window_input_event_scroll_delta_kind(window_id)
-}
-
-///|
-fn input_event_scroll_delta_x(window_id : Int) -> Double {
-  native_window_input_event_scroll_delta_x(window_id)
-}
-
-///|
-fn input_event_scroll_delta_y(window_id : Int) -> Double {
-  native_window_input_event_scroll_delta_y(window_id)
-}
-
-///|
-fn input_event_phase(window_id : Int) -> Int {
-  native_window_input_event_phase(window_id)
-}
-
-///|
-fn input_event_modifiers(window_id : Int) -> Int {
-  native_window_input_event_modifiers(window_id)
-}
-
-///|
-fn input_event_scancode(window_id : Int) -> Int {
-  native_window_input_event_scancode(window_id)
-}
-
-///|
-fn input_event_repeat(window_id : Int) -> Bool {
-  native_window_input_event_repeat(window_id)
-}
-
-///|
-fn input_event_text_with_all_modifiers(window_id : Int) -> Bytes {
-  native_window_input_event_text_with_all_modifiers(window_id)
-}
-
-///|
-fn input_event_text_ignoring_modifiers(window_id : Int) -> Bytes {
-  native_window_input_event_text_ignoring_modifiers(window_id)
-}
-
-///|
-fn input_event_text_without_modifiers(window_id : Int) -> Bytes {
-  native_window_input_event_text_without_modifiers(window_id)
-}
-
-///|
-fn input_event_ime_kind(window_id : Int) -> Int {
-  native_window_input_event_ime_kind(window_id)
-}
-
-///|
-fn input_event_ime_text(window_id : Int) -> Bytes {
-  native_window_input_event_ime_text(window_id)
-}
-
-///|
-fn input_event_path(window_id : Int) -> Bytes {
-  native_window_input_event_path(window_id)
-}
-
-///|
-fn input_event_ime_cursor_start(window_id : Int) -> Int {
-  native_window_input_event_ime_cursor_start(window_id)
-}
-
-///|
-fn input_event_ime_cursor_end(window_id : Int) -> Int {
-  native_window_input_event_ime_cursor_end(window_id)
-}
-
-///|
-// Thin wrappers by upstream ownership: event_loop.rs / window.rs / window_delegate.rs.
-fn wait_for_events(timeout_ms : Int) -> Bool {
-  native_event_loop_wait_millis(timeout_ms)
-}
-
-///|
-fn set_surface_size(window_id : Int, width : Int, height : Int) -> Unit {
-  native_window_set_surface_size(window_id, width, height)
-}
-
-///|
-fn set_surface_resize_increments(
-  window_id : Int,
-  width : Int,
-  height : Int,
+fn native_install_lifecycle_callback(
+  call_closure : FuncRef[((Int) -> Unit, Int) -> Unit],
+  callback : (Int) -> Unit,
 ) -> Unit {
-  native_window_set_surface_resize_increments(window_id, width, height)
+  appkit_install_lifecycle_callback(call_closure, callback)
 }
 
 ///|
-fn set_min_surface_size(window_id : Int, width : Int, height : Int) -> Unit {
-  native_window_set_min_surface_size(window_id, width, height)
-}
-
-///|
-fn set_max_surface_size(window_id : Int, width : Int, height : Int) -> Unit {
-  native_window_set_max_surface_size(window_id, width, height)
-}
-
-///|
-fn window_x(window_id : Int) -> Int {
-  native_window_x(window_id)
-}
-
-///|
-fn window_y(window_id : Int) -> Int {
-  native_window_y(window_id)
-}
-
-///|
-fn window_min_surface_width(window_id : Int) -> Int {
-  native_window_min_surface_width(window_id)
-}
-
-///|
-fn window_min_surface_height(window_id : Int) -> Int {
-  native_window_min_surface_height(window_id)
-}
-
-///|
-fn window_max_surface_width(window_id : Int) -> Int {
-  native_window_max_surface_width(window_id)
-}
-
-///|
-fn window_max_surface_height(window_id : Int) -> Int {
-  native_window_max_surface_height(window_id)
-}
-
-///|
-fn window_outer_width(window_id : Int) -> Int {
-  native_window_outer_width(window_id)
-}
-
-///|
-fn window_outer_height(window_id : Int) -> Int {
-  native_window_outer_height(window_id)
-}
-
-///|
-fn window_surface_x(window_id : Int) -> Int {
-  native_window_surface_x(window_id)
-}
-
-///|
-fn window_surface_y(window_id : Int) -> Int {
-  native_window_surface_y(window_id)
-}
-
-///|
-fn window_safe_area_top(window_id : Int) -> Int {
-  native_window_safe_area_top(window_id)
-}
-
-///|
-fn window_safe_area_left(window_id : Int) -> Int {
-  native_window_safe_area_left(window_id)
-}
-
-///|
-fn window_safe_area_bottom(window_id : Int) -> Int {
-  native_window_safe_area_bottom(window_id)
-}
-
-///|
-fn window_safe_area_right(window_id : Int) -> Int {
-  native_window_safe_area_right(window_id)
-}
-
-///|
-fn set_window_position(window_id : Int, x : Int, y : Int) -> Unit {
-  native_window_set_position(window_id, x, y)
-}
-
-///|
-fn show_window(window_id : Int, active : Bool) -> Unit {
-  native_window_show(window_id, active)
-}
-
-///|
-fn focus_window(window_id : Int) -> Unit {
-  native_window_focus(window_id)
-}
-
-///|
-fn set_window_minimized(window_id : Int, minimized : Bool) -> Unit {
-  native_window_set_minimized(window_id, minimized)
-}
-
-///|
-fn set_window_maximized(window_id : Int, maximized : Bool) -> Unit {
-  native_window_set_maximized(window_id, maximized)
-}
-
-///|
-fn set_window_fullscreen(window_id : Int, fullscreen : Bool) -> Unit {
-  native_window_set_fullscreen(window_id, fullscreen)
-}
-
-///|
-fn set_window_decorations(window_id : Int, decorated : Bool) -> Unit {
-  native_window_set_decorations(window_id, decorated)
-}
-
-///|
-fn set_window_enabled_buttons(
-  window_id : Int,
-  close : Bool,
-  minimize : Bool,
-  maximize : Bool,
-) -> Unit {
-  native_window_set_enabled_buttons(window_id, close, minimize, maximize)
-}
-
-///|
-fn set_window_blur(window_id : Int, blur : Bool) -> Unit {
-  native_window_set_blur(window_id, blur)
-}
-
-///|
-fn set_window_simple_fullscreen(window_id : Int, fullscreen : Bool) -> Bool {
-  native_window_set_simple_fullscreen(window_id, fullscreen)
-}
-
-///|
-fn set_window_exclusive_fullscreen(
-  window_id : Int,
-  monitor_id : UInt64,
-  width : Int,
-  height : Int,
-  bit_depth : Int,
-  refresh_rate_millihertz : Int,
-) -> Bool {
-  native_window_set_exclusive_fullscreen(
-    window_id, monitor_id, width, height, bit_depth, refresh_rate_millihertz,
-  )
-}
-
-///|
-fn set_window_accepts_first_mouse(
-  window_id : Int,
-  accepts_first_mouse : Bool,
-) -> Unit {
-  native_window_set_accepts_first_mouse(window_id, accepts_first_mouse)
-}
-
-///|
-fn set_window_disallow_hidpi(window_id : Int, disallow_hidpi : Bool) -> Unit {
-  native_window_set_disallow_hidpi(window_id, disallow_hidpi)
-}
-
-///|
-fn set_window_movable_by_window_background(
-  window_id : Int,
-  movable_by_window_background : Bool,
-) -> Unit {
-  native_window_set_movable_by_window_background(
-    window_id, movable_by_window_background,
-  )
-}
-
-///|
-fn set_window_titlebar_transparent(
-  window_id : Int,
-  titlebar_transparent : Bool,
-) -> Unit {
-  native_window_set_titlebar_transparent(window_id, titlebar_transparent)
-}
-
-///|
-fn set_window_title_hidden(window_id : Int, title_hidden : Bool) -> Unit {
-  native_window_set_title_hidden(window_id, title_hidden)
-}
-
-///|
-fn set_window_titlebar_hidden(window_id : Int, titlebar_hidden : Bool) -> Unit {
-  native_window_set_titlebar_hidden(window_id, titlebar_hidden)
-}
-
-///|
-fn set_window_titlebar_buttons_hidden(
-  window_id : Int,
-  titlebar_buttons_hidden : Bool,
-) -> Unit {
-  native_window_set_titlebar_buttons_hidden(window_id, titlebar_buttons_hidden)
-}
-
-///|
-fn set_window_fullsize_content_view(
-  window_id : Int,
-  fullsize_content_view : Bool,
-) -> Unit {
-  native_window_set_fullsize_content_view(window_id, fullsize_content_view)
-}
-
-///|
-fn set_window_has_shadow(window_id : Int, has_shadow : Bool) -> Unit {
-  native_window_set_has_shadow(window_id, has_shadow)
-}
-
-///|
-fn set_window_document_edited(window_id : Int, edited : Bool) -> Unit {
-  native_window_set_document_edited(window_id, edited)
-}
-
-///|
-fn set_window_borderless_game(window_id : Int, borderless_game : Bool) -> Unit {
-  native_window_set_borderless_game(window_id, borderless_game)
-}
-
-///|
-fn set_window_unified_titlebar(
-  window_id : Int,
-  unified_titlebar : Bool,
-) -> Unit {
-  native_window_set_unified_titlebar(window_id, unified_titlebar)
-}
-
-///|
-fn set_window_tabbing_identifier(window_id : Int, identifier : String) -> Unit {
-  let identifier_bytes = @utf8.encode(identifier[:], bom=false)
-  native_window_set_tabbing_identifier_utf8(
-    window_id,
-    identifier_bytes,
-    identifier_bytes.length().to_uint64(),
-  )
-}
-
-///|
-fn set_window_tabbing_mode_preferred(window_id : Int) -> Unit {
-  native_window_set_tabbing_mode_preferred(window_id)
-}
-
-///|
-fn select_window_next_tab(window_id : Int) -> Unit {
-  native_window_select_next_tab(window_id)
-}
-
-///|
-fn select_window_previous_tab(window_id : Int) -> Unit {
-  native_window_select_previous_tab(window_id)
-}
-
-///|
-fn select_window_tab_at_index(window_id : Int, index : Int) -> Unit {
-  native_window_select_tab_at_index(window_id, index)
-}
-
-///|
-fn set_window_option_as_alt(window_id : Int, option_as_alt : Int) -> Unit {
-  native_window_set_option_as_alt(window_id, option_as_alt)
-}
-
-///|
-// Thin wrappers by upstream ownership: cursor.rs.
-fn set_window_cursor(window_id : Int, cursor : Int) -> Unit {
-  native_window_set_cursor(window_id, cursor)
-}
-
-///|
-fn create_custom_cursor_rgba(
-  rgba : Bytes,
-  width : Int,
-  height : Int,
-  hotspot_x : Int,
-  hotspot_y : Int,
-) -> UInt64 {
-  native_custom_cursor_create_rgba(
-    rgba,
-    rgba.length(),
-    width,
-    height,
-    hotspot_x,
-    hotspot_y,
-  )
-}
-
-///|
-fn create_custom_cursor_url(
-  url : String,
-  hotspot_x : Int,
-  hotspot_y : Int,
-) -> UInt64 {
-  let url_bytes = @utf8.encode(url[:], bom=false)
-  native_custom_cursor_create_url(
-    url_bytes,
-    url_bytes.length(),
-    hotspot_x,
-    hotspot_y,
-  )
-}
-
-///|
-fn set_window_custom_cursor(window_id : Int, custom_cursor : UInt64) -> Bool {
-  native_window_set_custom_cursor(window_id, custom_cursor)
-}
-
-///|
-fn set_parent_window(window_id : Int, parent_window : UInt64) -> Bool {
-  native_window_set_parent_window(window_id, parent_window)
-}
-
-///|
-fn set_window_cursor_visible(window_id : Int, visible : Bool) -> Unit {
-  native_window_set_cursor_visible(window_id, visible)
-}
-
-///|
-fn set_window_cursor_hittest(window_id : Int, hittest : Bool) -> Bool {
-  native_window_set_cursor_hittest(window_id, hittest)
-}
-
-///|
-fn set_cursor_position(window_id : Int, x : Int, y : Int) -> Bool {
-  native_window_set_cursor_position(window_id, x, y)
-}
-
-///|
-fn set_cursor_grab(window_id : Int, mode : Int) -> Bool {
-  native_window_set_cursor_grab(window_id, mode)
-}
-
-///|
-fn drag_window(window_id : Int) -> Bool {
-  native_window_drag_window(window_id)
-}
-
-///|
-fn drag_resize_window(window_id : Int, direction : Int) -> Bool {
-  native_window_drag_resize_window(window_id, direction)
-}
-
-///|
-fn show_window_menu(window_id : Int, x : Int, y : Int) -> Bool {
-  native_window_show_window_menu(window_id, x, y)
-}
-
-///|
-fn set_window_transparent(window_id : Int, transparent : Bool) -> Unit {
-  native_window_set_transparent(window_id, transparent)
-}
-
-///|
-fn set_window_level(window_id : Int, level : Int) -> Unit {
-  native_window_set_window_level(window_id, level)
-}
-
-///|
-fn set_window_theme(window_id : Int, theme : Int) -> Unit {
-  native_window_set_theme(window_id, theme)
-}
-
-///|
-fn set_window_content_protected(
-  window_id : Int,
-  content_protected : Bool,
-) -> Unit {
-  native_window_set_content_protected(window_id, content_protected)
-}
-
-///|
-// Thin wrappers by upstream ownership: view.rs (IME bridge).
-fn set_ime_purpose(window_id : Int, purpose : Int) -> Unit {
-  native_window_set_ime_purpose(window_id, purpose)
-}
-
-///|
-fn set_ime_hints(window_id : Int, hints : Int) -> Unit {
-  native_window_set_ime_hints(window_id, hints)
-}
-
-///|
-fn set_ime_allowed(window_id : Int, allowed : Bool) -> Unit {
-  native_window_set_ime_allowed(window_id, allowed)
-}
-
-///|
-fn set_ime_cursor_area(
-  window_id : Int,
-  x : Int,
-  y : Int,
-  width : Int,
-  height : Int,
-) -> Unit {
-  native_window_set_ime_cursor_area(window_id, x, y, width, height)
-}
-
-///|
-fn set_ime_surrounding_text(
-  window_id : Int,
-  text : String,
-  cursor : Int,
-  anchor : Int,
-) -> Unit {
-  let text_bytes = @utf8.encode(text[:], bom=false)
-  native_window_set_ime_surrounding_text(
-    window_id,
-    text_bytes,
-    text_bytes.length(),
-    cursor,
-    anchor,
-  )
-}
-
-///|
-fn clear_ime_surrounding_text(window_id : Int) -> Unit {
-  native_window_clear_ime_surrounding_text(window_id)
-}
-
-///|
-fn close_window(window_id : Int) -> Unit {
-  native_window_close(window_id)
-}
-
-///|
-fn create_window(
+fn native_create_window(
+  raw_id : Int,
   width : Int,
   height : Int,
   visible : Bool,
@@ -901,766 +110,759 @@ fn create_window(
   decorations : Bool,
   panel : Bool,
   title : String,
-) -> Int {
-  let title_bytes = @utf8.encode(title[:], bom=false)
-  native_create_window(
+) -> UInt64 {
+  appkit_create_window(
+    raw_id,
     width,
     height,
-    visible,
-    active,
-    resizable,
-    decorations,
-    panel,
-    title_bytes,
-    title_bytes.length().to_uint64(),
+    if visible {
+      1
+    } else {
+      0
+    },
+    if active {
+      1
+    } else {
+      0
+    },
+    if resizable {
+      1
+    } else {
+      0
+    },
+    if decorations {
+      1
+    } else {
+      0
+    },
+    if panel {
+      1
+    } else {
+      0
+    },
+    @utf8.encode(title[:], bom=false),
   )
 }
 
 ///|
-fn set_title(window_id : Int, title : String) -> Unit {
-  let title_bytes = @utf8.encode(title[:], bom=false)
-  native_set_title(window_id, title_bytes, title_bytes.length().to_uint64())
+fn native_close_window(handle : UInt64) -> Unit {
+  appkit_close_window(handle)
 }
 
 ///|
-fn request_user_attention(window_id : Int, request_type : Int) -> Unit {
-  native_window_request_user_attention(window_id, request_type)
+fn native_show_window(handle : UInt64, active : Bool) -> Unit {
+  appkit_window_show(handle, if active { 1 } else { 0 })
 }
 
 ///|
-// Raw C bindings by upstream ownership: event_loop.rs / app.rs / menu.rs.
-pub extern "C" fn native_backend_available() -> Bool = "mbw_backend_available"
+fn native_window_set_visible(handle : UInt64, visible : Bool) -> Unit {
+  appkit_window_set_visible(handle, if visible { 1 } else { 0 })
+}
 
 ///|
-extern "C" fn native_is_main_thread() -> Bool = "mbw_is_main_thread"
+fn native_window_set_resizable(handle : UInt64, resizable : Bool) -> Unit {
+  appkit_window_set_resizable(handle, if resizable { 1 } else { 0 })
+}
 
 ///|
-pub extern "C" fn native_event_loop_reset_proxy() -> Unit = "mbw_event_loop_reset_proxy"
+fn native_window_set_title(handle : UInt64, title : String) -> Unit {
+  appkit_window_set_title(handle, @utf8.encode(title[:], bom=false))
+}
 
 ///|
-pub extern "C" fn native_event_loop_set_running(running : Bool) -> Unit = "mbw_event_loop_set_running"
+fn native_window_focus(handle : UInt64) -> Unit {
+  appkit_window_focus(handle)
+}
 
 ///|
-pub extern "C" fn native_event_loop_is_running() -> Bool = "mbw_event_loop_is_running"
+fn native_window_set_content_size(
+  handle : UInt64,
+  width : Int,
+  height : Int,
+) -> Unit {
+  appkit_window_set_content_size(handle, width, height)
+}
 
 ///|
-pub extern "C" fn native_event_loop_take_proxy_wake_up() -> Bool = "mbw_event_loop_take_proxy_wake_up"
+fn native_window_set_position(handle : UInt64, x : Int, y : Int) -> Unit {
+  appkit_window_set_position(handle, x, y)
+}
 
 ///|
-pub extern "C" fn native_event_loop_peek_proxy_wake_up() -> Bool = "mbw_event_loop_peek_proxy_wake_up"
+fn native_window_content_width(handle : UInt64) -> Int {
+  appkit_window_content_width(handle)
+}
 
 ///|
-pub extern "C" fn native_event_loop_wake_up() -> Unit = "mbw_event_loop_wake_up"
+fn native_window_content_height(handle : UInt64) -> Int {
+  appkit_window_content_height(handle)
+}
 
 ///|
-pub extern "C" fn native_runtime_now_ms() -> Int64 = "mbw_runtime_now_ms"
+fn native_window_x(handle : UInt64) -> Int {
+  appkit_window_x(handle)
+}
 
 ///|
-extern "C" fn native_event_loop_wait_millis(timeout_ms : Int) -> Bool = "mbw_event_loop_wait_millis"
+fn native_window_y(handle : UInt64) -> Int {
+  appkit_window_y(handle)
+}
 
 ///|
-pub extern "C" fn native_sleep_millis(ms : Int) -> Unit = "mbw_sleep_millis"
+fn native_window_has_focus(handle : UInt64) -> Bool {
+  appkit_window_has_focus(handle) != 0
+}
+
+///|
+fn native_window_is_occluded(handle : UInt64) -> Bool {
+  appkit_window_is_occluded(handle) != 0
+}
+
+///|
+fn native_window_scale_factor(handle : UInt64) -> Double {
+  appkit_window_scale_factor(handle)
+}
+
+///|
+fn native_window_set_minimized(handle : UInt64, minimized : Bool) -> Unit {
+  appkit_window_set_minimized(handle, if minimized { 1 } else { 0 })
+}
+
+///|
+fn native_window_is_minimized(handle : UInt64) -> Bool {
+  appkit_window_is_minimized(handle) != 0
+}
+
+///|
+fn native_window_set_maximized(handle : UInt64, maximized : Bool) -> Unit {
+  appkit_window_set_maximized(handle, if maximized { 1 } else { 0 })
+}
+
+///|
+fn native_window_is_maximized(handle : UInt64) -> Bool {
+  appkit_window_is_maximized(handle) != 0
+}
+
+///|
+fn native_window_set_fullscreen(handle : UInt64, fullscreen : Bool) -> Unit {
+  appkit_window_set_fullscreen(handle, if fullscreen { 1 } else { 0 })
+}
+
+///|
+fn native_window_is_fullscreen(handle : UInt64) -> Bool {
+  appkit_window_is_fullscreen(handle) != 0
+}
+
+///|
+fn native_window_style_mask(handle : UInt64) -> UInt64 {
+  appkit_window_style_mask(handle)
+}
+
+///|
+fn native_window_set_style_mask(handle : UInt64, style_mask : UInt64) -> Unit {
+  appkit_window_set_style_mask(handle, style_mask)
+}
+
+///|
+fn native_window_clear_style_mask_bits(
+  handle : UInt64,
+  style_mask : UInt64,
+) -> Unit {
+  appkit_window_clear_style_mask_bits(handle, style_mask)
+}
+
+///|
+fn native_window_num_tabs(handle : UInt64) -> Int {
+  appkit_window_num_tabs(handle)
+}
+
+///|
+fn native_window_set_theme(handle : UInt64, theme : Int) -> Unit {
+  appkit_window_set_theme(handle, theme)
+}
+
+///|
+fn native_window_set_has_shadow(handle : UInt64, has_shadow : Bool) -> Unit {
+  appkit_window_set_has_shadow(handle, if has_shadow { 1 } else { 0 })
+}
+
+///|
+fn native_window_set_document_edited(handle : UInt64, edited : Bool) -> Unit {
+  appkit_window_set_document_edited(handle, if edited { 1 } else { 0 })
+}
+
+///|
+fn native_window_set_level(handle : UInt64, level : Int) -> Unit {
+  appkit_window_set_level(handle, level)
+}
+
+///|
+fn native_window_set_movable_by_background(
+  handle : UInt64,
+  movable : Bool,
+) -> Unit {
+  appkit_window_set_movable_by_window_background(
+    handle,
+    if movable {
+      1
+    } else {
+      0
+    },
+  )
+}
+
+///|
+fn native_window_set_titlebar_transparent(
+  handle : UInt64,
+  transparent : Bool,
+) -> Unit {
+  appkit_window_set_titlebar_transparent(
+    handle,
+    if transparent {
+      1
+    } else {
+      0
+    },
+  )
+}
+
+///|
+fn native_window_set_title_hidden(handle : UInt64, hidden : Bool) -> Unit {
+  appkit_window_set_title_hidden(handle, if hidden { 1 } else { 0 })
+}
+
+///|
+fn native_window_set_titlebar_hidden(handle : UInt64, hidden : Bool) -> Unit {
+  appkit_window_set_titlebar_hidden(handle, if hidden { 1 } else { 0 })
+}
+
+///|
+fn native_window_set_titlebar_buttons_hidden(
+  handle : UInt64,
+  hidden : Bool,
+) -> Unit {
+  appkit_window_set_titlebar_buttons_hidden(handle, if hidden { 1 } else { 0 })
+}
+
+///|
+fn native_window_set_fullsize_content_view(
+  handle : UInt64,
+  enabled : Bool,
+) -> Unit {
+  appkit_window_set_fullsize_content_view(handle, if enabled { 1 } else { 0 })
+}
+
+///|
+fn native_window_set_unified_titlebar(
+  handle : UInt64,
+  unified_titlebar : Bool,
+) -> Unit {
+  appkit_window_set_unified_titlebar(
+    handle,
+    if unified_titlebar {
+      1
+    } else {
+      0
+    },
+  )
+}
+
+///|
+fn native_window_set_enabled_buttons(
+  handle : UInt64,
+  close : Bool,
+  minimize : Bool,
+  maximize : Bool,
+) -> Unit {
+  appkit_window_set_enabled_buttons(
+    handle,
+    if close {
+      1
+    } else {
+      0
+    },
+    if minimize {
+      1
+    } else {
+      0
+    },
+    if maximize {
+      1
+    } else {
+      0
+    },
+  )
+}
+
+///|
+fn native_window_request_user_attention(request_type : Int) -> Unit {
+  appkit_window_request_user_attention(request_type)
+}
+
+///|
+fn native_window_set_movable(handle : UInt64, movable : Bool) -> Unit {
+  appkit_window_set_movable(handle, if movable { 1 } else { 0 })
+}
+
+///|
+fn native_window_set_transparent(handle : UInt64, transparent : Bool) -> Unit {
+  appkit_window_set_transparent(handle, if transparent { 1 } else { 0 })
+}
+
+///|
+fn native_window_set_parent(handle : UInt64, parent_handle : UInt64) -> Unit {
+  appkit_window_set_parent(handle, parent_handle)
+}
+
+///|
+fn native_window_set_content_protected(
+  handle : UInt64,
+  content_protected : Bool,
+) -> Unit {
+  appkit_window_set_content_protected(
+    handle,
+    if content_protected {
+      1
+    } else {
+      0
+    },
+  )
+}
+
+///|
+fn native_window_set_tabbing_identifier(
+  handle : UInt64,
+  identifier : String,
+) -> Unit {
+  appkit_window_set_tabbing_identifier(
+    handle,
+    @utf8.encode(identifier[:], bom=false),
+  )
+}
+
+///|
+fn native_window_set_tabbing_mode_preferred(handle : UInt64) -> Unit {
+  appkit_window_set_tabbing_mode_preferred(handle)
+}
+
+///|
+fn native_window_select_next_tab(handle : UInt64) -> Unit {
+  appkit_window_select_next_tab(handle)
+}
+
+///|
+fn native_window_select_previous_tab(handle : UInt64) -> Unit {
+  appkit_window_select_previous_tab(handle)
+}
+
+///|
+fn native_window_select_tab_at_index(handle : UInt64, index : Int) -> Unit {
+  appkit_window_select_tab_at_index(handle, index)
+}
+
+///|
+fn native_window_set_cursor(handle : UInt64, cursor : Int) -> Unit {
+  appkit_window_set_cursor(handle, cursor)
+}
+
+///|
+fn native_window_set_custom_cursor(
+  handle : UInt64,
+  custom_cursor : UInt64,
+) -> Bool {
+  appkit_window_set_custom_cursor(handle, custom_cursor) != 0
+}
+
+///|
+fn native_window_set_cursor_visible(handle : UInt64, visible : Bool) -> Unit {
+  appkit_window_set_cursor_visible(handle, if visible { 1 } else { 0 })
+}
+
+///|
+fn native_window_set_cursor_hittest(handle : UInt64, hittest : Bool) -> Bool {
+  appkit_window_set_cursor_hittest(handle, if hittest { 1 } else { 0 }) != 0
+}
+
+///|
+fn native_window_set_cursor_position(handle : UInt64, x : Int, y : Int) -> Bool {
+  appkit_window_set_cursor_position(handle, x, y) != 0
+}
+
+///|
+fn native_window_set_cursor_grab(handle : UInt64, mode : Int) -> Bool {
+  appkit_window_set_cursor_grab(handle, mode) != 0
+}
+
+///|
+fn native_window_drag_window(handle : UInt64) -> Bool {
+  appkit_window_drag_window(handle) != 0
+}
+
+///|
+fn native_window_drag_resize_window(handle : UInt64, direction : Int) -> Bool {
+  appkit_window_drag_resize_window(handle, direction) != 0
+}
+
+///|
+fn native_window_show_window_menu(handle : UInt64, x : Int, y : Int) -> Bool {
+  appkit_window_show_window_menu(handle, x, y) != 0
+}
+
+///|
+fn native_window_theme(handle : UInt64) -> Int {
+  appkit_window_theme(handle)
+}
+
+///|
+fn native_event_loop_wake_up_appkit() -> Unit {
+  appkit_event_loop_wake_up()
+}
+
+///|
+fn native_event_loop_wait_millis(timeout_ms : Int) -> Bool {
+  appkit_event_loop_wait_millis(timeout_ms) != 0
+}
+
+///|
+extern "C" fn native_cg_display_create_uuid_from_display_id(
+  display : UInt,
+) -> UInt64 = "CGDisplayCreateUUIDFromDisplayID"
+
+///|
+extern "C" fn native_cf_absolute_time_get_current() -> Double = "CFAbsoluteTimeGetCurrent"
+
+///|
+extern "C" fn native_cg_main_display_id() -> UInt = "CGMainDisplayID"
+
+///|
+extern "C" fn native_cg_display_model_number(display : UInt) -> UInt = "CGDisplayModelNumber"
+
+///|
+extern "C" fn native_cg_display_pixels_wide(display : UInt) -> UInt64 = "CGDisplayPixelsWide"
+
+///|
+extern "C" fn native_cg_display_pixels_high(display : UInt) -> UInt64 = "CGDisplayPixelsHigh"
+
+///|
+extern "C" fn native_cg_display_get_display_id_from_uuid(uuid : UInt64) -> UInt = "CGDisplayGetDisplayIDFromUUID"
+
+///|
+extern "C" fn native_cf_release(cf_type : UInt64) -> Unit = "CFRelease"
+
+///|
+extern "C" fn native_pthread_main_np() -> Int = "pthread_main_np"
+
+///|
+extern "C" fn native_cg_active_display_count() -> Int = "mbw_cg_active_display_count"
+
+///|
+extern "C" fn native_cg_active_display_id_at(index : Int) -> UInt = "mbw_cg_active_display_id_at"
+
+///|
+extern "C" fn native_cg_display_bounds_x(display : UInt) -> Int = "mbw_cg_display_bounds_x"
+
+///|
+extern "C" fn native_cg_display_bounds_y(display : UInt) -> Int = "mbw_cg_display_bounds_y"
+
+///|
+extern "C" fn native_cg_display_scale_factor(display : UInt) -> Double = "mbw_cg_display_scale_factor"
+
+///|
+extern "C" fn appkit_install_window_event_callback(
+  call_closure : FuncRef[
+    ((Int, Int, Int, Int, Int, Double) -> Unit, Int, Int, Int, Int, Int, Double) -> Unit,
+  ],
+  callback : (Int, Int, Int, Int, Int, Double) -> Unit,
+) -> Unit = "mbw_install_window_event_callback"
+
+///|
+extern "C" fn appkit_install_lifecycle_callback(
+  call_closure : FuncRef[((Int) -> Unit, Int) -> Unit],
+  callback : (Int) -> Unit,
+) -> Unit = "mbw_install_lifecycle_callback"
 
 ///|
 #borrow(title)
-pub extern "C" fn native_create_window(
+extern "C" fn appkit_create_window(
+  raw_id : Int,
   width : Int,
   height : Int,
-  visible : Bool,
-  active : Bool,
-  resizable : Bool,
-  decorations : Bool,
-  panel : Bool,
+  visible : Int,
+  active : Int,
+  resizable : Int,
+  decorations : Int,
+  panel : Int,
   title : Bytes,
-  title_len : UInt64,
-) -> Int = "mbw_window_create_utf8"
+) -> UInt64 = "mbw_create_window"
 
 ///|
-// Raw C bindings by upstream ownership: window.rs / window_delegate.rs (geometry & queries).
-pub extern "C" fn native_poll_window(window_id : Int) -> Unit = "mbw_window_poll"
+extern "C" fn appkit_close_window(handle : UInt64) -> Unit = "mbw_close_window"
 
 ///|
-pub extern "C" fn native_window_width(window_id : Int) -> Int = "mbw_window_width"
+extern "C" fn appkit_window_show(handle : UInt64, active : Int) -> Unit = "mbw_window_show"
 
 ///|
-pub extern "C" fn native_window_height(window_id : Int) -> Int = "mbw_window_height"
+extern "C" fn appkit_window_set_visible(handle : UInt64, visible : Int) -> Unit = "mbw_window_set_visible"
 
 ///|
-extern "C" fn native_window_min_surface_width(window_id : Int) -> Int = "mbw_window_min_surface_width"
+extern "C" fn appkit_window_set_resizable(
+  handle : UInt64,
+  resizable : Int,
+) -> Unit = "mbw_window_set_resizable"
 
 ///|
-extern "C" fn native_window_min_surface_height(window_id : Int) -> Int = "mbw_window_min_surface_height"
+#borrow(title)
+extern "C" fn appkit_window_set_title(handle : UInt64, title : Bytes) -> Unit = "mbw_window_set_title"
 
 ///|
-extern "C" fn native_window_max_surface_width(window_id : Int) -> Int = "mbw_window_max_surface_width"
+extern "C" fn appkit_window_focus(handle : UInt64) -> Unit = "mbw_window_focus"
 
 ///|
-extern "C" fn native_window_max_surface_height(window_id : Int) -> Int = "mbw_window_max_surface_height"
-
-///|
-extern "C" fn native_window_outer_width(window_id : Int) -> Int = "mbw_window_outer_width"
-
-///|
-extern "C" fn native_window_outer_height(window_id : Int) -> Int = "mbw_window_outer_height"
-
-///|
-extern "C" fn native_window_surface_x(window_id : Int) -> Int = "mbw_window_surface_x"
-
-///|
-extern "C" fn native_window_surface_y(window_id : Int) -> Int = "mbw_window_surface_y"
-
-///|
-extern "C" fn native_window_safe_area_top(window_id : Int) -> Int = "mbw_window_safe_area_top"
-
-///|
-extern "C" fn native_window_safe_area_left(window_id : Int) -> Int = "mbw_window_safe_area_left"
-
-///|
-extern "C" fn native_window_safe_area_bottom(window_id : Int) -> Int = "mbw_window_safe_area_bottom"
-
-///|
-extern "C" fn native_window_safe_area_right(window_id : Int) -> Int = "mbw_window_safe_area_right"
-
-///|
-extern "C" fn native_window_resize_increment_width(window_id : Int) -> Int = "mbw_window_resize_increment_width"
-
-///|
-extern "C" fn native_window_resize_increment_height(window_id : Int) -> Int = "mbw_window_resize_increment_height"
-
-///|
-extern "C" fn native_window_x(window_id : Int) -> Int = "mbw_window_x"
-
-///|
-extern "C" fn native_window_y(window_id : Int) -> Int = "mbw_window_y"
-
-///|
-extern "C" fn native_window_theme(window_id : Int) -> Int = "mbw_window_theme"
-
-///|
-extern "C" fn native_display_handle() -> UInt64 = "mbw_display_handle"
-
-///|
-extern "C" fn native_window_display_handle(window_id : Int) -> UInt64 = "mbw_window_display_handle"
-
-///|
-extern "C" fn native_window_handle(window_id : Int) -> UInt64 = "mbw_window_handle"
-
-///|
-extern "C" fn native_system_theme() -> Int = "mbw_system_theme"
-
-///|
-extern "C" fn native_hide_application() -> Unit = "mbw_event_loop_hide_application"
-
-///|
-extern "C" fn native_hide_other_applications() -> Unit = "mbw_event_loop_hide_other_applications"
-
-///|
-extern "C" fn native_set_allows_automatic_window_tabbing(
-  enabled : Bool,
-) -> Unit = "mbw_event_loop_set_allows_automatic_window_tabbing"
-
-///|
-extern "C" fn native_allows_automatic_window_tabbing() -> Bool = "mbw_event_loop_allows_automatic_window_tabbing"
-
-///|
-extern "C" fn native_set_application_activation_policy(
-  activation_policy : Int,
-) -> Unit = "mbw_application_set_activation_policy"
-
-///|
-extern "C" fn native_set_application_default_menu(default_menu : Bool) -> Unit = "mbw_application_set_default_menu"
-
-///|
-extern "C" fn native_set_application_activate_ignoring_other_apps(
-  activate_ignoring_other_apps : Bool,
-) -> Unit = "mbw_application_set_activate_ignoring_other_apps"
-
-///|
-extern "C" fn native_window_title_utf8(window_id : Int) -> Bytes = "mbw_window_title_utf8"
-
-///|
-// Raw C bindings by upstream ownership: monitor.rs.
-extern "C" fn native_monitor_count() -> Int = "mbw_monitor_count"
-
-///|
-extern "C" fn native_monitor_id_at(index : Int) -> UInt64 = "mbw_monitor_id_at"
-
-///|
-extern "C" fn native_primary_monitor_id() -> UInt64 = "mbw_primary_monitor_id"
-
-///|
-extern "C" fn native_monitor_normalize_id(monitor_id : UInt64) -> UInt64 = "mbw_monitor_normalize_id"
-
-///|
-extern "C" fn native_monitor_screen_handle(monitor_id : UInt64) -> UInt64 = "mbw_monitor_screen_handle"
-
-///|
-extern "C" fn native_window_current_monitor_id(window_id : Int) -> UInt64 = "mbw_window_current_monitor_id"
-
-///|
-extern "C" fn native_monitor_name_utf8(monitor_id : UInt64) -> Bytes = "mbw_monitor_name_utf8"
-
-///|
-extern "C" fn native_monitor_position_x(monitor_id : UInt64) -> Int = "mbw_monitor_position_x"
-
-///|
-extern "C" fn native_monitor_position_y(monitor_id : UInt64) -> Int = "mbw_monitor_position_y"
-
-///|
-extern "C" fn native_monitor_width(monitor_id : UInt64) -> Int = "mbw_monitor_width"
-
-///|
-extern "C" fn native_monitor_height(monitor_id : UInt64) -> Int = "mbw_monitor_height"
-
-///|
-extern "C" fn native_monitor_scale_factor(monitor_id : UInt64) -> Double = "mbw_monitor_scale_factor"
-
-///|
-extern "C" fn native_monitor_video_mode_count(monitor_id : UInt64) -> Int = "mbw_monitor_video_mode_count"
-
-///|
-extern "C" fn native_monitor_video_mode_width(
-  monitor_id : UInt64,
-  index : Int,
-) -> Int = "mbw_monitor_video_mode_width"
-
-///|
-extern "C" fn native_monitor_video_mode_height(
-  monitor_id : UInt64,
-  index : Int,
-) -> Int = "mbw_monitor_video_mode_height"
-
-///|
-extern "C" fn native_monitor_video_mode_bit_depth(
-  monitor_id : UInt64,
-  index : Int,
-) -> Int = "mbw_monitor_video_mode_bit_depth"
-
-///|
-extern "C" fn native_monitor_video_mode_refresh_rate_millihertz(
-  monitor_id : UInt64,
-  index : Int,
-) -> Int = "mbw_monitor_video_mode_refresh_rate_millihertz"
-
-///|
-extern "C" fn native_monitor_current_video_mode_index(
-  monitor_id : UInt64,
-) -> Int = "mbw_monitor_current_video_mode_index"
-
-///|
-extern "C" fn native_window_scale_factor(window_id : Int) -> Double = "mbw_window_scale_factor"
-
-///|
-pub extern "C" fn native_window_take_close_requested(window_id : Int) -> Bool = "mbw_window_take_close_requested"
-
-///|
-extern "C" fn native_window_take_moved(window_id : Int) -> Bool = "mbw_window_take_moved"
-
-///|
-extern "C" fn native_window_pending_move_x(window_id : Int) -> Int = "mbw_window_pending_move_x"
-
-///|
-extern "C" fn native_window_pending_move_y(window_id : Int) -> Int = "mbw_window_pending_move_y"
-
-///|
-extern "C" fn native_window_take_destroyed(window_id : Int) -> Bool = "mbw_window_take_destroyed"
-
-///|
-extern "C" fn native_window_take_focused_changed(window_id : Int) -> Bool = "mbw_window_take_focused_changed"
-
-///|
-extern "C" fn native_window_pending_focused(window_id : Int) -> Bool = "mbw_window_pending_focused"
-
-///|
-extern "C" fn native_window_has_focus(window_id : Int) -> Bool = "mbw_window_has_focus"
-
-///|
-extern "C" fn native_window_occluded(window_id : Int) -> Bool = "mbw_window_is_occluded"
-
-///|
-extern "C" fn native_window_minimized(window_id : Int) -> Bool = "mbw_window_minimized"
-
-///|
-extern "C" fn native_window_maximized(window_id : Int) -> Bool = "mbw_window_maximized"
-
-///|
-extern "C" fn native_window_fullscreen(window_id : Int) -> Bool = "mbw_window_fullscreen"
-
-///|
-extern "C" fn native_window_simple_fullscreen(window_id : Int) -> Bool = "mbw_window_simple_fullscreen"
-
-///|
-extern "C" fn native_window_is_exclusive_fullscreen(window_id : Int) -> Bool = "mbw_window_is_exclusive_fullscreen"
-
-///|
-extern "C" fn native_window_tabbing_identifier_utf8(window_id : Int) -> Bytes = "mbw_window_tabbing_identifier_utf8"
-
-///|
-extern "C" fn native_window_num_tabs(window_id : Int) -> Int = "mbw_window_num_tabs"
-
-///|
-extern "C" fn native_window_take_scale_factor_changed(window_id : Int) -> Bool = "mbw_window_take_scale_factor_changed"
-
-///|
-extern "C" fn native_window_pending_scale_factor(window_id : Int) -> Double = "mbw_window_pending_scale_factor"
-
-///|
-extern "C" fn native_window_pending_scale_width(window_id : Int) -> Int = "mbw_window_pending_scale_width"
-
-///|
-extern "C" fn native_window_pending_scale_height(window_id : Int) -> Int = "mbw_window_pending_scale_height"
-
-///|
-extern "C" fn native_window_take_theme_changed(window_id : Int) -> Bool = "mbw_window_take_theme_changed"
-
-///|
-extern "C" fn native_window_pending_theme(window_id : Int) -> Int = "mbw_window_pending_theme"
-
-///|
-extern "C" fn native_window_take_occluded_changed(window_id : Int) -> Bool = "mbw_window_take_occluded_changed"
-
-///|
-extern "C" fn native_window_pending_occluded(window_id : Int) -> Bool = "mbw_window_pending_occluded"
-
-///|
-// Raw C bindings by upstream ownership: view.rs / event.rs (input queue payloads).
-extern "C" fn native_window_take_input_event(window_id : Int) -> Bool = "mbw_window_take_input_event"
-
-///|
-extern "C" fn native_window_input_event_kind(window_id : Int) -> Int = "mbw_window_input_event_kind"
-
-///|
-extern "C" fn native_window_input_event_x(window_id : Int) -> Double = "mbw_window_input_event_x"
-
-///|
-extern "C" fn native_window_input_event_y(window_id : Int) -> Double = "mbw_window_input_event_y"
-
-///|
-extern "C" fn native_window_input_event_state(window_id : Int) -> Int = "mbw_window_input_event_state"
-
-///|
-extern "C" fn native_window_input_event_button(window_id : Int) -> Int = "mbw_window_input_event_button"
-
-///|
-extern "C" fn native_window_input_event_pointer_source(window_id : Int) -> Int = "mbw_window_input_event_pointer_source"
-
-///|
-extern "C" fn native_window_input_event_pointer_kind(window_id : Int) -> Int = "mbw_window_input_event_pointer_kind"
-
-///|
-extern "C" fn native_window_input_event_scroll_delta_kind(
-  window_id : Int,
-) -> Int = "mbw_window_input_event_scroll_delta_kind"
-
-///|
-extern "C" fn native_window_input_event_scroll_delta_x(
-  window_id : Int,
-) -> Double = "mbw_window_input_event_scroll_delta_x"
-
-///|
-extern "C" fn native_window_input_event_scroll_delta_y(
-  window_id : Int,
-) -> Double = "mbw_window_input_event_scroll_delta_y"
-
-///|
-extern "C" fn native_window_input_event_phase(window_id : Int) -> Int = "mbw_window_input_event_phase"
-
-///|
-extern "C" fn native_window_input_event_modifiers(window_id : Int) -> Int = "mbw_window_input_event_modifiers"
-
-///|
-extern "C" fn native_window_input_event_scancode(window_id : Int) -> Int = "mbw_window_input_event_scancode"
-
-///|
-extern "C" fn native_window_input_event_repeat(window_id : Int) -> Bool = "mbw_window_input_event_repeat"
-
-///|
-extern "C" fn native_window_input_event_text_with_all_modifiers(
-  window_id : Int,
-) -> Bytes = "mbw_window_input_event_text_with_all_modifiers"
-
-///|
-extern "C" fn native_window_input_event_text_ignoring_modifiers(
-  window_id : Int,
-) -> Bytes = "mbw_window_input_event_text_ignoring_modifiers"
-
-///|
-extern "C" fn native_window_input_event_text_without_modifiers(
-  window_id : Int,
-) -> Bytes = "mbw_window_input_event_text_without_modifiers"
-
-///|
-extern "C" fn native_window_input_event_ime_kind(window_id : Int) -> Int = "mbw_window_input_event_ime_kind"
-
-///|
-extern "C" fn native_window_input_event_ime_text(window_id : Int) -> Bytes = "mbw_window_input_event_ime_text"
-
-///|
-extern "C" fn native_window_input_event_path(window_id : Int) -> Bytes = "mbw_window_input_event_path"
-
-///|
-extern "C" fn native_window_input_event_ime_cursor_start(
-  window_id : Int,
-) -> Int = "mbw_window_input_event_ime_cursor_start"
-
-///|
-extern "C" fn native_window_input_event_ime_cursor_end(window_id : Int) -> Int = "mbw_window_input_event_ime_cursor_end"
-
-///|
-pub extern "C" fn native_window_take_surface_resized(window_id : Int) -> Bool = "mbw_window_take_surface_resized"
-
-///|
-// Raw C bindings by upstream ownership: window_delegate.rs (setters & style).
-extern "C" fn native_window_set_surface_size(
-  window_id : Int,
+extern "C" fn appkit_window_set_content_size(
+  handle : UInt64,
   width : Int,
   height : Int,
-) -> Unit = "mbw_window_set_surface_size"
+) -> Unit = "mbw_window_set_content_size"
 
 ///|
-extern "C" fn native_window_set_surface_resize_increments(
-  window_id : Int,
-  width : Int,
-  height : Int,
-) -> Unit = "mbw_window_set_surface_resize_increments"
-
-///|
-extern "C" fn native_window_set_min_surface_size(
-  window_id : Int,
-  width : Int,
-  height : Int,
-) -> Unit = "mbw_window_set_min_surface_size"
-
-///|
-extern "C" fn native_window_set_max_surface_size(
-  window_id : Int,
-  width : Int,
-  height : Int,
-) -> Unit = "mbw_window_set_max_surface_size"
-
-///|
-extern "C" fn native_window_set_position(
-  window_id : Int,
+extern "C" fn appkit_window_set_position(
+  handle : UInt64,
   x : Int,
   y : Int,
 ) -> Unit = "mbw_window_set_position"
 
 ///|
-extern "C" fn native_window_focus(window_id : Int) -> Unit = "mbw_window_focus"
+extern "C" fn appkit_window_content_width(handle : UInt64) -> Int = "mbw_window_content_width"
 
 ///|
-extern "C" fn native_window_set_minimized(
-  window_id : Int,
-  minimized : Bool,
+extern "C" fn appkit_window_content_height(handle : UInt64) -> Int = "mbw_window_content_height"
+
+///|
+extern "C" fn appkit_window_x(handle : UInt64) -> Int = "mbw_window_x"
+
+///|
+extern "C" fn appkit_window_y(handle : UInt64) -> Int = "mbw_window_y"
+
+///|
+extern "C" fn appkit_window_has_focus(handle : UInt64) -> Int = "mbw_window_has_focus"
+
+///|
+extern "C" fn appkit_window_is_occluded(handle : UInt64) -> Int = "mbw_window_is_occluded"
+
+///|
+extern "C" fn appkit_window_scale_factor(handle : UInt64) -> Double = "mbw_window_scale_factor"
+
+///|
+extern "C" fn appkit_window_set_minimized(
+  handle : UInt64,
+  minimized : Int,
 ) -> Unit = "mbw_window_set_minimized"
 
 ///|
-extern "C" fn native_window_set_maximized(
-  window_id : Int,
-  maximized : Bool,
+extern "C" fn appkit_window_is_minimized(handle : UInt64) -> Int = "mbw_window_is_minimized"
+
+///|
+extern "C" fn appkit_window_set_maximized(
+  handle : UInt64,
+  maximized : Int,
 ) -> Unit = "mbw_window_set_maximized"
 
 ///|
-extern "C" fn native_window_set_fullscreen(
-  window_id : Int,
-  fullscreen : Bool,
+extern "C" fn appkit_window_is_maximized(handle : UInt64) -> Int = "mbw_window_is_maximized"
+
+///|
+extern "C" fn appkit_window_set_fullscreen(
+  handle : UInt64,
+  fullscreen : Int,
 ) -> Unit = "mbw_window_set_fullscreen"
 
 ///|
-extern "C" fn native_window_set_decorations(
-  window_id : Int,
-  decorated : Bool,
-) -> Unit = "mbw_window_set_decorations"
+extern "C" fn appkit_window_is_fullscreen(handle : UInt64) -> Int = "mbw_window_is_fullscreen"
 
 ///|
-extern "C" fn native_window_set_enabled_buttons(
-  window_id : Int,
-  close : Bool,
-  minimize : Bool,
-  maximize : Bool,
-) -> Unit = "mbw_window_set_enabled_buttons"
+extern "C" fn appkit_window_style_mask(handle : UInt64) -> UInt64 = "mbw_window_style_mask"
 
 ///|
-extern "C" fn native_window_set_blur(window_id : Int, blur : Bool) -> Unit = "mbw_window_set_blur"
+extern "C" fn appkit_window_set_style_mask(
+  handle : UInt64,
+  style_mask : UInt64,
+) -> Unit = "mbw_window_set_style_mask"
 
 ///|
-extern "C" fn native_window_set_simple_fullscreen(
-  window_id : Int,
-  fullscreen : Bool,
-) -> Bool = "mbw_window_set_simple_fullscreen"
+extern "C" fn appkit_window_clear_style_mask_bits(
+  handle : UInt64,
+  style_mask : UInt64,
+) -> Unit = "mbw_window_clear_style_mask_bits"
 
 ///|
-extern "C" fn native_window_set_exclusive_fullscreen(
-  window_id : Int,
-  monitor_id : UInt64,
-  width : Int,
-  height : Int,
-  bit_depth : Int,
-  refresh_rate_millihertz : Int,
-) -> Bool = "mbw_window_set_exclusive_fullscreen"
+extern "C" fn appkit_window_num_tabs(handle : UInt64) -> Int = "mbw_window_num_tabs"
 
 ///|
-extern "C" fn native_window_set_accepts_first_mouse(
-  window_id : Int,
-  accepts_first_mouse : Bool,
-) -> Unit = "mbw_window_set_accepts_first_mouse"
+extern "C" fn appkit_window_set_theme(handle : UInt64, theme : Int) -> Unit = "mbw_window_set_theme"
 
 ///|
-extern "C" fn native_window_set_disallow_hidpi(
-  window_id : Int,
-  disallow_hidpi : Bool,
-) -> Unit = "mbw_window_set_disallow_hidpi"
-
-///|
-extern "C" fn native_window_set_movable_by_window_background(
-  window_id : Int,
-  movable_by_window_background : Bool,
-) -> Unit = "mbw_window_set_movable_by_window_background"
-
-///|
-extern "C" fn native_window_set_titlebar_transparent(
-  window_id : Int,
-  titlebar_transparent : Bool,
-) -> Unit = "mbw_window_set_titlebar_transparent"
-
-///|
-extern "C" fn native_window_set_unified_titlebar(
-  window_id : Int,
-  unified_titlebar : Bool,
-) -> Unit = "mbw_window_set_unified_titlebar"
-
-///|
-extern "C" fn native_window_set_title_hidden(
-  window_id : Int,
-  title_hidden : Bool,
-) -> Unit = "mbw_window_set_title_hidden"
-
-///|
-extern "C" fn native_window_set_titlebar_hidden(
-  window_id : Int,
-  titlebar_hidden : Bool,
-) -> Unit = "mbw_window_set_titlebar_hidden"
-
-///|
-extern "C" fn native_window_set_titlebar_buttons_hidden(
-  window_id : Int,
-  titlebar_buttons_hidden : Bool,
-) -> Unit = "mbw_window_set_titlebar_buttons_hidden"
-
-///|
-extern "C" fn native_window_set_fullsize_content_view(
-  window_id : Int,
-  fullsize_content_view : Bool,
-) -> Unit = "mbw_window_set_fullsize_content_view"
-
-///|
-extern "C" fn native_window_set_has_shadow(
-  window_id : Int,
-  has_shadow : Bool,
+extern "C" fn appkit_window_set_has_shadow(
+  handle : UInt64,
+  has_shadow : Int,
 ) -> Unit = "mbw_window_set_has_shadow"
 
 ///|
-extern "C" fn native_window_set_document_edited(
-  window_id : Int,
-  edited : Bool,
+extern "C" fn appkit_window_set_document_edited(
+  handle : UInt64,
+  edited : Int,
 ) -> Unit = "mbw_window_set_document_edited"
 
 ///|
-extern "C" fn native_window_set_borderless_game(
-  window_id : Int,
-  borderless_game : Bool,
-) -> Unit = "mbw_window_set_borderless_game"
+extern "C" fn appkit_window_set_level(handle : UInt64, level : Int) -> Unit = "mbw_window_set_level"
+
+///|
+extern "C" fn appkit_window_set_movable_by_window_background(
+  handle : UInt64,
+  movable : Int,
+) -> Unit = "mbw_window_set_movable_by_window_background"
+
+///|
+extern "C" fn appkit_window_set_titlebar_transparent(
+  handle : UInt64,
+  transparent : Int,
+) -> Unit = "mbw_window_set_titlebar_transparent"
+
+///|
+extern "C" fn appkit_window_set_title_hidden(
+  handle : UInt64,
+  hidden : Int,
+) -> Unit = "mbw_window_set_title_hidden"
+
+///|
+extern "C" fn appkit_window_set_titlebar_hidden(
+  handle : UInt64,
+  hidden : Int,
+) -> Unit = "mbw_window_set_titlebar_hidden"
+
+///|
+extern "C" fn appkit_window_set_titlebar_buttons_hidden(
+  handle : UInt64,
+  hidden : Int,
+) -> Unit = "mbw_window_set_titlebar_buttons_hidden"
+
+///|
+extern "C" fn appkit_window_set_fullsize_content_view(
+  handle : UInt64,
+  enabled : Int,
+) -> Unit = "mbw_window_set_fullsize_content_view"
+
+///|
+extern "C" fn appkit_window_set_unified_titlebar(
+  handle : UInt64,
+  unified_titlebar : Int,
+) -> Unit = "mbw_window_set_unified_titlebar"
+
+///|
+extern "C" fn appkit_window_set_enabled_buttons(
+  handle : UInt64,
+  close : Int,
+  minimize : Int,
+  maximize : Int,
+) -> Unit = "mbw_window_set_enabled_buttons"
+
+///|
+extern "C" fn appkit_window_request_user_attention(request_type : Int) -> Unit = "mbw_window_request_user_attention"
+
+///|
+extern "C" fn appkit_window_set_movable(handle : UInt64, movable : Int) -> Unit = "mbw_window_set_movable"
+
+///|
+extern "C" fn appkit_window_set_transparent(
+  handle : UInt64,
+  transparent : Int,
+) -> Unit = "mbw_window_set_transparent"
+
+///|
+extern "C" fn appkit_window_set_parent(
+  handle : UInt64,
+  parent_handle : UInt64,
+) -> Unit = "mbw_window_set_parent"
+
+///|
+extern "C" fn appkit_window_set_content_protected(
+  handle : UInt64,
+  content_protected : Int,
+) -> Unit = "mbw_window_set_content_protected"
 
 ///|
 #borrow(identifier)
-extern "C" fn native_window_set_tabbing_identifier_utf8(
-  window_id : Int,
+extern "C" fn appkit_window_set_tabbing_identifier(
+  handle : UInt64,
   identifier : Bytes,
-  identifier_len : UInt64,
-) -> Unit = "mbw_window_set_tabbing_identifier_utf8"
+) -> Unit = "mbw_window_set_tabbing_identifier"
 
 ///|
-extern "C" fn native_window_set_tabbing_mode_preferred(window_id : Int) -> Unit = "mbw_window_set_tabbing_mode_preferred"
+extern "C" fn appkit_window_set_tabbing_mode_preferred(handle : UInt64) -> Unit = "mbw_window_set_tabbing_mode_preferred"
 
 ///|
-extern "C" fn native_window_select_next_tab(window_id : Int) -> Unit = "mbw_window_select_next_tab"
+extern "C" fn appkit_window_select_next_tab(handle : UInt64) -> Unit = "mbw_window_select_next_tab"
 
 ///|
-extern "C" fn native_window_select_previous_tab(window_id : Int) -> Unit = "mbw_window_select_previous_tab"
+extern "C" fn appkit_window_select_previous_tab(handle : UInt64) -> Unit = "mbw_window_select_previous_tab"
 
 ///|
-extern "C" fn native_window_select_tab_at_index(
-  window_id : Int,
+extern "C" fn appkit_window_select_tab_at_index(
+  handle : UInt64,
   index : Int,
 ) -> Unit = "mbw_window_select_tab_at_index"
 
 ///|
-extern "C" fn native_window_set_option_as_alt(
-  window_id : Int,
-  option_as_alt : Int,
-) -> Unit = "mbw_window_set_option_as_alt"
+extern "C" fn appkit_window_set_cursor(handle : UInt64, cursor : Int) -> Unit = "mbw_window_set_cursor"
 
 ///|
-extern "C" fn native_window_set_cursor(window_id : Int, cursor : Int) -> Unit = "mbw_window_set_cursor"
-
-///|
-#borrow(rgba)
-extern "C" fn native_custom_cursor_create_rgba(
-  rgba : Bytes,
-  rgba_len : Int,
-  width : Int,
-  height : Int,
-  hotspot_x : Int,
-  hotspot_y : Int,
-) -> UInt64 = "mbw_custom_cursor_create_rgba"
-
-///|
-#borrow(url)
-extern "C" fn native_custom_cursor_create_url(
-  url : Bytes,
-  url_len : Int,
-  hotspot_x : Int,
-  hotspot_y : Int,
-) -> UInt64 = "mbw_custom_cursor_create_url"
-
-///|
-extern "C" fn native_window_set_custom_cursor(
-  window_id : Int,
+extern "C" fn appkit_window_set_custom_cursor(
+  handle : UInt64,
   custom_cursor : UInt64,
-) -> Bool = "mbw_window_set_custom_cursor"
+) -> Int = "mbw_window_set_custom_cursor"
 
 ///|
-extern "C" fn native_window_set_parent_window(
-  window_id : Int,
-  parent_window : UInt64,
-) -> Bool = "mbw_window_set_parent_window"
-
-///|
-extern "C" fn native_window_set_cursor_visible(
-  window_id : Int,
-  visible : Bool,
+extern "C" fn appkit_window_set_cursor_visible(
+  handle : UInt64,
+  visible : Int,
 ) -> Unit = "mbw_window_set_cursor_visible"
 
 ///|
-extern "C" fn native_window_set_cursor_hittest(
-  window_id : Int,
-  hittest : Bool,
-) -> Bool = "mbw_window_set_cursor_hittest"
+extern "C" fn appkit_window_set_cursor_hittest(
+  handle : UInt64,
+  hittest : Int,
+) -> Int = "mbw_window_set_cursor_hittest"
 
 ///|
-extern "C" fn native_window_set_cursor_position(
-  window_id : Int,
+extern "C" fn appkit_window_set_cursor_position(
+  handle : UInt64,
   x : Int,
   y : Int,
-) -> Bool = "mbw_window_set_cursor_position"
+) -> Int = "mbw_window_set_cursor_position"
 
 ///|
-extern "C" fn native_window_set_cursor_grab(
-  window_id : Int,
-  mode : Int,
-) -> Bool = "mbw_window_set_cursor_grab"
+extern "C" fn appkit_window_set_cursor_grab(handle : UInt64, mode : Int) -> Int = "mbw_window_set_cursor_grab"
 
 ///|
-extern "C" fn native_window_drag_window(window_id : Int) -> Bool = "mbw_window_drag_window"
+extern "C" fn appkit_window_drag_window(handle : UInt64) -> Int = "mbw_window_drag_window"
 
 ///|
-extern "C" fn native_window_drag_resize_window(
-  window_id : Int,
+extern "C" fn appkit_window_drag_resize_window(
+  handle : UInt64,
   direction : Int,
-) -> Bool = "mbw_window_drag_resize_window"
+) -> Int = "mbw_window_drag_resize_window"
 
 ///|
-extern "C" fn native_window_show_window_menu(
-  window_id : Int,
+extern "C" fn appkit_window_show_window_menu(
+  handle : UInt64,
   x : Int,
   y : Int,
-) -> Bool = "mbw_window_show_window_menu"
+) -> Int = "mbw_window_show_window_menu"
 
 ///|
-extern "C" fn native_window_set_transparent(
-  window_id : Int,
-  transparent : Bool,
-) -> Unit = "mbw_window_set_transparent"
+extern "C" fn appkit_window_theme(handle : UInt64) -> Int = "mbw_window_theme"
 
 ///|
-extern "C" fn native_window_set_window_level(
-  window_id : Int,
-  level : Int,
-) -> Unit = "mbw_window_set_window_level"
+extern "C" fn appkit_event_loop_wake_up() -> Unit = "mbw_event_loop_wake_up"
 
 ///|
-extern "C" fn native_window_set_theme(window_id : Int, theme : Int) -> Unit = "mbw_window_set_theme"
-
-///|
-extern "C" fn native_window_set_content_protected(
-  window_id : Int,
-  content_protected : Bool,
-) -> Unit = "mbw_window_set_content_protected"
-
-///|
-// Raw C bindings by upstream ownership: view.rs (IME setters).
-extern "C" fn native_window_set_ime_purpose(
-  window_id : Int,
-  purpose : Int,
-) -> Unit = "mbw_window_set_ime_purpose"
-
-///|
-extern "C" fn native_window_set_ime_hints(window_id : Int, hints : Int) -> Unit = "mbw_window_set_ime_hints"
-
-///|
-extern "C" fn native_window_set_ime_allowed(
-  window_id : Int,
-  allowed : Bool,
-) -> Unit = "mbw_window_set_ime_allowed"
-
-///|
-extern "C" fn native_window_set_ime_cursor_area(
-  window_id : Int,
-  x : Int,
-  y : Int,
-  width : Int,
-  height : Int,
-) -> Unit = "mbw_window_set_ime_cursor_area"
-
-///|
-#borrow(text)
-extern "C" fn native_window_set_ime_surrounding_text(
-  window_id : Int,
-  text : Bytes,
-  text_len : Int,
-  cursor : Int,
-  anchor : Int,
-) -> Unit = "mbw_window_set_ime_surrounding_text_utf8"
-
-///|
-extern "C" fn native_window_clear_ime_surrounding_text(window_id : Int) -> Unit = "mbw_window_clear_ime_surrounding_text"
-
-///|
-// Raw C bindings by upstream ownership: window.rs / app.rs (lifecycle helpers).
-extern "C" fn native_window_close(window_id : Int) -> Unit = "mbw_window_close"
-
-///|
-#borrow(title)
-pub extern "C" fn native_set_title(
-  window_id : Int,
-  title : Bytes,
-  title_len : UInt64,
-) -> Unit = "mbw_window_set_title_utf8"
-
-///|
-extern "C" fn native_window_request_user_attention(
-  window_id : Int,
-  request_type : Int,
-) -> Unit = "mbw_window_request_user_attention"
-
-///|
-pub extern "C" fn native_set_visible(window_id : Int, visible : Bool) -> Unit = "mbw_window_set_visible"
-
-///|
-extern "C" fn native_window_show(window_id : Int, active : Bool) -> Unit = "mbw_window_show"
-
-///|
-pub extern "C" fn native_set_resizable(
-  window_id : Int,
-  resizable : Bool,
-) -> Unit = "mbw_window_set_resizable"
+extern "C" fn appkit_event_loop_wait_millis(timeout_ms : Int) -> Int = "mbw_event_loop_wait_millis"

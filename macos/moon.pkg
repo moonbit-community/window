@@ -5,14 +5,7 @@ import {
 }
 
 options(
-  "native-stub": [ "ffi.c" ],
+  "native-stub": [ "native_monitor.c", "native_appkit.m" ],
   "supported-targets": "native",
-  targets: {
-    "app_wbtest.mbt": [ "native" ],
-    "event_loop_test.mbt": [ "native" ],
-    "event_wbtest.mbt": [ "native" ],
-    "ffi.mbt": [ "native" ],
-    "ffi_wbtest.mbt": [ "native" ],
-    "monitor_wbtest.mbt": [ "native" ],
-  },
+  targets: { "ffi.mbt": [ "native" ] },
 )

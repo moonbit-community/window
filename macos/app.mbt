@@ -88,80 +88,16 @@ impl ApplicationHandler with macos_handler(_self) {
 }
 
 ///|
-// Port target: app.rs::maybe_dispatch_device_event
-pub fn[A : ApplicationHandler] dispatch_device_pointer_motion(
+// Port target: app.rs::send_event
+fn[A : ApplicationHandler] EventLoop::send_event(
+  self : EventLoop,
   app : A,
-  event_loop : ActiveEventLoop,
-  delta_x : Double,
-  delta_y : Double,
 ) -> Unit {
-  if delta_x == 0.0 && delta_y == 0.0 {
-    ()
-  } else {
-    app.device_event(
-      event_loop,
-      None,
-      @core.DeviceEvent::PointerMotion(delta_x, delta_y),
-    )
-  }
-}
-
-///|
-// Port target: app.rs::maybe_dispatch_device_event
-pub fn[A : ApplicationHandler] dispatch_device_button(
-  app : A,
-  event_loop : ActiveEventLoop,
-  button : Int,
-  state : @core.ElementState,
-) -> Unit {
-  if button >= 0 {
-    app.device_event(
-      event_loop,
-      None,
-      @core.DeviceEvent::Button(@core.ButtonId::from_raw(button), state),
-    )
-  }
-}
-
-///|
-// Port target: app.rs::maybe_dispatch_device_event
-pub fn[A : ApplicationHandler] maybe_dispatch_device_event(
-  app : A,
-  event_loop : ActiveEventLoop,
-  native_event_kind : Int,
-  button : Int,
-  delta_x : Double,
-  delta_y : Double,
-) -> Bool {
-  match native_event_kind {
-    1 => {
-      dispatch_device_pointer_motion(app, event_loop, delta_x, delta_y)
-      true
-    }
-    2 => {
-      dispatch_device_button(
-        app,
-        event_loop,
-        button,
-        @core.ElementState::Pressed,
-      )
-      true
-    }
-    3 => {
-      dispatch_device_button(
-        app,
-        event_loop,
-        button,
-        @core.ElementState::Released,
-      )
-      true
-    }
-    _ => false
-  }
+  dispatch_deferred_callbacks(app, self.as_active())
 }
 
 ///|
 // Port target: app.rs::override_send_event
-pub fn install_application_event_hook() -> Unit {
+fn override_send_event() -> Unit {
   ()
 }

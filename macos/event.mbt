@@ -15,6 +15,12 @@ fn extra_function_key_from_text(text : String?) -> @core.PhysicalKey? {
 }
 
 ///|
+// Port target: event.rs::extra_function_key_to_code
+fn extra_function_key_to_code(text : String?) -> @core.PhysicalKey? {
+  extra_function_key_from_text(text)
+}
+
+///|
 fn physical_key_from_scancode(
   scancode : Int,
   text_with_all_modifiers : String?,
@@ -143,7 +149,7 @@ fn physical_key_from_scancode(
     0x7F => Some(@core.KeyCode::Power)
     _ => None
   }
-  match extra_function_key_from_text(text_with_all_modifiers) {
+  match extra_function_key_to_code(text_with_all_modifiers) {
     Some(key) => key
     None =>
       match code {
@@ -151,28 +157,6 @@ fn physical_key_from_scancode(
         None =>
           @core.PhysicalKey::Unidentified(@core.NativeKeyCode::MacOS(scancode))
       }
-  }
-}
-
-///|
-pub fn scancode_to_physicalkey(scancode : Int) -> @core.PhysicalKey {
-  physical_key_from_scancode(scancode, None)
-}
-
-///|
-pub fn physicalkey_to_scancode(physical_key : @core.PhysicalKey) -> Int? {
-  match physical_key {
-    @core.PhysicalKey::Unidentified(_) => None
-    _ => {
-      let mut scancode = 0
-      while scancode <= 0x7F {
-        if scancode_to_physicalkey(scancode) == physical_key {
-          return Some(scancode)
-        }
-        scancode = scancode + 1
-      }
-      None
-    }
   }
 }
 
@@ -218,6 +202,12 @@ fn key_location_from_physical_key(key : @core.PhysicalKey) -> @core.KeyLocation 
     @core.PhysicalKey::Code(@core.KeyCode::Numpad9) => @core.KeyLocation::Numpad
     _ => @core.KeyLocation::Standard
   }
+}
+
+///|
+// Port target: event.rs::code_to_location
+fn code_to_location(key : @core.PhysicalKey) -> @core.KeyLocation {
+  key_location_from_physical_key(key)
 }
 
 ///|
@@ -285,6 +275,12 @@ fn named_key_from_code(code : @core.KeyCode) -> @core.NamedKey? {
 }
 
 ///|
+// Port target: event.rs::code_to_key
+fn code_to_key(code : @core.KeyCode) -> @core.NamedKey? {
+  named_key_from_code(code)
+}
+
+///|
 fn normalized_native_text(text : String?) -> String? {
   match text {
     Some(text) => if text.length() == 0 { None } else { Some(text) }
@@ -324,7 +320,7 @@ fn key_without_modifiers_from_scancode(
   match physical_key {
     @core.PhysicalKey::Code(@core.KeyCode::Space) => @core.Key::Character(" ")
     @core.PhysicalKey::Code(code) =>
-      match named_key_from_code(code) {
+      match code_to_key(code) {
         Some(named) => @core.Key::Named(named)
         None =>
           match key_from_native_text(text_without_modifiers) {
@@ -358,7 +354,7 @@ fn logical_key_from_scancode(
   match physical_key {
     @core.PhysicalKey::Code(@core.KeyCode::Space) => @core.Key::Character(" ")
     @core.PhysicalKey::Code(code) =>
-      match named_key_from_code(code) {
+      match code_to_key(code) {
         Some(named) => @core.Key::Named(named)
         None =>
           if modifiers.control_key() || modifiers.meta_key() {
@@ -462,7 +458,7 @@ fn create_key_event(
     physical_key,
     logical_key,
     key_without_modifiers,
-    key_location_from_physical_key(physical_key),
+    code_to_location(physical_key),
     state,
     repeat,
     text,

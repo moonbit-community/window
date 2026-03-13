@@ -11,6 +11,7 @@ struct ControlFlowDemo {
   mut request_redraw : Bool
   mut wait_cancelled : Bool
   mut close_requested : Bool
+  mut last_start_time_ms : Int64?
   mut window : @macos.Window?
 }
 
@@ -21,6 +22,7 @@ fn ControlFlowDemo::new() -> ControlFlowDemo {
     request_redraw: false,
     wait_cancelled: false,
     close_requested: false,
+    last_start_time_ms: None,
     window: None,
   }
 }
@@ -32,6 +34,11 @@ pub impl @macos.ApplicationHandler for ControlFlowDemo with new_events(
   cause,
 ) {
   println("new_events: \{cause}")
+  self.last_start_time_ms = match cause {
+    @core.StartCause::WaitCancelled(start_time_ms, _) => Some(start_time_ms)
+    @core.StartCause::ResumeTimeReached(start_time_ms, _) => Some(start_time_ms)
+    _ => self.last_start_time_ms
+  }
   self.wait_cancelled = match cause {
     @core.StartCause::WaitCancelled(_, _) => self.mode == Mode::WaitUntil
     _ => false
@@ -111,10 +118,13 @@ pub impl @macos.ApplicationHandler for ControlFlowDemo with about_to_wait(
     Mode::Wait => event_loop.set_control_flow(@core.ControlFlow::Wait)
     Mode::WaitUntil =>
       if !self.wait_cancelled {
-        let now_ms = @macos.native_runtime_now_ms()
-        event_loop.set_control_flow(
-          @core.ControlFlow::wait_duration(now_ms, 100),
-        )
+        match self.last_start_time_ms {
+          Some(start_time_ms) =>
+            event_loop.set_control_flow(
+              @core.ControlFlow::wait_duration(start_time_ms, 100),
+            )
+          None => event_loop.set_control_flow(@core.ControlFlow::Wait)
+        }
       }
     Mode::Poll => event_loop.set_control_flow(@core.ControlFlow::Poll)
   }
