@@ -239,12 +239,43 @@ fn app_state_queue_native_window_event(
 
 ///|
 fn app_state_install_native_callbacks() -> Unit {
-  let _ = queue_input_event
+  native_install_input_event_callback(
+    fn(
+      callback,
+      raw_id,
+      kind,
+      x,
+      y,
+      state,
+      button,
+      modifiers,
+      scancode,
+      repeat,
+      pointer_source,
+      pointer_kind,
+      scroll_delta_kind,
+      delta_x,
+      delta_y,
+      phase,
+    ) {
+      callback(
+        raw_id, kind, x, y, state, button, modifiers, scancode, repeat, pointer_source,
+        pointer_kind, scroll_delta_kind, delta_x, delta_y, phase,
+      )
+    },
+    native_callback_input_event,
+  )
   native_install_window_event_callback(
     fn(callback, kind, raw_id, arg0, arg1, arg2, argd) {
       callback(kind, raw_id, arg0, arg1, arg2, argd)
     },
     native_callback_window_event,
+  )
+  native_install_device_event_callback(
+    fn(callback, kind, button, delta_x, delta_y) {
+      callback(kind, button, delta_x, delta_y)
+    },
+    native_callback_device_event,
   )
   native_install_lifecycle_callback(
     fn(callback, kind) { callback(kind) },
@@ -260,6 +291,30 @@ fn native_callback_did_finish_launching() -> Unit {
 ///|
 fn native_callback_will_terminate() -> Unit {
   app_state_queue_will_terminate_notification()
+}
+
+///|
+fn native_callback_input_event(
+  raw_id : Int,
+  kind : Int,
+  x : Double,
+  y : Double,
+  state : Int,
+  button : Int,
+  modifiers : Int,
+  scancode : Int,
+  repeat : Int,
+  pointer_source : Int,
+  pointer_kind : Int,
+  scroll_delta_kind : Int,
+  delta_x : Double,
+  delta_y : Double,
+  phase : Int,
+) -> Unit {
+  queue_native_input_event(
+    raw_id, kind, x, y, state, button, modifiers, scancode, repeat, pointer_source,
+    pointer_kind, scroll_delta_kind, delta_x, delta_y, phase,
+  )
 }
 
 ///|

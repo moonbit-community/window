@@ -99,5 +99,5 @@ fn[A : ApplicationHandler] EventLoop::send_event(
 ///|
 // Port target: app.rs::override_send_event
 fn override_send_event() -> Unit {
-  ()
+  native_override_send_event()
 }

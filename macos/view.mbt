@@ -317,6 +317,32 @@ fn queue_input_event(
 }
 
 ///|
+fn queue_native_input_event(
+  raw_id : Int,
+  kind : Int,
+  x : Double,
+  y : Double,
+  state : Int,
+  button : Int,
+  modifiers : Int,
+  scancode : Int,
+  repeat : Int,
+  pointer_source : Int,
+  pointer_kind : Int,
+  scroll_delta_kind : Int,
+  delta_x : Double,
+  delta_y : Double,
+  phase : Int,
+) -> Unit {
+  let empty_text = @utf8.encode(""[:], bom=false)
+  queue_input_event(
+    raw_id, kind, x, y, state, button, modifiers, scancode, repeat, pointer_source,
+    pointer_kind, scroll_delta_kind, delta_x, delta_y, phase, empty_text, empty_text,
+    empty_text, 0, empty_text, -1, -1, empty_text,
+  )
+}
+
+///|
 fn initial_fullscreen_state(
   attributes : @core.WindowAttributes,
 ) -> @core.Fullscreen? {

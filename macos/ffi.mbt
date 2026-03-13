@@ -100,6 +100,80 @@ fn native_install_lifecycle_callback(
 }
 
 ///|
+fn native_install_input_event_callback(
+  call_closure : FuncRef[
+    (
+      (
+        Int,
+        Int,
+        Double,
+        Double,
+        Int,
+        Int,
+        Int,
+        Int,
+        Int,
+        Int,
+        Int,
+        Int,
+        Double,
+        Double,
+        Int,
+      ) -> Unit,
+      Int,
+      Int,
+      Double,
+      Double,
+      Int,
+      Int,
+      Int,
+      Int,
+      Int,
+      Int,
+      Int,
+      Int,
+      Double,
+      Double,
+      Int,
+    ) -> Unit,
+  ],
+  callback : (
+    Int,
+    Int,
+    Double,
+    Double,
+    Int,
+    Int,
+    Int,
+    Int,
+    Int,
+    Int,
+    Int,
+    Int,
+    Double,
+    Double,
+    Int,
+  ) -> Unit,
+) -> Unit {
+  appkit_install_input_event_callback(call_closure, callback)
+}
+
+///|
+fn native_install_device_event_callback(
+  call_closure : FuncRef[
+    ((Int, Int, Double, Double) -> Unit, Int, Int, Double, Double) -> Unit,
+  ],
+  callback : (Int, Int, Double, Double) -> Unit,
+) -> Unit {
+  appkit_install_device_event_callback(call_closure, callback)
+}
+
+///|
+fn native_override_send_event() -> Unit {
+  appkit_override_send_event()
+}
+
+///|
 fn native_create_window(
   raw_id : Int,
   width : Int,
@@ -863,6 +937,74 @@ extern "C" fn appkit_install_lifecycle_callback(
   call_closure : FuncRef[((Int) -> Unit, Int) -> Unit],
   callback : (Int) -> Unit,
 ) -> Unit = "mbw_install_lifecycle_callback"
+
+///|
+extern "C" fn appkit_install_input_event_callback(
+  call_closure : FuncRef[
+    (
+      (
+        Int,
+        Int,
+        Double,
+        Double,
+        Int,
+        Int,
+        Int,
+        Int,
+        Int,
+        Int,
+        Int,
+        Int,
+        Double,
+        Double,
+        Int,
+      ) -> Unit,
+      Int,
+      Int,
+      Double,
+      Double,
+      Int,
+      Int,
+      Int,
+      Int,
+      Int,
+      Int,
+      Int,
+      Int,
+      Double,
+      Double,
+      Int,
+    ) -> Unit,
+  ],
+  callback : (
+    Int,
+    Int,
+    Double,
+    Double,
+    Int,
+    Int,
+    Int,
+    Int,
+    Int,
+    Int,
+    Int,
+    Int,
+    Double,
+    Double,
+    Int,
+  ) -> Unit,
+) -> Unit = "mbw_install_input_event_callback"
+
+///|
+extern "C" fn appkit_install_device_event_callback(
+  call_closure : FuncRef[
+    ((Int, Int, Double, Double) -> Unit, Int, Int, Double, Double) -> Unit,
+  ],
+  callback : (Int, Int, Double, Double) -> Unit,
+) -> Unit = "mbw_install_device_event_callback"
+
+///|
+extern "C" fn appkit_override_send_event() -> Unit = "mbw_override_send_event"
 
 ///|
 #borrow(title)

@@ -1,6 +1,7 @@
 #import <AppKit/AppKit.h>
 #import <ApplicationServices/ApplicationServices.h>
 #import <Foundation/Foundation.h>
+#import <objc/runtime.h>
 #import <moonbit.h>
 #import <stdint.h>
 #include <dlfcn.h>
@@ -9,12 +10,26 @@
 typedef void (*mbw_window_event_trampoline_t)(void *closure, int32_t kind, int32_t raw_id,
                                               int32_t arg0, int32_t arg1, int32_t arg2,
                                               double argd);
+typedef void (*mbw_input_event_trampoline_t)(void *closure, int32_t raw_id, int32_t kind,
+                                             double x, double y, int32_t state, int32_t button,
+                                             int32_t modifiers, int32_t scancode, int32_t repeat,
+                                             int32_t pointer_source, int32_t pointer_kind,
+                                             int32_t scroll_delta_kind, double delta_x,
+                                             double delta_y, int32_t phase);
+typedef void (*mbw_device_event_trampoline_t)(void *closure, int32_t kind, int32_t button,
+                                              double delta_x, double delta_y);
 typedef void (*mbw_lifecycle_trampoline_t)(void *closure, int32_t kind);
+typedef void (*mbw_send_event_impl_t)(id self, SEL _cmd, NSEvent *event);
 
 static mbw_window_event_trampoline_t g_window_event_trampoline = NULL;
 static void *g_window_event_closure = NULL;
+static mbw_input_event_trampoline_t g_input_event_trampoline = NULL;
+static void *g_input_event_closure = NULL;
+static mbw_device_event_trampoline_t g_device_event_trampoline = NULL;
+static void *g_device_event_closure = NULL;
 static mbw_lifecycle_trampoline_t g_lifecycle_trampoline = NULL;
 static void *g_lifecycle_closure = NULL;
+static mbw_send_event_impl_t g_original_send_event_impl = NULL;
 static BOOL g_app_initialized = NO;
 static BOOL g_cursor_hidden = NO;
 
@@ -28,6 +43,8 @@ static BOOL g_cursor_hidden = NO;
 @property(nonatomic, assign) int32_t imeCursorY;
 @property(nonatomic, assign) int32_t imeCursorWidth;
 @property(nonatomic, assign) int32_t imeCursorHeight;
+@property(nonatomic, assign) int32_t rawId;
+@property(nonatomic, strong) NSTrackingArea *trackingArea;
 @end
 
 @interface MBWWindowDelegate : NSObject <NSWindowDelegate>
@@ -44,9 +61,445 @@ static BOOL g_cursor_hidden = NO;
 
 @implementation MBWContentView
 
+- (BOOL)isFlipped {
+  return YES;
+}
+
 - (BOOL)acceptsFirstMouse:(NSEvent *)event {
   (void)event;
   return self.acceptsFirstMouseEnabled;
+}
+
+- (BOOL)acceptsFirstResponder {
+  return YES;
+}
+
+- (void)updateTrackingAreas {
+  [super updateTrackingAreas];
+  if (self.trackingArea != nil) {
+    [self removeTrackingArea:self.trackingArea];
+    self.trackingArea = nil;
+  }
+  NSTrackingAreaOptions options = NSTrackingMouseEnteredAndExited | NSTrackingMouseMoved |
+                                  NSTrackingActiveInKeyWindow | NSTrackingInVisibleRect;
+  self.trackingArea = [[[NSTrackingArea alloc] initWithRect:self.bounds
+                                                    options:options
+                                                      owner:self
+                                                   userInfo:nil] autorelease];
+  if (self.trackingArea != nil) {
+    [self addTrackingArea:self.trackingArea];
+  }
+}
+
+- (NSPoint)mbw_mousePosition:(NSEvent *)event {
+  if (event == nil) {
+    return NSMakePoint(0.0, 0.0);
+  }
+  return [self convertPoint:event.locationInWindow fromView:nil];
+}
+
+- (int32_t)mbw_modifiers:(NSEvent *)event {
+  NSEventModifierFlags flags = event == nil ? 0 : event.modifierFlags;
+  int32_t modifiers = 0;
+  if ((flags & NSEventModifierFlagShift) != 0) {
+    modifiers |= 1;
+  }
+  if ((flags & NSEventModifierFlagControl) != 0) {
+    modifiers |= 2;
+  }
+  if ((flags & NSEventModifierFlagOption) != 0) {
+    modifiers |= 4;
+  }
+  if ((flags & NSEventModifierFlagCommand) != 0) {
+    modifiers |= 8;
+  }
+  return modifiers;
+}
+
+- (int32_t)mbw_phaseFromNSEventPhase:(NSEventPhase)phase {
+  switch (phase) {
+  case NSEventPhaseMayBegin:
+  case NSEventPhaseBegan:
+    return 1;
+  case NSEventPhaseChanged:
+    return 2;
+  case NSEventPhaseEnded:
+    return 3;
+  case NSEventPhaseCancelled:
+    return 4;
+  default:
+    return 0;
+  }
+}
+
+- (int32_t)mbw_scrollPhase:(NSEvent *)event {
+  int32_t phase = [self mbw_phaseFromNSEventPhase:event.momentumPhase];
+  if (phase != 0) {
+    return phase;
+  }
+  phase = [self mbw_phaseFromNSEventPhase:event.phase];
+  if (phase != 0) {
+    return phase;
+  }
+  return 2;
+}
+
+- (void)mbw_emitInputWithKind:(int32_t)kind
+                           x:(double)x
+                           y:(double)y
+                        state:(int32_t)state
+                       button:(int32_t)button
+                    modifiers:(int32_t)modifiers
+                     scancode:(int32_t)scancode
+                       repeat:(int32_t)repeat
+                pointerSource:(int32_t)pointerSource
+                  pointerKind:(int32_t)pointerKind
+              scrollDeltaKind:(int32_t)scrollDeltaKind
+                       deltaX:(double)deltaX
+                       deltaY:(double)deltaY
+                        phase:(int32_t)phase {
+  if (g_input_event_trampoline == NULL || g_input_event_closure == NULL || self.rawId <= 0) {
+    return;
+  }
+  g_input_event_trampoline(g_input_event_closure, self.rawId, kind, x, y, state, button,
+                           modifiers, scancode, repeat, pointerSource, pointerKind,
+                           scrollDeltaKind, deltaX, deltaY, phase);
+}
+
+- (void)mbw_emitMouseMotion:(NSEvent *)event {
+  NSPoint point = [self mbw_mousePosition:event];
+  [self mbw_emitInputWithKind:1
+                           x:point.x
+                           y:point.y
+                        state:0
+                       button:0
+                    modifiers:[self mbw_modifiers:event]
+                     scancode:0
+                       repeat:0
+                pointerSource:1
+                  pointerKind:1
+              scrollDeltaKind:0
+                       deltaX:0.0
+                       deltaY:0.0
+                        phase:0];
+}
+
+- (void)mbw_emitMouseButton:(NSEvent *)event state:(int32_t)state {
+  [self mbw_emitMouseMotion:event];
+  NSPoint point = [self mbw_mousePosition:event];
+  [self mbw_emitInputWithKind:4
+                           x:point.x
+                           y:point.y
+                        state:state
+                       button:(int32_t)event.buttonNumber
+                    modifiers:[self mbw_modifiers:event]
+                     scancode:0
+                       repeat:0
+                pointerSource:1
+                  pointerKind:1
+              scrollDeltaKind:0
+                       deltaX:0.0
+                       deltaY:0.0
+                        phase:0];
+}
+
+- (void)mbw_emitKeyboard:(NSEvent *)event state:(int32_t)state {
+  [self mbw_emitInputWithKind:7
+                           x:0.0
+                           y:0.0
+                        state:state
+                       button:0
+                    modifiers:[self mbw_modifiers:event]
+                     scancode:(int32_t)event.keyCode
+                       repeat:(event.isARepeat ? 1 : 0)
+                pointerSource:0
+                  pointerKind:0
+              scrollDeltaKind:0
+                       deltaX:0.0
+                       deltaY:0.0
+                        phase:0];
+}
+
+- (int32_t)mbw_flagsChangedState:(NSEvent *)event {
+  uint16_t scancode = event.keyCode;
+  NSEventModifierFlags flags = event.modifierFlags;
+  BOOL pressed = NO;
+  BOOL valid = YES;
+  switch (scancode) {
+  case 56:
+  case 60:
+    pressed = (flags & NSEventModifierFlagShift) != 0;
+    break;
+  case 59:
+  case 62:
+    pressed = (flags & NSEventModifierFlagControl) != 0;
+    break;
+  case 58:
+  case 61:
+    pressed = (flags & NSEventModifierFlagOption) != 0;
+    break;
+  case 55:
+  case 54:
+    pressed = (flags & NSEventModifierFlagCommand) != 0;
+    break;
+  case 57:
+    pressed = (flags & NSEventModifierFlagCapsLock) != 0;
+    break;
+  case 63:
+    pressed = (flags & NSEventModifierFlagFunction) != 0;
+    break;
+  default:
+    valid = NO;
+    break;
+  }
+  if (!valid) {
+    return 0;
+  }
+  return pressed ? 1 : 2;
+}
+
+- (void)drawRect:(NSRect)dirtyRect {
+  (void)dirtyRect;
+  [self mbw_emitInputWithKind:19
+                           x:0.0
+                           y:0.0
+                        state:0
+                       button:0
+                    modifiers:0
+                     scancode:0
+                       repeat:0
+                pointerSource:0
+                  pointerKind:0
+              scrollDeltaKind:0
+                       deltaX:0.0
+                       deltaY:0.0
+                        phase:0];
+}
+
+- (void)mouseMoved:(NSEvent *)event {
+  [self mbw_emitMouseMotion:event];
+}
+
+- (void)mouseDragged:(NSEvent *)event {
+  [self mbw_emitMouseMotion:event];
+}
+
+- (void)rightMouseDragged:(NSEvent *)event {
+  [self mbw_emitMouseMotion:event];
+}
+
+- (void)otherMouseDragged:(NSEvent *)event {
+  [self mbw_emitMouseMotion:event];
+}
+
+- (void)mouseEntered:(NSEvent *)event {
+  NSPoint point = [self mbw_mousePosition:event];
+  [self mbw_emitInputWithKind:2
+                           x:point.x
+                           y:point.y
+                        state:0
+                       button:0
+                    modifiers:[self mbw_modifiers:event]
+                     scancode:0
+                       repeat:0
+                pointerSource:1
+                  pointerKind:1
+              scrollDeltaKind:0
+                       deltaX:0.0
+                       deltaY:0.0
+                        phase:0];
+}
+
+- (void)mouseExited:(NSEvent *)event {
+  NSPoint point = [self mbw_mousePosition:event];
+  [self mbw_emitInputWithKind:3
+                           x:point.x
+                           y:point.y
+                        state:0
+                       button:0
+                    modifiers:[self mbw_modifiers:event]
+                     scancode:0
+                       repeat:0
+                pointerSource:1
+                  pointerKind:1
+              scrollDeltaKind:0
+                       deltaX:0.0
+                       deltaY:0.0
+                        phase:0];
+}
+
+- (void)mouseDown:(NSEvent *)event {
+  [self mbw_emitMouseButton:event state:1];
+}
+
+- (void)mouseUp:(NSEvent *)event {
+  [self mbw_emitMouseButton:event state:2];
+}
+
+- (void)rightMouseDown:(NSEvent *)event {
+  [self mbw_emitMouseButton:event state:1];
+}
+
+- (void)rightMouseUp:(NSEvent *)event {
+  [self mbw_emitMouseButton:event state:2];
+}
+
+- (void)otherMouseDown:(NSEvent *)event {
+  [self mbw_emitMouseButton:event state:1];
+}
+
+- (void)otherMouseUp:(NSEvent *)event {
+  [self mbw_emitMouseButton:event state:2];
+}
+
+- (void)scrollWheel:(NSEvent *)event {
+  [self mbw_emitMouseMotion:event];
+  [self mbw_emitInputWithKind:5
+                           x:0.0
+                           y:0.0
+                        state:0
+                       button:0
+                    modifiers:[self mbw_modifiers:event]
+                     scancode:0
+                       repeat:0
+                pointerSource:1
+                  pointerKind:1
+              scrollDeltaKind:(event.hasPreciseScrollingDeltas ? 2 : 1)
+                       deltaX:event.scrollingDeltaX
+                       deltaY:event.scrollingDeltaY
+                        phase:[self mbw_scrollPhase:event]];
+}
+
+- (void)magnifyWithEvent:(NSEvent *)event {
+  [self mbw_emitMouseMotion:event];
+  int32_t phase = [self mbw_phaseFromNSEventPhase:event.phase];
+  if (phase == 0) {
+    return;
+  }
+  [self mbw_emitInputWithKind:13
+                           x:0.0
+                           y:0.0
+                        state:0
+                       button:0
+                    modifiers:[self mbw_modifiers:event]
+                     scancode:0
+                       repeat:0
+                pointerSource:1
+                  pointerKind:1
+              scrollDeltaKind:0
+                       deltaX:event.magnification
+                       deltaY:0.0
+                        phase:phase];
+}
+
+- (void)swipeWithEvent:(NSEvent *)event {
+  [self mbw_emitMouseMotion:event];
+  int32_t phase = [self mbw_phaseFromNSEventPhase:event.phase];
+  if (phase == 0) {
+    phase = 2;
+  }
+  [self mbw_emitInputWithKind:14
+                           x:0.0
+                           y:0.0
+                        state:0
+                       button:0
+                    modifiers:[self mbw_modifiers:event]
+                     scancode:0
+                       repeat:0
+                pointerSource:1
+                  pointerKind:1
+              scrollDeltaKind:0
+                       deltaX:event.deltaX
+                       deltaY:event.deltaY
+                        phase:phase];
+}
+
+- (void)smartMagnifyWithEvent:(NSEvent *)event {
+  [self mbw_emitMouseMotion:event];
+  [self mbw_emitInputWithKind:15
+                           x:0.0
+                           y:0.0
+                        state:0
+                       button:0
+                    modifiers:[self mbw_modifiers:event]
+                     scancode:0
+                       repeat:0
+                pointerSource:1
+                  pointerKind:1
+              scrollDeltaKind:0
+                       deltaX:0.0
+                       deltaY:0.0
+                        phase:0];
+}
+
+- (void)rotateWithEvent:(NSEvent *)event {
+  [self mbw_emitMouseMotion:event];
+  int32_t phase = [self mbw_phaseFromNSEventPhase:event.phase];
+  if (phase == 0) {
+    return;
+  }
+  [self mbw_emitInputWithKind:16
+                           x:0.0
+                           y:0.0
+                        state:0
+                       button:0
+                    modifiers:[self mbw_modifiers:event]
+                     scancode:0
+                       repeat:0
+                pointerSource:1
+                  pointerKind:1
+              scrollDeltaKind:0
+                       deltaX:event.rotation
+                       deltaY:0.0
+                        phase:phase];
+}
+
+- (void)pressureChangeWithEvent:(NSEvent *)event {
+  [self mbw_emitMouseMotion:event];
+  [self mbw_emitInputWithKind:17
+                           x:0.0
+                           y:0.0
+                        state:(int32_t)event.stage
+                       button:0
+                    modifiers:[self mbw_modifiers:event]
+                     scancode:0
+                       repeat:0
+                pointerSource:1
+                  pointerKind:1
+              scrollDeltaKind:0
+                       deltaX:event.pressure
+                       deltaY:0.0
+                        phase:0];
+}
+
+- (void)keyDown:(NSEvent *)event {
+  [self mbw_emitKeyboard:event state:1];
+}
+
+- (void)keyUp:(NSEvent *)event {
+  [self mbw_emitKeyboard:event state:2];
+}
+
+- (void)flagsChanged:(NSEvent *)event {
+  int32_t modifiers = [self mbw_modifiers:event];
+  [self mbw_emitInputWithKind:6
+                           x:0.0
+                           y:0.0
+                        state:0
+                       button:0
+                    modifiers:modifiers
+                     scancode:0
+                       repeat:0
+                pointerSource:0
+                  pointerKind:0
+              scrollDeltaKind:0
+                       deltaX:0.0
+                       deltaY:0.0
+                        phase:0];
+  int32_t key_state = [self mbw_flagsChangedState:event];
+  if (key_state != 0) {
+    [self mbw_emitKeyboard:event state:key_state];
+  }
 }
 
 @end
@@ -291,6 +744,60 @@ static NSCursor *mbw_cursor_from_kind(int32_t cursor) {
   }
 }
 
+static void mbw_emit_device_event(int32_t kind, int32_t button, double delta_x, double delta_y) {
+  if (g_device_event_trampoline == NULL || g_device_event_closure == NULL) {
+    return;
+  }
+  g_device_event_trampoline(g_device_event_closure, kind, button, delta_x, delta_y);
+}
+
+static void mbw_maybe_dispatch_device_event(NSEvent *event) {
+  if (event == nil) {
+    return;
+  }
+  switch (event.type) {
+  case NSEventTypeMouseMoved:
+  case NSEventTypeLeftMouseDragged:
+  case NSEventTypeRightMouseDragged:
+  case NSEventTypeOtherMouseDragged: {
+    double delta_x = event.deltaX;
+    double delta_y = event.deltaY;
+    if (delta_x != 0.0 || delta_y != 0.0) {
+      mbw_emit_device_event(1, 0, delta_x, delta_y);
+    }
+    break;
+  }
+  case NSEventTypeLeftMouseDown:
+  case NSEventTypeRightMouseDown:
+  case NSEventTypeOtherMouseDown:
+    mbw_emit_device_event(2, (int32_t)event.buttonNumber, 0.0, 0.0);
+    break;
+  case NSEventTypeLeftMouseUp:
+  case NSEventTypeRightMouseUp:
+  case NSEventTypeOtherMouseUp:
+    mbw_emit_device_event(3, (int32_t)event.buttonNumber, 0.0, 0.0);
+    break;
+  default:
+    break;
+  }
+}
+
+static void mbw_overridden_send_event(id self, SEL _cmd, NSEvent *event) {
+  NSApplication *app = (NSApplication *)self;
+  if (event != nil && event.type == NSEventTypeKeyUp &&
+      (event.modifierFlags & NSEventModifierFlagCommand) != 0) {
+    NSWindow *key_window = app.keyWindow;
+    if (key_window != nil) {
+      [key_window sendEvent:event];
+      return;
+    }
+  }
+  mbw_maybe_dispatch_device_event(event);
+  if (g_original_send_event_impl != NULL) {
+    g_original_send_event_impl(self, _cmd, event);
+  }
+}
+
 MOONBIT_FFI_EXPORT
 void mbw_install_window_event_callback(mbw_window_event_trampoline_t trampoline, void *closure) {
   if (g_window_event_closure != NULL) {
@@ -304,6 +811,30 @@ void mbw_install_window_event_callback(mbw_window_event_trampoline_t trampoline,
 }
 
 MOONBIT_FFI_EXPORT
+void mbw_install_input_event_callback(mbw_input_event_trampoline_t trampoline, void *closure) {
+  if (g_input_event_closure != NULL) {
+    moonbit_decref(g_input_event_closure);
+  }
+  g_input_event_trampoline = trampoline;
+  g_input_event_closure = closure;
+  if (g_input_event_closure != NULL) {
+    moonbit_incref(g_input_event_closure);
+  }
+}
+
+MOONBIT_FFI_EXPORT
+void mbw_install_device_event_callback(mbw_device_event_trampoline_t trampoline, void *closure) {
+  if (g_device_event_closure != NULL) {
+    moonbit_decref(g_device_event_closure);
+  }
+  g_device_event_trampoline = trampoline;
+  g_device_event_closure = closure;
+  if (g_device_event_closure != NULL) {
+    moonbit_incref(g_device_event_closure);
+  }
+}
+
+MOONBIT_FFI_EXPORT
 void mbw_install_lifecycle_callback(mbw_lifecycle_trampoline_t trampoline, void *closure) {
   if (g_lifecycle_closure != NULL) {
     moonbit_decref(g_lifecycle_closure);
@@ -313,6 +844,24 @@ void mbw_install_lifecycle_callback(mbw_lifecycle_trampoline_t trampoline, void 
   if (g_lifecycle_closure != NULL) {
     moonbit_incref(g_lifecycle_closure);
   }
+}
+
+MOONBIT_FFI_EXPORT
+void mbw_override_send_event(void) {
+  mbw_ensure_app_initialized();
+  NSApplication *app = [NSApplication sharedApplication];
+  Class cls = object_getClass(app);
+  Method method = class_getInstanceMethod(cls, @selector(sendEvent:));
+  if (method == NULL) {
+    return;
+  }
+  IMP overridden = (IMP)mbw_overridden_send_event;
+  IMP current = method_getImplementation(method);
+  if (current == overridden) {
+    return;
+  }
+  IMP original = method_setImplementation(method, overridden);
+  g_original_send_event_impl = (mbw_send_event_impl_t)original;
 }
 
 MOONBIT_FFI_EXPORT
@@ -363,8 +912,10 @@ uint64_t mbw_create_window(int32_t raw_id, int32_t width, int32_t height, int32_
   content_view.imeCursorY = 0;
   content_view.imeCursorWidth = 1;
   content_view.imeCursorHeight = 1;
+  content_view.rawId = raw_id;
   content_view.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
   window.contentView = content_view;
+  [window setAcceptsMouseMovedEvents:YES];
 
   MBWWindowBox *box = [[MBWWindowBox alloc] init];
   box.window = window;
