@@ -1,7 +1,9 @@
 import {
   "Milky2018/window/core",
   "Milky2018/window/dpi",
+  "Milky2018/window/examples/util",
   "Milky2018/window/macos",
+  "moonbitlang/core/encoding/utf8",
 }
 
 options(

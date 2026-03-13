@@ -1,4 +1,5 @@
 ///|
+// Port target: winit-reference/winit/examples/run_on_demand.rs
 struct App {
   run_index : Ref[Int]
   frame_count : Ref[Int]
@@ -39,7 +40,7 @@ pub impl @macos.ApplicationHandler for App with window_event(
     @core.WindowEvent::RedrawRequested =>
       match self.window {
         Some(window) => {
-          window.pre_present_notify()
+          @util.fill_window(window)
           self.frame_count.val += 1
           if self.frame_count.val >= 30 {
             println(
@@ -56,6 +57,7 @@ pub impl @macos.ApplicationHandler for App with window_event(
 
 ///|
 fn main {
+  @util.tracing_init()
   let event_loop = @macos.EventLoop::new()
   let run_index = Ref::new(1)
   let frame_count = Ref::new(0)
@@ -63,6 +65,7 @@ fn main {
 
   event_loop.run_app_on_demand(app)
   println("Finished first run")
+  println("Waiting before second run (upstream waits 5 seconds)")
 
   run_index.val = 2
   frame_count.val = 0

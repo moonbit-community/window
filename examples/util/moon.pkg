@@ -1,0 +1,8 @@
+import {
+  "Milky2018/window/macos",
+}
+
+options(
+  "supported-targets": "native",
+  targets: { "util.mbt": [ "native" ] },
+)

@@ -1,4 +1,5 @@
 ///|
+// Port target: winit-reference/winit/examples/dnd.rs
 struct Application {
   mut window : @macos.Window?
 }
@@ -14,7 +15,7 @@ pub impl @macos.ApplicationHandler for Application with can_create_surfaces(
   event_loop,
 ) {
   let window_attributes = @core.WindowAttributes::default().with_title(
-    "Drag and drop files on me",
+    "Drag and drop files on me!",
   )
   let window = event_loop.create_window(window_attributes)
   window.request_redraw()
@@ -53,7 +54,7 @@ pub impl @macos.ApplicationHandler for Application with window_event(
     @core.WindowEvent::DragLeft(position) => println("Drag left: \{position}")
     @core.WindowEvent::RedrawRequested =>
       match self.window {
-        Some(window) => window.pre_present_notify()
+        Some(window) => @util.fill_window(window)
         None => ()
       }
     _ => ()
@@ -62,6 +63,7 @@ pub impl @macos.ApplicationHandler for Application with window_event(
 
 ///|
 fn main {
+  @util.tracing_init()
   let event_loop = @macos.EventLoop::new()
   event_loop.run_app(Application::new())
 }

@@ -1,5 +1,6 @@
 import {
   "Milky2018/window/core",
+  "Milky2018/window/examples/util",
   "Milky2018/window/macos",
 }
 

@@ -1,4 +1,5 @@
 ///|
+// Port target: winit-reference/winit/examples/control_flow.rs
 enum Mode {
   Wait
   WaitUntil
@@ -51,7 +52,7 @@ pub impl @macos.ApplicationHandler for ControlFlowDemo with can_create_surfaces(
   event_loop,
 ) {
   let window_attributes = @core.WindowAttributes::default().with_title(
-    "Press 1/2/3 to switch control flow. Press R to toggle redraw, Esc to exit.",
+    "Press 1, 2, 3 to change control flow mode. Press R to toggle redraw requests.",
   )
   let window = event_loop.create_window(window_attributes)
   self.window = Some(window)
@@ -92,10 +93,7 @@ pub impl @macos.ApplicationHandler for ControlFlowDemo with window_event(
       }
     @core.WindowEvent::RedrawRequested =>
       match self.window {
-        Some(window) => {
-          window.pre_present_notify()
-          println("redraw")
-        }
+        Some(window) => @util.fill_window(window)
         None => ()
       }
     _ => ()
@@ -136,6 +134,7 @@ pub impl @macos.ApplicationHandler for ControlFlowDemo with about_to_wait(
 
 ///|
 fn main {
+  @util.tracing_init()
   println("Press 1/2/3 to switch Wait/WaitUntil/Poll modes.")
   println("Press R to toggle redraw requests; press Esc to close.")
   let event_loop = @macos.EventLoop::new()

@@ -1,4 +1,5 @@
 ///|
+// Port target: winit-reference/winit/examples/window.rs
 struct App {
   mut window : @macos.Window?
 }
@@ -8,9 +9,7 @@ pub impl @macos.ApplicationHandler for App with can_create_surfaces(
   self,
   event_loop,
 ) {
-  let window_attributes = @core.WindowAttributes::default().with_title(
-    "winit/window example (MoonBit)",
-  )
+  let window_attributes = @core.WindowAttributes::default()
   let window = event_loop.create_window(window_attributes)
   self.window = Some(window)
 }
@@ -37,10 +36,7 @@ pub impl @macos.ApplicationHandler for App with window_event(
     }
     @core.WindowEvent::RedrawRequested =>
       match self.window {
-        Some(window) => {
-          window.pre_present_notify()
-          println("Redraw requested")
-        }
+        Some(window) => @util.fill_window(window)
         None => ()
       }
     _ => ()
@@ -49,6 +45,7 @@ pub impl @macos.ApplicationHandler for App with window_event(
 
 ///|
 fn main {
+  @util.tracing_init()
   let event_loop = @macos.EventLoop::new()
   event_loop.run_app({ window: None })
 }

@@ -1,36 +1,76 @@
 ///|
-struct App {
-  mut window : @macos.Window?
-  mut input_text : String
+// Port target: winit-reference/winit/examples/ime.rs
+struct TextInputState {
   mut ime_enabled : Bool
-  mut modifiers : @core.ModifiersState
+  mut contents : String
   mut purpose : @core.ImePurpose
   mut hint : @core.ImeHint
 }
 
 ///|
-fn App::new() -> App {
+fn TextInputState::new() -> TextInputState {
   {
-    window: None,
-    input_text: "",
     ime_enabled: true,
-    modifiers: @core.ModifiersState::none(),
+    contents: "",
     purpose: @core.ImePurpose::Normal,
     hint: @core.ImeHint::none(),
   }
 }
 
 ///|
-fn App::print_state(self : App) -> Unit {
-  println("text=\{self.input_text}")
+fn TextInputState::append_text(self : TextInputState, text : String) -> Unit {
+  self.contents = self.contents + text
+}
+
+///|
+fn TextInputState::pop(self : TextInputState) -> Unit {
+  let chars = self.contents.to_array()
+  ignore(chars.pop())
+  self.contents = String::from_array(chars)
+}
+
+///|
+fn TextInputState::delete_surrounding(
+  self : TextInputState,
+  before_bytes : Int,
+  _after_bytes : Int,
+) -> Unit {
+  let chars = self.contents.to_array()
+  let mut remaining = before_bytes
+  while remaining > 0 && !chars.is_empty() {
+    ignore(chars.pop())
+    remaining -= 1
+  }
+  self.contents = String::from_array(chars)
+}
+
+///|
+struct App {
+  mut window : @macos.Window?
+  input_state : TextInputState
+  mut modifiers : @core.ModifiersState
+}
+
+///|
+fn App::new() -> App {
+  {
+    window: None,
+    input_state: TextInputState::new(),
+    modifiers: @core.ModifiersState::none(),
+  }
+}
+
+///|
+fn App::print_input_state(self : App) -> Unit {
+  println("text=\{self.input_state.contents}|")
   println(
-    "ime_enabled=\{self.ime_enabled}, purpose=\{self.purpose}, hint=\{self.hint}",
+    "ime_enabled=\{self.input_state.ime_enabled}, purpose=\{self.input_state.purpose}, hint=\{self.input_state.hint}",
   )
 }
 
 ///|
 fn App::cycle_purpose(self : App) -> Unit {
-  self.purpose = match self.purpose {
+  self.input_state.purpose = match self.input_state.purpose {
     @core.ImePurpose::Normal => @core.ImePurpose::Password
     @core.ImePurpose::Password => @core.ImePurpose::Terminal
     @core.ImePurpose::Terminal => @core.ImePurpose::Number
@@ -47,45 +87,86 @@ fn App::cycle_purpose(self : App) -> Unit {
 
 ///|
 fn App::cycle_hint(self : App) -> Unit {
-  if self.hint == @core.ImeHint::none() {
-    self.hint = @core.ImeHint::completion()
-  } else if self.hint == @core.ImeHint::completion() {
-    self.hint = @core.ImeHint::spellcheck()
-  } else if self.hint == @core.ImeHint::spellcheck() {
-    self.hint = @core.ImeHint::completion().union(@core.ImeHint::spellcheck())
+  if self.input_state.hint == @core.ImeHint::none() {
+    self.input_state.hint = @core.ImeHint::completion()
+  } else if self.input_state.hint == @core.ImeHint::completion() {
+    self.input_state.hint = @core.ImeHint::spellcheck()
+  } else if self.input_state.hint == @core.ImeHint::spellcheck() {
+    self.input_state.hint = @core.ImeHint::completion().union(
+      @core.ImeHint::spellcheck(),
+    )
   } else {
-    self.hint = @core.ImeHint::none()
+    self.input_state.hint = @core.ImeHint::none()
   }
 }
 
 ///|
-fn App::apply_ime_state(self : App) -> Unit {
+fn App::ime_update_request(self : App) -> @core.ImeRequestData {
+  let text = self.input_state.contents
+  let utf8_bytes = @utf8.encode(text[:], bom=false)
+  let cursor = utf8_bytes.length()
+  let cursor_pos = @dpi.LogicalPosition::new((cursor * 10).to_double(), 0.0)
+  let mut request = @core.ImeRequestData::default()
+    .with_hint_and_purpose(self.input_state.hint, self.input_state.purpose)
+    .with_cursor_area(
+      cursor_pos.into_position(),
+      @dpi.PhysicalSize::new(20, 20).into_size(),
+    )
+
+  let surrounding = Some(@core.ImeSurroundingText::new(text, cursor, cursor)) catch {
+    _ => None
+  }
+
+  match surrounding {
+    Some(value) => request = request.with_surrounding_text(value)
+    None => ()
+  }
+  request
+}
+
+///|
+fn App::request_ime_update(self : App) -> Unit {
   match self.window {
-    Some(window) => {
-      window.set_ime_allowed(self.ime_enabled)
-      window.set_ime_purpose(self.purpose)
-      window.set_ime_hints(self.hint)
-      window.set_ime_cursor_area(
-        @dpi.LogicalPosition::new(16.0, 16.0).into_position(),
-        @dpi.LogicalSize::new(20.0, 20.0).into_size(),
-      )
-      let surrounding = try {
-        let cursor = self.input_text.length()
-        Some(@core.ImeSurroundingText::new(self.input_text, cursor, cursor))
-      } catch {
-        _ => None
+    Some(window) =>
+      window.request_ime_update(
+        @core.ImeRequest::Update(self.ime_update_request()),
+      ) catch {
+        err => println("request_ime_update failed: \{err}")
       }
-      window.set_ime_surrounding_text(surrounding)
-    }
     None => ()
   }
 }
 
 ///|
-fn App::backspace(self : App) -> Unit {
-  let chars = self.input_text.to_array()
-  ignore(chars.pop())
-  self.input_text = String::from_array(chars)
+fn App::toggle_ime(self : App) -> Unit {
+  let enable = !self.input_state.ime_enabled
+  match self.window {
+    Some(window) =>
+      if enable {
+        let enable_request = @core.ImeEnableRequest::new(
+          @core.ImeCapabilities::new(true, true, true),
+          self.ime_update_request(),
+        )
+        match enable_request {
+          Some(request) =>
+            try {
+              window.request_ime_update(@core.ImeRequest::Enable(request))
+              self.input_state.ime_enabled = true
+            } catch {
+              err => println("enable IME failed: \{err}")
+            }
+          None => ()
+        }
+      } else {
+        try {
+          window.request_ime_update(@core.ImeRequest::Disable)
+          self.input_state.ime_enabled = false
+        } catch {
+          err => println("disable IME failed: \{err}")
+        }
+      }
+    None => ()
+  }
 }
 
 ///|
@@ -94,50 +175,79 @@ fn App::handle_key_pressed(
   event_loop : @macos.ActiveEventLoop,
   key_event : @core.KeyEvent,
 ) -> Unit {
-  let logical_key = key_event.logical_key()
-  if logical_key is @core.Key::Named(@core.NamedKey::Escape) {
+  let key_without_modifiers = key_event.key_without_modifiers()
+  if key_without_modifiers is @core.Key::Named(@core.NamedKey::Escape) {
     event_loop.exit()
     return
   }
 
-  if self.modifiers.control_key() {
-    match logical_key {
+  if self.modifiers == @core.ModifiersState::control() {
+    match key_without_modifiers {
       @core.Key::Character("i") | @core.Key::Character("I") => {
-        self.ime_enabled = !self.ime_enabled
-        self.apply_ime_state()
-        println("toggle ime_enabled=\{self.ime_enabled}")
+        self.toggle_ime()
+        println("IME enabled now \{self.input_state.ime_enabled}")
       }
       @core.Key::Character("p") | @core.Key::Character("P") => {
         self.cycle_purpose()
-        self.apply_ime_state()
-        println("purpose=\{self.purpose}")
+        if self.input_state.ime_enabled {
+          self.request_ime_update()
+        }
+        println("IME purpose now \{self.input_state.purpose}")
       }
       @core.Key::Character("h") | @core.Key::Character("H") => {
         self.cycle_hint()
-        self.apply_ime_state()
-        println("hint=\{self.hint}")
+        if self.input_state.ime_enabled {
+          self.request_ime_update()
+        }
+        println("IME hint now \{self.input_state.hint}")
       }
       _ => ()
     }
     return
   }
 
-  match logical_key {
+  match key_without_modifiers {
     @core.Key::Named(@core.NamedKey::Backspace) => {
-      self.backspace()
-      self.apply_ime_state()
-      self.print_state()
+      self.input_state.pop()
+      if self.input_state.ime_enabled {
+        self.request_ime_update()
+      }
+      self.print_input_state()
     }
     _ =>
       match key_event.text() {
         Some(text) =>
           if !text.is_empty() {
-            self.input_text = self.input_text + text
-            self.apply_ime_state()
-            self.print_state()
+            self.input_state.append_text(text)
+            if self.input_state.ime_enabled {
+              self.request_ime_update()
+            }
+            self.print_input_state()
           }
         None => ()
       }
+  }
+}
+
+///|
+fn App::handle_ime_event(self : App, ime_event : @core.Ime) -> Unit {
+  println("IME event: \{ime_event}")
+  match ime_event {
+    @core.Ime::Commit(text) => {
+      self.input_state.append_text(text)
+      if self.input_state.ime_enabled {
+        self.request_ime_update()
+      }
+      self.print_input_state()
+    }
+    @core.Ime::DeleteSurrounding(before_bytes, after_bytes) => {
+      self.input_state.delete_surrounding(before_bytes, after_bytes)
+      if self.input_state.ime_enabled {
+        self.request_ime_update()
+      }
+      self.print_input_state()
+    }
+    _ => ()
   }
 }
 
@@ -151,7 +261,22 @@ pub impl @macos.ApplicationHandler for App with can_create_surfaces(
   )
   let window = event_loop.create_window(window_attributes)
   self.window = Some(window)
-  self.apply_ime_state()
+  match self.window {
+    Some(current_window) => {
+      let enable_request = @core.ImeEnableRequest::new(
+        @core.ImeCapabilities::new(true, true, true),
+        self.ime_update_request(),
+      )
+      match enable_request {
+        Some(request) =>
+          current_window.request_ime_update(@core.ImeRequest::Enable(request)) catch {
+            err => println("initial IME enable failed: \{err}")
+          }
+        None => ()
+      }
+    }
+    None => ()
+  }
 }
 
 ///|
@@ -170,24 +295,12 @@ pub impl @macos.ApplicationHandler for App with window_event(
       }
     @core.WindowEvent::RedrawRequested =>
       match self.window {
-        Some(window) => window.pre_present_notify()
+        Some(window) => @util.fill_window(window)
         None => ()
       }
-    @core.WindowEvent::Ime(ime_event) => {
-      println("IME event: \{ime_event}")
-      match ime_event {
-        @core.Ime::Commit(text) => {
-          self.input_text = self.input_text + text
-          self.apply_ime_state()
-          self.print_state()
-        }
-        _ => ()
-      }
-    }
-    @core.WindowEvent::ModifiersChanged(modifiers) => {
+    @core.WindowEvent::Ime(ime_event) => self.handle_ime_event(ime_event)
+    @core.WindowEvent::ModifiersChanged(modifiers) =>
       self.modifiers = modifiers.state()
-      println("modifiers=\{self.modifiers}")
-    }
     @core.WindowEvent::KeyboardInput(_device_id, key_event, is_synthetic) =>
       if !is_synthetic && key_event.state() is @core.ElementState::Pressed {
         self.handle_key_pressed(event_loop, key_event)
@@ -198,12 +311,12 @@ pub impl @macos.ApplicationHandler for App with window_event(
 
 ///|
 fn main {
-  println("IME example controls:")
-  println("  Ctrl+I toggle IME")
-  println("  Ctrl+P cycle IME purpose")
-  println("  Ctrl+H cycle IME hint")
-  println("  Esc to exit")
+  println("This showcases IME support by emulating a text field.")
+  println("Use Ctrl+I to toggle IME support.")
+  println("Use Ctrl+P to cycle content purpose values.")
+  println("Use Ctrl+H to cycle content hint permutations.")
 
+  @util.tracing_init()
   let event_loop = @macos.EventLoop::new()
   event_loop.run_app(App::new())
 }

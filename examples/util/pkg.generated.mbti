@@ -1,0 +1,26 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "Milky2018/window/examples/util"
+
+import {
+  "Milky2018/window/macos",
+}
+
+// Values
+pub fn cleanup_window(@macos.Window) -> Unit
+
+pub fn fill_window(@macos.Window) -> Unit
+
+pub fn fill_window_with_animated_color(@macos.Window, Int64) -> Unit
+
+pub fn fill_window_with_color(@macos.Window, Int) -> Unit
+
+pub fn tracing_init() -> Unit
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits
+

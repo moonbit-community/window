@@ -1,4 +1,5 @@
 ///|
+// Port target: winit-reference/winit/examples/child_window.rs
 struct App {
   mut parent_window : @macos.Window?
   windows : Array[@macos.Window]
@@ -8,14 +9,6 @@ struct App {
 ///|
 fn App::new() -> App {
   { parent_window: None, windows: [], child_count: 0 }
-}
-
-///|
-fn App::window_by_id(self : App, window_id : @core.WindowId) -> @macos.Window? {
-  match self.windows.search_by(window => window.id() == window_id) {
-    Some(index) => Some(self.windows[index])
-    None => None
-  }
 }
 
 ///|
@@ -93,8 +86,14 @@ pub impl @macos.ApplicationHandler for App with window_event(
         self.spawn_child_window(event_loop)
       }
     @core.WindowEvent::RedrawRequested =>
-      match self.window_by_id(window_id) {
-        Some(window) => window.pre_present_notify()
+      match self.windows.search_by(window => window.id() == window_id) {
+        Some(index) =>
+          if index == 0 {
+            @util.fill_window(self.windows[index])
+          } else {
+            let color = (0xff000000 : Int) + ((index * 0x00010101) & 0x00ffffff)
+            @util.fill_window_with_color(self.windows[index], color)
+          }
         None => ()
       }
     _ => ()
@@ -111,6 +110,7 @@ pub impl @macos.ApplicationHandler for App with about_to_wait(
 
 ///|
 fn main {
+  @util.tracing_init()
   let event_loop = @macos.EventLoop::new()
   event_loop.run_app(App::new())
 }
