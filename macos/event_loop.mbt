@@ -599,6 +599,9 @@ fn[A : ApplicationHandler] EventLoop::try_start_pump(
   if self.pump_started_ {
     @core.PumpStatus::Continue
   } else {
+    if is_launched() == false {
+      set_stop_on_launch()
+    }
     self.try_start_running()
     self.pump_started_ = true
     self.run_init_sequence(app)

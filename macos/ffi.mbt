@@ -159,6 +159,27 @@ fn native_install_input_event_callback(
 }
 
 ///|
+fn native_install_text_input_event_callback(
+  call_closure : FuncRef[
+    (
+      (Int, Int, Double, Double, Int, Bytes, Int, Int, Bytes) -> Unit,
+      Int,
+      Int,
+      Double,
+      Double,
+      Int,
+      Bytes,
+      Int,
+      Int,
+      Bytes,
+    ) -> Unit,
+  ],
+  callback : (Int, Int, Double, Double, Int, Bytes, Int, Int, Bytes) -> Unit,
+) -> Unit {
+  appkit_install_text_input_event_callback(call_closure, callback)
+}
+
+///|
 fn native_install_device_event_callback(
   call_closure : FuncRef[
     ((Int, Int, Double, Double) -> Unit, Int, Int, Double, Double) -> Unit,
@@ -994,6 +1015,25 @@ extern "C" fn appkit_install_input_event_callback(
     Int,
   ) -> Unit,
 ) -> Unit = "mbw_install_input_event_callback"
+
+///|
+extern "C" fn appkit_install_text_input_event_callback(
+  call_closure : FuncRef[
+    (
+      (Int, Int, Double, Double, Int, Bytes, Int, Int, Bytes) -> Unit,
+      Int,
+      Int,
+      Double,
+      Double,
+      Int,
+      Bytes,
+      Int,
+      Int,
+      Bytes,
+    ) -> Unit,
+  ],
+  callback : (Int, Int, Double, Double, Int, Bytes, Int, Int, Bytes) -> Unit,
+) -> Unit = "mbw_install_text_input_event_callback"
 
 ///|
 extern "C" fn appkit_install_device_event_callback(

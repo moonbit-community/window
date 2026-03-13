@@ -24,6 +24,7 @@ priv struct AppStateRuntime {
   mut activation_policy : Int
   mut default_menu : Bool
   mut activate_ignoring_other_apps : Bool
+  mut stop_on_launch : Bool
   mut stop_before_wait : Bool
   mut stop_after_wait : Bool
   mut stop_on_redraw : Bool
@@ -50,6 +51,7 @@ fn AppStateRuntime::new() -> AppStateRuntime {
     activation_policy: -1,
     default_menu: true,
     activate_ignoring_other_apps: true,
+    stop_on_launch: false,
     stop_before_wait: false,
     stop_after_wait: false,
     stop_on_redraw: false,
@@ -265,6 +267,23 @@ fn app_state_install_native_callbacks() -> Unit {
     },
     native_callback_input_event,
   )
+  native_install_text_input_event_callback(
+    fn(
+      callback,
+      raw_id,
+      kind,
+      x,
+      y,
+      state,
+      text,
+      cursor_start,
+      cursor_end,
+      path,
+    ) {
+      callback(raw_id, kind, x, y, state, text, cursor_start, cursor_end, path)
+    },
+    native_callback_text_input_event,
+  )
   native_install_window_event_callback(
     fn(callback, kind, raw_id, arg0, arg1, arg2, argd) {
       callback(kind, raw_id, arg0, arg1, arg2, argd)
@@ -314,6 +333,23 @@ fn native_callback_input_event(
   queue_native_input_event(
     raw_id, kind, x, y, state, button, modifiers, scancode, repeat, pointer_source,
     pointer_kind, scroll_delta_kind, delta_x, delta_y, phase,
+  )
+}
+
+///|
+fn native_callback_text_input_event(
+  raw_id : Int,
+  kind : Int,
+  x : Double,
+  y : Double,
+  state : Int,
+  text : Bytes,
+  cursor_start : Int,
+  cursor_end : Int,
+  path : Bytes,
+) -> Unit {
+  queue_native_text_input_event(
+    raw_id, kind, x, y, state, text, cursor_start, cursor_end, path,
   )
 }
 
@@ -461,6 +497,11 @@ fn app_state_configure_launch_policy(
 ///|
 fn app_state_set_stop_before_wait(value : Bool) -> Unit {
   app_state_runtime.val.stop_before_wait = value
+}
+
+///|
+fn app_state_set_stop_on_launch(value : Bool) -> Unit {
+  app_state_runtime.val.stop_on_launch = value
 }
 
 ///|
@@ -647,6 +688,11 @@ fn app_state_did_finish_launching() -> Unit {
   app_state_runtime.val.is_launched = true
   app_state_apply_launch_policy()
   app_state_runtime.val.waker.start()
+  if app_state_runtime.val.stop_on_launch {
+    app_state_runtime.val.stop_on_launch = false
+    app_state_set_stop_before_wait(true)
+    app_state_set_stop_after_wait(false)
+  }
 }
 
 ///|
@@ -674,6 +720,7 @@ fn app_state_internal_exit() -> Unit {
   app_state_runtime.val.event_handler_in_use = false
   app_state_runtime.val.pending_proxy_wake = false
   app_state_runtime.val.stop_on_redraw = false
+  app_state_runtime.val.stop_on_launch = false
   app_state_runtime.val.stop_before_wait = false
   app_state_runtime.val.stop_after_wait = false
   app_state_runtime.val.waker.stop()
@@ -982,7 +1029,6 @@ fn setup_global(
   activate_ignoring_other_apps : Bool,
 ) -> Unit {
   get()
-  set_stop_on_launch()
   app_state_configure_launch_policy(
     activation_policy, default_menu, activate_ignoring_other_apps,
   )
@@ -1016,7 +1062,7 @@ fn event_loop_proxy() -> EventLoopProxy {
 ///|
 // Port target: app_state.rs::set_stop_on_launch
 fn set_stop_on_launch() -> Unit {
-  ()
+  app_state_set_stop_on_launch(true)
 }
 
 ///|

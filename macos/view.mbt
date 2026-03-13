@@ -343,6 +343,39 @@ fn queue_native_input_event(
 }
 
 ///|
+fn queue_native_text_input_event(
+  raw_id : Int,
+  kind : Int,
+  x : Double,
+  y : Double,
+  state : Int,
+  text : Bytes,
+  cursor_start : Int,
+  cursor_end : Int,
+  path : Bytes,
+) -> Unit {
+  let empty_text = @utf8.encode(""[:], bom=false)
+  match kind {
+    8 =>
+      queue_input_event(
+        raw_id, 8, 0.0, 0.0, 0, 0, 0, 0, 0, 0, 0, 0, 0.0, 0.0, 0, empty_text, empty_text,
+        empty_text, state, text, cursor_start, cursor_end, empty_text,
+      )
+    9 | 10 | 11 | 12 =>
+      queue_input_event(
+        raw_id, kind, x, y, state, 0, 0, 0, 0, 0, 0, 0, 0.0, 0.0, 0, empty_text,
+        empty_text, empty_text, 0, empty_text, -1, -1, path,
+      )
+    18 =>
+      queue_input_event(
+        raw_id, 18, 0.0, 0.0, 0, 0, 0, 0, 0, 0, 0, 0, 0.0, 0.0, 0, empty_text, empty_text,
+        empty_text, 0, text, -1, -1, empty_text,
+      )
+    _ => ()
+  }
+}
+
+///|
 fn initial_fullscreen_state(
   attributes : @core.WindowAttributes,
 ) -> @core.Fullscreen? {
