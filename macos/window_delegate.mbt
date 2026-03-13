@@ -448,8 +448,13 @@ fn set_window_borderless_game(
   window_handle : UInt64,
   borderless_game : Bool,
 ) -> Unit {
-  let _ = window_handle
-  let _ = borderless_game
+  synthetic_update_window(window_handle, fn(window) {
+    if native_window_is_fullscreen(window.native_handle) {
+      set_application_presentation_options(
+        simple_fullscreen_presentation_options(borderless_game),
+      )
+    }
+  })
 }
 
 ///|
@@ -1007,10 +1012,14 @@ fn set_window_exclusive_runtime_state(
   display_id : UInt64,
   saved_mode_handle : UInt64,
 ) -> Unit {
-  let _ = window_handle
-  let _ = exclusive_fullscreen
   let _ = display_id
   let _ = saved_mode_handle
+  synthetic_update_window(window_handle, fn(window) {
+    native_window_set_movable(
+      window.native_handle,
+      exclusive_fullscreen == false,
+    )
+  })
 }
 
 ///|
@@ -2055,6 +2064,11 @@ pub fn Window::set_borderless_game(
 ) -> Unit {
   self.borderless_game_state = borderless_game
   set_window_borderless_game(self.raw_window_handle, borderless_game)
+  if self.simple_fullscreen_state {
+    set_application_presentation_options(
+      simple_fullscreen_presentation_options(borderless_game),
+    )
+  }
 }
 
 ///|
