@@ -297,6 +297,77 @@ fn key_from_native_text(text : String?) -> @core.Key? {
 }
 
 ///|
+fn fallback_character_from_key_code(code : @core.KeyCode) -> String? {
+  match code {
+    @core.KeyCode::KeyA => Some("a")
+    @core.KeyCode::KeyB => Some("b")
+    @core.KeyCode::KeyC => Some("c")
+    @core.KeyCode::KeyD => Some("d")
+    @core.KeyCode::KeyE => Some("e")
+    @core.KeyCode::KeyF => Some("f")
+    @core.KeyCode::KeyG => Some("g")
+    @core.KeyCode::KeyH => Some("h")
+    @core.KeyCode::KeyI => Some("i")
+    @core.KeyCode::KeyJ => Some("j")
+    @core.KeyCode::KeyK => Some("k")
+    @core.KeyCode::KeyL => Some("l")
+    @core.KeyCode::KeyM => Some("m")
+    @core.KeyCode::KeyN => Some("n")
+    @core.KeyCode::KeyO => Some("o")
+    @core.KeyCode::KeyP => Some("p")
+    @core.KeyCode::KeyQ => Some("q")
+    @core.KeyCode::KeyR => Some("r")
+    @core.KeyCode::KeyS => Some("s")
+    @core.KeyCode::KeyT => Some("t")
+    @core.KeyCode::KeyU => Some("u")
+    @core.KeyCode::KeyV => Some("v")
+    @core.KeyCode::KeyW => Some("w")
+    @core.KeyCode::KeyX => Some("x")
+    @core.KeyCode::KeyY => Some("y")
+    @core.KeyCode::KeyZ => Some("z")
+    @core.KeyCode::Digit0 => Some("0")
+    @core.KeyCode::Digit1 => Some("1")
+    @core.KeyCode::Digit2 => Some("2")
+    @core.KeyCode::Digit3 => Some("3")
+    @core.KeyCode::Digit4 => Some("4")
+    @core.KeyCode::Digit5 => Some("5")
+    @core.KeyCode::Digit6 => Some("6")
+    @core.KeyCode::Digit7 => Some("7")
+    @core.KeyCode::Digit8 => Some("8")
+    @core.KeyCode::Digit9 => Some("9")
+    @core.KeyCode::Space => Some(" ")
+    @core.KeyCode::Minus => Some("-")
+    @core.KeyCode::Equal => Some("=")
+    @core.KeyCode::BracketLeft => Some("[")
+    @core.KeyCode::BracketRight => Some("]")
+    @core.KeyCode::Backslash => Some("\\")
+    @core.KeyCode::Semicolon => Some(";")
+    @core.KeyCode::Quote => Some("'")
+    @core.KeyCode::Backquote => Some("`")
+    @core.KeyCode::Comma => Some(",")
+    @core.KeyCode::Period => Some(".")
+    @core.KeyCode::Slash => Some("/")
+    @core.KeyCode::NumpadDecimal => Some(".")
+    @core.KeyCode::NumpadAdd => Some("+")
+    @core.KeyCode::NumpadSubtract => Some("-")
+    @core.KeyCode::NumpadMultiply => Some("*")
+    @core.KeyCode::NumpadDivide => Some("/")
+    @core.KeyCode::Numpad0 => Some("0")
+    @core.KeyCode::Numpad1 => Some("1")
+    @core.KeyCode::Numpad2 => Some("2")
+    @core.KeyCode::Numpad3 => Some("3")
+    @core.KeyCode::Numpad4 => Some("4")
+    @core.KeyCode::Numpad5 => Some("5")
+    @core.KeyCode::Numpad6 => Some("6")
+    @core.KeyCode::Numpad7 => Some("7")
+    @core.KeyCode::Numpad8 => Some("8")
+    @core.KeyCode::Numpad9 => Some("9")
+    @core.KeyCode::NumpadComma => Some(",")
+    _ => None
+  }
+}
+
+///|
 fn dead_or_character_from_native_text(
   text : String?,
   state : @core.ElementState,
@@ -325,7 +396,12 @@ fn key_without_modifiers_from_scancode(
         None =>
           match key_from_native_text(text_without_modifiers) {
             Some(key) => key
-            None => @core.Key::Unidentified(@core.NativeKey::MacOS(scancode))
+            None =>
+              match fallback_character_from_key_code(code) {
+                Some(text) => @core.Key::Character(text)
+                None =>
+                  @core.Key::Unidentified(@core.NativeKey::MacOS(scancode))
+              }
           }
       }
     @core.PhysicalKey::Unidentified(@core.NativeKeyCode::MacOS(code)) =>
