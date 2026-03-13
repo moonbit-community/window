@@ -46,7 +46,9 @@ fn EventLoop::create_custom_cursor_from_url_source(
 ) -> @core.CustomCursor raise @core.RequestError {
   ignore(self)
   validate_url_cursor_source(url, hotspot_x, hotspot_y)
-  custom_cursor_from_native(allocate_custom_cursor_id())
+  custom_cursor_from_native(
+    native_custom_cursor_create_url(url, hotspot_x, hotspot_y),
+  )
 }
 
 ///|
@@ -113,17 +115,9 @@ fn cursor_from_image(
   hotspot_y : Int,
 ) -> @core.CustomCursor raise @core.RequestError {
   validate_rgba_cursor_source(rgba, width, height, hotspot_x, hotspot_y)
-  custom_cursor_from_native(allocate_custom_cursor_id())
-}
-
-///|
-let next_custom_cursor_id : Ref[UInt64] = Ref::new((1 : Int).to_uint64())
-
-///|
-fn allocate_custom_cursor_id() -> UInt64 {
-  let id = next_custom_cursor_id.val
-  next_custom_cursor_id.val = id + (1 : Int).to_uint64()
-  id
+  custom_cursor_from_native(
+    native_custom_cursor_create_rgba(rgba, width, height, hotspot_x, hotspot_y),
+  )
 }
 
 ///|

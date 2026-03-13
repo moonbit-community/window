@@ -607,6 +607,37 @@ fn native_window_set_cursor(handle : UInt64, cursor : Int) -> Unit {
 }
 
 ///|
+fn native_custom_cursor_create_rgba(
+  rgba : Bytes,
+  width : Int,
+  height : Int,
+  hotspot_x : Int,
+  hotspot_y : Int,
+) -> UInt64 {
+  appkit_custom_cursor_create_rgba(
+    rgba,
+    rgba.length(),
+    width,
+    height,
+    hotspot_x,
+    hotspot_y,
+  )
+}
+
+///|
+fn native_custom_cursor_create_url(
+  url : String,
+  hotspot_x : Int,
+  hotspot_y : Int,
+) -> UInt64 {
+  appkit_custom_cursor_create_url(
+    @utf8.encode(url[:], bom=false),
+    hotspot_x,
+    hotspot_y,
+  )
+}
+
+///|
 fn native_window_set_custom_cursor(
   handle : UInt64,
   custom_cursor : UInt64,
@@ -1161,6 +1192,25 @@ extern "C" fn appkit_window_select_tab_at_index(
 
 ///|
 extern "C" fn appkit_window_set_cursor(handle : UInt64, cursor : Int) -> Unit = "mbw_window_set_cursor"
+
+///|
+#borrow(rgba)
+extern "C" fn appkit_custom_cursor_create_rgba(
+  rgba : Bytes,
+  rgba_len : Int,
+  width : Int,
+  height : Int,
+  hotspot_x : Int,
+  hotspot_y : Int,
+) -> UInt64 = "mbw_custom_cursor_create_rgba"
+
+///|
+#borrow(url)
+extern "C" fn appkit_custom_cursor_create_url(
+  url : Bytes,
+  hotspot_x : Int,
+  hotspot_y : Int,
+) -> UInt64 = "mbw_custom_cursor_create_url"
 
 ///|
 extern "C" fn appkit_window_set_custom_cursor(

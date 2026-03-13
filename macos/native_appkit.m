@@ -4,6 +4,7 @@
 #import <moonbit.h>
 #import <stdint.h>
 #include <dlfcn.h>
+#include <string.h>
 
 typedef void (*mbw_window_event_trampoline_t)(void *closure, int32_t kind, int32_t raw_id,
                                               int32_t arg0, int32_t arg1, int32_t arg2,
@@ -172,6 +173,18 @@ static NSString *mbw_string_from_utf8(const char *text) {
   }
   NSString *value = [NSString stringWithUTF8String:text];
   return value == nil ? @"" : value;
+}
+
+static NSURL *mbw_url_from_utf8(const char *text) {
+  NSString *value = mbw_string_from_utf8(text);
+  if (value.length == 0) {
+    return nil;
+  }
+  NSURL *url = [NSURL URLWithString:value];
+  if (url == nil || url.scheme == nil) {
+    url = [NSURL fileURLWithPath:value];
+  }
+  return url;
 }
 
 static void mbw_install_default_menu(void) {
@@ -1210,10 +1223,94 @@ void mbw_window_set_cursor(uint64_t handle, int32_t cursor) {
 }
 
 MOONBIT_FFI_EXPORT
+uint64_t mbw_custom_cursor_create_rgba(const uint8_t *rgba, int32_t rgba_len, int32_t width,
+                                       int32_t height, int32_t hotspot_x, int32_t hotspot_y) {
+  if (rgba == NULL || width <= 0 || height <= 0 || hotspot_x < 0 || hotspot_y < 0) {
+    return 0;
+  }
+  int32_t expected_len = width * height * 4;
+  if (expected_len <= 0 || rgba_len < expected_len) {
+    return 0;
+  }
+
+  NSBitmapImageRep *rep =
+      [[NSBitmapImageRep alloc] initWithBitmapDataPlanes:NULL
+                                               pixelsWide:width
+                                               pixelsHigh:height
+                                            bitsPerSample:8
+                                          samplesPerPixel:4
+                                                 hasAlpha:YES
+                                                 isPlanar:NO
+                                           colorSpaceName:NSDeviceRGBColorSpace
+                                             bitmapFormat:0
+                                              bytesPerRow:width * 4
+                                             bitsPerPixel:32];
+  if (rep == nil || [rep bitmapData] == NULL) {
+    [rep release];
+    return 0;
+  }
+  memcpy([rep bitmapData], rgba, (size_t)expected_len);
+
+  NSImage *image = [[NSImage alloc] initWithSize:NSMakeSize((CGFloat)width, (CGFloat)height)];
+  if (image == nil) {
+    [rep release];
+    return 0;
+  }
+  [image addRepresentation:rep];
+  [rep release];
+
+  NSCursor *cursor = [[NSCursor alloc]
+      initWithImage:image
+            hotSpot:NSMakePoint((CGFloat)hotspot_x, (CGFloat)hotspot_y)];
+  [image release];
+  if (cursor == nil) {
+    return 0;
+  }
+
+  return (uint64_t)(void *)cursor;
+}
+
+MOONBIT_FFI_EXPORT
+uint64_t mbw_custom_cursor_create_url(const char *url, int32_t hotspot_x, int32_t hotspot_y) {
+  if (hotspot_x < 0 || hotspot_y < 0) {
+    return 0;
+  }
+  NSURL *nsurl = mbw_url_from_utf8(url);
+  if (nsurl == nil) {
+    return 0;
+  }
+  NSImage *image = [[NSImage alloc] initWithContentsOfURL:nsurl];
+  if (image == nil) {
+    return 0;
+  }
+  NSCursor *cursor = [[NSCursor alloc]
+      initWithImage:image
+            hotSpot:NSMakePoint((CGFloat)hotspot_x, (CGFloat)hotspot_y)];
+  [image release];
+  if (cursor == nil) {
+    return 0;
+  }
+  return (uint64_t)(void *)cursor;
+}
+
+MOONBIT_FFI_EXPORT
 int32_t mbw_window_set_custom_cursor(uint64_t handle, uint64_t custom_cursor) {
-  (void)handle;
-  (void)custom_cursor;
-  return 0;
+  MBWWindowBox *box = mbw_window_box_from_handle(handle);
+  if (box == nil || box.window == nil || custom_cursor == 0) {
+    return 0;
+  }
+  id cursor_obj = (__bridge id)(void *)custom_cursor;
+  if (cursor_obj == nil || ![cursor_obj isKindOfClass:[NSCursor class]]) {
+    return 0;
+  }
+  NSCursor *cursor = (NSCursor *)cursor_obj;
+  [cursor set];
+  NSView *content_view = box.window.contentView;
+  if (content_view != nil) {
+    [content_view discardCursorRects];
+    [content_view addCursorRect:content_view.bounds cursor:cursor];
+  }
+  return 1;
 }
 
 MOONBIT_FFI_EXPORT
