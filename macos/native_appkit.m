@@ -174,6 +174,81 @@ static NSString *mbw_string_from_utf8(const char *text) {
   return value == nil ? @"" : value;
 }
 
+static void mbw_install_default_menu(void) {
+  NSApplication *app = [NSApplication sharedApplication];
+  NSString *process_name = [[NSProcessInfo processInfo] processName];
+  if (process_name == nil || process_name.length == 0) {
+    process_name = @"Application";
+  }
+
+  NSMenu *main_menu = [[NSMenu alloc] initWithTitle:@""];
+  NSMenuItem *app_menu_item = [[NSMenuItem alloc] initWithTitle:@"" action:nil keyEquivalent:@""];
+  [main_menu addItem:app_menu_item];
+
+  NSMenu *app_menu = [[NSMenu alloc] initWithTitle:@""];
+  [app_menu_item setSubmenu:app_menu];
+
+  NSMenuItem *about_item = [[NSMenuItem alloc]
+      initWithTitle:[NSString stringWithFormat:@"About %@", process_name]
+             action:@selector(orderFrontStandardAboutPanel:)
+      keyEquivalent:@""];
+  [about_item setTarget:app];
+  [app_menu addItem:about_item];
+  [about_item release];
+
+  [app_menu addItem:[NSMenuItem separatorItem]];
+
+  NSMenuItem *services_item =
+      [[NSMenuItem alloc] initWithTitle:@"Services" action:nil keyEquivalent:@""];
+  NSMenu *services_menu = [[NSMenu alloc] initWithTitle:@"Services"];
+  [app setServicesMenu:services_menu];
+  [services_item setSubmenu:services_menu];
+  [app_menu addItem:services_item];
+  [services_menu release];
+  [services_item release];
+
+  NSMenuItem *hide_item = [[NSMenuItem alloc]
+      initWithTitle:[NSString stringWithFormat:@"Hide %@", process_name]
+             action:@selector(hide:)
+      keyEquivalent:@"h"];
+  [hide_item setTarget:app];
+  [app_menu addItem:hide_item];
+  [hide_item release];
+
+  NSMenuItem *hide_others_item =
+      [[NSMenuItem alloc] initWithTitle:@"Hide Others"
+                                 action:@selector(hideOtherApplications:)
+                          keyEquivalent:@"h"];
+  [hide_others_item setTarget:app];
+  [hide_others_item setKeyEquivalentModifierMask:(NSEventModifierFlagOption |
+                                                  NSEventModifierFlagCommand)];
+  [app_menu addItem:hide_others_item];
+  [hide_others_item release];
+
+  NSMenuItem *show_all_item =
+      [[NSMenuItem alloc] initWithTitle:@"Show All"
+                                 action:@selector(unhideAllApplications:)
+                          keyEquivalent:@""];
+  [show_all_item setTarget:app];
+  [app_menu addItem:show_all_item];
+  [show_all_item release];
+
+  [app_menu addItem:[NSMenuItem separatorItem]];
+
+  NSMenuItem *quit_item = [[NSMenuItem alloc]
+      initWithTitle:[NSString stringWithFormat:@"Quit %@", process_name]
+             action:@selector(terminate:)
+      keyEquivalent:@"q"];
+  [quit_item setTarget:app];
+  [app_menu addItem:quit_item];
+  [quit_item release];
+
+  [app setMainMenu:main_menu];
+  [app_menu release];
+  [app_menu_item release];
+  [main_menu release];
+}
+
 static NSCursor *mbw_cursor_from_kind(int32_t cursor) {
   switch (cursor) {
   case 10:
@@ -1173,20 +1248,24 @@ int32_t mbw_window_set_cursor_position(uint64_t handle, int32_t x, int32_t y) {
   NSRect content_rect = [box.window contentRectForFrameRect:box.window.frame];
   CGPoint point = CGPointMake(content_rect.origin.x + (CGFloat)x,
                               content_rect.origin.y + content_rect.size.height - (CGFloat)y);
-  CGWarpMouseCursorPosition(point);
-  return 1;
+  CGError warp_err = CGWarpMouseCursorPosition(point);
+  if (warp_err != kCGErrorSuccess) {
+    return 0;
+  }
+  CGError associate_err = CGAssociateMouseAndMouseCursorPosition(true);
+  return associate_err == kCGErrorSuccess ? 1 : 0;
 }
 
 MOONBIT_FFI_EXPORT
 int32_t mbw_window_set_cursor_grab(uint64_t handle, int32_t mode) {
   (void)handle;
   if (mode == 0) {
-    CGAssociateMouseAndMouseCursorPosition(true);
-    return 1;
+    CGError err = CGAssociateMouseAndMouseCursorPosition(true);
+    return err == kCGErrorSuccess ? 1 : 0;
   }
   if (mode == 1) {
-    CGAssociateMouseAndMouseCursorPosition(false);
-    return 1;
+    CGError err = CGAssociateMouseAndMouseCursorPosition(false);
+    return err == kCGErrorSuccess ? 1 : 0;
   }
   return 0;
 }
@@ -1253,6 +1332,63 @@ void mbw_set_application_presentation_options(uint64_t options) {
   mbw_ensure_app_initialized();
   NSApplication *app = [NSApplication sharedApplication];
   app.presentationOptions = (NSApplicationPresentationOptions)options;
+}
+
+MOONBIT_FFI_EXPORT
+void mbw_application_hide(void) {
+  mbw_ensure_app_initialized();
+  [[NSApplication sharedApplication] hide:nil];
+}
+
+MOONBIT_FFI_EXPORT
+void mbw_application_hide_other_applications(void) {
+  mbw_ensure_app_initialized();
+  [[NSApplication sharedApplication] hideOtherApplications:nil];
+}
+
+MOONBIT_FFI_EXPORT
+void mbw_application_set_allows_automatic_window_tabbing(int32_t enabled) {
+  if ([NSWindow respondsToSelector:@selector(setAllowsAutomaticWindowTabbing:)]) {
+    [NSWindow setAllowsAutomaticWindowTabbing:(enabled ? YES : NO)];
+  }
+}
+
+MOONBIT_FFI_EXPORT
+int32_t mbw_application_allows_automatic_window_tabbing(void) {
+  if ([NSWindow respondsToSelector:@selector(allowsAutomaticWindowTabbing)]) {
+    return [NSWindow allowsAutomaticWindowTabbing] ? 1 : 0;
+  }
+  return 0;
+}
+
+MOONBIT_FFI_EXPORT
+void mbw_application_set_activation_policy(int32_t activation_policy) {
+  mbw_ensure_app_initialized();
+  NSApplicationActivationPolicy policy = NSApplicationActivationPolicyRegular;
+  if (activation_policy == 1) {
+    policy = NSApplicationActivationPolicyAccessory;
+  } else if (activation_policy == 2) {
+    policy = NSApplicationActivationPolicyProhibited;
+  }
+  [[NSApplication sharedApplication] setActivationPolicy:policy];
+}
+
+MOONBIT_FFI_EXPORT
+void mbw_application_set_activate_ignoring_other_apps(
+    int32_t activate_ignoring_other_apps) {
+  mbw_ensure_app_initialized();
+  [[NSApplication sharedApplication]
+      activateIgnoringOtherApps:(activate_ignoring_other_apps ? YES : NO)];
+}
+
+MOONBIT_FFI_EXPORT
+void mbw_application_initialize_default_menu(int32_t enabled) {
+  mbw_ensure_app_initialized();
+  if (enabled) {
+    mbw_install_default_menu();
+  } else {
+    [[NSApplication sharedApplication] setMainMenu:nil];
+  }
 }
 
 MOONBIT_FFI_EXPORT

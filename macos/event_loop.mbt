@@ -190,14 +190,16 @@ pub fn ActiveEventLoop::system_theme(self : ActiveEventLoop) -> @core.Theme? {
 ///|
 // Port target: event_loop.rs::hide_application
 pub fn ActiveEventLoop::hide_application(self : ActiveEventLoop) -> Unit {
-  let _ = self
+  let _ = self.inner
+  native_application_hide()
   application_hidden_state.val = true
 }
 
 ///|
 // Port target: event_loop.rs::hide_other_applications
 pub fn ActiveEventLoop::hide_other_applications(self : ActiveEventLoop) -> Unit {
-  let _ = self
+  let _ = self.inner
+  native_application_hide_other_applications()
   other_applications_hidden_state.val = true
 }
 
@@ -207,7 +209,8 @@ pub fn ActiveEventLoop::set_allows_automatic_window_tabbing(
   self : ActiveEventLoop,
   enabled : Bool,
 ) -> Unit {
-  let _ = self
+  let _ = self.inner
+  native_application_set_allows_automatic_window_tabbing(enabled)
   allows_automatic_window_tabbing_state.val = enabled
 }
 
@@ -216,8 +219,10 @@ pub fn ActiveEventLoop::set_allows_automatic_window_tabbing(
 pub fn ActiveEventLoop::allows_automatic_window_tabbing(
   self : ActiveEventLoop,
 ) -> Bool {
-  let _ = self
-  allows_automatic_window_tabbing_state.val
+  let _ = self.inner
+  let enabled = native_application_allows_automatic_window_tabbing()
+  allows_automatic_window_tabbing_state.val = enabled
+  enabled
 }
 
 ///|

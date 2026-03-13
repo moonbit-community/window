@@ -680,6 +680,57 @@ fn native_set_application_presentation_options(options : UInt64) -> Unit {
 }
 
 ///|
+fn native_application_hide() -> Unit {
+  appkit_application_hide()
+}
+
+///|
+fn native_application_hide_other_applications() -> Unit {
+  appkit_application_hide_other_applications()
+}
+
+///|
+fn native_application_set_allows_automatic_window_tabbing(
+  enabled : Bool,
+) -> Unit {
+  appkit_application_set_allows_automatic_window_tabbing(
+    if enabled {
+      1
+    } else {
+      0
+    },
+  )
+}
+
+///|
+fn native_application_allows_automatic_window_tabbing() -> Bool {
+  appkit_application_allows_automatic_window_tabbing() != 0
+}
+
+///|
+fn native_application_set_activation_policy(activation_policy : Int) -> Unit {
+  appkit_application_set_activation_policy(activation_policy)
+}
+
+///|
+fn native_application_set_activate_ignoring_other_apps(
+  activate_ignoring_other_apps : Bool,
+) -> Unit {
+  appkit_application_set_activate_ignoring_other_apps(
+    if activate_ignoring_other_apps {
+      1
+    } else {
+      0
+    },
+  )
+}
+
+///|
+fn native_application_initialize_default_menu(enabled : Bool) -> Unit {
+  appkit_application_initialize_default_menu(if enabled { 1 } else { 0 })
+}
+
+///|
 fn native_find_display_mode_handle(
   monitor_id : UInt64,
   width : Int,
@@ -1174,6 +1225,33 @@ extern "C" fn appkit_application_presentation_options() -> UInt64 = "mbw_applica
 extern "C" fn appkit_set_application_presentation_options(
   options : UInt64,
 ) -> Unit = "mbw_set_application_presentation_options"
+
+///|
+extern "C" fn appkit_application_hide() -> Unit = "mbw_application_hide"
+
+///|
+extern "C" fn appkit_application_hide_other_applications() -> Unit = "mbw_application_hide_other_applications"
+
+///|
+extern "C" fn appkit_application_set_allows_automatic_window_tabbing(
+  enabled : Int,
+) -> Unit = "mbw_application_set_allows_automatic_window_tabbing"
+
+///|
+extern "C" fn appkit_application_allows_automatic_window_tabbing() -> Int = "mbw_application_allows_automatic_window_tabbing"
+
+///|
+extern "C" fn appkit_application_set_activation_policy(
+  activation_policy : Int,
+) -> Unit = "mbw_application_set_activation_policy"
+
+///|
+extern "C" fn appkit_application_set_activate_ignoring_other_apps(
+  activate_ignoring_other_apps : Int,
+) -> Unit = "mbw_application_set_activate_ignoring_other_apps"
+
+///|
+extern "C" fn appkit_application_initialize_default_menu(enabled : Int) -> Unit = "mbw_application_initialize_default_menu"
 
 ///|
 extern "C" fn native_monitor_find_display_mode_handle(

@@ -596,8 +596,14 @@ fn app_state_did_finish_launching() -> Unit {
 
 ///|
 fn app_state_apply_launch_policy() -> Unit {
-  let _ = app_state_runtime.val.activation_policy
-  let _ = app_state_runtime.val.activate_ignoring_other_apps
+  if app_state_runtime.val.activation_policy >= 0 {
+    native_application_set_activation_policy(
+      app_state_runtime.val.activation_policy,
+    )
+  }
+  native_application_set_activate_ignoring_other_apps(
+    app_state_runtime.val.activate_ignoring_other_apps,
+  )
   initialize(app_state_runtime.val.default_menu)
 }
 

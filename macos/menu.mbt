@@ -95,5 +95,5 @@ fn initialize_default_menu(enabled : Bool) -> Unit {
   } else {
     default_menu_initialized.val = false
   }
-  let _ = enabled
+  native_application_initialize_default_menu(enabled)
 }
