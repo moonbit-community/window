@@ -163,20 +163,34 @@ fn app_state_dispatch_with_registered_callback(
 }
 
 ///|
+fn app_state_take_next_dispatchable_callback() -> DeferredCallback? {
+  if app_state_runtime.val.deferred_callbacks.is_empty() {
+    return None
+  }
+  if app_state_is_running() {
+    return Some(app_state_runtime.val.deferred_callbacks.remove(0))
+  }
+  match
+    app_state_runtime.val.deferred_callbacks.search_by(callback => {
+      app_state_callback_requires_running(callback) == false
+    }) {
+    Some(index) => Some(app_state_runtime.val.deferred_callbacks.remove(index))
+    None => None
+  }
+}
+
+///|
 fn app_state_dispatch_registered_deferred_callbacks() -> Unit {
   if app_state_runtime.val.dispatch_callback is None {
     return ()
   }
-  while app_state_runtime.val.event_handler_in_use == false &&
-        app_state_runtime.val.deferred_callbacks.is_empty() == false {
-    let head = app_state_runtime.val.deferred_callbacks[0]
-    if app_state_callback_requires_running(head) &&
-      app_state_is_running() == false {
-      return ()
-    }
-    let callback = app_state_runtime.val.deferred_callbacks.remove(0)
-    if app_state_dispatch_with_registered_callback(callback) == false {
-      return ()
+  while app_state_runtime.val.event_handler_in_use == false {
+    match app_state_take_next_dispatchable_callback() {
+      Some(callback) =>
+        if app_state_dispatch_with_registered_callback(callback) == false {
+          return ()
+        }
+      None => return ()
     }
   }
 }
@@ -985,17 +999,11 @@ fn[A : ApplicationHandler] app_state_dispatch_deferred_callbacks(
   app : A,
   event_loop : ActiveEventLoop,
 ) -> Unit {
-  while app_state_runtime.val.event_handler_in_use == false &&
-        app_state_runtime.val.deferred_callbacks.is_empty() == false {
-    if app_state_is_running() == false {
-      match app_state_runtime.val.deferred_callbacks[0] {
-        DeferredCallback::DidFinishLaunching
-        | DeferredCallback::WillTerminate => ()
-        _ => return ()
-      }
+  while app_state_runtime.val.event_handler_in_use == false {
+    match app_state_take_next_dispatchable_callback() {
+      Some(callback) => app_state_with_handler(app, event_loop, callback)
+      None => return ()
     }
-    let callback = app_state_runtime.val.deferred_callbacks.remove(0)
-    app_state_with_handler(app, event_loop, callback)
   }
 }
 

@@ -1,6 +1,12 @@
 ///|
 pub fn validate_scale_factor(scale_factor : Double) -> Bool {
-  scale_factor == scale_factor && scale_factor > 0.0
+  let exponent_mask = (0x7ff : Int).to_uint64()
+  let exponent = (Double::reinterpret_as_uint64(scale_factor) >> 52) &
+    exponent_mask
+  scale_factor > 0.0 &&
+  Double::is_nan(scale_factor) == false &&
+  Double::is_inf(scale_factor) == false &&
+  exponent != (0 : Int).to_uint64()
 }
 
 ///|

@@ -179,8 +179,13 @@ The implementation is **not yet 1:1 aligned** with `winit-reference` semantics.
 - Completed: removed `EventLoop::run_init_sequence` and `EventLoop::finish_exit` scaffolding; run/pump/on-demand paths now follow a direct `dispatch-init (if launched) -> NSApplication::run -> deferred dispatch -> internal_exit` shape.
 - Completed: `app_state_internal_exit` no longer clears the run-scope dispatch handler; dispatch handler lifetime is now owned by event-loop run scopes (set/clear around each run entry).
 - Completed: `WillTerminate` lifecycle handling is now centralized in `app_state_will_terminate` (`notify_windows_of_exit` + deferred-callback termination + `internal_exit`), reducing split shutdown behavior across event-loop/app-state layers.
+- Completed: deferred-callback draining now supports lifecycle callback dispatch (`DidFinishLaunching` / `WillTerminate`) even when non-running callbacks are queued ahead, preventing lifecycle-starvation races in stop/wake interleavings.
+- Completed: added `macos/app_state_wbtest.mbt` whitebox coverage for wait-timeout selection, `StartCause` synthesis, lifecycle callback dedup, running-state callback gating, and deferred-callback dispatch ordering.
+- Completed: added MoonBit-adapted upstream object tests:
+  - `core/serde_objects_test.mbt` (maps `winit/tests/serde_objects.rs` intent to Show/Eq representability checks)
+  - `macos/send_sync_objects_test.mbt` (maps `winit/tests/send_objects.rs` + `sync_object.rs` intent to value-surface/type-check coverage in MoonBit)
 
 ## Remaining Structural Work
 
-- Not completed: Final event-loop edge-case parity audit around lifecycle races (`DidFinishLaunching`/`WillTerminate`) and nested stop/wake interleavings.
+- Not completed: Final event-loop edge-case parity audit around nested stop/wake interleavings after the lifecycle-starvation fix.
 - Not completed: Full example behavior parity for all upstream demo semantics.

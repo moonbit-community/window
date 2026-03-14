@@ -1069,6 +1069,22 @@ fn window_current_monitor_id(window_handle : UInt64) -> UInt64 {
 }
 
 ///|
+fn initial_window_surface_size(
+  surface_size : @dpi.Size?,
+  inner_size : @dpi.Size?,
+  scale_factor : Double,
+) -> @dpi.PhysicalSize {
+  match surface_size {
+    Some(size) => size.to_physical(scale_factor)
+    None =>
+      match inner_size {
+        Some(size) => size.to_physical(scale_factor)
+        None => @dpi.PhysicalSize::new(800, 600)
+      }
+  }
+}
+
+///|
 // Port target: window_delegate.rs::new
 fn new_window(
   event_loop : EventLoop,
@@ -1080,10 +1096,13 @@ fn new_window(
     Some(monitor) => monitor.scale_factor()
     None => 1.0
   }
-  let size = match attributes.surface_size() {
-    Some(size) => size.to_physical(scale_factor)
-    None => @dpi.PhysicalSize::new(800, 600)
-  }
+  // MoonBit adaptation: honor `inner_size` as a fallback when incoming
+  // attributes are not pre-normalized to `surface_size`.
+  let size = initial_window_surface_size(
+    attributes.surface_size(),
+    attributes.inner_size(),
+    scale_factor,
+  )
   let raw_window_handle = create_window(
     raw_id,
     size.width(),
