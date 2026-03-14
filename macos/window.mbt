@@ -325,18 +325,22 @@ fn Window::set_ime_cursor_area_raw(
   size : @dpi.Size,
 ) -> Unit {
   let scale_factor = self.scale_factor()
-  let physical_position = position.to_physical(scale_factor)
-  let physical_size = size.to_physical(scale_factor)
-  let width = if physical_size.width() > 0 { physical_size.width() } else { 1 }
-  let height = if physical_size.height() > 0 {
-    physical_size.height()
+  let logical_position = position.to_logical(scale_factor)
+  let logical_size = size.to_logical(scale_factor)
+  let width = if logical_size.width().to_int() > 0 {
+    logical_size.width().to_int()
+  } else {
+    1
+  }
+  let height = if logical_size.height().to_int() > 0 {
+    logical_size.height().to_int()
   } else {
     1
   }
   set_ime_cursor_area(
     self.raw_window_handle,
-    physical_position.x(),
-    physical_position.y(),
+    logical_position.x().to_int(),
+    logical_position.y().to_int(),
     width,
     height,
   )
@@ -356,18 +360,18 @@ pub fn Window::set_ime_surrounding_text(
 
 ///|
 pub fn Window::ime_cursor_area_position(self : Window) -> @dpi.PhysicalPosition {
-  @dpi.PhysicalPosition::new(
-    window_ime_cursor_x(self.raw_window_handle),
-    window_ime_cursor_y(self.raw_window_handle),
-  )
+  @dpi.LogicalPosition::new(
+    window_ime_cursor_x(self.raw_window_handle).to_double(),
+    window_ime_cursor_y(self.raw_window_handle).to_double(),
+  ).to_physical(self.scale_factor())
 }
 
 ///|
 pub fn Window::ime_cursor_area_size(self : Window) -> @dpi.PhysicalSize {
-  @dpi.PhysicalSize::new(
-    window_ime_cursor_width(self.raw_window_handle),
-    window_ime_cursor_height(self.raw_window_handle),
-  )
+  @dpi.LogicalSize::new(
+    window_ime_cursor_width(self.raw_window_handle).to_double(),
+    window_ime_cursor_height(self.raw_window_handle).to_double(),
+  ).to_physical(self.scale_factor())
 }
 
 ///|

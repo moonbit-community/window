@@ -67,6 +67,61 @@ static void mbw_main_run_loop_observer_callback(CFRunLoopObserverRef observer,
                                                 CFRunLoopActivity activity, void *info);
 static void mbw_test_custom_application_send_event(id self, SEL _cmd, NSEvent *event);
 
+static void mbw_call_window_event_trampoline(int32_t kind, int32_t raw_id, int32_t arg0,
+                                             int32_t arg1, int32_t arg2, double argd) {
+  if (g_window_event_trampoline == NULL || g_window_event_closure == NULL) {
+    return;
+  }
+  moonbit_incref(g_window_event_closure);
+  g_window_event_trampoline(g_window_event_closure, kind, raw_id, arg0, arg1, arg2, argd);
+}
+
+static void mbw_call_input_event_trampoline(
+    int32_t raw_id, int32_t kind, double x, double y, int32_t state, int32_t button,
+    int32_t modifiers, int32_t scancode, int32_t repeat, int32_t pointer_source,
+    int32_t pointer_kind, int32_t scroll_delta_kind, double delta_x, double delta_y,
+    int32_t phase, moonbit_bytes_t text_with_all_modifiers,
+    moonbit_bytes_t text_ignoring_modifiers, moonbit_bytes_t text_without_modifiers) {
+  if (g_input_event_trampoline == NULL || g_input_event_closure == NULL) {
+    return;
+  }
+  moonbit_incref(g_input_event_closure);
+  g_input_event_trampoline(g_input_event_closure, raw_id, kind, x, y, state, button, modifiers,
+                           scancode, repeat, pointer_source, pointer_kind, scroll_delta_kind,
+                           delta_x, delta_y, phase, text_with_all_modifiers,
+                           text_ignoring_modifiers, text_without_modifiers);
+}
+
+static void mbw_call_text_input_event_trampoline(int32_t raw_id, int32_t kind, double x, double y,
+                                                 int32_t state, moonbit_bytes_t text,
+                                                 int32_t cursor_start, int32_t cursor_end,
+                                                 moonbit_bytes_t path) {
+  if (g_text_input_event_trampoline == NULL || g_text_input_event_closure == NULL) {
+    return;
+  }
+  moonbit_incref(g_text_input_event_closure);
+  g_text_input_event_trampoline(g_text_input_event_closure, raw_id, kind, x, y, state, text,
+                                cursor_start, cursor_end, path);
+}
+
+static void mbw_call_device_event_trampoline(int32_t kind, int32_t button, double delta_x,
+                                             double delta_y) {
+  if (g_device_event_trampoline == NULL || g_device_event_closure == NULL) {
+    return;
+  }
+  moonbit_incref(g_device_event_closure);
+  g_device_event_trampoline(g_device_event_closure, kind, button, delta_x, delta_y);
+}
+
+static void mbw_call_lifecycle_trampoline(mbw_lifecycle_trampoline_t trampoline, void *closure,
+                                          int32_t callback_kind) {
+  if (trampoline == NULL || closure == NULL) {
+    return;
+  }
+  moonbit_incref(closure);
+  trampoline(closure, callback_kind);
+}
+
 @interface MBWContentView : NSView <NSTextInputClient, NSDraggingDestination>
 @property(nonatomic, assign) BOOL acceptsFirstMouseEnabled;
 @property(nonatomic, assign) int32_t optionAsAlt;
@@ -251,7 +306,7 @@ static void mbw_test_custom_application_send_event(id self, SEL _cmd, NSEvent *e
         textWithAllModifiers:(NSString *)textWithAllModifiers
        textIgnoringModifiers:(NSString *)textIgnoringModifiers
         textWithoutModifiers:(NSString *)textWithoutModifiers {
-  if (g_input_event_trampoline == NULL || g_input_event_closure == NULL || self.rawId <= 0) {
+  if (self.rawId <= 0) {
     return;
   }
   moonbit_bytes_t text_with_all_modifiers =
@@ -260,10 +315,10 @@ static void mbw_test_custom_application_send_event(id self, SEL _cmd, NSEvent *e
       [self mbw_makeBytesFromString:(textIgnoringModifiers == nil ? @"" : textIgnoringModifiers)];
   moonbit_bytes_t text_without_modifiers =
       [self mbw_makeBytesFromString:(textWithoutModifiers == nil ? @"" : textWithoutModifiers)];
-  g_input_event_trampoline(g_input_event_closure, self.rawId, kind, x, y, state, button,
-                           modifiers, scancode, repeat, pointerSource, pointerKind,
-                           scrollDeltaKind, deltaX, deltaY, phase, text_with_all_modifiers,
-                           text_ignoring_modifiers, text_without_modifiers);
+  mbw_call_input_event_trampoline(self.rawId, kind, x, y, state, button, modifiers, scancode,
+                                  repeat, pointerSource, pointerKind, scrollDeltaKind, deltaX,
+                                  deltaY, phase, text_with_all_modifiers,
+                                  text_ignoring_modifiers, text_without_modifiers);
 }
 
 - (moonbit_bytes_t)mbw_makeBytesFromString:(NSString *)text {
@@ -366,14 +421,13 @@ static void mbw_test_custom_application_send_event(id self, SEL _cmd, NSEvent *e
                        cursorStart:(int32_t)cursorStart
                          cursorEnd:(int32_t)cursorEnd
                               path:(NSString *)path {
-  if (g_text_input_event_trampoline == NULL || g_text_input_event_closure == NULL ||
-      self.rawId <= 0) {
+  if (self.rawId <= 0) {
     return;
   }
   moonbit_bytes_t text_bytes = [self mbw_makeBytesFromString:(text == nil ? @"" : text)];
   moonbit_bytes_t path_bytes = [self mbw_makeBytesFromString:(path == nil ? @"" : path)];
-  g_text_input_event_trampoline(g_text_input_event_closure, self.rawId, kind, x, y, state,
-                                text_bytes, cursorStart, cursorEnd, path_bytes);
+  mbw_call_text_input_event_trampoline(self.rawId, kind, x, y, state, text_bytes, cursorStart,
+                                       cursorEnd, path_bytes);
 }
 
 - (void)mbw_emitImeEnabledIfNeeded {
@@ -1060,120 +1114,91 @@ static void mbw_test_custom_application_send_event(id self, SEL _cmd, NSEvent *e
 
 - (BOOL)windowShouldClose:(id)sender {
   (void)sender;
-  if (g_window_event_trampoline != NULL && g_window_event_closure != NULL) {
-    g_window_event_trampoline(g_window_event_closure, 1, self.rawId, 0, 0, 0, 0.0);
-  }
+  mbw_call_window_event_trampoline(1, self.rawId, 0, 0, 0, 0.0);
   return self.allowClose;
 }
 
 - (void)windowWillClose:(NSNotification *)notification {
   (void)notification;
-  if (g_window_event_trampoline != NULL && g_window_event_closure != NULL) {
-    g_window_event_trampoline(g_window_event_closure, 2, self.rawId, 0, 0, 0, 0.0);
-  }
+  mbw_call_window_event_trampoline(2, self.rawId, 0, 0, 0, 0.0);
 }
 
 - (void)windowDidBecomeKey:(NSNotification *)notification {
   (void)notification;
-  if (g_window_event_trampoline != NULL && g_window_event_closure != NULL) {
-    g_window_event_trampoline(g_window_event_closure, 3, self.rawId, 1, 0, 0, 0.0);
-  }
+  mbw_call_window_event_trampoline(3, self.rawId, 1, 0, 0, 0.0);
 }
 
 - (void)windowDidResignKey:(NSNotification *)notification {
   (void)notification;
-  if (g_window_event_trampoline != NULL && g_window_event_closure != NULL) {
-    g_window_event_trampoline(g_window_event_closure, 3, self.rawId, 0, 0, 0, 0.0);
-  }
+  mbw_call_window_event_trampoline(3, self.rawId, 0, 0, 0, 0.0);
 }
 
 - (void)windowDidMove:(NSNotification *)notification {
   (void)notification;
-  if (g_window_event_trampoline != NULL && g_window_event_closure != NULL) {
-    NSWindow *window = (NSWindow *)notification.object;
-    NSRect frame = window.frame;
-    g_window_event_trampoline(g_window_event_closure, 4, self.rawId, (int32_t)frame.origin.x,
-                              (int32_t)frame.origin.y, 0, 0.0);
-  }
+  NSWindow *window = (NSWindow *)notification.object;
+  NSRect frame = window.frame;
+  mbw_call_window_event_trampoline(4, self.rawId, (int32_t)frame.origin.x,
+                                   (int32_t)frame.origin.y, 0, 0.0);
 }
 
 - (void)windowDidResize:(NSNotification *)notification {
   (void)notification;
-  if (g_window_event_trampoline != NULL && g_window_event_closure != NULL) {
-    NSWindow *window = (NSWindow *)notification.object;
-    NSRect contentRect = [window contentRectForFrameRect:window.frame];
-    g_window_event_trampoline(g_window_event_closure, 8, self.rawId,
-                              (int32_t)contentRect.size.width, (int32_t)contentRect.size.height,
-                              0, 0.0);
-  }
+  NSWindow *window = (NSWindow *)notification.object;
+  NSRect contentRect = [window contentRectForFrameRect:window.frame];
+  mbw_call_window_event_trampoline(8, self.rawId, (int32_t)contentRect.size.width,
+                                   (int32_t)contentRect.size.height, 0, 0.0);
 }
 
 - (void)windowDidChangeBackingProperties:(NSNotification *)notification {
   (void)notification;
-  if (g_window_event_trampoline != NULL && g_window_event_closure != NULL) {
-    NSWindow *window = (NSWindow *)notification.object;
-    NSRect contentRect = [window contentRectForFrameRect:window.frame];
-    g_window_event_trampoline(g_window_event_closure, 5, self.rawId,
-                              (int32_t)contentRect.size.width, (int32_t)contentRect.size.height,
-                              0, window.backingScaleFactor);
-  }
+  NSWindow *window = (NSWindow *)notification.object;
+  NSRect contentRect = [window contentRectForFrameRect:window.frame];
+  mbw_call_window_event_trampoline(5, self.rawId, (int32_t)contentRect.size.width,
+                                   (int32_t)contentRect.size.height, 0,
+                                   window.backingScaleFactor);
 }
 
 - (void)windowDidChangeOcclusionState:(NSNotification *)notification {
   (void)notification;
-  if (g_window_event_trampoline != NULL && g_window_event_closure != NULL) {
-    NSWindow *window = (NSWindow *)notification.object;
-    BOOL occluded = (window.occlusionState & NSWindowOcclusionStateVisible) == 0;
-    g_window_event_trampoline(g_window_event_closure, 7, self.rawId, occluded ? 1 : 0, 0, 0, 0.0);
-  }
+  NSWindow *window = (NSWindow *)notification.object;
+  BOOL occluded = (window.occlusionState & NSWindowOcclusionStateVisible) == 0;
+  mbw_call_window_event_trampoline(7, self.rawId, occluded ? 1 : 0, 0, 0, 0.0);
 }
 
 - (void)windowWillEnterFullScreen:(NSNotification *)notification {
   (void)notification;
   self.inFullscreenTransition = YES;
-  if (g_window_event_trampoline != NULL && g_window_event_closure != NULL) {
-    g_window_event_trampoline(g_window_event_closure, 9, self.rawId, 0, 0, 0, 0.0);
-  }
+  mbw_call_window_event_trampoline(9, self.rawId, 0, 0, 0, 0.0);
 }
 
 - (void)windowWillExitFullScreen:(NSNotification *)notification {
   (void)notification;
   self.inFullscreenTransition = YES;
-  if (g_window_event_trampoline != NULL && g_window_event_closure != NULL) {
-    g_window_event_trampoline(g_window_event_closure, 10, self.rawId, 0, 0, 0, 0.0);
-  }
+  mbw_call_window_event_trampoline(10, self.rawId, 0, 0, 0, 0.0);
 }
 
 - (void)windowDidEnterFullScreen:(NSNotification *)notification {
   (void)notification;
   self.inFullscreenTransition = NO;
-  if (g_window_event_trampoline != NULL && g_window_event_closure != NULL) {
-    NSWindow *window = (NSWindow *)notification.object;
-    NSRect contentRect = [window contentRectForFrameRect:window.frame];
-    g_window_event_trampoline(g_window_event_closure, 11, self.rawId,
-                              (int32_t)contentRect.size.width, (int32_t)contentRect.size.height,
-                              0, 0.0);
-  }
+  NSWindow *window = (NSWindow *)notification.object;
+  NSRect contentRect = [window contentRectForFrameRect:window.frame];
+  mbw_call_window_event_trampoline(11, self.rawId, (int32_t)contentRect.size.width,
+                                   (int32_t)contentRect.size.height, 0, 0.0);
 }
 
 - (void)windowDidExitFullScreen:(NSNotification *)notification {
   (void)notification;
   self.inFullscreenTransition = NO;
-  if (g_window_event_trampoline != NULL && g_window_event_closure != NULL) {
-    NSWindow *window = (NSWindow *)notification.object;
-    NSRect contentRect = [window contentRectForFrameRect:window.frame];
-    g_window_event_trampoline(g_window_event_closure, 12, self.rawId,
-                              (int32_t)contentRect.size.width, (int32_t)contentRect.size.height,
-                              0, 0.0);
-  }
+  NSWindow *window = (NSWindow *)notification.object;
+  NSRect contentRect = [window contentRectForFrameRect:window.frame];
+  mbw_call_window_event_trampoline(12, self.rawId, (int32_t)contentRect.size.width,
+                                   (int32_t)contentRect.size.height, 0, 0.0);
 }
 
 - (void)windowDidFailToEnterFullScreen:(NSWindow *)window {
   (void)window;
   self.inFullscreenTransition = NO;
-  if (g_window_event_trampoline != NULL && g_window_event_closure != NULL) {
-    g_window_event_trampoline(g_window_event_closure, 13, self.rawId, 0, 0, 0, 0.0);
-  }
+  mbw_call_window_event_trampoline(13, self.rawId, 0, 0, 0, 0.0);
 }
 
 @end
@@ -1182,9 +1207,7 @@ static void mbw_test_custom_application_send_event(id self, SEL _cmd, NSEvent *e
 
 - (void)handleNotification:(NSNotification *)notification {
   (void)notification;
-  if (self.trampoline != NULL && self.closure != NULL) {
-    self.trampoline(self.closure, self.callbackKind);
-  }
+  mbw_call_lifecycle_trampoline(self.trampoline, self.closure, self.callbackKind);
 }
 
 @end
@@ -1209,14 +1232,17 @@ uint64_t mbw_notification_center_add_observer(mbw_lifecycle_trampoline_t trampol
                                               int32_t callback_kind) {
   NSNotificationName name = mbw_notification_name_from_kind(notification_kind);
   if (name == nil || trampoline == NULL || closure == NULL) {
+    if (closure != NULL) {
+      moonbit_decref(closure);
+    }
     return 0;
   }
   NSApplication *app = [NSApplication sharedApplication];
   MBWNotificationObserver *observer = [[MBWNotificationObserver alloc] init];
   if (observer == nil) {
+    moonbit_decref(closure);
     return 0;
   }
-  moonbit_incref(closure);
   observer.callbackKind = callback_kind;
   observer.trampoline = trampoline;
   observer.closure = closure;
@@ -1260,10 +1286,10 @@ static void mbw_main_run_loop_observer_callback(CFRunLoopObserverRef observer,
   (void)observer;
   (void)activity;
   MBWMainRunLoopObserver *box = (MBWMainRunLoopObserver *)info;
-  if (box == NULL || box->trampoline == NULL || box->closure == NULL) {
+  if (box == NULL) {
     return;
   }
-  box->trampoline(box->closure, box->callback_kind);
+  mbw_call_lifecycle_trampoline(box->trampoline, box->closure, box->callback_kind);
 }
 
 MOONBIT_FFI_EXPORT
@@ -1271,19 +1297,23 @@ uint64_t mbw_main_run_loop_add_observer(mbw_lifecycle_trampoline_t trampoline, v
                                          int32_t activity_kind, int32_t callback_kind,
                                          int32_t order) {
   if (trampoline == NULL || closure == NULL) {
+    if (closure != NULL) {
+      moonbit_decref(closure);
+    }
     return 0;
   }
   CFRunLoopActivity activity = mbw_main_run_loop_activity_from_kind(activity_kind);
   if (activity == 0) {
+    moonbit_decref(closure);
     return 0;
   }
   mbw_ensure_app_initialized();
   MBWMainRunLoopObserver *box = (MBWMainRunLoopObserver *)malloc(sizeof(MBWMainRunLoopObserver));
   if (box == NULL) {
+    moonbit_decref(closure);
     return 0;
   }
   memset(box, 0, sizeof(MBWMainRunLoopObserver));
-  moonbit_incref(closure);
   box->trampoline = trampoline;
   box->closure = closure;
   box->callback_kind = callback_kind;
@@ -1594,10 +1624,7 @@ static NSCursor *mbw_cursor_from_kind(int32_t cursor) {
 }
 
 static void mbw_emit_device_event(int32_t kind, int32_t button, double delta_x, double delta_y) {
-  if (g_device_event_trampoline == NULL || g_device_event_closure == NULL) {
-    return;
-  }
-  g_device_event_trampoline(g_device_event_closure, kind, button, delta_x, delta_y);
+  mbw_call_device_event_trampoline(kind, button, delta_x, delta_y);
 }
 
 static void mbw_maybe_dispatch_device_event(NSEvent *event) {
@@ -1680,9 +1707,6 @@ void mbw_install_window_event_callback(mbw_window_event_trampoline_t trampoline,
   }
   g_window_event_trampoline = trampoline;
   g_window_event_closure = closure;
-  if (g_window_event_closure != NULL) {
-    moonbit_incref(g_window_event_closure);
-  }
 }
 
 MOONBIT_FFI_EXPORT
@@ -1692,9 +1716,6 @@ void mbw_install_input_event_callback(mbw_input_event_trampoline_t trampoline, v
   }
   g_input_event_trampoline = trampoline;
   g_input_event_closure = closure;
-  if (g_input_event_closure != NULL) {
-    moonbit_incref(g_input_event_closure);
-  }
 }
 
 MOONBIT_FFI_EXPORT
@@ -1705,9 +1726,6 @@ void mbw_install_text_input_event_callback(mbw_text_input_event_trampoline_t tra
   }
   g_text_input_event_trampoline = trampoline;
   g_text_input_event_closure = closure;
-  if (g_text_input_event_closure != NULL) {
-    moonbit_incref(g_text_input_event_closure);
-  }
 }
 
 MOONBIT_FFI_EXPORT
@@ -1717,9 +1735,6 @@ void mbw_install_device_event_callback(mbw_device_event_trampoline_t trampoline,
   }
   g_device_event_trampoline = trampoline;
   g_device_event_closure = closure;
-  if (g_device_event_closure != NULL) {
-    moonbit_incref(g_device_event_closure);
-  }
 }
 
 MOONBIT_FFI_EXPORT

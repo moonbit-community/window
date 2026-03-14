@@ -265,6 +265,36 @@ fn app_state_queue_device_event(
 }
 
 ///|
+fn app_state_window_scale_factor(raw_id : Int) -> Double {
+  match app_state_window_handle(raw_id) {
+    Some(window_handle) => native_window_scale_factor(window_handle)
+    None => 1.0
+  }
+}
+
+///|
+fn app_state_logical_size_to_physical(
+  raw_id : Int,
+  width : Int,
+  height : Int,
+) -> @dpi.PhysicalSize {
+  @dpi.LogicalSize::new(width.to_double(), height.to_double()).to_physical(
+    app_state_window_scale_factor(raw_id),
+  )
+}
+
+///|
+fn app_state_logical_position_to_physical(
+  raw_id : Int,
+  x : Int,
+  y : Int,
+) -> @dpi.PhysicalPosition {
+  @dpi.LogicalPosition::new(x.to_double(), y.to_double()).to_physical(
+    app_state_window_scale_factor(raw_id),
+  )
+}
+
+///|
 fn app_state_queue_native_window_event(
   kind : Int,
   raw_id : Int,
@@ -304,7 +334,9 @@ fn app_state_queue_native_window_event(
     4 =>
       app_state_queue_window_callback(
         window_id,
-        @core.WindowEvent::Moved(@dpi.PhysicalPosition::new(arg0, arg1)),
+        @core.WindowEvent::Moved(
+          app_state_logical_position_to_physical(raw_id, arg0, arg1),
+        ),
       )
     5 =>
       app_state_maybe_dispatch_callback(
@@ -329,7 +361,9 @@ fn app_state_queue_native_window_event(
     8 =>
       app_state_queue_window_callback(
         window_id,
-        @core.WindowEvent::SurfaceResized(@dpi.PhysicalSize::new(arg0, arg1)),
+        @core.WindowEvent::SurfaceResized(
+          app_state_logical_size_to_physical(raw_id, arg0, arg1),
+        ),
       )
     9 => ()
     10 => ()
@@ -337,14 +371,18 @@ fn app_state_queue_native_window_event(
       app_state_process_queued_fullscreen_request(raw_id)
       app_state_queue_window_callback(
         window_id,
-        @core.WindowEvent::SurfaceResized(@dpi.PhysicalSize::new(arg0, arg1)),
+        @core.WindowEvent::SurfaceResized(
+          app_state_logical_size_to_physical(raw_id, arg0, arg1),
+        ),
       )
     }
     12 => {
       app_state_process_queued_fullscreen_request(raw_id)
       app_state_queue_window_callback(
         window_id,
-        @core.WindowEvent::SurfaceResized(@dpi.PhysicalSize::new(arg0, arg1)),
+        @core.WindowEvent::SurfaceResized(
+          app_state_logical_size_to_physical(raw_id, arg0, arg1),
+        ),
       )
     }
     13 => app_state_process_queued_fullscreen_request(raw_id)
@@ -945,9 +983,11 @@ fn[A : ApplicationHandler] app_state_dispatch_callback(
       width,
       height
     ) => {
-      let writer = @core.SurfaceSizeWriter::new(
-        @dpi.PhysicalSize::new(width, height),
-      )
+      let physical_size = @dpi.LogicalSize::new(
+        width.to_double(),
+        height.to_double(),
+      ).to_physical(scale_factor)
+      let writer = @core.SurfaceSizeWriter::new(physical_size)
       app.window_event(
         event_loop,
         window_id,
@@ -955,12 +995,16 @@ fn[A : ApplicationHandler] app_state_dispatch_callback(
       )
       let requested_size = writer.surface_size()
       match app_state_window_handle(raw_id) {
-        Some(window_handle) =>
+        Some(window_handle) => {
+          let logical_size = requested_size.to_logical(
+            native_window_scale_factor(window_handle),
+          )
           set_surface_size(
             window_handle,
-            requested_size.width(),
-            requested_size.height(),
+            logical_size.width().to_int(),
+            logical_size.height().to_int(),
           )
+        }
         None => ()
       }
     }

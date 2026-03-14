@@ -130,6 +130,16 @@ fn request_user_attention(window_handle : UInt64, request_type : Int) -> Unit {
 }
 
 ///|
+fn window_native_scale_factor(window_handle : UInt64) -> Double {
+  let native_handle = registered_native_handle(window_handle)
+  if native_handle == (0 : Int).to_uint64() {
+    1.0
+  } else {
+    native_window_scale_factor(native_handle)
+  }
+}
+
+///|
 fn set_surface_size(window_handle : UInt64, width : Int, height : Int) -> Unit {
   let content_width = clamp_size(width)
   let content_height = clamp_size(height)
@@ -182,7 +192,14 @@ fn set_max_surface_size(
 ///|
 fn set_window_position(window_handle : UInt64, x : Int, y : Int) -> Unit {
   if registered_native_handle(window_handle) != (0 : Int).to_uint64() {
-    native_window_set_position(window_handle, x, y)
+    let logical_position = @dpi.PhysicalPosition::new(x, y).to_logical(
+      window_native_scale_factor(window_handle),
+    )
+    native_window_set_position(
+      window_handle,
+      logical_position.x().to_int(),
+      logical_position.y().to_int(),
+    )
   }
 }
 
@@ -192,7 +209,14 @@ fn set_window_outer_size(
   width : Int,
   height : Int,
 ) -> Unit {
-  set_surface_size(window_handle, width, height)
+  let logical_size = @dpi.PhysicalSize::new(width, height).to_logical(
+    window_native_scale_factor(window_handle),
+  )
+  set_surface_size(
+    window_handle,
+    logical_size.width().to_int(),
+    logical_size.height().to_int(),
+  )
 }
 
 ///|
@@ -1073,13 +1097,13 @@ fn initial_window_surface_size(
   surface_size : @dpi.Size?,
   inner_size : @dpi.Size?,
   scale_factor : Double,
-) -> @dpi.PhysicalSize {
+) -> @dpi.LogicalSize {
   match surface_size {
-    Some(size) => size.to_physical(scale_factor)
+    Some(size) => size.to_logical(scale_factor)
     None =>
       match inner_size {
-        Some(size) => size.to_physical(scale_factor)
-        None => @dpi.PhysicalSize::new(800, 600)
+        Some(size) => size.to_logical(scale_factor)
+        None => @dpi.LogicalSize::new(800.0, 600.0)
       }
   }
 }
@@ -1105,8 +1129,8 @@ fn new_window(
   )
   let raw_window_handle = create_window(
     raw_id,
-    size.width(),
-    size.height(),
+    clamp_size(size.width().to_int()),
+    clamp_size(size.height().to_int()),
     attributes.visible(),
     attributes.active(),
     attributes.resizable(),
@@ -1211,11 +1235,11 @@ fn new_window(
   )
   match attributes.surface_resize_increments() {
     Some(increments) => {
-      let physical_increments = increments.to_physical(scale_factor)
+      let logical_increments = increments.to_logical(scale_factor)
       set_surface_resize_increments(
         raw_window_handle,
-        physical_increments.width(),
-        physical_increments.height(),
+        logical_increments.width().to_int(),
+        logical_increments.height().to_int(),
       )
     }
     None => ()
@@ -1255,22 +1279,22 @@ fn new_window(
   }
   match attributes.min_surface_size() {
     Some(min_size) => {
-      let physical_min = min_size.to_physical(scale_factor)
+      let logical_min = min_size.to_logical(scale_factor)
       set_min_surface_size(
         raw_window_handle,
-        physical_min.width(),
-        physical_min.height(),
+        logical_min.width().to_int(),
+        logical_min.height().to_int(),
       )
     }
     None => ()
   }
   match attributes.max_surface_size() {
     Some(max_size) => {
-      let physical_max = max_size.to_physical(scale_factor)
+      let logical_max = max_size.to_logical(scale_factor)
       set_max_surface_size(
         raw_window_handle,
-        physical_max.width(),
-        physical_max.height(),
+        logical_max.width().to_int(),
+        logical_max.height().to_int(),
       )
     }
     None => ()
@@ -1327,10 +1351,10 @@ fn new_window(
 
 ///|
 pub fn Window::surface_size(self : Window) -> @dpi.PhysicalSize {
-  @dpi.PhysicalSize::new(
-    native_window_width(self.raw_window_handle),
-    native_window_height(self.raw_window_handle),
-  )
+  @dpi.LogicalSize::new(
+    native_window_width(self.raw_window_handle).to_double(),
+    native_window_height(self.raw_window_handle).to_double(),
+  ).to_physical(self.scale_factor())
 }
 
 ///|
@@ -1340,18 +1364,18 @@ pub fn Window::inner_size(self : Window) -> @dpi.PhysicalSize {
 
 ///|
 pub fn Window::outer_size(self : Window) -> @dpi.PhysicalSize {
-  @dpi.PhysicalSize::new(
-    window_outer_width(self.raw_window_handle),
-    window_outer_height(self.raw_window_handle),
-  )
+  @dpi.LogicalSize::new(
+    window_outer_width(self.raw_window_handle).to_double(),
+    window_outer_height(self.raw_window_handle).to_double(),
+  ).to_physical(self.scale_factor())
 }
 
 ///|
 pub fn Window::surface_position(self : Window) -> @dpi.PhysicalPosition {
-  @dpi.PhysicalPosition::new(
-    window_surface_x(self.raw_window_handle),
-    window_surface_y(self.raw_window_handle),
-  )
+  @dpi.LogicalPosition::new(
+    window_surface_x(self.raw_window_handle).to_double(),
+    window_surface_y(self.raw_window_handle).to_double(),
+  ).to_physical(self.scale_factor())
 }
 
 ///|
@@ -1361,11 +1385,12 @@ pub fn Window::inner_position(self : Window) -> @dpi.PhysicalPosition {
 
 ///|
 pub fn Window::safe_area(self : Window) -> @dpi.PhysicalInsets {
+  let scale_factor = self.scale_factor()
   @dpi.PhysicalInsets::new(
-    window_safe_area_top(self.raw_window_handle),
-    window_safe_area_left(self.raw_window_handle),
-    window_safe_area_bottom(self.raw_window_handle),
-    window_safe_area_right(self.raw_window_handle),
+    (window_safe_area_top(self.raw_window_handle).to_double() * scale_factor).to_int(),
+    (window_safe_area_left(self.raw_window_handle).to_double() * scale_factor).to_int(),
+    (window_safe_area_bottom(self.raw_window_handle).to_double() * scale_factor).to_int(),
+    (window_safe_area_right(self.raw_window_handle).to_double() * scale_factor).to_int(),
   )
 }
 
@@ -1374,11 +1399,11 @@ pub fn Window::request_surface_size(
   self : Window,
   size : @dpi.Size,
 ) -> @dpi.PhysicalSize? {
-  let physical_size = size.to_physical(self.scale_factor())
+  let logical_size = size.to_logical(self.scale_factor())
   set_surface_size(
     self.raw_window_handle,
-    physical_size.width(),
-    physical_size.height(),
+    logical_size.width().to_int(),
+    logical_size.height().to_int(),
   )
   None
 }
@@ -1398,11 +1423,11 @@ pub fn Window::set_surface_resize_increments(
 ) -> Unit {
   match size {
     Some(size) => {
-      let physical_size = size.to_physical(self.scale_factor())
+      let logical_size = size.to_logical(self.scale_factor())
       set_surface_resize_increments(
         self.raw_window_handle,
-        physical_size.width(),
-        physical_size.height(),
+        logical_size.width().to_int(),
+        logical_size.height().to_int(),
       )
     }
     None => set_surface_resize_increments(self.raw_window_handle, 0, 0)
@@ -1419,7 +1444,11 @@ pub fn Window::surface_resize_increments(self : Window) -> @dpi.PhysicalSize? {
   let width = window_resize_increment_width(self.raw_window_handle)
   let height = window_resize_increment_height(self.raw_window_handle)
   if width > 0 && height > 0 {
-    Some(@dpi.PhysicalSize::new(width, height))
+    Some(
+      @dpi.LogicalSize::new(width.to_double(), height.to_double()).to_physical(
+        self.scale_factor(),
+      ),
+    )
   } else {
     None
   }
@@ -1434,11 +1463,11 @@ pub fn Window::resize_increments(self : Window) -> @dpi.PhysicalSize? {
 pub fn Window::set_min_surface_size(self : Window, size : @dpi.Size?) -> Unit {
   match size {
     Some(size) => {
-      let physical_size = size.to_physical(self.scale_factor())
+      let logical_size = size.to_logical(self.scale_factor())
       set_min_surface_size(
         self.raw_window_handle,
-        physical_size.width(),
-        physical_size.height(),
+        logical_size.width().to_int(),
+        logical_size.height().to_int(),
       )
     }
     None => set_min_surface_size(self.raw_window_handle, 0, 0)
@@ -1454,11 +1483,11 @@ pub fn Window::set_min_inner_size(self : Window, size : @dpi.Size?) -> Unit {
 pub fn Window::set_max_surface_size(self : Window, size : @dpi.Size?) -> Unit {
   match size {
     Some(size) => {
-      let physical_size = size.to_physical(self.scale_factor())
+      let logical_size = size.to_logical(self.scale_factor())
       set_max_surface_size(
         self.raw_window_handle,
-        physical_size.width(),
-        physical_size.height(),
+        logical_size.width().to_int(),
+        logical_size.height().to_int(),
       )
     }
     None => set_max_surface_size(self.raw_window_handle, 0, 0)
@@ -1475,7 +1504,11 @@ pub fn Window::min_surface_size(self : Window) -> @dpi.PhysicalSize? {
   let width = window_min_surface_width(self.raw_window_handle)
   let height = window_min_surface_height(self.raw_window_handle)
   if width > 0 && height > 0 {
-    Some(@dpi.PhysicalSize::new(width, height))
+    Some(
+      @dpi.LogicalSize::new(width.to_double(), height.to_double()).to_physical(
+        self.scale_factor(),
+      ),
+    )
   } else {
     None
   }
@@ -1491,7 +1524,11 @@ pub fn Window::max_surface_size(self : Window) -> @dpi.PhysicalSize? {
   let width = window_max_surface_width(self.raw_window_handle)
   let height = window_max_surface_height(self.raw_window_handle)
   if width > 0 && height > 0 {
-    Some(@dpi.PhysicalSize::new(width, height))
+    Some(
+      @dpi.LogicalSize::new(width.to_double(), height.to_double()).to_physical(
+        self.scale_factor(),
+      ),
+    )
   } else {
     None
   }
@@ -1510,7 +1547,10 @@ pub fn Window::outer_position(
   if raw_id == (0 : Int).to_uint64() {
     raise @core.RequestError::Ignored
   }
-  @dpi.PhysicalPosition::new(window_x(raw_id), window_y(raw_id))
+  @dpi.LogicalPosition::new(
+    window_x(raw_id).to_double(),
+    window_y(raw_id).to_double(),
+  ).to_physical(self.scale_factor())
 }
 
 ///|
