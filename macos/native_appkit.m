@@ -12,15 +12,7 @@
 typedef void (*mbw_window_event_trampoline_t)(void *closure, int32_t kind, int32_t raw_id,
                                               int32_t arg0, int32_t arg1, int32_t arg2,
                                               double argd);
-typedef void (*mbw_input_event_trampoline_t)(void *closure, int32_t raw_id, int32_t kind,
-                                             double x, double y, int32_t state, int32_t button,
-                                             int32_t modifiers, int32_t scancode, int32_t repeat,
-                                             int32_t pointer_source, int32_t pointer_kind,
-                                             int32_t scroll_delta_kind, double delta_x,
-                                             double delta_y, int32_t phase,
-                                             moonbit_bytes_t text_with_all_modifiers,
-                                             moonbit_bytes_t text_ignoring_modifiers,
-                                             moonbit_bytes_t text_without_modifiers);
+typedef void (*mbw_input_event_trampoline_t)(void *closure, uint64_t input_event_payload_handle);
 typedef void (*mbw_text_input_event_trampoline_t)(void *closure, int32_t raw_id, int32_t kind,
                                                   double x, double y, int32_t state,
                                                   moonbit_bytes_t text, int32_t cursor_start,
@@ -50,6 +42,27 @@ typedef struct {
   int32_t callback_kind;
 } MBWMainRunLoopObserver;
 
+typedef struct {
+  int32_t raw_id;
+  int32_t kind;
+  double x;
+  double y;
+  int32_t state;
+  int32_t button;
+  int32_t modifiers;
+  int32_t scancode;
+  int32_t repeat;
+  int32_t pointer_source;
+  int32_t pointer_kind;
+  int32_t scroll_delta_kind;
+  double delta_x;
+  double delta_y;
+  int32_t phase;
+  moonbit_bytes_t text_with_all_modifiers;
+  moonbit_bytes_t text_ignoring_modifiers;
+  moonbit_bytes_t text_without_modifiers;
+} MBWInputEventPayload;
+
 typedef NS_ENUM(int32_t, MBWImeState) {
   MBWImeStateDisabled = 0,
   MBWImeStateGround = 1,
@@ -72,24 +85,14 @@ static void mbw_call_window_event_trampoline(int32_t kind, int32_t raw_id, int32
   if (g_window_event_trampoline == NULL || g_window_event_closure == NULL) {
     return;
   }
-  moonbit_incref(g_window_event_closure);
   g_window_event_trampoline(g_window_event_closure, kind, raw_id, arg0, arg1, arg2, argd);
 }
 
-static void mbw_call_input_event_trampoline(
-    int32_t raw_id, int32_t kind, double x, double y, int32_t state, int32_t button,
-    int32_t modifiers, int32_t scancode, int32_t repeat, int32_t pointer_source,
-    int32_t pointer_kind, int32_t scroll_delta_kind, double delta_x, double delta_y,
-    int32_t phase, moonbit_bytes_t text_with_all_modifiers,
-    moonbit_bytes_t text_ignoring_modifiers, moonbit_bytes_t text_without_modifiers) {
+static void mbw_call_input_event_trampoline(uint64_t input_event_payload_handle) {
   if (g_input_event_trampoline == NULL || g_input_event_closure == NULL) {
     return;
   }
-  moonbit_incref(g_input_event_closure);
-  g_input_event_trampoline(g_input_event_closure, raw_id, kind, x, y, state, button, modifiers,
-                           scancode, repeat, pointer_source, pointer_kind, scroll_delta_kind,
-                           delta_x, delta_y, phase, text_with_all_modifiers,
-                           text_ignoring_modifiers, text_without_modifiers);
+  g_input_event_trampoline(g_input_event_closure, input_event_payload_handle);
 }
 
 static void mbw_call_text_input_event_trampoline(int32_t raw_id, int32_t kind, double x, double y,
@@ -99,7 +102,6 @@ static void mbw_call_text_input_event_trampoline(int32_t raw_id, int32_t kind, d
   if (g_text_input_event_trampoline == NULL || g_text_input_event_closure == NULL) {
     return;
   }
-  moonbit_incref(g_text_input_event_closure);
   g_text_input_event_trampoline(g_text_input_event_closure, raw_id, kind, x, y, state, text,
                                 cursor_start, cursor_end, path);
 }
@@ -109,7 +111,6 @@ static void mbw_call_device_event_trampoline(int32_t kind, int32_t button, doubl
   if (g_device_event_trampoline == NULL || g_device_event_closure == NULL) {
     return;
   }
-  moonbit_incref(g_device_event_closure);
   g_device_event_trampoline(g_device_event_closure, kind, button, delta_x, delta_y);
 }
 
@@ -118,7 +119,6 @@ static void mbw_call_lifecycle_trampoline(mbw_lifecycle_trampoline_t trampoline,
   if (trampoline == NULL || closure == NULL) {
     return;
   }
-  moonbit_incref(closure);
   trampoline(closure, callback_kind);
 }
 
@@ -309,16 +309,38 @@ static void mbw_call_lifecycle_trampoline(mbw_lifecycle_trampoline_t trampoline,
   if (self.rawId <= 0) {
     return;
   }
-  moonbit_bytes_t text_with_all_modifiers =
+  MBWInputEventPayload *payload =
+      (MBWInputEventPayload *)malloc(sizeof(MBWInputEventPayload));
+  if (payload == NULL) {
+    return;
+  }
+  memset(payload, 0, sizeof(MBWInputEventPayload));
+  payload->raw_id = self.rawId;
+  payload->kind = kind;
+  payload->x = x;
+  payload->y = y;
+  payload->state = state;
+  payload->button = button;
+  payload->modifiers = modifiers;
+  payload->scancode = scancode;
+  payload->repeat = repeat;
+  payload->pointer_source = pointerSource;
+  payload->pointer_kind = pointerKind;
+  payload->scroll_delta_kind = scrollDeltaKind;
+  payload->delta_x = deltaX;
+  payload->delta_y = deltaY;
+  payload->phase = phase;
+  payload->text_with_all_modifiers =
       [self mbw_makeBytesFromString:(textWithAllModifiers == nil ? @"" : textWithAllModifiers)];
-  moonbit_bytes_t text_ignoring_modifiers =
+  payload->text_ignoring_modifiers =
       [self mbw_makeBytesFromString:(textIgnoringModifiers == nil ? @"" : textIgnoringModifiers)];
-  moonbit_bytes_t text_without_modifiers =
+  payload->text_without_modifiers =
       [self mbw_makeBytesFromString:(textWithoutModifiers == nil ? @"" : textWithoutModifiers)];
-  mbw_call_input_event_trampoline(self.rawId, kind, x, y, state, button, modifiers, scancode,
-                                  repeat, pointerSource, pointerKind, scrollDeltaKind, deltaX,
-                                  deltaY, phase, text_with_all_modifiers,
-                                  text_ignoring_modifiers, text_without_modifiers);
+  mbw_call_input_event_trampoline((uint64_t)(void *)payload);
+  moonbit_decref(payload->text_with_all_modifiers);
+  moonbit_decref(payload->text_ignoring_modifiers);
+  moonbit_decref(payload->text_without_modifiers);
+  free(payload);
 }
 
 - (moonbit_bytes_t)mbw_makeBytesFromString:(NSString *)text {
@@ -428,6 +450,8 @@ static void mbw_call_lifecycle_trampoline(mbw_lifecycle_trampoline_t trampoline,
   moonbit_bytes_t path_bytes = [self mbw_makeBytesFromString:(path == nil ? @"" : path)];
   mbw_call_text_input_event_trampoline(self.rawId, kind, x, y, state, text_bytes, cursorStart,
                                        cursorEnd, path_bytes);
+  moonbit_decref(text_bytes);
+  moonbit_decref(path_bytes);
 }
 
 - (void)mbw_emitImeEnabledIfNeeded {
@@ -1232,17 +1256,14 @@ uint64_t mbw_notification_center_add_observer(mbw_lifecycle_trampoline_t trampol
                                               int32_t callback_kind) {
   NSNotificationName name = mbw_notification_name_from_kind(notification_kind);
   if (name == nil || trampoline == NULL || closure == NULL) {
-    if (closure != NULL) {
-      moonbit_decref(closure);
-    }
     return 0;
   }
   NSApplication *app = [NSApplication sharedApplication];
   MBWNotificationObserver *observer = [[MBWNotificationObserver alloc] init];
   if (observer == nil) {
-    moonbit_decref(closure);
     return 0;
   }
+  moonbit_incref(closure);
   observer.callbackKind = callback_kind;
   observer.trampoline = trampoline;
   observer.closure = closure;
@@ -1297,23 +1318,19 @@ uint64_t mbw_main_run_loop_add_observer(mbw_lifecycle_trampoline_t trampoline, v
                                          int32_t activity_kind, int32_t callback_kind,
                                          int32_t order) {
   if (trampoline == NULL || closure == NULL) {
-    if (closure != NULL) {
-      moonbit_decref(closure);
-    }
     return 0;
   }
   CFRunLoopActivity activity = mbw_main_run_loop_activity_from_kind(activity_kind);
   if (activity == 0) {
-    moonbit_decref(closure);
     return 0;
   }
   mbw_ensure_app_initialized();
   MBWMainRunLoopObserver *box = (MBWMainRunLoopObserver *)malloc(sizeof(MBWMainRunLoopObserver));
   if (box == NULL) {
-    moonbit_decref(closure);
     return 0;
   }
   memset(box, 0, sizeof(MBWMainRunLoopObserver));
+  moonbit_incref(closure);
   box->trampoline = trampoline;
   box->closure = closure;
   box->callback_kind = callback_kind;
@@ -1707,6 +1724,9 @@ void mbw_install_window_event_callback(mbw_window_event_trampoline_t trampoline,
   }
   g_window_event_trampoline = trampoline;
   g_window_event_closure = closure;
+  if (g_window_event_closure != NULL) {
+    moonbit_incref(g_window_event_closure);
+  }
 }
 
 MOONBIT_FFI_EXPORT
@@ -1716,6 +1736,141 @@ void mbw_install_input_event_callback(mbw_input_event_trampoline_t trampoline, v
   }
   g_input_event_trampoline = trampoline;
   g_input_event_closure = closure;
+  if (g_input_event_closure != NULL) {
+    moonbit_incref(g_input_event_closure);
+  }
+}
+
+static MBWInputEventPayload *mbw_input_event_payload_from_handle(uint64_t payload_handle) {
+  if (payload_handle == 0) {
+    return NULL;
+  }
+  return (MBWInputEventPayload *)(void *)payload_handle;
+}
+
+static moonbit_bytes_t mbw_input_payload_text_or_empty(moonbit_bytes_t text) {
+  if (text == NULL) {
+    return moonbit_make_bytes(0, 0);
+  }
+  moonbit_incref(text);
+  return text;
+}
+
+MOONBIT_FFI_EXPORT
+int32_t mbw_input_event_payload_raw_id(uint64_t payload_handle) {
+  MBWInputEventPayload *payload = mbw_input_event_payload_from_handle(payload_handle);
+  return payload == NULL ? 0 : payload->raw_id;
+}
+
+MOONBIT_FFI_EXPORT
+int32_t mbw_input_event_payload_kind(uint64_t payload_handle) {
+  MBWInputEventPayload *payload = mbw_input_event_payload_from_handle(payload_handle);
+  return payload == NULL ? 0 : payload->kind;
+}
+
+MOONBIT_FFI_EXPORT
+double mbw_input_event_payload_x(uint64_t payload_handle) {
+  MBWInputEventPayload *payload = mbw_input_event_payload_from_handle(payload_handle);
+  return payload == NULL ? 0.0 : payload->x;
+}
+
+MOONBIT_FFI_EXPORT
+double mbw_input_event_payload_y(uint64_t payload_handle) {
+  MBWInputEventPayload *payload = mbw_input_event_payload_from_handle(payload_handle);
+  return payload == NULL ? 0.0 : payload->y;
+}
+
+MOONBIT_FFI_EXPORT
+int32_t mbw_input_event_payload_state(uint64_t payload_handle) {
+  MBWInputEventPayload *payload = mbw_input_event_payload_from_handle(payload_handle);
+  return payload == NULL ? 0 : payload->state;
+}
+
+MOONBIT_FFI_EXPORT
+int32_t mbw_input_event_payload_button(uint64_t payload_handle) {
+  MBWInputEventPayload *payload = mbw_input_event_payload_from_handle(payload_handle);
+  return payload == NULL ? 0 : payload->button;
+}
+
+MOONBIT_FFI_EXPORT
+int32_t mbw_input_event_payload_modifiers(uint64_t payload_handle) {
+  MBWInputEventPayload *payload = mbw_input_event_payload_from_handle(payload_handle);
+  return payload == NULL ? 0 : payload->modifiers;
+}
+
+MOONBIT_FFI_EXPORT
+int32_t mbw_input_event_payload_scancode(uint64_t payload_handle) {
+  MBWInputEventPayload *payload = mbw_input_event_payload_from_handle(payload_handle);
+  return payload == NULL ? 0 : payload->scancode;
+}
+
+MOONBIT_FFI_EXPORT
+int32_t mbw_input_event_payload_repeat(uint64_t payload_handle) {
+  MBWInputEventPayload *payload = mbw_input_event_payload_from_handle(payload_handle);
+  return payload == NULL ? 0 : payload->repeat;
+}
+
+MOONBIT_FFI_EXPORT
+int32_t mbw_input_event_payload_pointer_source(uint64_t payload_handle) {
+  MBWInputEventPayload *payload = mbw_input_event_payload_from_handle(payload_handle);
+  return payload == NULL ? 0 : payload->pointer_source;
+}
+
+MOONBIT_FFI_EXPORT
+int32_t mbw_input_event_payload_pointer_kind(uint64_t payload_handle) {
+  MBWInputEventPayload *payload = mbw_input_event_payload_from_handle(payload_handle);
+  return payload == NULL ? 0 : payload->pointer_kind;
+}
+
+MOONBIT_FFI_EXPORT
+int32_t mbw_input_event_payload_scroll_delta_kind(uint64_t payload_handle) {
+  MBWInputEventPayload *payload = mbw_input_event_payload_from_handle(payload_handle);
+  return payload == NULL ? 0 : payload->scroll_delta_kind;
+}
+
+MOONBIT_FFI_EXPORT
+double mbw_input_event_payload_delta_x(uint64_t payload_handle) {
+  MBWInputEventPayload *payload = mbw_input_event_payload_from_handle(payload_handle);
+  return payload == NULL ? 0.0 : payload->delta_x;
+}
+
+MOONBIT_FFI_EXPORT
+double mbw_input_event_payload_delta_y(uint64_t payload_handle) {
+  MBWInputEventPayload *payload = mbw_input_event_payload_from_handle(payload_handle);
+  return payload == NULL ? 0.0 : payload->delta_y;
+}
+
+MOONBIT_FFI_EXPORT
+int32_t mbw_input_event_payload_phase(uint64_t payload_handle) {
+  MBWInputEventPayload *payload = mbw_input_event_payload_from_handle(payload_handle);
+  return payload == NULL ? 0 : payload->phase;
+}
+
+MOONBIT_FFI_EXPORT
+moonbit_bytes_t mbw_input_event_payload_text_with_all_modifiers(uint64_t payload_handle) {
+  MBWInputEventPayload *payload = mbw_input_event_payload_from_handle(payload_handle);
+  if (payload == NULL) {
+    return moonbit_make_bytes(0, 0);
+  }
+  return mbw_input_payload_text_or_empty(payload->text_with_all_modifiers);
+}
+
+MOONBIT_FFI_EXPORT
+moonbit_bytes_t mbw_input_event_payload_text_ignoring_modifiers(uint64_t payload_handle) {
+  MBWInputEventPayload *payload = mbw_input_event_payload_from_handle(payload_handle);
+  if (payload == NULL) {
+    return moonbit_make_bytes(0, 0);
+  }
+  return mbw_input_payload_text_or_empty(payload->text_ignoring_modifiers);
+}
+
+MOONBIT_FFI_EXPORT
+moonbit_bytes_t mbw_input_event_payload_text_without_modifiers(uint64_t payload_handle) {
+  MBWInputEventPayload *payload = mbw_input_event_payload_from_handle(payload_handle);
+  if (payload == NULL) {
+    return moonbit_make_bytes(0, 0);
+  }
+  return mbw_input_payload_text_or_empty(payload->text_without_modifiers);
 }
 
 MOONBIT_FFI_EXPORT
@@ -1726,6 +1881,9 @@ void mbw_install_text_input_event_callback(mbw_text_input_event_trampoline_t tra
   }
   g_text_input_event_trampoline = trampoline;
   g_text_input_event_closure = closure;
+  if (g_text_input_event_closure != NULL) {
+    moonbit_incref(g_text_input_event_closure);
+  }
 }
 
 MOONBIT_FFI_EXPORT
@@ -1735,6 +1893,9 @@ void mbw_install_device_event_callback(mbw_device_event_trampoline_t trampoline,
   }
   g_device_event_trampoline = trampoline;
   g_device_event_closure = closure;
+  if (g_device_event_closure != NULL) {
+    moonbit_incref(g_device_event_closure);
+  }
 }
 
 MOONBIT_FFI_EXPORT

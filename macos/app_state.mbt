@@ -393,32 +393,8 @@ fn app_state_queue_native_window_event(
 ///|
 fn app_state_install_native_callbacks() -> Unit {
   native_install_input_event_callback(
-    fn(
-      callback,
-      raw_id,
-      kind,
-      x,
-      y,
-      state,
-      button,
-      modifiers,
-      scancode,
-      repeat,
-      pointer_source,
-      pointer_kind,
-      scroll_delta_kind,
-      delta_x,
-      delta_y,
-      phase,
-      text_with_all_modifiers,
-      text_ignoring_modifiers,
-      text_without_modifiers,
-    ) {
-      callback(
-        raw_id, kind, x, y, state, button, modifiers, scancode, repeat, pointer_source,
-        pointer_kind, scroll_delta_kind, delta_x, delta_y, phase, text_with_all_modifiers,
-        text_ignoring_modifiers, text_without_modifiers,
-      )
+    fn(callback, input_event_payload_handle) {
+      callback(input_event_payload_handle)
     },
     native_callback_input_event,
   )
@@ -464,26 +440,39 @@ fn native_callback_will_terminate() -> Unit {
 }
 
 ///|
-fn native_callback_input_event(
-  raw_id : Int,
-  kind : Int,
-  x : Double,
-  y : Double,
-  state : Int,
-  button : Int,
-  modifiers : Int,
-  scancode : Int,
-  repeat : Int,
-  pointer_source : Int,
-  pointer_kind : Int,
-  scroll_delta_kind : Int,
-  delta_x : Double,
-  delta_y : Double,
-  phase : Int,
-  text_with_all_modifiers : Bytes,
-  text_ignoring_modifiers : Bytes,
-  text_without_modifiers : Bytes,
-) -> Unit {
+fn native_callback_input_event(input_event_payload_handle : UInt64) -> Unit {
+  let raw_id = native_input_event_payload_raw_id(input_event_payload_handle)
+  let kind = native_input_event_payload_kind(input_event_payload_handle)
+  let x = native_input_event_payload_x(input_event_payload_handle)
+  let y = native_input_event_payload_y(input_event_payload_handle)
+  let state = native_input_event_payload_state(input_event_payload_handle)
+  let button = native_input_event_payload_button(input_event_payload_handle)
+  let modifiers = native_input_event_payload_modifiers(
+    input_event_payload_handle,
+  )
+  let scancode = native_input_event_payload_scancode(input_event_payload_handle)
+  let repeat = native_input_event_payload_repeat(input_event_payload_handle)
+  let pointer_source = native_input_event_payload_pointer_source(
+    input_event_payload_handle,
+  )
+  let pointer_kind = native_input_event_payload_pointer_kind(
+    input_event_payload_handle,
+  )
+  let scroll_delta_kind = native_input_event_payload_scroll_delta_kind(
+    input_event_payload_handle,
+  )
+  let delta_x = native_input_event_payload_delta_x(input_event_payload_handle)
+  let delta_y = native_input_event_payload_delta_y(input_event_payload_handle)
+  let phase = native_input_event_payload_phase(input_event_payload_handle)
+  let text_with_all_modifiers = native_input_event_payload_text_with_all_modifiers(
+    input_event_payload_handle,
+  )
+  let text_ignoring_modifiers = native_input_event_payload_text_ignoring_modifiers(
+    input_event_payload_handle,
+  )
+  let text_without_modifiers = native_input_event_payload_text_without_modifiers(
+    input_event_payload_handle,
+  )
   queue_native_input_event(
     raw_id, kind, x, y, state, button, modifiers, scancode, repeat, pointer_source,
     pointer_kind, scroll_delta_kind, delta_x, delta_y, phase, text_with_all_modifiers,

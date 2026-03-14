@@ -132,70 +132,106 @@ fn native_notification_center_remove_observer(observer_handle : UInt64) -> Unit 
 
 ///|
 fn native_install_input_event_callback(
-  call_closure : FuncRef[
-    (
-      (
-        Int,
-        Int,
-        Double,
-        Double,
-        Int,
-        Int,
-        Int,
-        Int,
-        Int,
-        Int,
-        Int,
-        Int,
-        Double,
-        Double,
-        Int,
-        Bytes,
-        Bytes,
-        Bytes,
-      ) -> Unit,
-      Int,
-      Int,
-      Double,
-      Double,
-      Int,
-      Int,
-      Int,
-      Int,
-      Int,
-      Int,
-      Int,
-      Int,
-      Double,
-      Double,
-      Int,
-      Bytes,
-      Bytes,
-      Bytes,
-    ) -> Unit,
-  ],
-  callback : (
-    Int,
-    Int,
-    Double,
-    Double,
-    Int,
-    Int,
-    Int,
-    Int,
-    Int,
-    Int,
-    Int,
-    Int,
-    Double,
-    Double,
-    Int,
-    Bytes,
-    Bytes,
-    Bytes,
-  ) -> Unit,
+  call_closure : FuncRef[((UInt64) -> Unit, UInt64) -> Unit],
+  callback : (UInt64) -> Unit,
 ) -> Unit {
   appkit_install_input_event_callback(call_closure, callback)
+}
+
+///|
+fn native_input_event_payload_raw_id(payload_handle : UInt64) -> Int {
+  appkit_input_event_payload_raw_id(payload_handle)
+}
+
+///|
+fn native_input_event_payload_kind(payload_handle : UInt64) -> Int {
+  appkit_input_event_payload_kind(payload_handle)
+}
+
+///|
+fn native_input_event_payload_x(payload_handle : UInt64) -> Double {
+  appkit_input_event_payload_x(payload_handle)
+}
+
+///|
+fn native_input_event_payload_y(payload_handle : UInt64) -> Double {
+  appkit_input_event_payload_y(payload_handle)
+}
+
+///|
+fn native_input_event_payload_state(payload_handle : UInt64) -> Int {
+  appkit_input_event_payload_state(payload_handle)
+}
+
+///|
+fn native_input_event_payload_button(payload_handle : UInt64) -> Int {
+  appkit_input_event_payload_button(payload_handle)
+}
+
+///|
+fn native_input_event_payload_modifiers(payload_handle : UInt64) -> Int {
+  appkit_input_event_payload_modifiers(payload_handle)
+}
+
+///|
+fn native_input_event_payload_scancode(payload_handle : UInt64) -> Int {
+  appkit_input_event_payload_scancode(payload_handle)
+}
+
+///|
+fn native_input_event_payload_repeat(payload_handle : UInt64) -> Int {
+  appkit_input_event_payload_repeat(payload_handle)
+}
+
+///|
+fn native_input_event_payload_pointer_source(payload_handle : UInt64) -> Int {
+  appkit_input_event_payload_pointer_source(payload_handle)
+}
+
+///|
+fn native_input_event_payload_pointer_kind(payload_handle : UInt64) -> Int {
+  appkit_input_event_payload_pointer_kind(payload_handle)
+}
+
+///|
+fn native_input_event_payload_scroll_delta_kind(payload_handle : UInt64) -> Int {
+  appkit_input_event_payload_scroll_delta_kind(payload_handle)
+}
+
+///|
+fn native_input_event_payload_delta_x(payload_handle : UInt64) -> Double {
+  appkit_input_event_payload_delta_x(payload_handle)
+}
+
+///|
+fn native_input_event_payload_delta_y(payload_handle : UInt64) -> Double {
+  appkit_input_event_payload_delta_y(payload_handle)
+}
+
+///|
+fn native_input_event_payload_phase(payload_handle : UInt64) -> Int {
+  appkit_input_event_payload_phase(payload_handle)
+}
+
+///|
+fn native_input_event_payload_text_with_all_modifiers(
+  payload_handle : UInt64,
+) -> Bytes {
+  appkit_input_event_payload_text_with_all_modifiers(payload_handle)
+}
+
+///|
+fn native_input_event_payload_text_ignoring_modifiers(
+  payload_handle : UInt64,
+) -> Bytes {
+  appkit_input_event_payload_text_ignoring_modifiers(payload_handle)
+}
+
+///|
+fn native_input_event_payload_text_without_modifiers(
+  payload_handle : UInt64,
+) -> Bytes {
+  appkit_input_event_payload_text_without_modifiers(payload_handle)
 }
 
 ///|
@@ -1187,6 +1223,7 @@ extern "C" fn native_cg_display_bounds_y(display : UInt) -> Int = "mbw_cg_displa
 extern "C" fn native_cg_display_scale_factor(display : UInt) -> Double = "mbw_cg_display_scale_factor"
 
 ///|
+#borrow(callback)
 extern "C" fn appkit_install_window_event_callback(
   call_closure : FuncRef[
     ((Int, Int, Int, Int, Int, Double) -> Unit, Int, Int, Int, Int, Int, Double) -> Unit,
@@ -1195,6 +1232,7 @@ extern "C" fn appkit_install_window_event_callback(
 ) -> Unit = "mbw_install_window_event_callback"
 
 ///|
+#borrow(callback)
 extern "C" fn appkit_notification_center_add_observer(
   call_closure : FuncRef[((Int) -> Unit, Int) -> Unit],
   callback : (Int) -> Unit,
@@ -1208,6 +1246,7 @@ extern "C" fn appkit_notification_center_remove_observer(
 ) -> Unit = "mbw_notification_center_remove_observer"
 
 ///|
+#borrow(callback)
 extern "C" fn appkit_main_run_loop_add_observer(
   call_closure : FuncRef[((Int) -> Unit, Int) -> Unit],
   callback : (Int) -> Unit,
@@ -1222,72 +1261,88 @@ extern "C" fn appkit_main_run_loop_remove_observer(
 ) -> Unit = "mbw_main_run_loop_remove_observer"
 
 ///|
+#borrow(callback)
 extern "C" fn appkit_install_input_event_callback(
-  call_closure : FuncRef[
-    (
-      (
-        Int,
-        Int,
-        Double,
-        Double,
-        Int,
-        Int,
-        Int,
-        Int,
-        Int,
-        Int,
-        Int,
-        Int,
-        Double,
-        Double,
-        Int,
-        Bytes,
-        Bytes,
-        Bytes,
-      ) -> Unit,
-      Int,
-      Int,
-      Double,
-      Double,
-      Int,
-      Int,
-      Int,
-      Int,
-      Int,
-      Int,
-      Int,
-      Int,
-      Double,
-      Double,
-      Int,
-      Bytes,
-      Bytes,
-      Bytes,
-    ) -> Unit,
-  ],
-  callback : (
-    Int,
-    Int,
-    Double,
-    Double,
-    Int,
-    Int,
-    Int,
-    Int,
-    Int,
-    Int,
-    Int,
-    Int,
-    Double,
-    Double,
-    Int,
-    Bytes,
-    Bytes,
-    Bytes,
-  ) -> Unit,
+  call_closure : FuncRef[((UInt64) -> Unit, UInt64) -> Unit],
+  callback : (UInt64) -> Unit,
 ) -> Unit = "mbw_install_input_event_callback"
 
 ///|
+extern "C" fn appkit_input_event_payload_raw_id(payload_handle : UInt64) -> Int = "mbw_input_event_payload_raw_id"
+
+///|
+extern "C" fn appkit_input_event_payload_kind(payload_handle : UInt64) -> Int = "mbw_input_event_payload_kind"
+
+///|
+extern "C" fn appkit_input_event_payload_x(payload_handle : UInt64) -> Double = "mbw_input_event_payload_x"
+
+///|
+extern "C" fn appkit_input_event_payload_y(payload_handle : UInt64) -> Double = "mbw_input_event_payload_y"
+
+///|
+extern "C" fn appkit_input_event_payload_state(payload_handle : UInt64) -> Int = "mbw_input_event_payload_state"
+
+///|
+extern "C" fn appkit_input_event_payload_button(payload_handle : UInt64) -> Int = "mbw_input_event_payload_button"
+
+///|
+extern "C" fn appkit_input_event_payload_modifiers(
+  payload_handle : UInt64,
+) -> Int = "mbw_input_event_payload_modifiers"
+
+///|
+extern "C" fn appkit_input_event_payload_scancode(
+  payload_handle : UInt64,
+) -> Int = "mbw_input_event_payload_scancode"
+
+///|
+extern "C" fn appkit_input_event_payload_repeat(payload_handle : UInt64) -> Int = "mbw_input_event_payload_repeat"
+
+///|
+extern "C" fn appkit_input_event_payload_pointer_source(
+  payload_handle : UInt64,
+) -> Int = "mbw_input_event_payload_pointer_source"
+
+///|
+extern "C" fn appkit_input_event_payload_pointer_kind(
+  payload_handle : UInt64,
+) -> Int = "mbw_input_event_payload_pointer_kind"
+
+///|
+extern "C" fn appkit_input_event_payload_scroll_delta_kind(
+  payload_handle : UInt64,
+) -> Int = "mbw_input_event_payload_scroll_delta_kind"
+
+///|
+extern "C" fn appkit_input_event_payload_delta_x(
+  payload_handle : UInt64,
+) -> Double = "mbw_input_event_payload_delta_x"
+
+///|
+extern "C" fn appkit_input_event_payload_delta_y(
+  payload_handle : UInt64,
+) -> Double = "mbw_input_event_payload_delta_y"
+
+///|
+extern "C" fn appkit_input_event_payload_phase(payload_handle : UInt64) -> Int = "mbw_input_event_payload_phase"
+
+///|
+extern "C" fn appkit_input_event_payload_text_with_all_modifiers(
+  payload_handle : UInt64,
+) -> Bytes = "mbw_input_event_payload_text_with_all_modifiers"
+
+///|
+extern "C" fn appkit_input_event_payload_text_ignoring_modifiers(
+  payload_handle : UInt64,
+) -> Bytes = "mbw_input_event_payload_text_ignoring_modifiers"
+
+///|
+extern "C" fn appkit_input_event_payload_text_without_modifiers(
+  payload_handle : UInt64,
+) -> Bytes = "mbw_input_event_payload_text_without_modifiers"
+
+///|
+#borrow(callback)
 extern "C" fn appkit_install_text_input_event_callback(
   call_closure : FuncRef[
     (
@@ -1307,6 +1362,7 @@ extern "C" fn appkit_install_text_input_event_callback(
 ) -> Unit = "mbw_install_text_input_event_callback"
 
 ///|
+#borrow(callback)
 extern "C" fn appkit_install_device_event_callback(
   call_closure : FuncRef[
     ((Int, Int, Double, Double) -> Unit, Int, Int, Double, Double) -> Unit,
