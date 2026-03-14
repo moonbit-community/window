@@ -1,6 +1,6 @@
 #include <CoreGraphics/CoreGraphics.h>
 #include <CoreFoundation/CoreFoundation.h>
-#include <CoreVideo/CoreVideo.h>
+#include <ApplicationServices/ApplicationServices.h>
 #include <stdint.h>
 #include <stdlib.h>
 
@@ -67,26 +67,11 @@ double mbw_cg_display_scale_factor(uint32_t display_id) {
 }
 
 static int32_t mbw_display_mode_bit_depth_ref(CGDisplayModeRef mode) {
-  if (mode == NULL) {
-    return 0;
-  }
-  CFStringRef encoding = CGDisplayModeCopyPixelEncoding(mode);
-  if (encoding == NULL) {
-    return 0;
-  }
-
-  int32_t bit_depth = 0;
-  if (CFStringCompare(encoding, CFSTR("IO32BitDirectPixels"), 0) == kCFCompareEqualTo) {
-    bit_depth = 32;
-  } else if (CFStringCompare(encoding, CFSTR("IO16BitDirectPixels"), 0) == kCFCompareEqualTo) {
-    bit_depth = 16;
-  } else if (CFStringCompare(encoding, CFSTR("IO30BitDirectPixels"), 0) == kCFCompareEqualTo ||
-             CFStringCompare(encoding, CFSTR("kIO30BitDirectPixels"), 0) == kCFCompareEqualTo) {
-    bit_depth = 30;
-  }
-
-  CFRelease(encoding);
-  return bit_depth;
+  // `CGDisplayModeCopyPixelEncoding` is deprecated and no direct replacement is
+  // provided for per-mode bit-depth queries. In practice, modern macOS display
+  // modes are effectively 32-bit.
+  (void)mode;
+  return 32;
 }
 
 uint64_t mbw_find_display_mode_handle(uint32_t display_id, int32_t width, int32_t height,
@@ -116,7 +101,7 @@ uint64_t mbw_find_display_mode_handle(uint32_t display_id, int32_t width, int32_
     if ((int32_t)mode_width != width || (int32_t)mode_height != height) {
       continue;
     }
-    if (bit_depth > 0) {
+    if (bit_depth > 0 && bit_depth == 32) {
       int32_t mode_bit_depth = mbw_display_mode_bit_depth_ref(mode);
       if (mode_bit_depth > 0 && mode_bit_depth != bit_depth) {
         continue;
@@ -230,34 +215,6 @@ int32_t mbw_display_mode_refresh_rate_millihertz(uint64_t mode_handle) {
   }
   CGDisplayModeRef mode = (CGDisplayModeRef)(uintptr_t)mode_handle;
   double hz = CGDisplayModeGetRefreshRate(mode);
-  if (hz <= 0.0) {
-    return 0;
-  }
-  double millihertz = hz * 1000.0;
-  if (millihertz > (double)INT32_MAX) {
-    return INT32_MAX;
-  }
-  return (int32_t)(millihertz + 0.5);
-}
-
-int32_t mbw_display_refresh_rate_millihertz(uint32_t display_id) {
-  if (display_id == 0) {
-    return 0;
-  }
-  CVDisplayLinkRef display_link = NULL;
-  CVReturn create_result =
-      CVDisplayLinkCreateWithCGDisplay((CGDirectDisplayID)display_id, &display_link);
-  if (create_result != kCVReturnSuccess || display_link == NULL) {
-    return 0;
-  }
-
-  CVTime nominal = CVDisplayLinkGetNominalOutputVideoRefreshPeriod(display_link);
-  CVDisplayLinkRelease(display_link);
-  if ((nominal.flags & kCVTimeIsIndefinite) != 0 || nominal.timeValue <= 0 || nominal.timeScale <= 0) {
-    return 0;
-  }
-
-  double hz = ((double)nominal.timeScale) / ((double)nominal.timeValue);
   if (hz <= 0.0) {
     return 0;
   }

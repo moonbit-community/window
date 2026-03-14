@@ -32,6 +32,50 @@ fn callback_names_for_test(
 }
 
 ///|
+fn active_event_loop_for_test() -> ActiveEventLoop {
+  {
+    inner: {
+      did_finish_launching_observer_: (0 : Int).to_uint64(),
+      will_terminate_observer_: (0 : Int).to_uint64(),
+      before_waiting_observer_: (0 : Int).to_uint64(),
+      after_waiting_observer_: (0 : Int).to_uint64(),
+    },
+  }
+}
+
+///|
+let launch_init_callback_order_for_test : Ref[Array[String]] = Ref::new([])
+
+///|
+let launch_init_stop_flag_seen_for_test : Ref[Array[Bool]] = Ref::new([])
+
+///|
+struct LaunchInitCallbacksApp {}
+
+///|
+pub impl ApplicationHandler for LaunchInitCallbacksApp with new_events(
+  _self,
+  _event_loop,
+  _cause,
+) {
+  launch_init_callback_order_for_test.val.push("new_events")
+  launch_init_stop_flag_seen_for_test.val.push(
+    app_state_runtime.val.stop_on_launch,
+  )
+}
+
+///|
+pub impl ApplicationHandler for LaunchInitCallbacksApp with can_create_surfaces(
+  _self,
+  _event_loop,
+) {
+  launch_init_callback_order_for_test.val.push("can_create_surfaces")
+  launch_init_stop_flag_seen_for_test.val.push(
+    app_state_runtime.val.stop_on_launch,
+  )
+}
+
+///|
 test "min_timeout_handles_none_and_picks_smaller_timeout" {
   assert_eq(min_timeout_ms(None, None), None)
   assert_eq(
@@ -162,5 +206,75 @@ test "dispatch_registered_deferred_callbacks_dispatches_lifecycle_while_not_runn
   assert_eq(seen.val, ["will_terminate", "did_finish_launching"])
   assert_eq(callback_names_for_test(app_state_runtime.val.deferred_callbacks), [
     "proxy_wake_up",
+  ])
+}
+
+///|
+test "did_finish_launching_keeps_stop_on_launch_until_init_dispatch" {
+  reset_app_state_runtime_for_test()
+  app_state_set_stop_on_launch(true)
+
+  app_state_did_finish_launching()
+
+  assert_true(app_state_is_launched())
+  assert_true(app_state_runtime.val.stop_on_launch)
+}
+
+///|
+test "did_finish_launching_and_dispatch_runs_init_before_stop_on_launch" {
+  reset_app_state_runtime_for_test()
+  launch_init_callback_order_for_test.val = []
+  launch_init_stop_flag_seen_for_test.val = []
+  app_state_set_stop_on_launch(true)
+
+  app_state_did_finish_launching_and_dispatch(
+    LaunchInitCallbacksApp::{  },
+    active_event_loop_for_test(),
+  )
+
+  assert_eq(launch_init_callback_order_for_test.val, [
+    "new_events", "can_create_surfaces",
+  ])
+  assert_eq(launch_init_stop_flag_seen_for_test.val, [true, true])
+  assert_false(app_state_runtime.val.stop_on_launch)
+}
+
+///|
+test "reentrant_redraw_requested_is_dropped" {
+  reset_app_state_runtime_for_test()
+  app_state_set_running(true)
+  app_state_set_handler_in_use(true)
+  let seen : Ref[Array[String]] = Ref::new([])
+  app_state_runtime.val.dispatch_callback = Some(fn(callback) {
+    seen.val.push(callback_name_for_test(callback))
+  })
+
+  app_state_queue_window_callback(
+    @core.WindowId::from_raw(1),
+    @core.WindowEvent::RedrawRequested,
+  )
+
+  assert_eq(seen.val.length(), 0)
+  assert_eq(app_state_runtime.val.deferred_callbacks.length(), 0)
+}
+
+///|
+test "reentrant_non_redraw_window_event_is_queued" {
+  reset_app_state_runtime_for_test()
+  app_state_set_running(true)
+  app_state_set_handler_in_use(true)
+  let seen : Ref[Array[String]] = Ref::new([])
+  app_state_runtime.val.dispatch_callback = Some(fn(callback) {
+    seen.val.push(callback_name_for_test(callback))
+  })
+
+  app_state_queue_window_callback(
+    @core.WindowId::from_raw(1),
+    @core.WindowEvent::Focused(true),
+  )
+
+  assert_eq(seen.val.length(), 0)
+  assert_eq(callback_names_for_test(app_state_runtime.val.deferred_callbacks), [
+    "window_event",
   ])
 }

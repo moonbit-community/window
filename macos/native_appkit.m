@@ -2213,6 +2213,41 @@ uint64_t mbw_window_current_monitor_id(uint64_t handle) {
 }
 
 MOONBIT_FFI_EXPORT
+int32_t mbw_display_refresh_rate_millihertz(uint32_t display_id) {
+  NSScreen *target = nil;
+  for (NSScreen *screen in [NSScreen screens]) {
+    NSDictionary *description = [screen deviceDescription];
+    NSNumber *number = [description objectForKey:@"NSScreenNumber"];
+    if (number != nil && [number unsignedIntValue] == display_id) {
+      target = screen;
+      break;
+    }
+  }
+  if (target == nil) {
+    target = [NSScreen mainScreen];
+  }
+  if (target == nil) {
+    return 0;
+  }
+
+  NSInteger frames_per_second = 0;
+  if (@available(macOS 12.0, *)) {
+    frames_per_second = target.maximumFramesPerSecond;
+  } else {
+    return 0;
+  }
+  if (frames_per_second <= 0) {
+    return 0;
+  }
+
+  long long millihertz = (long long)frames_per_second * 1000LL;
+  if (millihertz > INT32_MAX) {
+    return INT32_MAX;
+  }
+  return (int32_t)millihertz;
+}
+
+MOONBIT_FFI_EXPORT
 int32_t mbw_window_x(uint64_t handle) {
   MBWWindowBox *box = mbw_window_box_from_handle(handle);
   if (box == nil || box.window == nil) {

@@ -202,6 +202,13 @@ fn app_state_maybe_dispatch_callback(callback : DeferredCallback) -> Unit {
     return ()
   }
   if app_state_runtime.val.event_handler_in_use {
+    match callback {
+      // Port target: app_state.rs::handle_redraw
+      // Drop re-entrant redraw callbacks instead of queueing them.
+      DeferredCallback::WindowEvent(_, @core.WindowEvent::RedrawRequested) =>
+        return ()
+      _ => ()
+    }
     app_state_defer_callback(callback)
     return ()
   }
@@ -862,10 +869,6 @@ fn app_state_did_finish_launching() -> Unit {
   app_state_runtime.val.is_launched = true
   app_state_apply_launch_policy()
   app_state_runtime.val.waker.start()
-  if app_state_runtime.val.stop_on_launch {
-    app_state_runtime.val.stop_on_launch = false
-    stop_app_immediately()
-  }
 }
 
 ///|
@@ -1068,6 +1071,10 @@ fn[A : ApplicationHandler] app_state_did_finish_launching_and_dispatch(
   }
   app_state_did_finish_launching()
   app_state_dispatch_init_events(app, event_loop)
+  if app_state_runtime.val.stop_on_launch {
+    app_state_runtime.val.stop_on_launch = false
+    stop_app_immediately()
+  }
 }
 
 ///|

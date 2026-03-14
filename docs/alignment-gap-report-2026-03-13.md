@@ -184,6 +184,9 @@ The implementation is **not yet 1:1 aligned** with `winit-reference` semantics.
 - Completed: added MoonBit-adapted upstream object tests:
   - `core/serde_objects_test.mbt` (maps `winit/tests/serde_objects.rs` intent to Show/Eq representability checks)
   - `macos/send_sync_objects_test.mbt` (maps `winit/tests/send_objects.rs` + `sync_object.rs` intent to value-surface/type-check coverage in MoonBit)
+- Completed: `DidFinishLaunching` dispatch order now matches upstream intent more closely by dispatching init callbacks before `stop_on_launch` shutdown handling.
+- Completed: re-entrant `RedrawRequested` callbacks are now dropped (instead of deferred) while a handler is in use, matching upstream `handle_redraw` behavior boundaries.
+- Completed: expanded `macos/app_state_wbtest.mbt` coverage for launch-dispatch ordering and re-entrant redraw-vs-non-redraw queue behavior.
 
 ## Remaining Structural Work
 
