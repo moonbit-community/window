@@ -488,18 +488,6 @@ fn EventLoop::clear_pump_wait(self : EventLoop) -> Unit {
 }
 
 ///|
-fn[A : ApplicationHandler] EventLoop::run_init_sequence(
-  self : EventLoop,
-  app : A,
-) -> Unit {
-  if app_state_is_launched() {
-    app_state_dispatch_init_events(app, self.as_active())
-  } else {
-    self.dispatch_window_events(app)
-  }
-}
-
-///|
 fn[A : ApplicationHandler] EventLoop::dispatch_window_events(
   self : EventLoop,
   app : A,
@@ -520,17 +508,6 @@ fn stop_app_immediately() -> Unit {
 }
 
 ///|
-fn[A : ApplicationHandler] EventLoop::finish_exit(
-  self : EventLoop,
-  app : A,
-) -> @core.PumpStatus {
-  app_state_set_handler_in_use(false)
-  self.dispatch_window_events(app)
-  app_state_internal_exit()
-  @core.PumpStatus::Exit(0)
-}
-
-///|
 pub fn[A : ApplicationHandler] EventLoop::run_app_on_demand(
   self : EventLoop,
   app : A,
@@ -546,10 +523,18 @@ pub fn[A : ApplicationHandler] EventLoop::try_run_app_on_demand(
   if app_state_is_running() {
     raise @core.EventLoopError::RecreationAttempt
   }
+  app_state_set_dispatch_handler(app, self.as_active())
   app_state_clear_exit()
   app_state_set_handler_in_use(false)
   self.clear_pump_wait()
-  self.try_run_app(app)
+  if app_state_is_launched() {
+    app_state_set_running(true)
+    app_state_dispatch_init_events(app, self.as_active())
+  }
+  native_application_run()
+  self.dispatch_window_events(app)
+  app_state_internal_exit()
+  app_state_clear_dispatch_handler()
 }
 
 ///|
@@ -573,19 +558,18 @@ pub fn[A : ApplicationHandler] EventLoop::try_pump_app_events(
     if app_state_is_launched() == false {
       app_state_set_stop_on_launch(true)
       native_application_run()
-      self.dispatch_window_events(app)
     } else if app_state_is_running() == false {
       app_state_set_running(true)
       app_state_dispatch_init_events(app, self.as_active())
-      self.dispatch_window_events(app)
     } else {
       self.configure_pump_wait(timeout_ms)
       native_application_run()
-      self.dispatch_window_events(app)
       self.clear_pump_wait()
     }
+    self.dispatch_window_events(app)
     if self.exiting() {
-      self.finish_exit(app)
+      app_state_internal_exit()
+      @core.PumpStatus::Exit(0)
     } else {
       @core.PumpStatus::Continue
     }
@@ -610,14 +594,12 @@ pub fn[A : ApplicationHandler] EventLoop::try_run_app(
   app_state_set_dispatch_handler(app, self.as_active())
   let result = (fn() -> Unit raise @core.EventLoopError {
     self.try_start_running()
-    self.run_init_sequence(app)
-    if self.exiting() {
-      ignore(self.finish_exit(app))
-    } else {
-      native_application_run()
-      self.dispatch_window_events(app)
-      ignore(self.finish_exit(app))
+    if app_state_is_launched() {
+      app_state_dispatch_init_events(app, self.as_active())
     }
+    native_application_run()
+    self.dispatch_window_events(app)
+    app_state_internal_exit()
   })() catch {
     err => {
       app_state_clear_dispatch_handler()

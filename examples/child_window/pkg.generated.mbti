@@ -14,7 +14,7 @@ import {
 type App
 pub impl @macos.ApplicationHandler for App
 
-type WindowColor
+type WindowData
 
 // Type aliases
 

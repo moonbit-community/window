@@ -876,6 +876,8 @@ fn app_state_apply_launch_policy() -> Unit {
 
 ///|
 fn app_state_will_terminate() -> Unit {
+  notify_windows_of_exit()
+  app_state_runtime.val.deferred_callbacks = []
   app_state_exit()
   app_state_internal_exit()
 }
@@ -893,8 +895,6 @@ fn app_state_internal_exit() -> Unit {
   app_state_runtime.val.start_time_ms = None
   app_state_runtime.val.pending_redraw_window_ids = []
   app_state_runtime.val.fullscreen_requests = []
-  app_state_runtime.val.deferred_callbacks = []
-  app_state_runtime.val.dispatch_callback = None
 }
 
 ///|
@@ -908,10 +908,7 @@ fn[A : ApplicationHandler] app_state_dispatch_callback(
       if app_state_is_launched() == false {
         app_state_did_finish_launching_and_dispatch(app, event_loop)
       }
-    DeferredCallback::WillTerminate => {
-      notify_windows_of_exit()
-      app_state_will_terminate()
-    }
+    DeferredCallback::WillTerminate => app_state_will_terminate()
     DeferredCallback::NewEvents(cause) => app.new_events(event_loop, cause)
     DeferredCallback::CanCreateSurfaces => app.can_create_surfaces(event_loop)
     DeferredCallback::AboutToWait => app.about_to_wait(event_loop)

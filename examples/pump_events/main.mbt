@@ -34,7 +34,6 @@ pub impl @macos.ApplicationHandler for PumpDemo with window_event(
     @core.WindowEvent::RedrawRequested =>
       match self.window {
         Some(window) => {
-          window.pre_present_notify()
           @util.fill_window(window)
           window.request_redraw()
         }
@@ -54,10 +53,7 @@ fn pump_loop(event_loop : @macos.EventLoop, app : PumpDemo) -> Unit {
         println("Update()")
         @util.sleep_millis(16)
       }
-      @core.PumpStatus::Exit(exit_code) => {
-        println("Pump exited with code \{exit_code}")
-        done = true
-      }
+      @core.PumpStatus::Exit(_exit_code) => done = true
     }
   }
 }

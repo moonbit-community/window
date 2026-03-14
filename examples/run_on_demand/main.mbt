@@ -1,7 +1,7 @@
 ///|
 // Port target: winit-reference/winit/examples/run_on_demand.rs
 struct App {
-  run_index : Ref[Int]
+  mut run_index : Int
   mut window_id : @core.WindowId?
   mut window : @macos.Window?
 }
@@ -41,7 +41,7 @@ pub impl @macos.ApplicationHandler for App with window_event(
         Some(current_window_id) =>
           if current_window_id == window_id {
             println(
-              "--------------------------------------------------------- Window \{self.run_index.val} Destroyed",
+              "--------------------------------------------------------- Window \{self.run_index} Destroyed",
             )
             self.window_id = None
             self.window = None
@@ -53,7 +53,7 @@ pub impl @macos.ApplicationHandler for App with window_event(
       match self.window {
         Some(window) => {
           println(
-            "--------------------------------------------------------- Window \{self.run_index.val} CloseRequested",
+            "--------------------------------------------------------- Window \{self.run_index} CloseRequested",
           )
           @util.cleanup_window(window)
           self.window = None
@@ -62,10 +62,7 @@ pub impl @macos.ApplicationHandler for App with window_event(
       }
     @core.WindowEvent::RedrawRequested =>
       match self.window {
-        Some(window) => {
-          window.pre_present_notify()
-          @util.fill_window(window)
-        }
+        Some(window) => @util.fill_window(window)
         None => ()
       }
     _ => ()
@@ -76,8 +73,7 @@ pub impl @macos.ApplicationHandler for App with window_event(
 fn main {
   @util.tracing_init()
   let event_loop = @macos.EventLoop::new()
-  let run_index = Ref::new(1)
-  let app : App = { run_index, window_id: None, window: None }
+  let app : App = { run_index: 1, window_id: None, window: None }
 
   event_loop.run_app_on_demand(app)
   println(
@@ -88,7 +84,7 @@ fn main {
   )
   @util.sleep_millis(5000)
 
-  run_index.val = 2
+  app.run_index += 1
   event_loop.run_app_on_demand(app)
   println(
     "--------------------------------------------------------- Finished second loop",

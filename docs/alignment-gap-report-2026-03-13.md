@@ -175,8 +175,12 @@ The implementation is **not yet 1:1 aligned** with `winit-reference` semantics.
 - Completed: the legacy wait-millis ABI (`mbw_event_loop_wait_millis`) has been removed from the MoonBit FFI surface and native bridge, reducing non-upstream runtime primitives.
 - Completed: `try_run_app` now runs via a direct `NSApplication::run` cycle with explicit post-run deferred dispatch + unified `finish_exit` finalization, removing the previous manual outer `run_loop` stepping layer.
 - Completed: `pump_app_events` control flow has been simplified to launch/rerun/timeout branches around direct `NSApplication::run`, and `try_pump_app_events` is now non-fallible (matching upstream pump semantics more closely).
+- Completed: `run_app_on_demand` now uses a dedicated on-demand run path (normalize pump flags, relaunch init-dispatch when already launched, then direct `NSApplication::run` + internal-exit) instead of reusing `try_run_app`.
+- Completed: removed `EventLoop::run_init_sequence` and `EventLoop::finish_exit` scaffolding; run/pump/on-demand paths now follow a direct `dispatch-init (if launched) -> NSApplication::run -> deferred dispatch -> internal_exit` shape.
+- Completed: `app_state_internal_exit` no longer clears the run-scope dispatch handler; dispatch handler lifetime is now owned by event-loop run scopes (set/clear around each run entry).
+- Completed: `WillTerminate` lifecycle handling is now centralized in `app_state_will_terminate` (`notify_windows_of_exit` + deferred-callback termination + `internal_exit`), reducing split shutdown behavior across event-loop/app-state layers.
 
 ## Remaining Structural Work
 
-- Not completed: Final `run_app` / `run_app_on_demand` / `pump_app_events` control-flow parity cleanup (the backend now runs through `NSApplication::run`, but loop entry/exit orchestration still retains MoonBit-specific scaffolding).
+- Not completed: Final event-loop edge-case parity audit around lifecycle races (`DidFinishLaunching`/`WillTerminate`) and nested stop/wake interleavings.
 - Not completed: Full example behavior parity for all upstream demo semantics.

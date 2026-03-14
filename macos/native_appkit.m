@@ -61,9 +61,11 @@ static int32_t mbw_event_is_repeat_safe(NSEvent *event);
 static NSString *mbw_event_characters_safe(NSEvent *event);
 static NSString *mbw_event_characters_ignoring_modifiers_safe(NSEvent *event);
 static void mbw_ensure_app_initialized(void);
+static void mbw_override_send_event_for_application(NSApplication *app, BOOL update_original);
 static CFRunLoopActivity mbw_main_run_loop_activity_from_kind(int32_t activity_kind);
 static void mbw_main_run_loop_observer_callback(CFRunLoopObserverRef observer,
                                                 CFRunLoopActivity activity, void *info);
+static void mbw_test_custom_application_send_event(id self, SEL _cmd, NSEvent *event);
 
 @interface MBWContentView : NSView <NSTextInputClient, NSDraggingDestination>
 @property(nonatomic, assign) BOOL acceptsFirstMouseEnabled;
@@ -1645,6 +1647,32 @@ static void mbw_overridden_send_event(id self, SEL _cmd, NSEvent *event) {
   }
 }
 
+static void mbw_override_send_event_for_application(NSApplication *app, BOOL update_original) {
+  if (app == nil) {
+    return;
+  }
+  Class cls = object_getClass(app);
+  Method method = class_getInstanceMethod(cls, @selector(sendEvent:));
+  if (method == NULL) {
+    return;
+  }
+  IMP overridden = (IMP)mbw_overridden_send_event;
+  IMP current = method_getImplementation(method);
+  if (current == overridden) {
+    return;
+  }
+  IMP original = method_setImplementation(method, overridden);
+  if (update_original) {
+    g_original_send_event_impl = (mbw_send_event_impl_t)original;
+  }
+}
+
+static void mbw_test_custom_application_send_event(id self, SEL _cmd, NSEvent *event) {
+  (void)self;
+  (void)_cmd;
+  (void)event;
+}
+
 MOONBIT_FFI_EXPORT
 void mbw_install_window_event_callback(mbw_window_event_trampoline_t trampoline, void *closure) {
   if (g_window_event_closure != NULL) {
@@ -1697,19 +1725,60 @@ void mbw_install_device_event_callback(mbw_device_event_trampoline_t trampoline,
 MOONBIT_FFI_EXPORT
 void mbw_override_send_event(void) {
   mbw_ensure_app_initialized();
+  mbw_override_send_event_for_application([NSApplication sharedApplication], YES);
+}
+
+MOONBIT_FFI_EXPORT
+int32_t mbw_test_application_override_send_event(void) {
+  if (![NSThread isMainThread]) {
+    return 1;
+  }
+
+  mbw_ensure_app_initialized();
   NSApplication *app = [NSApplication sharedApplication];
+  mbw_override_send_event_for_application(app, YES);
+  mbw_override_send_event_for_application(app, YES);
+
   Class cls = object_getClass(app);
   Method method = class_getInstanceMethod(cls, @selector(sendEvent:));
   if (method == NULL) {
-    return;
+    return 0;
   }
-  IMP overridden = (IMP)mbw_overridden_send_event;
-  IMP current = method_getImplementation(method);
-  if (current == overridden) {
-    return;
+  return method_getImplementation(method) == (IMP)mbw_overridden_send_event ? 1 : 0;
+}
+
+MOONBIT_FFI_EXPORT
+int32_t mbw_test_application_override_send_event_custom_class(void) {
+  if (![NSThread isMainThread]) {
+    return 1;
   }
-  IMP original = method_setImplementation(method, overridden);
-  g_original_send_event_impl = (mbw_send_event_impl_t)original;
+
+  static Class test_application_class = Nil;
+  if (test_application_class == Nil) {
+    test_application_class = objc_allocateClassPair([NSApplication class], "MBWTestApplication", 0);
+    if (test_application_class != Nil) {
+      class_addMethod(test_application_class, @selector(sendEvent:),
+                      (IMP)mbw_test_custom_application_send_event, "v@:@");
+      objc_registerClassPair(test_application_class);
+    } else {
+      test_application_class = objc_getClass("MBWTestApplication");
+    }
+  }
+  if (test_application_class == Nil) {
+    return 0;
+  }
+
+  Method method = class_getInstanceMethod(test_application_class, @selector(sendEvent:));
+  if (method == NULL) {
+    return 0;
+  }
+
+  IMP original = method_getImplementation(method);
+  method_setImplementation(method, (IMP)mbw_overridden_send_event);
+  int32_t ok =
+      method_getImplementation(method) == (IMP)mbw_overridden_send_event ? 1 : 0;
+  method_setImplementation(method, original);
+  return ok;
 }
 
 MOONBIT_FFI_EXPORT

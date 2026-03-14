@@ -1,20 +1,19 @@
 ///|
 // Port target: winit-reference/winit/examples/child_window.rs
 struct App {
-  mut parent_window : @macos.Window?
-  windows : Array[@macos.Window]
-  window_colors : Array[WindowColor]
+  mut parent_window_id : @core.WindowId?
+  windows : Array[WindowData]
 }
 
 ///|
-struct WindowColor {
-  window_id : @core.WindowId
+struct WindowData {
+  window : @macos.Window
   color : Int
 }
 
 ///|
 fn App::new() -> App {
-  { parent_window: None, windows: [], window_colors: [] }
+  { parent_window_id: None, windows: [] }
 }
 
 ///|
@@ -34,22 +33,19 @@ fn child_color(child_index : Int) -> Int {
 }
 
 ///|
-fn App::set_window_color(
-  self : App,
-  window_id : @core.WindowId,
-  color : Int,
-) -> Unit {
-  match self.window_colors.search_by(entry => entry.window_id == window_id) {
-    Some(index) => self.window_colors[index] = { window_id, color }
-    None => self.window_colors.push({ window_id, color })
-  }
+fn App::window_data_index(self : App, window_id : @core.WindowId) -> Int? {
+  self.windows.search_by(entry => entry.window.id() == window_id)
 }
 
 ///|
-fn App::window_color(self : App, window_id : @core.WindowId) -> Int {
-  match self.window_colors.search_by(entry => entry.window_id == window_id) {
-    Some(index) => self.window_colors[index].color
-    None => 0xff000000
+fn App::parent_window(self : App) -> @macos.Window? {
+  match self.parent_window_id {
+    Some(parent_window_id) =>
+      match self.window_data_index(parent_window_id) {
+        Some(index) => Some(self.windows[index].window)
+        None => None
+      }
+    None => None
   }
 }
 
@@ -58,7 +54,7 @@ fn App::spawn_child_window(
   self : App,
   event_loop : @macos.ActiveEventLoop,
 ) -> Unit {
-  match self.parent_window {
+  match self.parent_window() {
     Some(parent_window) => {
       let child_index = self.windows.length() - 1
       let x = (child_index % 5).to_double() * 128.0
@@ -73,9 +69,12 @@ fn App::spawn_child_window(
         .with_visible(true)
         .with_parent_window(Some(parent_raw))
       let child_window = event_loop.create_window(child_attrs)
-      self.windows.push(child_window)
-      self.set_window_color(child_window.id(), child_color(child_index))
-      println("Child window created with id: \{child_window.id()}")
+      let child_window_id = child_window.id()
+      self.windows.push({
+        window: child_window,
+        color: child_color(child_index),
+      })
+      println("Child window created with id: \{child_window_id}")
     }
     None => ()
   }
@@ -91,10 +90,10 @@ pub impl @macos.ApplicationHandler for App with can_create_surfaces(
     .with_position(@dpi.LogicalPosition::new(0.0, 0.0).into_position())
     .with_surface_size(@dpi.LogicalSize::new(640.0, 480.0).into_size())
   let parent_window = event_loop.create_window(parent_attrs)
-  self.parent_window = Some(parent_window)
-  self.windows.push(parent_window)
-  self.set_window_color(parent_window.id(), 0xffbbbbbb)
-  println("Parent window id: \{parent_window.id()}")
+  let parent_window_id = parent_window.id()
+  self.parent_window_id = Some(parent_window_id)
+  self.windows.push({ window: parent_window, color: 0xffbbbbbb })
+  println("Parent window id: \{parent_window_id}")
 }
 
 ///|
@@ -116,15 +115,23 @@ pub impl @macos.ApplicationHandler for App with window_event(
         self.spawn_child_window(event_loop)
       }
     @core.WindowEvent::RedrawRequested =>
-      match self.windows.search_by(window => window.id() == window_id) {
+      match self.window_data_index(window_id) {
         Some(index) =>
-          if index == 0 {
-            self.windows[index].pre_present_notify()
-            @util.fill_window(self.windows[index])
-          } else {
-            self.windows[index].pre_present_notify()
-            let color = self.window_color(window_id)
-            @util.fill_window_with_color(self.windows[index], color)
+          match self.parent_window_id {
+            Some(parent_window_id) =>
+              if parent_window_id == window_id {
+                @util.fill_window(self.windows[index].window)
+              } else {
+                @util.fill_window_with_color(
+                  self.windows[index].window,
+                  self.windows[index].color,
+                )
+              }
+            None =>
+              @util.fill_window_with_color(
+                self.windows[index].window,
+                self.windows[index].color,
+              )
           }
         None => ()
       }
