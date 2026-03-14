@@ -53,6 +53,7 @@ pub struct PlatformEventLoopAttributes {
   priv mut activation_policy : ActivationPolicy?
   priv mut default_menu : Bool
   priv mut activate_ignoring_other_apps : Bool
+  priv mut any_thread : Bool
 } derive(Eq, Show)
 
 ///|
@@ -61,6 +62,7 @@ pub fn PlatformEventLoopAttributes::default() -> PlatformEventLoopAttributes {
     activation_policy: None,
     default_menu: true,
     activate_ignoring_other_apps: true,
+    any_thread: false,
   }
 }
 
@@ -110,6 +112,22 @@ pub fn PlatformEventLoopAttributes::activate_ignoring_other_apps(
   self : PlatformEventLoopAttributes,
 ) -> Bool {
   self.activate_ignoring_other_apps
+}
+
+///|
+pub fn PlatformEventLoopAttributes::with_any_thread(
+  self : PlatformEventLoopAttributes,
+  any_thread : Bool,
+) -> PlatformEventLoopAttributes {
+  self.any_thread = any_thread
+  self
+}
+
+///|
+pub fn PlatformEventLoopAttributes::any_thread(
+  self : PlatformEventLoopAttributes,
+) -> Bool {
+  self.any_thread
 }
 
 ///|

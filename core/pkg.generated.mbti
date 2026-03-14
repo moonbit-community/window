@@ -1163,10 +1163,12 @@ pub struct PlatformEventLoopAttributes {
 }
 pub fn PlatformEventLoopAttributes::activate_ignoring_other_apps(Self) -> Bool
 pub fn PlatformEventLoopAttributes::activation_policy(Self) -> ActivationPolicy?
+pub fn PlatformEventLoopAttributes::any_thread(Self) -> Bool
 pub fn PlatformEventLoopAttributes::default() -> Self
 pub fn PlatformEventLoopAttributes::default_menu(Self) -> Bool
 pub fn PlatformEventLoopAttributes::with_activate_ignoring_other_apps(Self, Bool) -> Self
 pub fn PlatformEventLoopAttributes::with_activation_policy(Self, ActivationPolicy) -> Self
+pub fn PlatformEventLoopAttributes::with_any_thread(Self, Bool) -> Self
 pub fn PlatformEventLoopAttributes::with_default_menu(Self, Bool) -> Self
 pub impl Eq for PlatformEventLoopAttributes
 pub impl Show for PlatformEventLoopAttributes

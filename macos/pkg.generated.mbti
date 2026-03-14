@@ -82,6 +82,7 @@ pub fn EventLoopBuilder::platform_attributes(Self) -> @core.PlatformEventLoopAtt
 pub fn EventLoopBuilder::try_build(Self) -> EventLoop raise @core.EventLoopError
 pub fn EventLoopBuilder::with_activate_ignoring_other_apps(Self, Bool) -> Self
 pub fn EventLoopBuilder::with_activation_policy(Self, @core.ActivationPolicy) -> Self
+pub fn EventLoopBuilder::with_any_thread(Self, Bool) -> Self
 pub fn EventLoopBuilder::with_default_menu(Self, Bool) -> Self
 pub fn EventLoopBuilder::with_platform_attributes(Self, @core.PlatformEventLoopAttributes) -> Self
 pub impl Eq for EventLoopBuilder

@@ -321,6 +321,17 @@ pub fn EventLoopBuilder::with_activate_ignoring_other_apps(
 }
 
 ///|
+pub fn EventLoopBuilder::with_any_thread(
+  self : EventLoopBuilder,
+  any_thread : Bool,
+) -> EventLoopBuilder {
+  self.platform_attributes_ = self.platform_attributes_.with_any_thread(
+    any_thread,
+  )
+  self
+}
+
+///|
 pub fn EventLoopBuilder::build(self : EventLoopBuilder) -> EventLoop {
   try! self.try_build()
 }
@@ -358,7 +369,7 @@ pub fn EventLoop::new_with_platform_attributes(
 pub fn EventLoop::try_new_with_platform_attributes(
   attributes : @core.PlatformEventLoopAttributes,
 ) -> EventLoop raise @core.EventLoopError {
-  if is_main_thread() == false {
+  if !attributes.any_thread() && is_main_thread() == false {
     raise @core.EventLoopError::Os
   }
   if event_loop_global_created.val {
