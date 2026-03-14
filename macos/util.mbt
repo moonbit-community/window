@@ -106,11 +106,37 @@ fn ime_purpose_to_native(purpose : @core.ImePurpose) -> Int {
 }
 
 ///|
+fn ime_purpose_from_native(purpose : Int) -> @core.ImePurpose {
+  match normalize_ime_purpose_native(purpose) {
+    1 => @core.ImePurpose::Password
+    2 => @core.ImePurpose::Terminal
+    3 => @core.ImePurpose::Number
+    4 => @core.ImePurpose::Phone
+    5 => @core.ImePurpose::Url
+    6 => @core.ImePurpose::Email
+    7 => @core.ImePurpose::Pin
+    8 => @core.ImePurpose::Date
+    9 => @core.ImePurpose::Time
+    10 => @core.ImePurpose::DateTime
+    _ => @core.ImePurpose::Normal
+  }
+}
+
+///|
 fn window_level_to_native(level : @core.WindowLevel) -> Int {
   match level {
     @core.WindowLevel::Normal => 0
     @core.WindowLevel::AlwaysOnTop => 1
     @core.WindowLevel::AlwaysOnBottom => 2
+  }
+}
+
+///|
+fn window_level_from_native(level : Int) -> @core.WindowLevel {
+  match normalize_window_level_native(level) {
+    1 => @core.WindowLevel::AlwaysOnTop
+    2 => @core.WindowLevel::AlwaysOnBottom
+    _ => @core.WindowLevel::Normal
   }
 }
 
@@ -146,5 +172,15 @@ fn option_as_alt_to_native(option_as_alt : @core.OptionAsAlt) -> Int {
     @core.OptionAsAlt::OnlyRight => 2
     @core.OptionAsAlt::Both => 3
     @core.OptionAsAlt::None => 0
+  }
+}
+
+///|
+fn option_as_alt_from_native(option_as_alt : Int) -> @core.OptionAsAlt {
+  match normalize_option_as_alt_native(option_as_alt) {
+    1 => @core.OptionAsAlt::OnlyLeft
+    2 => @core.OptionAsAlt::OnlyRight
+    3 => @core.OptionAsAlt::Both
+    _ => @core.OptionAsAlt::None
   }
 }

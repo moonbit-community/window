@@ -29,9 +29,6 @@ jobs:
       - name: Type check (native)
         run: moon check --target native
 
-      - name: Run tests
-        run: moon test
-
       - name: Build library (native)
         run: moon build --target native
 

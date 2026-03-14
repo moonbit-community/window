@@ -1,5 +1,6 @@
 #include <CoreGraphics/CoreGraphics.h>
 #include <CoreFoundation/CoreFoundation.h>
+#include <CoreVideo/CoreVideo.h>
 #include <stdint.h>
 #include <stdlib.h>
 
@@ -65,9 +66,31 @@ double mbw_cg_display_scale_factor(uint32_t display_id) {
   return ((double)pixel_width) / width;
 }
 
+static int32_t mbw_display_mode_bit_depth_ref(CGDisplayModeRef mode) {
+  if (mode == NULL) {
+    return 0;
+  }
+  CFStringRef encoding = CGDisplayModeCopyPixelEncoding(mode);
+  if (encoding == NULL) {
+    return 0;
+  }
+
+  int32_t bit_depth = 0;
+  if (CFStringCompare(encoding, CFSTR("IO32BitDirectPixels"), 0) == kCFCompareEqualTo) {
+    bit_depth = 32;
+  } else if (CFStringCompare(encoding, CFSTR("IO16BitDirectPixels"), 0) == kCFCompareEqualTo) {
+    bit_depth = 16;
+  } else if (CFStringCompare(encoding, CFSTR("IO30BitDirectPixels"), 0) == kCFCompareEqualTo ||
+             CFStringCompare(encoding, CFSTR("kIO30BitDirectPixels"), 0) == kCFCompareEqualTo) {
+    bit_depth = 30;
+  }
+
+  CFRelease(encoding);
+  return bit_depth;
+}
+
 uint64_t mbw_find_display_mode_handle(uint32_t display_id, int32_t width, int32_t height,
                                       int32_t bit_depth, int32_t refresh_rate_millihertz) {
-  (void)bit_depth;
   if (display_id == 0 || width <= 0 || height <= 0) {
     return 0;
   }
@@ -92,6 +115,12 @@ uint64_t mbw_find_display_mode_handle(uint32_t display_id, int32_t width, int32_
     size_t mode_height = CGDisplayModeGetPixelHeight(mode);
     if ((int32_t)mode_width != width || (int32_t)mode_height != height) {
       continue;
+    }
+    if (bit_depth > 0) {
+      int32_t mode_bit_depth = mbw_display_mode_bit_depth_ref(mode);
+      if (mode_bit_depth > 0 && mode_bit_depth != bit_depth) {
+        continue;
+      }
     }
     if (refresh_rate_millihertz > 0) {
       double hz = CGDisplayModeGetRefreshRate(mode);
@@ -121,6 +150,122 @@ uint64_t mbw_copy_current_display_mode_handle(uint32_t display_id) {
   CGDisplayModeRef mode =
       CGDisplayCopyDisplayMode((CGDirectDisplayID)display_id);
   return (uint64_t)(uintptr_t)mode;
+}
+
+int32_t mbw_copy_display_mode_count(uint32_t display_id) {
+  if (display_id == 0) {
+    return 0;
+  }
+  CFArrayRef modes = CGDisplayCopyAllDisplayModes((CGDirectDisplayID)display_id, NULL);
+  if (modes == NULL) {
+    return 0;
+  }
+  CFIndex count = CFArrayGetCount(modes);
+  CFRelease(modes);
+  if (count <= 0) {
+    return 0;
+  }
+  if (count > INT32_MAX) {
+    return INT32_MAX;
+  }
+  return (int32_t)count;
+}
+
+uint64_t mbw_copy_display_mode_handle_at(uint32_t display_id, int32_t index) {
+  if (display_id == 0 || index < 0) {
+    return 0;
+  }
+  CFArrayRef modes = CGDisplayCopyAllDisplayModes((CGDirectDisplayID)display_id, NULL);
+  if (modes == NULL) {
+    return 0;
+  }
+  CFIndex count = CFArrayGetCount(modes);
+  if ((CFIndex)index >= count) {
+    CFRelease(modes);
+    return 0;
+  }
+  CGDisplayModeRef mode = (CGDisplayModeRef)CFArrayGetValueAtIndex(modes, (CFIndex)index);
+  if (mode != NULL) {
+    CFRetain(mode);
+  }
+  CFRelease(modes);
+  return (uint64_t)(uintptr_t)mode;
+}
+
+int32_t mbw_display_mode_width(uint64_t mode_handle) {
+  if (mode_handle == 0) {
+    return 0;
+  }
+  CGDisplayModeRef mode = (CGDisplayModeRef)(uintptr_t)mode_handle;
+  size_t width = CGDisplayModeGetPixelWidth(mode);
+  if (width > INT32_MAX) {
+    return INT32_MAX;
+  }
+  return (int32_t)width;
+}
+
+int32_t mbw_display_mode_height(uint64_t mode_handle) {
+  if (mode_handle == 0) {
+    return 0;
+  }
+  CGDisplayModeRef mode = (CGDisplayModeRef)(uintptr_t)mode_handle;
+  size_t height = CGDisplayModeGetPixelHeight(mode);
+  if (height > INT32_MAX) {
+    return INT32_MAX;
+  }
+  return (int32_t)height;
+}
+
+int32_t mbw_display_mode_bit_depth(uint64_t mode_handle) {
+  if (mode_handle == 0) {
+    return 0;
+  }
+  CGDisplayModeRef mode = (CGDisplayModeRef)(uintptr_t)mode_handle;
+  return mbw_display_mode_bit_depth_ref(mode);
+}
+
+int32_t mbw_display_mode_refresh_rate_millihertz(uint64_t mode_handle) {
+  if (mode_handle == 0) {
+    return 0;
+  }
+  CGDisplayModeRef mode = (CGDisplayModeRef)(uintptr_t)mode_handle;
+  double hz = CGDisplayModeGetRefreshRate(mode);
+  if (hz <= 0.0) {
+    return 0;
+  }
+  double millihertz = hz * 1000.0;
+  if (millihertz > (double)INT32_MAX) {
+    return INT32_MAX;
+  }
+  return (int32_t)(millihertz + 0.5);
+}
+
+int32_t mbw_display_refresh_rate_millihertz(uint32_t display_id) {
+  if (display_id == 0) {
+    return 0;
+  }
+  CVDisplayLinkRef display_link = NULL;
+  CVReturn create_result =
+      CVDisplayLinkCreateWithCGDisplay((CGDirectDisplayID)display_id, &display_link);
+  if (create_result != kCVReturnSuccess || display_link == NULL) {
+    return 0;
+  }
+
+  CVTime nominal = CVDisplayLinkGetNominalOutputVideoRefreshPeriod(display_link);
+  CVDisplayLinkRelease(display_link);
+  if ((nominal.flags & kCVTimeIsIndefinite) != 0 || nominal.timeValue <= 0 || nominal.timeScale <= 0) {
+    return 0;
+  }
+
+  double hz = ((double)nominal.timeScale) / ((double)nominal.timeValue);
+  if (hz <= 0.0) {
+    return 0;
+  }
+  double millihertz = hz * 1000.0;
+  if (millihertz > (double)INT32_MAX) {
+    return INT32_MAX;
+  }
+  return (int32_t)(millihertz + 0.5);
 }
 
 void mbw_release_display_mode_handle(uint64_t mode_handle) {

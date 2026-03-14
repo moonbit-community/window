@@ -15,7 +15,7 @@ fn normalize_display_id(display_id : UInt64) -> UInt64 {
 }
 
 ///|
-fn display_video_mode(display_id : UInt64) -> @core.VideoMode {
+fn fallback_display_video_mode(display_id : UInt64) -> @core.VideoMode {
   let width = cg_display_pixels_wide(display_id)
   let height = cg_display_pixels_high(display_id)
   @core.VideoMode::new(
@@ -34,6 +34,88 @@ fn display_video_mode(display_id : UInt64) -> @core.VideoMode {
     None,
     None,
   )
+}
+
+///|
+fn display_video_mode_from_handle(
+  display_id : UInt64,
+  mode_handle : UInt64,
+) -> @core.VideoMode? {
+  if mode_handle == (0 : Int).to_uint64() {
+    return None
+  }
+  let width = native_display_mode_width(mode_handle)
+  let height = native_display_mode_height(mode_handle)
+  if width <= 0 || height <= 0 {
+    return None
+  }
+  let bit_depth = native_display_mode_bit_depth(mode_handle)
+  let refresh_rate_millihertz = {
+    let mode_refresh_rate_millihertz = native_display_mode_refresh_rate_millihertz(
+      mode_handle,
+    )
+    if mode_refresh_rate_millihertz > 0 {
+      mode_refresh_rate_millihertz
+    } else {
+      native_display_refresh_rate_millihertz(display_id)
+    }
+  }
+  Some(
+    @core.VideoMode::new(
+      @dpi.PhysicalSize::new(width, height),
+      if bit_depth > 0 {
+        Some(bit_depth)
+      } else {
+        None
+      },
+      if refresh_rate_millihertz > 0 {
+        Some(refresh_rate_millihertz)
+      } else {
+        None
+      },
+    ),
+  )
+}
+
+///|
+fn push_unique_video_mode(
+  video_modes : Array[@core.VideoMode],
+  mode : @core.VideoMode,
+) -> Unit {
+  match video_modes.search_by(existing => existing == mode) {
+    Some(_) => ()
+    None => video_modes.push(mode)
+  }
+}
+
+///|
+fn available_display_video_modes(display_id : UInt64) -> Array[@core.VideoMode] {
+  let modes : Array[@core.VideoMode] = []
+  let count = native_copy_display_mode_count(display_id)
+  let mut index = 0
+  while index < count {
+    let mode_handle = native_copy_display_mode_handle_at(display_id, index)
+    if mode_handle != (0 : Int).to_uint64() {
+      match display_video_mode_from_handle(display_id, mode_handle) {
+        Some(mode) => push_unique_video_mode(modes, mode)
+        None => ()
+      }
+      native_release_display_mode_handle(mode_handle)
+    }
+    index = index + 1
+  }
+  modes
+}
+
+///|
+fn current_display_video_mode(display_id : UInt64) -> @core.VideoMode? {
+  let mode_handle = native_copy_current_display_mode_handle(display_id)
+  if mode_handle == (0 : Int).to_uint64() {
+    return None
+  }
+  let mode = display_video_mode_from_handle(display_id, mode_handle)
+  native_release_display_mode_handle(mode_handle)
+  mode
 }
 
 ///|
@@ -63,9 +145,14 @@ fn monitor_from_display_id(display_id : UInt64) -> @core.MonitorHandle? {
     return None
   }
   let scale_factor = clamped_scale_factor(display_id)
-  let mode = display_video_mode(display_id)
-  let width = mode.surface_size().width
-  let height = mode.surface_size().height
+  let current_mode = match current_display_video_mode(display_id) {
+    Some(mode) => mode
+    None => fallback_display_video_mode(display_id)
+  }
+  let video_modes = available_display_video_modes(display_id)
+  push_unique_video_mode(video_modes, current_mode)
+  let width = current_mode.surface_size().width
+  let height = current_mode.surface_size().height
   let model_number = cg_display_model_number(display_id)
   Some(
     @core.MonitorHandle::new(
@@ -74,8 +161,8 @@ fn monitor_from_display_id(display_id : UInt64) -> @core.MonitorHandle? {
       display_position(display_id, scale_factor),
       @dpi.PhysicalSize::new(width, height),
       scale_factor,
-      Some(mode),
-      [mode],
+      Some(current_mode),
+      video_modes,
     ),
   )
 }

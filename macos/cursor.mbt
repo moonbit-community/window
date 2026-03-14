@@ -11,8 +11,8 @@ pub fn EventLoop::create_custom_cursor(
       self.create_custom_cursor_from_rgba_source(
         rgba, width, height, hotspot_x, hotspot_y,
       )
-    @core.CustomCursorSource::Url(url, hotspot_x, hotspot_y) =>
-      self.create_custom_cursor_from_url_source(url, hotspot_x, hotspot_y)
+    @core.CustomCursorSource::Url(_, _, _) =>
+      raise @core.RequestError::NotSupported
     @core.CustomCursorSource::Animation(_, _) =>
       raise @core.RequestError::NotSupported
   }
@@ -38,20 +38,6 @@ fn EventLoop::create_custom_cursor_from_rgba_source(
 }
 
 ///|
-fn EventLoop::create_custom_cursor_from_url_source(
-  self : EventLoop,
-  url : String,
-  hotspot_x : Int,
-  hotspot_y : Int,
-) -> @core.CustomCursor raise @core.RequestError {
-  ignore(self)
-  validate_url_cursor_source(url, hotspot_x, hotspot_y)
-  custom_cursor_from_native(
-    native_custom_cursor_create_url(url, hotspot_x, hotspot_y),
-  )
-}
-
-///|
 fn validate_rgba_cursor_source(
   rgba : Bytes,
   width : Int,
@@ -74,20 +60,6 @@ fn validate_rgba_cursor_source(
     raise @core.RequestError::Ignored
   }
   if hotspot_x < 0 || hotspot_x >= width || hotspot_y < 0 || hotspot_y >= height {
-    raise @core.RequestError::Ignored
-  }
-}
-
-///|
-fn validate_url_cursor_source(
-  url : String,
-  hotspot_x : Int,
-  hotspot_y : Int,
-) -> Unit raise @core.RequestError {
-  if url.length() == 0 {
-    raise @core.RequestError::Ignored
-  }
-  if hotspot_x < 0 || hotspot_y < 0 {
     raise @core.RequestError::Ignored
   }
 }

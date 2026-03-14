@@ -2,12 +2,11 @@
 // Port target: winit-reference/winit/examples/pump_events.rs
 struct PumpDemo {
   mut window : @macos.Window?
-  mut redraw_count : Int
 }
 
 ///|
 fn PumpDemo::new() -> PumpDemo {
-  { window: None, redraw_count: 0 }
+  { window: None }
 }
 
 ///|
@@ -29,17 +28,15 @@ pub impl @macos.ApplicationHandler for PumpDemo with window_event(
   _window_id,
   event,
 ) {
+  println("\{event}")
   match event {
     @core.WindowEvent::CloseRequested => event_loop.exit()
     @core.WindowEvent::RedrawRequested =>
       match self.window {
         Some(window) => {
-          self.redraw_count += 1
+          window.pre_present_notify()
           @util.fill_window(window)
           window.request_redraw()
-          if self.redraw_count % 30 == 0 {
-            println("redraw_count=\{self.redraw_count}")
-          }
         }
         None => ()
       }
@@ -51,10 +48,12 @@ pub impl @macos.ApplicationHandler for PumpDemo with window_event(
 fn pump_loop(event_loop : @macos.EventLoop, app : PumpDemo) -> Unit {
   let mut done = false
   while done == false {
-    match event_loop.pump_app_events(Some(0), app) {
-      @core.PumpStatus::Continue =>
-        // The upstream example sleeps briefly to simulate application work.
+    let timeout_ms = Some(0)
+    match event_loop.pump_app_events(timeout_ms, app) {
+      @core.PumpStatus::Continue => {
         println("Update()")
+        @util.sleep_millis(16)
+      }
       @core.PumpStatus::Exit(exit_code) => {
         println("Pump exited with code \{exit_code}")
         done = true
@@ -67,7 +66,6 @@ fn pump_loop(event_loop : @macos.EventLoop, app : PumpDemo) -> Unit {
 fn main {
   @util.tracing_init()
   let event_loop = @macos.EventLoop::new()
-  event_loop.set_control_flow(@core.ControlFlow::Poll)
   let app = PumpDemo::new()
   pump_loop(event_loop, app)
 }

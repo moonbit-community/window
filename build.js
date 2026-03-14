@@ -1,18 +1,19 @@
-const os = require("os");
+const fs = require("fs");
+const path = require("path");
 
-const platform = os.platform();
+const moduleConfigPath = path.join(__dirname, "moon.mod.json");
+const moduleConfig = JSON.parse(fs.readFileSync(moduleConfigPath, "utf8"));
+const packageName = `${moduleConfig.name}/macos`;
 const macosFrameworkFlags =
-  "-framework AppKit -framework Foundation -framework CoreGraphics -framework Carbon -lobjc";
+  "-framework AppKit -framework Foundation -framework CoreGraphics -framework CoreVideo -framework ApplicationServices -lobjc";
 
-const output = {
-  link_configs: [],
-};
-
-if (platform === "darwin") {
-  output.link_configs.push({
-    package: "Milky2018/window/macos",
-    link_flags: macosFrameworkFlags,
-  });
-}
-
-console.log(JSON.stringify(output));
+console.log(
+  JSON.stringify({
+    link_configs: [
+      {
+        package: packageName,
+        link_flags: macosFrameworkFlags,
+      },
+    ],
+  }),
+);

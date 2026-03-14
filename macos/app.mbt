@@ -14,7 +14,6 @@ pub(open) trait ApplicationHandler {
   destroy_surfaces(Self, ActiveEventLoop) -> Unit = _
   memory_warning(Self, ActiveEventLoop) -> Unit = _
   standard_key_binding(Self, ActiveEventLoop, @core.WindowId, String) -> Unit = _
-  macos_handler(Self) -> Bool = _
 }
 
 ///|
@@ -80,20 +79,6 @@ impl ApplicationHandler with standard_key_binding(
   _action,
 ) {
   ()
-}
-
-///|
-impl ApplicationHandler with macos_handler(_self) {
-  false
-}
-
-///|
-// Port target: app.rs::send_event
-fn[A : ApplicationHandler] EventLoop::send_event(
-  self : EventLoop,
-  app : A,
-) -> Unit {
-  dispatch_deferred_callbacks(app, self.as_active())
 }
 
 ///|

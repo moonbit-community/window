@@ -2,6 +2,62 @@
 // Port target: winit-reference/winit-appkit/src/observer.rs
 
 ///|
+const MAIN_RUN_LOOP_ACTIVITY_BEFORE_WAITING : Int = 1
+
+///|
+const MAIN_RUN_LOOP_ACTIVITY_AFTER_WAITING : Int = 2
+
+///|
+const MAIN_RUN_LOOP_CALLBACK_BEFORE_WAITING : Int = 3
+
+///|
+const MAIN_RUN_LOOP_CALLBACK_AFTER_WAITING : Int = 4
+
+///|
+const MAIN_RUN_LOOP_ORDER_LOWEST : Int = 2147483647
+
+///|
+const MAIN_RUN_LOOP_ORDER_HIGHEST : Int = -2147483647 - 1
+
+///|
+fn create_main_run_loop_observer(
+  activity_kind : Int,
+  callback_kind : Int,
+  order : Int,
+) -> UInt64 {
+  native_main_run_loop_add_observer(
+    fn(callback, kind) { callback(kind) },
+    native_callback_lifecycle,
+    activity_kind,
+    callback_kind,
+    order,
+  )
+}
+
+///|
+fn create_before_waiting_observer() -> UInt64 {
+  create_main_run_loop_observer(
+    MAIN_RUN_LOOP_ACTIVITY_BEFORE_WAITING,
+    MAIN_RUN_LOOP_CALLBACK_BEFORE_WAITING,
+    MAIN_RUN_LOOP_ORDER_LOWEST,
+  )
+}
+
+///|
+fn create_after_waiting_observer() -> UInt64 {
+  create_main_run_loop_observer(
+    MAIN_RUN_LOOP_ACTIVITY_AFTER_WAITING,
+    MAIN_RUN_LOOP_CALLBACK_AFTER_WAITING,
+    MAIN_RUN_LOOP_ORDER_HIGHEST,
+  )
+}
+
+///|
+fn release_main_run_loop_observer(observer_handle : UInt64) -> Unit {
+  native_main_run_loop_remove_observer(observer_handle)
+}
+
+///|
 priv struct EventLoopWaker {
   mut next_fire_date_ms : Int64?
 }
@@ -53,9 +109,4 @@ fn EventLoopWaker::start_at(self : EventLoopWaker, instant_ms : Int64?) -> Unit 
     Some(instant_ms) => self.update_next_fire_date(Some(instant_ms), false)
     None => self.stop()
   }
-}
-
-///|
-fn EventLoopWaker::next_fire_date(self : EventLoopWaker) -> Int64? {
-  self.next_fire_date_ms
 }

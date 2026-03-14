@@ -30,18 +30,26 @@ enum Action {
 ///|
 struct Application {
   windows : Array[@macos.Window]
+  window_input_states : Array[WindowInputState]
   mut proxy : @macos.EventLoopProxy?
-  mut proxy_sent : Bool
+  proxy_actions : Array[Action]
   mut created_windows : Int
+  custom_cursors : Array[@core.CustomCursor]
+  start_time_ms : Int64
+}
+
+///|
+struct WindowInputState {
+  window_id : @core.WindowId
   mut modifiers : @core.ModifiersState
+  mut theme : @core.Theme
   mut cursor_grab_mode : @core.CursorGrabMode
   mut cursor_index : Int
   mut custom_cursor_index : Int
-  custom_cursors : Array[@core.CustomCursor]
-  animated_fill_window_ids : Array[@core.WindowId]
-  continuous_redraw_window_ids : Array[@core.WindowId]
-  emit_surface_size_window_ids : Array[@core.WindowId]
-  occluded_window_ids : Array[@core.WindowId]
+  mut animated_fill_color : Bool
+  mut continuous_redraw : Bool
+  mut emit_surface_size : Bool
+  mut occluded : Bool
 }
 
 ///|
@@ -56,53 +64,36 @@ fn system_cursors() -> Array[@core.CursorIcon] {
     @core.CursorIcon::Help,
     @core.CursorIcon::Progress,
     @core.CursorIcon::NotAllowed,
+    @core.CursorIcon::ContextMenu,
+    @core.CursorIcon::Cell,
+    @core.CursorIcon::VerticalText,
+    @core.CursorIcon::Alias,
+    @core.CursorIcon::Copy,
+    @core.CursorIcon::NoDrop,
     @core.CursorIcon::Grab,
     @core.CursorIcon::Grabbing,
+    @core.CursorIcon::AllScroll,
     @core.CursorIcon::ZoomIn,
     @core.CursorIcon::ZoomOut,
+    @core.CursorIcon::EResize,
+    @core.CursorIcon::NResize,
+    @core.CursorIcon::NeResize,
+    @core.CursorIcon::NwResize,
+    @core.CursorIcon::SResize,
+    @core.CursorIcon::SeResize,
+    @core.CursorIcon::SwResize,
+    @core.CursorIcon::WResize,
     @core.CursorIcon::EwResize,
     @core.CursorIcon::NsResize,
+    @core.CursorIcon::NeswResize,
+    @core.CursorIcon::NwseResize,
+    @core.CursorIcon::ColResize,
+    @core.CursorIcon::RowResize,
   ]
 }
 
 ///|
-fn contains_window_id(
-  window_ids : Array[@core.WindowId],
-  window_id : @core.WindowId,
-) -> Bool {
-  match window_ids.search_by(id => id == window_id) {
-    Some(_) => true
-    None => false
-  }
-}
-
-///|
-fn remove_window_id(
-  window_ids : Array[@core.WindowId],
-  window_id : @core.WindowId,
-) -> Unit {
-  match window_ids.search_by(id => id == window_id) {
-    Some(index) => ignore(window_ids.remove(index))
-    None => ()
-  }
-}
-
-///|
-fn toggle_window_id(
-  window_ids : Array[@core.WindowId],
-  window_id : @core.WindowId,
-) -> Bool {
-  match window_ids.search_by(id => id == window_id) {
-    Some(index) => {
-      ignore(window_ids.remove(index))
-      false
-    }
-    None => {
-      window_ids.push(window_id)
-      true
-    }
-  }
-}
+let border_size_points : Double = 20.0
 
 ///|
 fn modifiers_match(
@@ -127,21 +118,23 @@ fn make_custom_cursor_source(value : Int) -> @core.CustomCursorSource? {
 }
 
 ///|
+fn fill_color_for_theme(theme : @core.Theme) -> Int {
+  match theme {
+    @core.Theme::Light => 0xffe8e8e8
+    @core.Theme::Dark => 0xff525252
+  }
+}
+
+///|
 fn Application::new() -> Application {
   {
     windows: [],
+    window_input_states: [],
     proxy: None,
-    proxy_sent: false,
+    proxy_actions: [],
     created_windows: 0,
-    modifiers: @core.ModifiersState::none(),
-    cursor_grab_mode: @core.CursorGrabMode::None,
-    cursor_index: 0,
-    custom_cursor_index: 0,
     custom_cursors: [],
-    animated_fill_window_ids: [],
-    continuous_redraw_window_ids: [],
-    emit_surface_size_window_ids: [],
-    occluded_window_ids: [],
+    start_time_ms: @util.now_millis(),
   }
 }
 
@@ -165,7 +158,7 @@ fn Application::print_help(_self : Application) -> Unit {
   println("  Alt+S toggle periodic surface-size logs; Ctrl+S proxy message")
   println("Mouse shortcuts:")
   println("  Ctrl+Left drag window")
-  println("  Alt+Left drag-resize (south-east)")
+  println("  Alt+Left drag-resize (direction depends on pointer edge/corner)")
   println("  Ctrl+Right show window menu")
 }
 
@@ -186,7 +179,7 @@ fn Application::create_window(
   event_loop : @macos.ActiveEventLoop,
   title : String,
   tabbing_identifier : String?,
-) -> @core.WindowId {
+) -> @core.WindowId? {
   let mut window_attributes = @core.WindowAttributes::default()
     .with_title(title)
     .with_transparent(true)
@@ -201,16 +194,42 @@ fn Application::create_window(
     }
     None => ()
   }
-  let window = event_loop.create_window(window_attributes)
+  let window : @macos.Window = event_loop.try_create_window(window_attributes) catch {
+    err => {
+      println("Error creating new window: \{err}")
+      return None
+    }
+  }
   let window_id = window.id()
+  let initial_theme = match window.theme() {
+    Some(theme) => theme
+    None => @core.Theme::Dark
+  }
   self.windows.push(window)
+  let initial_custom_cursor_index = if self.custom_cursors.is_empty() {
+    0
+  } else {
+    self.custom_cursors.length() - 1
+  }
+  self.window_input_states.push({
+    window_id,
+    modifiers: @core.ModifiersState::none(),
+    theme: initial_theme,
+    cursor_grab_mode: @core.CursorGrabMode::None,
+    cursor_index: 0,
+    custom_cursor_index: initial_custom_cursor_index,
+    animated_fill_color: false,
+    continuous_redraw: false,
+    emit_surface_size: false,
+    occluded: false,
+  })
   self.created_windows += 1
   println("Created window #\{self.created_windows}: \{window_id}")
   match self.window_by_id(window_id) {
     Some(created_window) => created_window.request_redraw()
     None => ()
   }
-  window_id
+  Some(window_id)
 }
 
 ///|
@@ -245,132 +264,196 @@ fn Application::remove_window(
     }
     None => ()
   }
-  remove_window_id(self.animated_fill_window_ids, window_id)
-  remove_window_id(self.continuous_redraw_window_ids, window_id)
-  remove_window_id(self.emit_surface_size_window_ids, window_id)
-  remove_window_id(self.occluded_window_ids, window_id)
+  match
+    self.window_input_states.search_by(entry => entry.window_id == window_id) {
+    Some(index) => ignore(self.window_input_states.remove(index))
+    None => ()
+  }
+}
+
+///|
+fn Application::ensure_window_input_state(
+  self : Application,
+  window_id : @core.WindowId,
+) -> Int {
+  match
+    self.window_input_states.search_by(entry => entry.window_id == window_id) {
+    Some(index) => index
+    None => {
+      let initial_custom_cursor_index = if self.custom_cursors.is_empty() {
+        0
+      } else {
+        self.custom_cursors.length() - 1
+      }
+      let initial_theme = match self.window_by_id(window_id) {
+        Some(window) =>
+          match window.theme() {
+            Some(theme) => theme
+            None => @core.Theme::Dark
+          }
+        None => @core.Theme::Dark
+      }
+      self.window_input_states.push({
+        window_id,
+        modifiers: @core.ModifiersState::none(),
+        theme: initial_theme,
+        cursor_grab_mode: @core.CursorGrabMode::None,
+        cursor_index: 0,
+        custom_cursor_index: initial_custom_cursor_index,
+        animated_fill_color: false,
+        continuous_redraw: false,
+        emit_surface_size: false,
+        occluded: false,
+      })
+      self.window_input_states.length() - 1
+    }
+  }
+}
+
+///|
+fn Application::modifiers_for_window(
+  self : Application,
+  window_id : @core.WindowId,
+) -> @core.ModifiersState {
+  match
+    self.window_input_states.search_by(entry => entry.window_id == window_id) {
+    Some(index) => self.window_input_states[index].modifiers
+    None => @core.ModifiersState::none()
+  }
+}
+
+///|
+fn Application::set_window_modifiers(
+  self : Application,
+  window_id : @core.WindowId,
+  modifiers : @core.ModifiersState,
+) -> Unit {
+  let index = self.ensure_window_input_state(window_id)
+  self.window_input_states[index].modifiers = modifiers
 }
 
 ///|
 fn Application::action_from_key(
   self : Application,
+  window_id : @core.WindowId,
   key_event : @core.KeyEvent,
 ) -> Action? {
+  let modifiers = self.modifiers_for_window(window_id)
   let key = key_event.key_without_modifiers()
   match key {
     @core.Key::Named(@core.NamedKey::Escape) => Some(Action::CloseWindow)
     @core.Key::Character("q") | @core.Key::Character("Q") =>
-      if modifiers_match(self.modifiers, true, false, false, false) {
+      if modifiers_match(modifiers, true, false, false, false) {
         Some(Action::CloseWindow)
       } else {
         None
       }
     @core.Key::Character("h") | @core.Key::Character("H") =>
-      if modifiers_match(self.modifiers, true, false, false, false) {
+      if modifiers_match(modifiers, true, false, false, false) {
         Some(Action::PrintHelp)
       } else {
         None
       }
     @core.Key::Character("n") | @core.Key::Character("N") =>
-      if modifiers_match(self.modifiers, true, false, false, false) {
+      if modifiers_match(modifiers, true, false, false, false) {
         Some(Action::CreateNewWindow)
       } else {
         None
       }
     @core.Key::Character("f") | @core.Key::Character("F") =>
-      if modifiers_match(self.modifiers, false, false, true, false) {
+      if modifiers_match(modifiers, false, false, true, false) {
         Some(Action::ToggleAnimatedFillColor)
-      } else if modifiers_match(self.modifiers, true, false, false, false) {
+      } else if modifiers_match(modifiers, true, false, false, false) {
         Some(Action::ToggleFullscreen)
-      } else if modifiers_match(self.modifiers, false, true, false, false) {
+      } else if modifiers_match(modifiers, false, true, false, false) {
         Some(Action::ToggleSimpleFullscreen)
       } else {
         None
       }
     @core.Key::Character("d") | @core.Key::Character("D") =>
-      if modifiers_match(self.modifiers, true, false, false, false) {
+      if modifiers_match(modifiers, true, false, false, false) {
         Some(Action::ToggleDecorations)
       } else {
         None
       }
     @core.Key::Character("l") | @core.Key::Character("L") =>
-      if modifiers_match(self.modifiers, true, false, false, false) {
+      if modifiers_match(modifiers, true, false, false, false) {
         Some(Action::CycleCursorGrab)
       } else {
         None
       }
     @core.Key::Character("p") | @core.Key::Character("P") =>
-      if modifiers_match(self.modifiers, true, false, false, false) {
+      if modifiers_match(modifiers, true, false, false, false) {
         Some(Action::ToggleResizeIncrements)
       } else {
         None
       }
     @core.Key::Character("r") | @core.Key::Character("R") =>
-      if modifiers_match(self.modifiers, true, false, false, false) {
+      if modifiers_match(modifiers, true, false, false, false) {
         Some(Action::ToggleResizable)
-      } else if modifiers_match(self.modifiers, false, true, false, false) {
+      } else if modifiers_match(modifiers, false, true, false, false) {
         Some(Action::RequestResize)
-      } else if modifiers_match(self.modifiers, false, false, true, false) {
+      } else if modifiers_match(modifiers, false, false, true, false) {
         Some(Action::ToggleContinuousRedraw)
       } else {
         None
       }
     @core.Key::Character("m") | @core.Key::Character("M") =>
-      if modifiers_match(self.modifiers, true, true, false, false) {
+      if modifiers_match(modifiers, true, true, false, false) {
         Some(Action::DumpMonitors)
-      } else if modifiers_match(self.modifiers, true, false, false, false) {
+      } else if modifiers_match(modifiers, true, false, false, false) {
         Some(Action::ToggleMaximize)
-      } else if modifiers_match(self.modifiers, false, true, false, false) {
+      } else if modifiers_match(modifiers, false, true, false, false) {
         Some(Action::Minimize)
       } else {
         None
       }
     @core.Key::Character("c") | @core.Key::Character("C") =>
-      if modifiers_match(self.modifiers, true, false, false, false) {
+      if modifiers_match(modifiers, true, false, false, false) {
         Some(Action::NextCursor)
-      } else if modifiers_match(self.modifiers, false, true, false, false) {
+      } else if modifiers_match(modifiers, false, true, false, false) {
         Some(Action::NextCustomCursor)
       } else {
         None
       }
     @core.Key::Character("z") | @core.Key::Character("Z") =>
-      if modifiers_match(self.modifiers, true, false, false, false) {
+      if modifiers_match(modifiers, true, false, false, false) {
         Some(Action::ToggleCursorVisibility)
       } else {
         None
       }
     @core.Key::Character("k") | @core.Key::Character("K") =>
-      if modifiers_match(self.modifiers, false, false, false, false) {
+      if modifiers_match(modifiers, false, false, false, false) {
         Some(Action::SetTheme(None))
-      } else if modifiers_match(self.modifiers, false, false, false, true) {
+      } else if modifiers_match(modifiers, false, false, false, true) {
         Some(Action::SetTheme(Some(@core.Theme::Light)))
-      } else if modifiers_match(self.modifiers, true, false, false, false) {
+      } else if modifiers_match(modifiers, true, false, false, false) {
         Some(Action::SetTheme(Some(@core.Theme::Dark)))
       } else {
         None
       }
     @core.Key::Character("t") | @core.Key::Character("T") =>
-      if modifiers_match(self.modifiers, false, false, false, true) {
+      if modifiers_match(modifiers, false, false, false, true) {
         Some(Action::CreateNewTab)
       } else {
         None
       }
     @core.Key::Character("o") | @core.Key::Character("O") =>
-      if modifiers_match(self.modifiers, true, false, false, false) {
+      if modifiers_match(modifiers, true, false, false, false) {
         Some(Action::CycleOptionAsAlt)
       } else {
         None
       }
     @core.Key::Character("b") | @core.Key::Character("B") =>
-      if modifiers_match(self.modifiers, true, false, false, false) {
+      if modifiers_match(modifiers, true, false, false, false) {
         Some(Action::ToggleBorderlessGame)
       } else {
         None
       }
     @core.Key::Character("s") | @core.Key::Character("S") =>
-      if modifiers_match(self.modifiers, false, true, false, false) {
+      if modifiers_match(modifiers, false, true, false, false) {
         Some(Action::EmitSurfaceSize)
-      } else if modifiers_match(self.modifiers, true, false, false, false) {
+      } else if modifiers_match(modifiers, true, false, false, false) {
         Some(Action::Message)
       } else {
         None
@@ -436,28 +519,39 @@ fn Application::perform_window_action(
     Action::Minimize => window.set_minimized(true)
     Action::NextCursor => {
       let cursors = system_cursors()
-      self.cursor_index = (self.cursor_index + 1) % cursors.length()
-      window.set_cursor_icon(cursors[self.cursor_index])
+      let state_index = self.ensure_window_input_state(window_id)
+      let next_cursor_index = (
+          self.window_input_states[state_index].cursor_index + 1
+        ) %
+        cursors.length()
+      self.window_input_states[state_index].cursor_index = next_cursor_index
+      window.set_cursor_icon(cursors[next_cursor_index])
     }
     Action::NextCustomCursor =>
       if self.custom_cursors.is_empty() {
         println("No custom cursor available on this platform/runtime")
       } else {
-        self.custom_cursor_index = (self.custom_cursor_index + 1) %
+        let state_index = self.ensure_window_input_state(window_id)
+        let next_custom_cursor_index = (
+            self.window_input_states[state_index].custom_cursor_index + 1
+          ) %
           self.custom_cursors.length()
+        self.window_input_states[state_index].custom_cursor_index = next_custom_cursor_index
         window.set_cursor(
-          @core.Cursor::Custom(self.custom_cursors[self.custom_cursor_index]),
+          @core.Cursor::Custom(self.custom_cursors[next_custom_cursor_index]),
         )
       }
     Action::CycleCursorGrab => {
-      let next_mode = match self.cursor_grab_mode {
-        @core.CursorGrabMode::None => @core.CursorGrabMode::Locked
-        @core.CursorGrabMode::Locked => @core.CursorGrabMode::Confined
-        @core.CursorGrabMode::Confined => @core.CursorGrabMode::None
+      let state_index = self.ensure_window_input_state(window_id)
+      let next_mode = match
+        self.window_input_states[state_index].cursor_grab_mode {
+        @core.CursorGrabMode::None => @core.CursorGrabMode::Confined
+        @core.CursorGrabMode::Confined => @core.CursorGrabMode::Locked
+        @core.CursorGrabMode::Locked => @core.CursorGrabMode::None
       }
       try {
         window.set_cursor_grab(next_mode)
-        self.cursor_grab_mode = next_mode
+        self.window_input_states[state_index].cursor_grab_mode = next_mode
       } catch {
         err => println("Cursor grab update failed: \{err}")
       }
@@ -492,21 +586,24 @@ fn Application::perform_window_action(
       println("OptionAsAlt=\{next}")
     }
     Action::ToggleAnimatedFillColor => {
-      let enabled = toggle_window_id(self.animated_fill_window_ids, window_id)
+      let state_index = self.ensure_window_input_state(window_id)
+      self.window_input_states[state_index].animated_fill_color = !self.window_input_states[state_index].animated_fill_color
+      let enabled = self.window_input_states[state_index].animated_fill_color
       println("Animated fill on \{window_id}: \{enabled}")
     }
     Action::ToggleContinuousRedraw => {
-      let enabled = toggle_window_id(
-        self.continuous_redraw_window_ids,
-        window_id,
-      )
+      let state_index = self.ensure_window_input_state(window_id)
+      self.window_input_states[state_index].continuous_redraw = !self.window_input_states[state_index].continuous_redraw
+      let enabled = self.window_input_states[state_index].continuous_redraw
       println("Continuous redraw on \{window_id}: \{enabled}")
+      if enabled {
+        window.request_redraw()
+      }
     }
     Action::EmitSurfaceSize => {
-      let enabled = toggle_window_id(
-        self.emit_surface_size_window_ids,
-        window_id,
-      )
+      let state_index = self.ensure_window_input_state(window_id)
+      self.window_input_states[state_index].emit_surface_size = !self.window_input_states[state_index].emit_surface_size
+      let enabled = self.window_input_states[state_index].emit_surface_size
       println("Emit surface size on \{window_id}: \{enabled}")
     }
     Action::CreateNewWindow
@@ -530,7 +627,10 @@ fn Application::execute_action(
     Action::DumpMonitors => self.dump_monitors(event_loop)
     Action::Message =>
       match self.proxy {
-        Some(proxy) => proxy.wake_up()
+        Some(proxy) => {
+          self.proxy_actions.push(Action::Message)
+          proxy.wake_up()
+        }
         None => ()
       }
     _ =>
@@ -539,6 +639,78 @@ fn Application::execute_action(
           self.perform_window_action(event_loop, window_id, action, window)
         None => ()
       }
+  }
+}
+
+///|
+fn Application::handle_proxy_action(
+  self : Application,
+  event_loop : @macos.ActiveEventLoop,
+  action : Action,
+) -> Unit {
+  match action {
+    Action::Message => {
+      println("Received proxy wake-up")
+      for state in self.window_input_states {
+        if state.emit_surface_size {
+          let window_id = state.window_id
+          match self.window_by_id(window_id) {
+            Some(window) => {
+              let size = window.surface_size()
+              println(
+                "Window \{window_id} surface size: \{size.width()}x\{size.height()}",
+              )
+            }
+            None => ()
+          }
+        }
+      }
+    }
+    Action::DumpMonitors => self.dump_monitors(event_loop)
+    _ => ()
+  }
+}
+
+///|
+fn drag_resize_direction(
+  window : @macos.Window,
+  position : @dpi.PhysicalPositionF64,
+) -> @core.ResizeDirection? {
+  let size = window.surface_size()
+  let border_size = border_size_points * window.scale_factor()
+
+  let x_direction = if position.x() < border_size {
+    Some(@core.ResizeDirection::West)
+  } else if position.x() > size.width().to_double() - border_size {
+    Some(@core.ResizeDirection::East)
+  } else {
+    None
+  }
+
+  let y_direction = if position.y() < border_size {
+    Some(@core.ResizeDirection::North)
+  } else if position.y() > size.height().to_double() - border_size {
+    Some(@core.ResizeDirection::South)
+  } else {
+    None
+  }
+
+  match (x_direction, y_direction) {
+    (Some(@core.ResizeDirection::West), Some(@core.ResizeDirection::North)) =>
+      Some(@core.ResizeDirection::NorthWest)
+    (Some(@core.ResizeDirection::West), Some(@core.ResizeDirection::South)) =>
+      Some(@core.ResizeDirection::SouthWest)
+    (Some(@core.ResizeDirection::East), Some(@core.ResizeDirection::North)) =>
+      Some(@core.ResizeDirection::NorthEast)
+    (Some(@core.ResizeDirection::East), Some(@core.ResizeDirection::South)) =>
+      Some(@core.ResizeDirection::SouthEast)
+    (Some(@core.ResizeDirection::West), _) => Some(@core.ResizeDirection::West)
+    (Some(@core.ResizeDirection::East), _) => Some(@core.ResizeDirection::East)
+    (_, Some(@core.ResizeDirection::North)) =>
+      Some(@core.ResizeDirection::North)
+    (_, Some(@core.ResizeDirection::South)) =>
+      Some(@core.ResizeDirection::South)
+    _ => None
   }
 }
 
@@ -553,23 +725,28 @@ fn Application::handle_pointer_binding(
   if state != @core.ElementState::Pressed {
     return
   }
+  let modifiers = self.modifiers_for_window(window_id)
   let button = match source {
     @core.ButtonSource::Mouse(mouse_button) => Some(mouse_button)
     _ => None
   }
   match (button, self.window_by_id(window_id)) {
     (Some(@core.MouseButton::Left), Some(window)) =>
-      if modifiers_match(self.modifiers, true, false, false, false) {
+      if modifiers_match(modifiers, true, false, false, false) {
         window.drag_window() catch {
           err => println("Drag window failed: \{err}")
         }
-      } else if modifiers_match(self.modifiers, false, true, false, false) {
-        window.drag_resize_window(@core.ResizeDirection::SouthEast) catch {
-          err => println("Drag resize failed: \{err}")
+      } else if modifiers_match(modifiers, false, true, false, false) {
+        match drag_resize_direction(window, position) {
+          Some(direction) =>
+            window.drag_resize_window(direction) catch {
+              err => println("Drag resize failed: \{err}")
+            }
+          None => println("Drag resize requires pointer near a window edge")
         }
       }
     (Some(@core.MouseButton::Right), Some(window)) =>
-      if modifiers_match(self.modifiers, true, false, false, false) {
+      if modifiers_match(modifiers, true, false, false, false) {
         let menu_position = @dpi.PhysicalPosition::new(
           position.x().to_int(),
           position.y().to_int(),
@@ -581,12 +758,25 @@ fn Application::handle_pointer_binding(
 }
 
 ///|
+fn Application::window_state(
+  self : Application,
+  window_id : @core.WindowId,
+) -> WindowInputState? {
+  match
+    self.window_input_states.search_by(entry => entry.window_id == window_id) {
+    Some(index) => Some(self.window_input_states[index])
+    None => None
+  }
+}
+
+///|
 pub impl @macos.ApplicationHandler for Application with can_create_surfaces(
   self,
   event_loop,
 ) {
   self.proxy = Some(event_loop.create_proxy())
   self.load_custom_cursors(event_loop)
+  self.dump_monitors(event_loop)
   self.create_window(event_loop, "Winit window", None) |> ignore
   self.print_help()
 }
@@ -596,20 +786,9 @@ pub impl @macos.ApplicationHandler for Application with proxy_wake_up(
   self,
   event_loop,
 ) {
-  println("Received proxy wake-up")
-  if self.windows.length() == 1 {
-    self.create_window(event_loop, "proxy wake-up window", None) |> ignore
-  }
-  for window_id in self.emit_surface_size_window_ids {
-    match self.window_by_id(window_id) {
-      Some(window) => {
-        let size = window.surface_size()
-        println(
-          "Window \{window_id} surface size: \{size.width()}x\{size.height()}",
-        )
-      }
-      None => ()
-    }
+  while self.proxy_actions.is_empty() == false {
+    let action = self.proxy_actions.remove(0)
+    self.handle_proxy_action(event_loop, action)
   }
 }
 
@@ -618,32 +797,19 @@ pub impl @macos.ApplicationHandler for Application with about_to_wait(
   self,
   event_loop,
 ) {
-  if !self.proxy_sent {
-    match self.proxy {
-      Some(proxy) => {
-        proxy.wake_up()
-        self.proxy_sent = true
-      }
-      None => ()
-    }
-  }
-
-  for window_id in self.continuous_redraw_window_ids {
-    match self.window_by_id(window_id) {
-      Some(window) => window.request_redraw()
-      None => ()
-    }
-  }
-
-  if self.continuous_redraw_window_ids.is_empty() {
-    event_loop.set_control_flow(@core.ControlFlow::Wait)
-  } else {
-    event_loop.set_control_flow(@core.ControlFlow::Poll)
-  }
-
   if self.windows.is_empty() {
     event_loop.exit()
   }
+}
+
+///|
+pub impl @macos.ApplicationHandler for Application with device_event(
+  _self,
+  _event_loop,
+  device_id,
+  event,
+) {
+  println("Device \{device_id} event: \{event}")
 }
 
 ///|
@@ -675,23 +841,37 @@ pub impl @macos.ApplicationHandler for Application with window_event(
       }
     }
     @core.WindowEvent::Focused(focused) =>
-      println("Window \{window_id} focus=\{focused}")
-    @core.WindowEvent::Occluded(occluded) =>
-      if occluded {
-        if !contains_window_id(self.occluded_window_ids, window_id) {
-          self.occluded_window_ids.push(window_id)
-        }
+      if focused {
+        println("Window=\{window_id} focused")
       } else {
-        remove_window_id(self.occluded_window_ids, window_id)
+        println("Window=\{window_id} unfocused")
+      }
+    @core.WindowEvent::ScaleFactorChanged(scale_factor, _writer) =>
+      println("Window=\{window_id} changed scale to \{scale_factor}")
+    @core.WindowEvent::Occluded(occluded) => {
+      let state_index = self.ensure_window_input_state(window_id)
+      self.window_input_states[state_index].occluded = occluded
+      if !occluded {
         match self.window_by_id(window_id) {
           Some(window) => window.request_redraw()
           None => ()
         }
       }
-    @core.WindowEvent::ThemeChanged(theme) =>
+    }
+    @core.WindowEvent::ThemeChanged(theme) => {
+      let state_index = self.ensure_window_input_state(window_id)
+      self.window_input_states[state_index].theme = theme
       println("Window \{window_id} theme=\{theme}")
+    }
     @core.WindowEvent::ModifiersChanged(modifiers) =>
-      self.modifiers = modifiers.state()
+      self.set_window_modifiers(window_id, modifiers.state())
+    @core.WindowEvent::MouseWheel(_device_id, delta, _phase) =>
+      match delta {
+        @core.MouseScrollDelta::LineDelta(x, y) =>
+          println("Mouse wheel Line Delta: (\{x},\{y})")
+        @core.MouseScrollDelta::PixelDelta(px) =>
+          println("Mouse wheel Pixel Delta: (\{px.x()},\{px.y()})")
+      }
     @core.WindowEvent::PointerButton(
       _device_id,
       state,
@@ -701,7 +881,7 @@ pub impl @macos.ApplicationHandler for Application with window_event(
     ) => self.handle_pointer_binding(window_id, state, position, source)
     @core.WindowEvent::KeyboardInput(_device_id, key_event, is_synthetic) =>
       if !is_synthetic && key_event.state() is @core.ElementState::Pressed {
-        match self.action_from_key(key_event) {
+        match self.action_from_key(window_id, key_event) {
           Some(action) => self.execute_action(event_loop, window_id, action)
           None => ()
         }
@@ -712,21 +892,46 @@ pub impl @macos.ApplicationHandler for Application with window_event(
         None => ()
       }
     @core.WindowEvent::RedrawRequested =>
-      if contains_window_id(self.occluded_window_ids, window_id) {
-        ()
-      } else {
-        match self.window_by_id(window_id) {
-          Some(window) =>
-            if contains_window_id(self.animated_fill_window_ids, window_id) {
-              @util.fill_window_with_animated_color(window, 0)
-            } else {
-              @util.fill_window(window)
+      match self.window_state(window_id) {
+        Some(state) =>
+          if state.occluded {
+            ()
+          } else {
+            match self.window_by_id(window_id) {
+              Some(window) => {
+                window.pre_present_notify()
+                if state.animated_fill_color {
+                  @util.fill_window_with_animated_color(
+                    window,
+                    self.start_time_ms,
+                  )
+                } else {
+                  @util.fill_window_with_color(
+                    window,
+                    fill_color_for_theme(state.theme),
+                  )
+                }
+                if state.continuous_redraw {
+                  window.request_redraw()
+                }
+              }
+              None => ()
             }
-          None => ()
-        }
+          }
+        None => ()
       }
     _ => ()
   }
+}
+
+///|
+pub impl @macos.ApplicationHandler for Application with standard_key_binding(
+  _self,
+  _event_loop,
+  window_id,
+  action,
+) {
+  println("macOS standard key binding: window=\{window_id} action=\{action}")
 }
 
 ///|

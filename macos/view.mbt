@@ -56,7 +56,7 @@ fn queue_view_standard_key_binding(
   if action.length() == 0 {
     ()
   } else {
-    queue_standard_key_binding_callback(window_id, action)
+    app_state_queue_standard_key_binding_callback(window_id, action)
   }
 }
 
@@ -131,7 +131,7 @@ fn queue_input_event(
   let position = @dpi.PhysicalPositionF64::new(x, y)
   match kind {
     1 =>
-      queue_window_callback(
+      app_state_queue_window_callback(
         window_id,
         @core.WindowEvent::PointerMoved(
           pointer_device_id,
@@ -141,7 +141,7 @@ fn queue_input_event(
         ),
       )
     2 =>
-      queue_window_callback(
+      app_state_queue_window_callback(
         window_id,
         @core.WindowEvent::PointerEntered(
           pointer_device_id,
@@ -151,7 +151,7 @@ fn queue_input_event(
         ),
       )
     3 =>
-      queue_window_callback(
+      app_state_queue_window_callback(
         window_id,
         @core.WindowEvent::PointerLeft(
           pointer_device_id,
@@ -163,7 +163,7 @@ fn queue_input_event(
     4 =>
       match element_state_from_native(state) {
         Some(state) =>
-          queue_window_callback(
+          app_state_queue_window_callback(
             window_id,
             @core.WindowEvent::PointerButton(
               pointer_device_id,
@@ -179,7 +179,7 @@ fn queue_input_event(
       match scroll_delta_from_native(scroll_delta_kind, delta_x, delta_y) {
         Some(delta) => {
           let phase = scroll_phase_from_native(phase)
-          queue_window_callback(
+          app_state_queue_window_callback(
             window_id,
             @core.WindowEvent::MouseWheel(pointer_device_id, delta, phase),
           )
@@ -193,7 +193,7 @@ fn queue_input_event(
         view_pressed_modifiers(raw_id),
       )
       view_set_pressed_modifiers(raw_id, pressed_modifiers)
-      queue_window_callback(
+      app_state_queue_window_callback(
         window_id,
         @core.WindowEvent::ModifiersChanged(
           @core.Modifiers::from_state(state, pressed_modifiers),
@@ -223,7 +223,7 @@ fn queue_input_event(
               state,
             ),
           )
-          queue_window_callback(
+          app_state_queue_window_callback(
             window_id,
             @core.WindowEvent::KeyboardInput(
               keyboard_device_id, key_event, false,
@@ -238,23 +238,29 @@ fn queue_input_event(
           ime_kind, ime_text, ime_cursor_start, ime_cursor_end,
         ) {
         Some(ime) =>
-          queue_window_callback(window_id, @core.WindowEvent::Ime(ime))
+          app_state_queue_window_callback(
+            window_id,
+            @core.WindowEvent::Ime(ime),
+          )
         None => ()
       }
     9 =>
-      queue_window_callback(
+      app_state_queue_window_callback(
         window_id,
         @core.WindowEvent::DragEntered(drag_paths_from_native(path), position),
       )
     10 =>
-      queue_window_callback(window_id, @core.WindowEvent::DragMoved(position))
+      app_state_queue_window_callback(
+        window_id,
+        @core.WindowEvent::DragMoved(position),
+      )
     11 =>
-      queue_window_callback(
+      app_state_queue_window_callback(
         window_id,
         @core.WindowEvent::DragDropped(drag_paths_from_native(path), position),
       )
     12 =>
-      queue_window_callback(
+      app_state_queue_window_callback(
         window_id,
         @core.WindowEvent::DragLeft(
           if state != 0 {
@@ -267,7 +273,7 @@ fn queue_input_event(
     13 =>
       match touch_phase_from_native(phase) {
         Some(phase) =>
-          queue_window_callback(
+          app_state_queue_window_callback(
             window_id,
             @core.WindowEvent::PinchGesture(pointer_device_id, delta_x, phase),
           )
@@ -276,7 +282,7 @@ fn queue_input_event(
     14 =>
       match touch_phase_from_native(phase) {
         Some(phase) =>
-          queue_window_callback(
+          app_state_queue_window_callback(
             window_id,
             @core.WindowEvent::PanGesture(
               pointer_device_id,
@@ -287,14 +293,14 @@ fn queue_input_event(
         None => ()
       }
     15 =>
-      queue_window_callback(
+      app_state_queue_window_callback(
         window_id,
         @core.WindowEvent::DoubleTapGesture(pointer_device_id),
       )
     16 =>
       match touch_phase_from_native(phase) {
         Some(phase) =>
-          queue_window_callback(
+          app_state_queue_window_callback(
             window_id,
             @core.WindowEvent::RotationGesture(
               pointer_device_id, delta_x, phase,
@@ -303,12 +309,16 @@ fn queue_input_event(
         None => ()
       }
     17 =>
-      queue_window_callback(
+      app_state_queue_window_callback(
         window_id,
         @core.WindowEvent::TouchpadPressure(pointer_device_id, delta_x, state),
       )
     18 => queue_view_standard_key_binding(window_id, text_from_native(ime_text))
-    19 => queue_window_callback(window_id, @core.WindowEvent::RedrawRequested)
+    19 =>
+      app_state_queue_window_callback(
+        window_id,
+        @core.WindowEvent::RedrawRequested,
+      )
     100 => native_callback_device_event(1, button, delta_x, delta_y)
     101 => native_callback_device_event(2, button, 0.0, 0.0)
     102 => native_callback_device_event(3, button, 0.0, 0.0)
@@ -333,12 +343,15 @@ fn queue_native_input_event(
   delta_x : Double,
   delta_y : Double,
   phase : Int,
+  text_with_all_modifiers : Bytes,
+  text_ignoring_modifiers : Bytes,
+  text_without_modifiers : Bytes,
 ) -> Unit {
   let empty_text = @utf8.encode(""[:], bom=false)
   queue_input_event(
     raw_id, kind, x, y, state, button, modifiers, scancode, repeat, pointer_source,
-    pointer_kind, scroll_delta_kind, delta_x, delta_y, phase, empty_text, empty_text,
-    empty_text, 0, empty_text, -1, -1, empty_text,
+    pointer_kind, scroll_delta_kind, delta_x, delta_y, phase, text_with_all_modifiers,
+    text_ignoring_modifiers, text_without_modifiers, 0, empty_text, -1, -1, empty_text,
   )
 }
 
@@ -460,388 +473,4 @@ fn normalize_pressed_modifier_keys(
   pressed_mods : @core.ModifiersKeys,
 ) -> @core.ModifiersKeys {
   @core.Modifiers::from_state(state, pressed_mods).pressed_mods()
-}
-
-///|
-pub fn Window::set_cursor(self : Window, cursor : @core.Cursor) -> Unit {
-  match cursor {
-    @core.Cursor::Icon(icon) => {
-      self.cursor_state = cursor
-      set_window_cursor(self.raw_window_handle, cursor_icon_to_native(icon))
-    }
-    @core.Cursor::Custom(custom_cursor) =>
-      if set_window_custom_cursor(
-          self.raw_window_handle,
-          custom_cursor.into_raw(),
-        ) {
-        self.cursor_state = cursor
-      } else {
-        self.cursor_state = @core.Cursor::Icon(@core.CursorIcon::Default)
-        set_window_cursor(
-          self.raw_window_handle,
-          cursor_icon_to_native(@core.CursorIcon::Default),
-        )
-      }
-  }
-}
-
-///|
-pub fn Window::set_cursor_icon(
-  self : Window,
-  cursor : @core.CursorIcon,
-) -> Unit {
-  self.set_cursor(@core.Cursor::Icon(cursor))
-}
-
-///|
-pub fn Window::set_cursor_visible(self : Window, visible : Bool) -> Unit {
-  self.cursor_visible_state = visible
-  set_window_cursor_visible(self.raw_window_handle, visible)
-}
-
-///|
-pub fn Window::set_cursor_hittest(
-  self : Window,
-  hittest : Bool,
-) -> Unit raise @core.RequestError {
-  if set_window_cursor_hittest(self.raw_window_handle, hittest) == false {
-    raise @core.RequestError::NotSupported
-  }
-  self.cursor_hittest_state = hittest
-}
-
-///|
-pub fn Window::set_cursor_position(
-  self : Window,
-  position : @dpi.Position,
-) -> Unit raise @core.RequestError {
-  let physical_position = position.to_physical(self.scale_factor())
-  if set_cursor_position(
-      self.raw_window_handle,
-      physical_position.x(),
-      physical_position.y(),
-    ) ==
-    false {
-    raise @core.RequestError::NotSupported
-  }
-}
-
-///|
-pub fn Window::set_cursor_grab(
-  self : Window,
-  mode : @core.CursorGrabMode,
-) -> Unit raise @core.RequestError {
-  if mode is @core.CursorGrabMode::Confined {
-    raise @core.RequestError::NotSupported
-  }
-  if set_cursor_grab(self.raw_window_handle, cursor_grab_mode_to_native(mode)) ==
-    false {
-    raise @core.RequestError::NotSupported
-  }
-}
-
-///|
-pub fn Window::drag_window(self : Window) -> Unit raise @core.RequestError {
-  if drag_window(self.raw_window_handle) == false {
-    raise @core.RequestError::NotSupported
-  }
-}
-
-///|
-pub fn Window::drag_resize_window(
-  self : Window,
-  direction : @core.ResizeDirection,
-) -> Unit raise @core.RequestError {
-  if drag_resize_window(
-      self.raw_window_handle,
-      resize_direction_to_native(direction),
-    ) ==
-    false {
-    raise @core.RequestError::NotSupported
-  }
-}
-
-///|
-pub fn Window::show_window_menu(
-  self : Window,
-  position : @dpi.Position,
-) -> Unit {
-  let physical_position = position.to_physical(self.scale_factor())
-  let _ = show_window_menu(
-    self.raw_window_handle,
-    physical_position.x(),
-    physical_position.y(),
-  )
-}
-
-///|
-pub fn Window::cursor(self : Window) -> @core.Cursor {
-  self.cursor_state
-}
-
-///|
-pub fn Window::is_cursor_visible(self : Window) -> Bool {
-  self.cursor_visible_state
-}
-
-///|
-pub fn Window::is_cursor_hittest(self : Window) -> Bool {
-  self.cursor_hittest_state
-}
-
-///|
-pub fn Window::set_ime_purpose(
-  self : Window,
-  purpose : @core.ImePurpose,
-) -> Unit {
-  match self.ime_capabilities() {
-    Some(capabilities) =>
-      if capabilities.hint_and_purpose() {
-        let _ = self.request_ime_update(
-          @core.ImeRequestData::default()
-          .with_hint_and_purpose(@core.ImeHint::none(), purpose)
-          .into_request(),
-        ) catch {
-          _ => ()
-        }
-      }
-    None => ()
-  }
-}
-
-///|
-fn Window::set_ime_purpose_raw(
-  self : Window,
-  purpose : @core.ImePurpose,
-) -> Unit {
-  self.ime_purpose_state = purpose
-  set_ime_purpose(
-    self.raw_window_handle,
-    normalize_ime_purpose_native(ime_purpose_to_native(purpose)),
-  )
-}
-
-///|
-pub fn Window::set_ime_hints(self : Window, hints : @core.ImeHint) -> Unit {
-  self.ime_hints_state = hints
-  set_ime_hints(self.raw_window_handle, normalize_ime_hints_bits(hints.bits()))
-}
-
-///|
-pub fn Window::set_ime_allowed(self : Window, allowed : Bool) -> Unit {
-  let request : @core.ImeRequest? = if allowed {
-    let capabilities = @core.ImeCapabilities::default()
-      .with_hint_and_purpose()
-      .with_cursor_area()
-    let request_data = @core.ImeRequestData::default()
-      .with_hint_and_purpose(@core.ImeHint::none(), @core.ImePurpose::Normal)
-      .with_cursor_area(
-        @dpi.LogicalPosition::new(0.0, 0.0).into_position(),
-        @dpi.LogicalSize::new(0.0, 0.0).into_size(),
-      )
-    match @core.ImeEnableRequest::new(capabilities, request_data) {
-      Some(enable_request) => Some(@core.ImeRequest::Enable(enable_request))
-      None => None
-    }
-  } else {
-    Some(@core.ImeRequest::Disable)
-  }
-  match request {
-    Some(request) => {
-      let _ = self.request_ime_update(request) catch { _ => () }
-      ()
-    }
-    None => ()
-  }
-}
-
-///|
-fn Window::set_ime_allowed_raw(self : Window, allowed : Bool) -> Unit {
-  self.ime_allowed_state = allowed
-  if allowed == false {
-    self.ime_capabilities_state = None
-    self.ime_surrounding_text_state = None
-  }
-  set_ime_allowed(self.raw_window_handle, allowed)
-}
-
-///|
-pub fn Window::ime_allowed(self : Window) -> Bool {
-  self.ime_allowed_state
-}
-
-///|
-pub fn Window::set_ime_cursor_area(
-  self : Window,
-  position : @dpi.Position,
-  size : @dpi.Size,
-) -> Unit {
-  match self.ime_capabilities() {
-    Some(capabilities) =>
-      if capabilities.cursor_area() {
-        let _ = self.request_ime_update(
-          @core.ImeRequestData::default()
-          .with_cursor_area(position, size)
-          .into_request(),
-        ) catch {
-          _ => ()
-        }
-      }
-    None => ()
-  }
-}
-
-///|
-fn Window::set_ime_cursor_area_raw(
-  self : Window,
-  position : @dpi.Position,
-  size : @dpi.Size,
-) -> Unit {
-  let scale_factor = self.scale_factor()
-  let physical_position = position.to_physical(scale_factor)
-  let physical_size = size.to_physical(scale_factor)
-  let width = if physical_size.width() > 0 { physical_size.width() } else { 1 }
-  let height = if physical_size.height() > 0 {
-    physical_size.height()
-  } else {
-    1
-  }
-  self.ime_cursor_area_position_state = physical_position
-  self.ime_cursor_area_size_state = @dpi.PhysicalSize::new(width, height)
-  set_ime_cursor_area(
-    self.raw_window_handle,
-    physical_position.x(),
-    physical_position.y(),
-    width,
-    height,
-  )
-}
-
-///|
-pub fn Window::set_ime_surrounding_text(
-  self : Window,
-  surrounding_text : @core.ImeSurroundingText?,
-) -> Unit {
-  match surrounding_text {
-    Some(surrounding_text) =>
-      self.ime_surrounding_text_state = Some(surrounding_text)
-    None => self.ime_surrounding_text_state = None
-  }
-}
-
-///|
-pub fn Window::ime_cursor_area_position(self : Window) -> @dpi.PhysicalPosition {
-  self.ime_cursor_area_position_state
-}
-
-///|
-pub fn Window::ime_cursor_area_size(self : Window) -> @dpi.PhysicalSize {
-  self.ime_cursor_area_size_state
-}
-
-///|
-pub fn Window::ime_surrounding_text(self : Window) -> @core.ImeSurroundingText? {
-  self.ime_surrounding_text_state
-}
-
-///|
-pub fn Window::ime_purpose(self : Window) -> @core.ImePurpose {
-  self.ime_purpose_state
-}
-
-///|
-pub fn Window::ime_hints(self : Window) -> @core.ImeHint {
-  self.ime_hints_state
-}
-
-///|
-fn Window::apply_ime_request_data(
-  self : Window,
-  request_data : @core.ImeRequestData,
-) -> Unit raise @core.ImeRequestError {
-  if self.ime_allowed() == false {
-    raise @core.ImeRequestError::NotEnabled
-  }
-  if request_data.has_hint_and_purpose() {
-    if self.ime_supports_hint_and_purpose() {
-      match request_data.hint_and_purpose() {
-        Some((hints, purpose)) => {
-          self.set_ime_hints(hints)
-          self.set_ime_purpose_raw(purpose)
-        }
-        None => ()
-      }
-    }
-  }
-  if request_data.has_cursor_area() {
-    if self.ime_supports_cursor_area() {
-      match request_data.cursor_area() {
-        Some((position, size)) => self.set_ime_cursor_area_raw(position, size)
-        None => ()
-      }
-    }
-  }
-  if request_data.has_surrounding_text() {
-    if self.ime_supports_surrounding_text() {
-      match request_data.surrounding_text() {
-        Some(surrounding_text) =>
-          self.set_ime_surrounding_text(Some(surrounding_text))
-        None => ()
-      }
-    }
-  }
-}
-
-///|
-pub fn Window::request_ime_update(
-  self : Window,
-  request : @core.ImeRequest,
-) -> Unit raise @core.ImeRequestError {
-  match request {
-    @core.ImeRequest::Enable(enable_request) =>
-      if self.ime_allowed() {
-        raise @core.ImeRequestError::AlreadyEnabled
-      } else {
-        let capabilities = enable_request.capabilities()
-        let request_data = enable_request.request_data()
-        self.set_ime_allowed_raw(true)
-        self.ime_capabilities_state = Some(capabilities)
-        self.apply_ime_request_data(request_data)
-      }
-    @core.ImeRequest::Update(request_data) =>
-      self.apply_ime_request_data(request_data)
-    @core.ImeRequest::Disable => {
-      self.set_ime_allowed_raw(false)
-      ()
-    }
-  }
-}
-
-///|
-pub fn Window::ime_capabilities(self : Window) -> @core.ImeCapabilities? {
-  self.ime_capabilities_state
-}
-
-///|
-fn Window::ime_supports_hint_and_purpose(self : Window) -> Bool {
-  match self.ime_capabilities_state {
-    Some(capabilities) => capabilities.hint_and_purpose()
-    None => true
-  }
-}
-
-///|
-fn Window::ime_supports_cursor_area(self : Window) -> Bool {
-  match self.ime_capabilities_state {
-    Some(capabilities) => capabilities.cursor_area()
-    None => true
-  }
-}
-
-///|
-fn Window::ime_supports_surrounding_text(self : Window) -> Bool {
-  match self.ime_capabilities_state {
-    Some(capabilities) => capabilities.surrounding_text()
-    None => true
-  }
 }

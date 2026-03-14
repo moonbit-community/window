@@ -46,6 +46,7 @@ pub fn EventLoop::create_custom_cursor(Self, @core.CustomCursorSource) -> @core.
 pub fn EventLoop::create_proxy(Self) -> EventLoopProxy
 pub fn EventLoop::create_window(Self, @core.WindowAttributes) -> Window
 pub fn EventLoop::display_handle(Self) -> UInt64
+pub fn EventLoop::drop(Self) -> Unit
 pub fn EventLoop::exit(Self) -> Unit
 pub fn EventLoop::exiting(Self) -> Bool
 pub fn EventLoop::hide_application(Self) -> Unit
@@ -65,7 +66,7 @@ pub fn EventLoop::system_theme(Self) -> @core.Theme?
 pub fn EventLoop::try_create_window(Self, @core.WindowAttributes) -> Window raise @core.RequestError
 pub fn EventLoop::try_new() -> Self raise @core.EventLoopError
 pub fn EventLoop::try_new_with_platform_attributes(@core.PlatformEventLoopAttributes) -> Self raise @core.EventLoopError
-pub fn[A : ApplicationHandler] EventLoop::try_pump_app_events(Self, Int?, A) -> @core.PumpStatus raise @core.EventLoopError
+pub fn[A : ApplicationHandler] EventLoop::try_pump_app_events(Self, Int?, A) -> @core.PumpStatus
 pub fn[A : ApplicationHandler] EventLoop::try_run_app(Self, A) -> Unit raise @core.EventLoopError
 pub fn[A : ApplicationHandler] EventLoop::try_run_app_on_demand(Self, A) -> Unit raise @core.EventLoopError
 pub fn EventLoop::window_target(Self) -> ActiveEventLoop
@@ -253,6 +254,5 @@ pub(open) trait ApplicationHandler {
   destroy_surfaces(Self, ActiveEventLoop) -> Unit = _
   memory_warning(Self, ActiveEventLoop) -> Unit = _
   standard_key_binding(Self, ActiveEventLoop, @core.WindowId, String) -> Unit = _
-  macos_handler(Self) -> Bool = _
 }
 

@@ -18,6 +18,8 @@ pub impl Show for Action
 type Application
 pub impl @macos.ApplicationHandler for Application
 
+type WindowInputState
+
 // Type aliases
 
 // Traits

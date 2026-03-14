@@ -8,7 +8,7 @@ pub struct EventLoopProxy {
 
 ///|
 pub fn EventLoopProxy::wake_up(_self : EventLoopProxy) -> Unit {
-  queue_proxy_wake_up()
+  app_state_queue_proxy_wake_up()
 }
 
 ///|
@@ -28,7 +28,10 @@ pub fn EventLoop::display_handle(self : EventLoop) -> UInt64 {
 
 ///|
 pub fn EventLoop::system_theme(_self : EventLoop) -> @core.Theme? {
-  Some(@core.Theme::Light)
+  match theme_from_native(native_application_theme()) {
+    Some(theme) => Some(theme)
+    None => Some(@core.Theme::Light)
+  }
 }
 
 ///|
@@ -97,11 +100,10 @@ fn activation_policy_to_native(
 
 ///|
 pub struct EventLoop {
-  priv mut pump_started_ : Bool
-  priv _did_finish_launching_observer : NotificationObserver
-  priv _will_terminate_observer : NotificationObserver
-  priv mut next_window_id_ : Int
-  priv mut window_ids : Array[Int]
+  priv did_finish_launching_observer_ : UInt64
+  priv will_terminate_observer_ : UInt64
+  priv before_waiting_observer_ : UInt64
+  priv after_waiting_observer_ : UInt64
 } derive(Show)
 
 ///|
@@ -115,16 +117,15 @@ pub struct ActiveEventLoop {
 } derive(Show)
 
 ///|
-let application_hidden_state : Ref[Bool] = Ref::new(false)
-
-///|
-let other_applications_hidden_state : Ref[Bool] = Ref::new(false)
-
-///|
-let allows_automatic_window_tabbing_state : Ref[Bool] = Ref::new(false)
-
-///|
 let event_loop_global_created : Ref[Bool] = Ref::new(false)
+
+///|
+pub fn EventLoop::drop(self : EventLoop) -> Unit {
+  release_main_run_loop_observer(self.before_waiting_observer_)
+  release_main_run_loop_observer(self.after_waiting_observer_)
+  release_notification_observer(self.did_finish_launching_observer_)
+  release_notification_observer(self.will_terminate_observer_)
+}
 
 ///|
 fn EventLoop::as_active(self : EventLoop) -> ActiveEventLoop {
@@ -192,7 +193,6 @@ pub fn ActiveEventLoop::system_theme(self : ActiveEventLoop) -> @core.Theme? {
 pub fn ActiveEventLoop::hide_application(self : ActiveEventLoop) -> Unit {
   let _ = self.inner
   native_application_hide()
-  application_hidden_state.val = true
 }
 
 ///|
@@ -200,7 +200,6 @@ pub fn ActiveEventLoop::hide_application(self : ActiveEventLoop) -> Unit {
 pub fn ActiveEventLoop::hide_other_applications(self : ActiveEventLoop) -> Unit {
   let _ = self.inner
   native_application_hide_other_applications()
-  other_applications_hidden_state.val = true
 }
 
 ///|
@@ -211,7 +210,6 @@ pub fn ActiveEventLoop::set_allows_automatic_window_tabbing(
 ) -> Unit {
   let _ = self.inner
   native_application_set_allows_automatic_window_tabbing(enabled)
-  allows_automatic_window_tabbing_state.val = enabled
 }
 
 ///|
@@ -220,9 +218,7 @@ pub fn ActiveEventLoop::allows_automatic_window_tabbing(
   self : ActiveEventLoop,
 ) -> Bool {
   let _ = self.inner
-  let enabled = native_application_allows_automatic_window_tabbing()
-  allows_automatic_window_tabbing_state.val = enabled
-  enabled
+  native_application_allows_automatic_window_tabbing()
 }
 
 ///|
@@ -368,32 +364,24 @@ pub fn EventLoop::try_new_with_platform_attributes(
   if event_loop_global_created.val {
     raise @core.EventLoopError::RecreationAttempt
   }
-  if is_running() == false {
-    clear_exit()
-    app_state_set_handler_in_use(false)
-    app_state_set_control_flow(@core.ControlFlow::Wait)
-  }
-  setup_global(
+  app_state_setup_global(
     activation_policy_to_native(attributes.activation_policy()),
     attributes.default_menu(),
     attributes.activate_ignoring_other_apps(),
   )
   override_send_event()
-  if is_launched() {
+  let did_finish_launching_observer = create_did_finish_launching_observer()
+  let will_terminate_observer = create_will_terminate_observer()
+  let before_waiting_observer = create_before_waiting_observer()
+  let after_waiting_observer = create_after_waiting_observer()
+  if app_state_is_launched() {
     app_state_apply_launch_policy()
   }
-  let did_finish_launching_observer = create_observer(
-    "NSApplicationDidFinishLaunchingNotification",
-  )
-  let will_terminate_observer = create_observer(
-    "NSApplicationWillTerminateNotification",
-  )
   let event_loop = {
-    pump_started_: false,
-    _did_finish_launching_observer: did_finish_launching_observer,
-    _will_terminate_observer: will_terminate_observer,
-    next_window_id_: 1,
-    window_ids: [],
+    did_finish_launching_observer_: did_finish_launching_observer,
+    will_terminate_observer_: will_terminate_observer,
+    before_waiting_observer_: before_waiting_observer,
+    after_waiting_observer_: after_waiting_observer,
   }
   event_loop_global_created.val = true
   event_loop
@@ -431,7 +419,7 @@ pub fn EventLoop::control_flow(self : EventLoop) -> @core.ControlFlow {
 
 ///|
 pub fn EventLoop::create_proxy(_self : EventLoop) -> EventLoopProxy {
-  event_loop_proxy()
+  { _unit: () }
 }
 
 ///|
@@ -446,32 +434,23 @@ pub fn EventLoop::exiting(self : EventLoop) -> Bool {
 }
 
 ///|
-fn EventLoop::reset_run_state(self : EventLoop) -> Unit {
-  internal_exit()
-  app_state_clear_redraws()
-  self.pump_started_ = false
-}
-
-///|
 fn EventLoop::start_running(self : EventLoop) -> Unit {
-  clear_exit()
-  self.reset_run_state()
-  app_state_set_running(true)
+  let _ = self
+  app_state_clear_exit()
+  app_state_set_handler_in_use(false)
+  if app_state_is_launched() {
+    app_state_set_running(true)
+  }
 }
 
 ///|
 fn EventLoop::try_start_running(
   self : EventLoop,
 ) -> Unit raise @core.EventLoopError {
-  if is_running() {
+  if app_state_is_running() {
     raise @core.EventLoopError::RecreationAttempt
   }
   self.start_running()
-}
-
-///|
-fn EventLoop::clear_running(_self : EventLoop) -> Unit {
-  app_state_set_running(false)
 }
 
 ///|
@@ -479,31 +458,33 @@ fn EventLoop::configure_pump_wait(self : EventLoop, timeout_ms : Int?) -> Unit {
   let _ = self
   match timeout_ms {
     Some(timeout_ms) if timeout_ms <= 0 => {
-      set_wait_timeout(None)
-      set_stop_before_wait(true)
-      set_stop_after_wait(false)
+      app_state_set_wait_timeout_ms(None)
+      app_state_set_stop_before_wait(true)
+      app_state_set_stop_after_wait(false)
     }
     Some(timeout_ms) => {
-      set_stop_before_wait(false)
-      set_stop_after_wait(true)
-      set_wait_timeout(Some(runtime_now_ms() + timeout_ms.to_int64()))
+      app_state_set_stop_before_wait(false)
+      app_state_set_stop_after_wait(true)
+      app_state_set_wait_timeout_ms(
+        Some(runtime_now_ms() + timeout_ms.to_int64()),
+      )
     }
     None => {
-      set_wait_timeout(None)
-      set_stop_before_wait(false)
-      set_stop_after_wait(true)
+      app_state_set_wait_timeout_ms(None)
+      app_state_set_stop_before_wait(false)
+      app_state_set_stop_after_wait(true)
     }
   }
-  set_stop_on_redraw(true)
+  app_state_set_stop_on_redraw(true)
 }
 
 ///|
 fn EventLoop::clear_pump_wait(self : EventLoop) -> Unit {
   let _ = self
-  set_wait_timeout(None)
-  set_stop_before_wait(false)
-  set_stop_after_wait(false)
-  set_stop_on_redraw(false)
+  app_state_set_wait_timeout_ms(None)
+  app_state_set_stop_before_wait(false)
+  app_state_set_stop_after_wait(false)
+  app_state_set_stop_on_redraw(false)
 }
 
 ///|
@@ -511,106 +492,31 @@ fn[A : ApplicationHandler] EventLoop::run_init_sequence(
   self : EventLoop,
   app : A,
 ) -> Unit {
-  let launched_before = is_launched()
-  if launched_before == false {
-    app_state_queue_did_finish_launching_notification()
-  }
-  self.dispatch_application_notifications(app)
-  if launched_before {
-    dispatch_init_events(app, self.as_active())
-  } else if is_launched() == false {
-    app_state_did_finish_launching_and_dispatch(app, self.as_active())
-  }
-}
-
-///|
-fn[A : ApplicationHandler] EventLoop::run_iteration(
-  self : EventLoop,
-  app : A,
-) -> @core.PumpStatus {
-  self.dispatch_application_notifications(app)
-  self.send_event(app)
-  self.dispatch_window_events(app)
-  cleared(app, self.as_active())
-  if self.exiting() {
-    return self.finish_exit(app)
-  }
-  let cause = app_state_wait()
-  self.dispatch_application_notifications(app)
-  self.send_event(app)
-  wakeup(app, self.as_active(), cause)
-  if self.exiting() {
-    self.finish_exit(app)
+  if app_state_is_launched() {
+    app_state_dispatch_init_events(app, self.as_active())
   } else {
-    @core.PumpStatus::Continue
+    self.dispatch_window_events(app)
   }
 }
 
 ///|
-fn[A : ApplicationHandler] EventLoop::dispatch_application_notifications(
+fn[A : ApplicationHandler] EventLoop::dispatch_window_events(
   self : EventLoop,
   app : A,
 ) -> Unit {
-  if self._did_finish_launching_observer.take_pending() &&
-    is_launched() == false {
-    app_state_did_finish_launching_and_dispatch(app, self.as_active())
-  }
-  if self._will_terminate_observer.take_pending() {
-    self.notify_windows_of_exit()
-    will_terminate()
-  }
+  app_state_dispatch_deferred_callbacks(app, self.as_active())
 }
 
 ///|
-fn EventLoop::notify_windows_of_exit(self : EventLoop) -> Unit {
-  for raw_id in self.window_ids {
-    let _ = window_handle_for_id(raw_id)
-    app_state_clear_window_redraw(raw_id)
-    view_clear_pressed_modifiers(raw_id)
-    unregister_window_handle(raw_id)
-  }
+// Port target: event_loop.rs::notify_windows_of_exit
+fn notify_windows_of_exit() -> Unit {
+  native_application_close_all_windows()
 }
 
 ///|
 // Port target: event_loop.rs::stop_app_immediately
 fn stop_app_immediately() -> Unit {
-  queue_proxy_wake_up()
-}
-
-///|
-fn[A : ApplicationHandler] EventLoop::run_loop(
-  self : EventLoop,
-  app : A,
-) -> Unit {
-  while self.exiting() == false {
-    let status = self.run_iteration(app)
-    if status is @core.PumpStatus::Exit(_) {
-      return
-    }
-  }
-  self.clear_running()
-}
-
-///|
-fn[A : ApplicationHandler] EventLoop::try_start_pump(
-  self : EventLoop,
-  app : A,
-) -> @core.PumpStatus raise @core.EventLoopError {
-  if self.pump_started_ {
-    @core.PumpStatus::Continue
-  } else {
-    if is_launched() == false {
-      set_stop_on_launch()
-    }
-    self.try_start_running()
-    self.pump_started_ = true
-    self.run_init_sequence(app)
-    if self.exiting() {
-      self.finish_exit(app)
-    } else {
-      @core.PumpStatus::Continue
-    }
-  }
+  native_application_stop_immediately()
 }
 
 ///|
@@ -619,12 +525,8 @@ fn[A : ApplicationHandler] EventLoop::finish_exit(
   app : A,
 ) -> @core.PumpStatus {
   app_state_set_handler_in_use(false)
-  app_state_queue_will_terminate_notification()
-  self.dispatch_application_notifications(app)
   self.dispatch_window_events(app)
-  self.clear_running()
-  self.pump_started_ = false
-  internal_exit()
+  app_state_internal_exit()
   @core.PumpStatus::Exit(0)
 }
 
@@ -641,15 +543,13 @@ pub fn[A : ApplicationHandler] EventLoop::try_run_app_on_demand(
   self : EventLoop,
   app : A,
 ) -> Unit raise @core.EventLoopError {
-  if is_running() {
+  if app_state_is_running() {
     raise @core.EventLoopError::RecreationAttempt
   }
-  clear_exit()
+  app_state_clear_exit()
   app_state_set_handler_in_use(false)
   self.clear_pump_wait()
-  self.pump_started_ = false
   self.try_run_app(app)
-  self.reset_run_state()
 }
 
 ///|
@@ -658,7 +558,7 @@ pub fn[A : ApplicationHandler] EventLoop::pump_app_events(
   timeout_ms : Int?,
   app : A,
 ) -> @core.PumpStatus {
-  try! self.try_pump_app_events(timeout_ms, app)
+  self.try_pump_app_events(timeout_ms, app)
 }
 
 ///|
@@ -666,20 +566,32 @@ pub fn[A : ApplicationHandler] EventLoop::try_pump_app_events(
   self : EventLoop,
   timeout_ms : Int?,
   app : A,
-) -> @core.PumpStatus raise @core.EventLoopError {
-  let started_now = self.pump_started_ == false
-  match self.try_start_pump(app) {
-    @core.PumpStatus::Exit(code) => return @core.PumpStatus::Exit(code)
-    _ => ()
-  }
-  if started_now {
-    self.clear_pump_wait()
-    return @core.PumpStatus::Continue
-  }
-  self.configure_pump_wait(timeout_ms)
-  let status = self.run_iteration(app)
-  self.clear_pump_wait()
-  status
+) -> @core.PumpStatus {
+  app_state_set_dispatch_handler(app, self.as_active())
+  let result = (fn() -> @core.PumpStatus {
+    app_state_set_handler_in_use(false)
+    if app_state_is_launched() == false {
+      app_state_set_stop_on_launch(true)
+      native_application_run()
+      self.dispatch_window_events(app)
+    } else if app_state_is_running() == false {
+      app_state_set_running(true)
+      app_state_dispatch_init_events(app, self.as_active())
+      self.dispatch_window_events(app)
+    } else {
+      self.configure_pump_wait(timeout_ms)
+      native_application_run()
+      self.dispatch_window_events(app)
+      self.clear_pump_wait()
+    }
+    if self.exiting() {
+      self.finish_exit(app)
+    } else {
+      @core.PumpStatus::Continue
+    }
+  })()
+  app_state_clear_dispatch_handler()
+  result
 }
 
 ///|
@@ -695,11 +607,23 @@ pub fn[A : ApplicationHandler] EventLoop::try_run_app(
   self : EventLoop,
   app : A,
 ) -> Unit raise @core.EventLoopError {
-  self.try_start_running()
-  self.run_init_sequence(app)
-  if self.exiting() {
-    ignore(self.finish_exit(app))
-  } else {
-    self.run_loop(app)
+  app_state_set_dispatch_handler(app, self.as_active())
+  let result = (fn() -> Unit raise @core.EventLoopError {
+    self.try_start_running()
+    self.run_init_sequence(app)
+    if self.exiting() {
+      ignore(self.finish_exit(app))
+    } else {
+      native_application_run()
+      self.dispatch_window_events(app)
+      ignore(self.finish_exit(app))
+    }
+  })() catch {
+    err => {
+      app_state_clear_dispatch_handler()
+      raise err
+    }
   }
+  app_state_clear_dispatch_handler()
+  result
 }

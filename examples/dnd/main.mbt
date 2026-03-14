@@ -18,7 +18,6 @@ pub impl @macos.ApplicationHandler for Application with can_create_surfaces(
     "Drag and drop files on me!",
   )
   let window = event_loop.create_window(window_attributes)
-  window.request_redraw()
   self.window = Some(window)
 }
 
@@ -29,34 +28,20 @@ pub impl @macos.ApplicationHandler for Application with window_event(
   _window_id,
   event,
 ) {
-  for compat_event in event.into_winit_events() {
-    match compat_event {
-      @core.WinitWindowEvent::DroppedFile(path) =>
-        println("Dropped file: \{path}")
-      @core.WinitWindowEvent::HoveredFile(path) =>
-        println("Hovered file: \{path}")
-      @core.WinitWindowEvent::HoveredFileCancelled =>
-        println("File hover cancelled")
-      _ => ()
-    }
-  }
-
   match event {
-    @core.WindowEvent::CloseRequested => {
-      println("Close requested; exiting")
-      event_loop.exit()
-    }
-    @core.WindowEvent::DragEntered(paths, position) =>
-      println("Drag entered at \{position}: \{paths}")
-    @core.WindowEvent::DragMoved(position) => println("Drag moved: \{position}")
-    @core.WindowEvent::DragDropped(paths, position) =>
-      println("Dropped at \{position}: \{paths}")
-    @core.WindowEvent::DragLeft(position) => println("Drag left: \{position}")
+    @core.WindowEvent::DragEntered(_, _)
+    | @core.WindowEvent::DragMoved(_)
+    | @core.WindowEvent::DragDropped(_, _)
+    | @core.WindowEvent::DragLeft(_) => println("\{event}")
     @core.WindowEvent::RedrawRequested =>
       match self.window {
-        Some(window) => @util.fill_window(window)
+        Some(window) => {
+          window.pre_present_notify()
+          @util.fill_window(window)
+        }
         None => ()
       }
+    @core.WindowEvent::CloseRequested => event_loop.exit()
     _ => ()
   }
 }

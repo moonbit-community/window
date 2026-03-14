@@ -1,8 +1,14 @@
 import {
+  "moonbitlang/core/math",
   "Milky2018/window/macos",
 }
 
 options(
+  "native-stub": [ "sleep.c", "fill_native.m" ],
   "supported-targets": "native",
-  targets: { "util.mbt": [ "native" ] },
+  targets: {
+    "fill.mbt": [ "native" ],
+    "sleep.mbt": [ "native" ],
+    "tracing.mbt": [ "native" ],
+  },
 )

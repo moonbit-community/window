@@ -12,7 +12,6 @@ struct ControlFlowDemo {
   mut request_redraw : Bool
   mut wait_cancelled : Bool
   mut close_requested : Bool
-  mut last_start_time_ms : Int64?
   mut window : @macos.Window?
 }
 
@@ -23,7 +22,6 @@ fn ControlFlowDemo::new() -> ControlFlowDemo {
     request_redraw: false,
     wait_cancelled: false,
     close_requested: false,
-    last_start_time_ms: None,
     window: None,
   }
 }
@@ -35,11 +33,6 @@ pub impl @macos.ApplicationHandler for ControlFlowDemo with new_events(
   cause,
 ) {
   println("new_events: \{cause}")
-  self.last_start_time_ms = match cause {
-    @core.StartCause::WaitCancelled(start_time_ms, _) => Some(start_time_ms)
-    @core.StartCause::ResumeTimeReached(start_time_ms, _) => Some(start_time_ms)
-    _ => self.last_start_time_ms
-  }
   self.wait_cancelled = match cause {
     @core.StartCause::WaitCancelled(_, _) => self.mode == Mode::WaitUntil
     _ => false
@@ -65,6 +58,7 @@ pub impl @macos.ApplicationHandler for ControlFlowDemo with window_event(
   _window_id,
   event,
 ) {
+  println("\{event}")
   match event {
     @core.WindowEvent::CloseRequested => self.close_requested = true
     @core.WindowEvent::KeyboardInput(_device_id, key_event, _is_synthetic) =>
@@ -82,7 +76,7 @@ pub impl @macos.ApplicationHandler for ControlFlowDemo with window_event(
             self.mode = Mode::Poll
             println("mode = \{self.mode}")
           }
-          @core.Key::Character("r") | @core.Key::Character("R") => {
+          @core.Key::Character("r") => {
             self.request_redraw = !self.request_redraw
             println("request_redraw = \{self.request_redraw}")
           }
@@ -93,7 +87,10 @@ pub impl @macos.ApplicationHandler for ControlFlowDemo with window_event(
       }
     @core.WindowEvent::RedrawRequested =>
       match self.window {
-        Some(window) => @util.fill_window(window)
+        Some(window) => {
+          window.pre_present_notify()
+          @util.fill_window(window)
+        }
         None => ()
       }
     _ => ()
@@ -116,15 +113,14 @@ pub impl @macos.ApplicationHandler for ControlFlowDemo with about_to_wait(
     Mode::Wait => event_loop.set_control_flow(@core.ControlFlow::Wait)
     Mode::WaitUntil =>
       if !self.wait_cancelled {
-        match self.last_start_time_ms {
-          Some(start_time_ms) =>
-            event_loop.set_control_flow(
-              @core.ControlFlow::wait_duration(start_time_ms, 100),
-            )
-          None => event_loop.set_control_flow(@core.ControlFlow::Wait)
-        }
+        event_loop.set_control_flow(
+          @core.ControlFlow::wait_duration(@util.now_millis(), 100),
+        )
       }
-    Mode::Poll => event_loop.set_control_flow(@core.ControlFlow::Poll)
+    Mode::Poll => {
+      @util.sleep_millis(100)
+      event_loop.set_control_flow(@core.ControlFlow::Poll)
+    }
   }
 
   if self.close_requested {
