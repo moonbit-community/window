@@ -797,7 +797,8 @@ fn app_state_set_handler_in_use(value : Bool) -> Unit {
 ///|
 fn app_state_handler_ready() -> Bool {
   app_state_runtime.val.is_running &&
-  app_state_runtime.val.event_handler_in_use == false
+  app_state_runtime.val.event_handler_in_use == false &&
+  app_state_runtime.val.dispatch_callback is Some(_)
 }
 
 ///|

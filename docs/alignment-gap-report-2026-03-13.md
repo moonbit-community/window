@@ -192,6 +192,8 @@ The implementation is **not yet 1:1 aligned** with `winit-reference` semantics.
 - Completed: monitor `NSScreen` lookup now matches upstream strategy more closely by resolving screen identity via display UUID matching (not raw display-id equality), reducing stale-screen mismatch risk across display reconfiguration.
 - Completed: expanded `app_state` whitebox coverage for run-loop observer behavior (`before_waiting` redraw/about-to-wait ordering, `after_waiting` `StartCause` propagation, and launch-notification immediate dispatch when a handler is installed), improving confidence in stop/wake interleaving parity.
 - Completed: `examples/x11_embed` non-X11 fallback message now matches upstream wording (`This example is only supported on X11 platforms.`).
+- Completed: `app_state_handler_ready` now requires a registered dispatch handler in addition to running/not-in-handler state, aligning with upstream `EventHandler::ready()` gating and preventing observer callbacks from being processed during `pump_app_events` idle gaps with no active handler.
+- Completed: added whitebox coverage for dispatch-handler gating (`handler_ready_requires_registered_dispatch_handler`, plus before/after waiting no-op behavior when handler is absent).
 
 ## Remaining Structural Work
 

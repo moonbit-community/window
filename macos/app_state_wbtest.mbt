@@ -340,3 +340,41 @@ test "queue_did_finish_launching_dispatches_init_when_handler_registered" {
   ])
   app_state_clear_dispatch_handler()
 }
+
+///|
+test "handler_ready_requires_registered_dispatch_handler" {
+  reset_app_state_runtime_for_test()
+  app_state_set_running(true)
+  app_state_set_handler_in_use(false)
+  assert_false(app_state_handler_ready())
+
+  app_state_runtime.val.dispatch_callback = Some(fn(_callback) {  })
+  assert_true(app_state_handler_ready())
+}
+
+///|
+test "before_waiting_noops_without_dispatch_handler" {
+  reset_app_state_runtime_for_test()
+  app_state_set_running(true)
+  app_state_set_handler_in_use(false)
+  app_state_set_control_flow(@core.ControlFlow::Wait)
+  app_state_queue_redraw(1)
+
+  app_state_on_before_waiting()
+
+  assert_eq(app_state_runtime.val.pending_redraw_window_ids, [1])
+  assert_true(app_state_runtime.val.start_time_ms is None)
+}
+
+///|
+test "after_waiting_noops_without_dispatch_handler" {
+  reset_app_state_runtime_for_test()
+  app_state_set_running(true)
+  app_state_set_handler_in_use(false)
+  app_state_runtime.val.start_time_ms = Some((42 : Int).to_int64())
+  app_state_set_control_flow(@core.ControlFlow::Poll)
+
+  app_state_on_after_waiting()
+
+  assert_eq(app_state_runtime.val.deferred_callbacks.length(), 0)
+}
