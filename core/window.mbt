@@ -411,6 +411,61 @@ pub fn OptionAsAlt::default() -> OptionAsAlt {
 }
 
 ///|
+pub struct ScreenEdge {
+  priv bits : Int
+} derive(Eq, Show)
+
+///|
+pub fn ScreenEdge::none() -> ScreenEdge {
+  { bits: 0 }
+}
+
+///|
+pub fn ScreenEdge::top() -> ScreenEdge {
+  { bits: 1 }
+}
+
+///|
+pub fn ScreenEdge::left() -> ScreenEdge {
+  { bits: 2 }
+}
+
+///|
+pub fn ScreenEdge::bottom() -> ScreenEdge {
+  { bits: 4 }
+}
+
+///|
+pub fn ScreenEdge::right() -> ScreenEdge {
+  { bits: 8 }
+}
+
+///|
+pub fn ScreenEdge::all() -> ScreenEdge {
+  { bits: 15 }
+}
+
+///|
+pub fn ScreenEdge::union(self : ScreenEdge, other : ScreenEdge) -> ScreenEdge {
+  { bits: self.bits | other.bits }
+}
+
+///|
+pub fn ScreenEdge::contains(self : ScreenEdge, other : ScreenEdge) -> Bool {
+  (self.bits & other.bits) == other.bits
+}
+
+///|
+pub fn ScreenEdge::from_bits(bits : Int) -> ScreenEdge {
+  { bits: bits & 15 }
+}
+
+///|
+pub fn ScreenEdge::bits(self : ScreenEdge) -> Int {
+  self.bits
+}
+
+///|
 pub struct PlatformWindowAttributes {
   priv mut accepts_first_mouse : Bool
   priv mut disallow_hidpi : Bool
@@ -807,6 +862,7 @@ pub fn ParentWindow::into_raw(self : ParentWindow) -> UInt64 {
 pub struct WindowAttributes {
   priv mut active : Bool
   priv mut blur : Bool
+  priv mut clip_children : Bool
   priv mut content_protected : Bool
   priv mut cursor : Cursor
   priv mut cursor_hittest : Bool
@@ -819,9 +875,11 @@ pub struct WindowAttributes {
   priv mut max_surface_size : @dpi.Size?
   priv mut maximized : Bool
   priv mut min_surface_size : @dpi.Size?
+  priv mut name : String?
   priv mut parent_window : ParentWindow?
   priv mut platform_attributes : PlatformWindowAttributes
   priv mut position : @dpi.Position?
+  priv mut skip_taskbar : Bool
   priv mut surface_size : @dpi.Size?
   priv mut surface_resize_increments : @dpi.Size?
   priv mut theme : Theme?
@@ -838,6 +896,7 @@ pub fn WindowAttributes::default() -> WindowAttributes {
   {
     active: true,
     blur: false,
+    clip_children: true,
     content_protected: false,
     cursor: Cursor::Icon(CursorIcon::Default),
     cursor_hittest: true,
@@ -850,9 +909,11 @@ pub fn WindowAttributes::default() -> WindowAttributes {
     maximized: false,
     min_surface_size: None,
     max_surface_size: None,
+    name: None,
     parent_window: None,
     platform_attributes: PlatformWindowAttributes::default(),
     position: None,
+    skip_taskbar: false,
     surface_size: None,
     surface_resize_increments: None,
     theme: None,
@@ -948,6 +1009,33 @@ pub fn WindowAttributes::with_parent_window(
   parent_window : ParentWindow?,
 ) -> WindowAttributes {
   self.parent_window = parent_window
+  self
+}
+
+///|
+pub fn WindowAttributes::with_name(
+  self : WindowAttributes,
+  name : String,
+) -> WindowAttributes {
+  self.name = Some(name)
+  self
+}
+
+///|
+pub fn WindowAttributes::with_skip_taskbar(
+  self : WindowAttributes,
+  skip_taskbar : Bool,
+) -> WindowAttributes {
+  self.skip_taskbar = skip_taskbar
+  self
+}
+
+///|
+pub fn WindowAttributes::with_clip_children(
+  self : WindowAttributes,
+  clip_children : Bool,
+) -> WindowAttributes {
+  self.clip_children = clip_children
   self
 }
 
@@ -1197,6 +1285,21 @@ pub fn WindowAttributes::parent_window(
   self : WindowAttributes,
 ) -> ParentWindow? {
   self.parent_window
+}
+
+///|
+pub fn WindowAttributes::name(self : WindowAttributes) -> String? {
+  self.name
+}
+
+///|
+pub fn WindowAttributes::skip_taskbar(self : WindowAttributes) -> Bool {
+  self.skip_taskbar
+}
+
+///|
+pub fn WindowAttributes::clip_children(self : WindowAttributes) -> Bool {
+  self.clip_children
 }
 
 ///|

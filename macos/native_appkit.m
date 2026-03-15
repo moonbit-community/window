@@ -2,6 +2,7 @@
 #import <ApplicationServices/ApplicationServices.h>
 #import <CoreFoundation/CoreFoundation.h>
 #import <Foundation/Foundation.h>
+#import <QuartzCore/QuartzCore.h>
 #import <objc/runtime.h>
 #import <moonbit.h>
 #import <stdint.h>
@@ -78,7 +79,6 @@ static void mbw_override_send_event_for_application(NSApplication *app, BOOL upd
 static CFRunLoopActivity mbw_main_run_loop_activity_from_kind(int32_t activity_kind);
 static void mbw_main_run_loop_observer_callback(CFRunLoopObserverRef observer,
                                                 CFRunLoopActivity activity, void *info);
-static void mbw_test_custom_application_send_event(id self, SEL _cmd, NSEvent *event);
 
 static void mbw_call_window_event_trampoline(int32_t kind, int32_t raw_id, int32_t arg0,
                                              int32_t arg1, int32_t arg2, double argd) {
@@ -169,6 +169,9 @@ static void mbw_call_lifecycle_trampoline(mbw_lifecycle_trampoline_t trampoline,
 @property(nonatomic, assign) int32_t rawId;
 @property(nonatomic, assign) NSRect standardFrame;
 @property(nonatomic, assign) BOOL hasStandardFrame;
+@property(nonatomic, copy) NSString *windowName;
+@property(nonatomic, assign) BOOL skipTaskbar;
+@property(nonatomic, assign) BOOL clipChildren;
 @end
 
 @implementation MBWContentView
@@ -1709,12 +1712,6 @@ static void mbw_override_send_event_for_application(NSApplication *app, BOOL upd
   }
 }
 
-static void mbw_test_custom_application_send_event(id self, SEL _cmd, NSEvent *event) {
-  (void)self;
-  (void)_cmd;
-  (void)event;
-}
-
 MOONBIT_FFI_EXPORT
 void mbw_install_window_event_callback(mbw_window_event_trampoline_t trampoline, void *closure) {
   if (g_window_event_closure != NULL) {
@@ -1744,7 +1741,6 @@ static moonbit_bytes_t mbw_input_payload_text_or_empty(moonbit_bytes_t text) {
   if (text == NULL) {
     return moonbit_make_bytes(0, 0);
   }
-  moonbit_incref(text);
   return text;
 }
 
@@ -1891,59 +1887,6 @@ void mbw_override_send_event(void) {
 }
 
 MOONBIT_FFI_EXPORT
-int32_t mbw_test_application_override_send_event(void) {
-  if (![NSThread isMainThread]) {
-    return 1;
-  }
-
-  mbw_ensure_app_initialized();
-  NSApplication *app = [NSApplication sharedApplication];
-  mbw_override_send_event_for_application(app, YES);
-  mbw_override_send_event_for_application(app, YES);
-
-  Class cls = object_getClass(app);
-  Method method = class_getInstanceMethod(cls, @selector(sendEvent:));
-  if (method == NULL) {
-    return 0;
-  }
-  return method_getImplementation(method) == (IMP)mbw_overridden_send_event ? 1 : 0;
-}
-
-MOONBIT_FFI_EXPORT
-int32_t mbw_test_application_override_send_event_custom_class(void) {
-  if (![NSThread isMainThread]) {
-    return 1;
-  }
-
-  static Class test_application_class = Nil;
-  if (test_application_class == Nil) {
-    test_application_class = objc_allocateClassPair([NSApplication class], "MBWTestApplication", 0);
-    if (test_application_class != Nil) {
-      class_addMethod(test_application_class, @selector(sendEvent:),
-                      (IMP)mbw_test_custom_application_send_event, "v@:@");
-      objc_registerClassPair(test_application_class);
-    } else {
-      test_application_class = objc_getClass("MBWTestApplication");
-    }
-  }
-  if (test_application_class == Nil) {
-    return 0;
-  }
-
-  Method method = class_getInstanceMethod(test_application_class, @selector(sendEvent:));
-  if (method == NULL) {
-    return 0;
-  }
-
-  IMP original = method_getImplementation(method);
-  method_setImplementation(method, (IMP)mbw_overridden_send_event);
-  int32_t ok =
-      method_getImplementation(method) == (IMP)mbw_overridden_send_event ? 1 : 0;
-  method_setImplementation(method, original);
-  return ok;
-}
-
-MOONBIT_FFI_EXPORT
 uint64_t mbw_create_window(int32_t raw_id, int32_t width, int32_t height, int32_t visible,
                            int32_t active, int32_t resizable, int32_t decorations, int32_t panel,
                            const char *title) {
@@ -2002,6 +1945,10 @@ uint64_t mbw_create_window(int32_t raw_id, int32_t width, int32_t height, int32_
   content_view.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
   [content_view registerForDraggedTypes:@[ NSPasteboardTypeFileURL ]];
   window.contentView = content_view;
+  [content_view setWantsLayer:YES];
+  if (content_view.layer != nil) {
+    content_view.layer.masksToBounds = YES;
+  }
   [window setAcceptsMouseMovedEvents:YES];
 
   MBWWindowBox *box = [[MBWWindowBox alloc] init];
@@ -2011,6 +1958,9 @@ uint64_t mbw_create_window(int32_t raw_id, int32_t width, int32_t height, int32_
   box.rawId = raw_id;
   box.standardFrame = window.frame;
   box.hasStandardFrame = NO;
+  box.windowName = @"";
+  box.skipTaskbar = NO;
+  box.clipChildren = YES;
   (void)visible;
   (void)active;
   [window orderOut:nil];
@@ -2117,6 +2067,59 @@ void mbw_window_set_title(uint64_t handle, const char *title) {
     return;
   }
   box.window.title = mbw_string_from_utf8(title);
+}
+
+MOONBIT_FFI_EXPORT
+void mbw_window_set_name(uint64_t handle, const char *name) {
+  MBWWindowBox *box = mbw_window_box_from_handle(handle);
+  if (box == nil || box.window == nil) {
+    return;
+  }
+  NSString *window_name = mbw_string_from_utf8(name);
+  box.windowName = window_name;
+  if ([box.window respondsToSelector:@selector(setIdentifier:)]) {
+    box.window.identifier = window_name;
+  }
+}
+
+MOONBIT_FFI_EXPORT
+void mbw_window_set_skip_taskbar(uint64_t handle, int32_t skip_taskbar) {
+  MBWWindowBox *box = mbw_window_box_from_handle(handle);
+  if (box == nil || box.window == nil) {
+    return;
+  }
+  BOOL skip = skip_taskbar ? YES : NO;
+  box.skipTaskbar = skip;
+  if ([box.window respondsToSelector:@selector(setExcludedFromWindowsMenu:)]) {
+    box.window.excludedFromWindowsMenu = skip;
+  }
+  NSUInteger behavior = box.window.collectionBehavior;
+  if (skip) {
+    behavior |= NSWindowCollectionBehaviorTransient;
+#ifdef NSWindowCollectionBehaviorIgnoresCycle
+    behavior |= NSWindowCollectionBehaviorIgnoresCycle;
+#endif
+  } else {
+    behavior &= ~NSWindowCollectionBehaviorTransient;
+#ifdef NSWindowCollectionBehaviorIgnoresCycle
+    behavior &= ~NSWindowCollectionBehaviorIgnoresCycle;
+#endif
+  }
+  box.window.collectionBehavior = behavior;
+}
+
+MOONBIT_FFI_EXPORT
+void mbw_window_set_clip_children(uint64_t handle, int32_t clip_children) {
+  MBWWindowBox *box = mbw_window_box_from_handle(handle);
+  if (box == nil || box.window == nil || box.contentView == nil) {
+    return;
+  }
+  BOOL clip = clip_children ? YES : NO;
+  box.clipChildren = clip;
+  [box.contentView setWantsLayer:YES];
+  if (box.contentView.layer != nil) {
+    box.contentView.layer.masksToBounds = clip;
+  }
 }
 
 MOONBIT_FFI_EXPORT

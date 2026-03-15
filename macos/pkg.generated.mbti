@@ -214,6 +214,9 @@ pub fn Window::set_min_surface_size(Self, @dpi.Size?) -> Unit
 pub fn Window::set_minimized(Self, Bool) -> Unit
 pub fn Window::set_option_as_alt(Self, @core.OptionAsAlt) -> Unit
 pub fn Window::set_outer_position(Self, @dpi.Position) -> Unit
+pub fn Window::set_preferred_screen_edges_deferring_system_gestures(Self, @core.ScreenEdge) -> Unit
+pub fn Window::set_prefers_home_indicator_hidden(Self, Bool) -> Unit
+pub fn Window::set_prefers_status_bar_hidden(Self, Bool) -> Unit
 pub fn Window::set_resizable(Self, Bool) -> Unit
 pub fn Window::set_resize_increments(Self, @dpi.Size?) -> Unit
 pub fn Window::set_simple_fullscreen(Self, Bool) -> Bool

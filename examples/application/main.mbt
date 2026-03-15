@@ -33,9 +33,9 @@ struct Application {
   window_input_states : Array[WindowInputState]
   mut proxy : @macos.EventLoopProxy?
   proxy_actions : Array[Action]
-  mut created_windows : Int
   custom_cursors : Array[@core.CustomCursor]
   start_time_ms : Int64
+  mut next_proxy_wake_ms : Int64
 }
 
 ///|
@@ -50,6 +50,10 @@ struct WindowInputState {
   mut continuous_redraw : Bool
   mut emit_surface_size : Bool
   mut occluded : Bool
+  mut zoom : Double
+  mut rotated : Double
+  mut panned_x : Double
+  mut panned_y : Double
 }
 
 ///|
@@ -126,21 +130,48 @@ fn fill_color_for_theme(theme : @core.Theme) -> Int {
 }
 
 ///|
+fn video_mode_bits_suffix(mode : @core.VideoMode) -> String {
+  match mode.bit_depth() {
+    Some(bits) => "x\{bits}"
+    None => ""
+  }
+}
+
+///|
+fn video_mode_refresh_suffix(mode : @core.VideoMode) -> String {
+  match mode.refresh_rate_millihertz() {
+    Some(m_hz) => " @ \{m_hz / 1000}.\{m_hz % 1000} Hz"
+    None => ""
+  }
+}
+
+///|
+fn print_video_mode(prefix : String, mode : @core.VideoMode) -> Unit {
+  let surface_size = mode.surface_size()
+  let bits = video_mode_bits_suffix(mode)
+  let refresh = video_mode_refresh_suffix(mode)
+  println(
+    "\{prefix}\{surface_size.width()}x\{surface_size.height()}\{bits}\{refresh}",
+  )
+}
+
+///|
 fn Application::new() -> Application {
+  let start_time_ms = @util.now_millis()
   {
     windows: [],
     window_input_states: [],
     proxy: None,
     proxy_actions: [],
-    created_windows: 0,
     custom_cursors: [],
-    start_time_ms: @util.now_millis(),
+    start_time_ms,
+    next_proxy_wake_ms: start_time_ms + (1000 : Int).to_int64(),
   }
 }
 
 ///|
 fn Application::print_help(_self : Application) -> Unit {
-  println("Keyboard shortcuts (matching upstream application example intent):")
+  println("Keyboard bindings:")
   println("  Ctrl+Q close current window")
   println("  Ctrl+H print this help")
   println("  Ctrl+N create a new window")
@@ -156,7 +187,7 @@ fn Application::print_help(_self : Application) -> Unit {
   )
   println("  Shift+F toggle animated fill; Shift+R toggle continuous redraw")
   println("  Alt+S toggle periodic surface-size logs; Ctrl+S proxy message")
-  println("Mouse shortcuts:")
+  println("Mouse bindings:")
   println("  Ctrl+Left drag window")
   println("  Alt+Left drag-resize (direction depends on pointer edge/corner)")
   println("  Ctrl+Right show window menu")
@@ -205,6 +236,7 @@ fn Application::create_window(
     Some(theme) => theme
     None => @core.Theme::Dark
   }
+  println("Theme: \{initial_theme}")
   self.windows.push(window)
   let initial_custom_cursor_index = if self.custom_cursors.is_empty() {
     0
@@ -222,9 +254,12 @@ fn Application::create_window(
     continuous_redraw: false,
     emit_surface_size: false,
     occluded: false,
+    zoom: 0.0,
+    rotated: 0.0,
+    panned_x: 0.0,
+    panned_y: 0.0,
   })
-  self.created_windows += 1
-  println("Created window #\{self.created_windows}: \{window_id}")
+  println("Created new window with id=\{window_id}")
   match self.window_by_id(window_id) {
     Some(created_window) => created_window.request_redraw()
     None => ()
@@ -237,6 +272,7 @@ fn Application::load_custom_cursors(
   self : Application,
   event_loop : @macos.ActiveEventLoop,
 ) -> Unit {
+  println("Loading cursor assets")
   self.custom_cursors.clear()
   for value in [255, 192, 128] {
     match make_custom_cursor_source(value) {
@@ -304,6 +340,10 @@ fn Application::ensure_window_input_state(
         continuous_redraw: false,
         emit_surface_size: false,
         occluded: false,
+        zoom: 0.0,
+        rotated: 0.0,
+        panned_x: 0.0,
+        panned_y: 0.0,
       })
       self.window_input_states.length() - 1
     }
@@ -467,14 +507,37 @@ fn Application::dump_monitors(
   _self : Application,
   event_loop : @macos.ActiveEventLoop,
 ) -> Unit {
-  let primary_monitor = event_loop.primary_monitor()
-  println("Primary monitor: \{primary_monitor}")
+  println("Monitors information")
   let monitors = event_loop.available_monitors()
-  println("Available monitors (\{monitors.length()}):")
+  let primary_native_id = match event_loop.primary_monitor() {
+    Some(primary_monitor) => Some(primary_monitor.native_id())
+    None => None
+  }
   for monitor in monitors {
-    println(
-      "  name=\{monitor.name()} pos=\{monitor.position()} size=\{monitor.surface_size()} scale=\{monitor.scale_factor()} current_video=\{monitor.current_video_mode()}",
-    )
+    let intro = match primary_native_id {
+      Some(primary_id) =>
+        if primary_id == monitor.native_id() {
+          "Primary monitor"
+        } else {
+          "Monitor"
+        }
+      None => "Monitor"
+    }
+    match monitor.name() {
+      Some(name) => println("\{intro}: \{name}")
+      None => println("\{intro}: [no name]")
+    }
+    match monitor.current_video_mode() {
+      Some(current_mode) => print_video_mode("  ", current_mode)
+      None => ()
+    }
+    let position = monitor.position()
+    println("  Position: \{position.x()},\{position.y()}")
+    println("  Scale factor: \{monitor.scale_factor()}")
+    println("  Available modes (width x height x bit-depth):")
+    for mode in monitor.video_modes() {
+      print_video_mode("    ", mode)
+    }
   }
 }
 
@@ -487,20 +550,17 @@ fn Application::perform_window_action(
   window : @macos.Window,
 ) -> Unit {
   match action {
-    Action::CloseWindow => {
-      self.remove_window(window_id)
-      if self.windows.is_empty() {
-        event_loop.exit()
-      }
-    }
+    Action::CloseWindow => self.remove_window(window_id)
     Action::ToggleCursorVisibility =>
       window.set_cursor_visible(!window.is_cursor_visible())
     Action::ToggleResizeIncrements =>
       if window.resize_increments() is None {
+        println("Had increments: false")
         window.set_resize_increments(
           Some(@dpi.LogicalSize::new(25.0, 25.0).into_size()),
         )
       } else {
+        println("Had increments: true")
         window.set_resize_increments(None)
       }
     Action::ToggleResizable => window.set_resizable(!window.is_resizable())
@@ -513,8 +573,11 @@ fn Application::perform_window_action(
     Action::ToggleSimpleFullscreen => {
       let _ = window.set_simple_fullscreen(!window.simple_fullscreen())
     }
-    Action::ToggleBorderlessGame =>
-      window.set_borderless_game(!window.is_borderless_game())
+    Action::ToggleBorderlessGame => {
+      let next = !window.is_borderless_game()
+      window.set_borderless_game(next)
+      println("Borderless game: \{next}")
+    }
     Action::ToggleMaximize => window.set_maximized(!window.is_maximized())
     Action::Minimize => window.set_minimized(true)
     Action::NextCursor => {
@@ -525,6 +588,7 @@ fn Application::perform_window_action(
         ) %
         cursors.length()
       self.window_input_states[state_index].cursor_index = next_cursor_index
+      println("Setting cursor to \{cursors[next_cursor_index]}")
       window.set_cursor_icon(cursors[next_cursor_index])
     }
     Action::NextCustomCursor =>
@@ -549,6 +613,7 @@ fn Application::perform_window_action(
         @core.CursorGrabMode::Confined => @core.CursorGrabMode::Locked
         @core.CursorGrabMode::Locked => @core.CursorGrabMode::None
       }
+      println("Changing cursor grab mode to \{next_mode}")
       try {
         window.set_cursor_grab(next_mode)
         self.window_input_states[state_index].cursor_grab_mode = next_mode
@@ -563,9 +628,23 @@ fn Application::perform_window_action(
       } else {
         @dpi.LogicalSize::new(640.0, 480.0)
       }
+      println("Requesting resize from \{current} to \{next_size}")
       ignore(window.request_surface_size(next_size.into_size()))
+      println("Requesting surface size is asynchronous")
     }
-    Action::SetTheme(theme) => window.set_theme(theme)
+    Action::SetTheme(theme) => {
+      window.set_theme(theme)
+      let state_index = self.ensure_window_input_state(window_id)
+      let actual_theme = match theme {
+        Some(theme) => theme
+        None =>
+          match window.theme() {
+            Some(theme) => theme
+            None => @core.Theme::Dark
+          }
+      }
+      self.window_input_states[state_index].theme = actual_theme
+    }
     Action::CreateNewTab => {
       let current_id = window.tabbing_identifier()
       let tab_id = if current_id.is_empty() {
@@ -583,7 +662,7 @@ fn Application::perform_window_action(
         @core.OptionAsAlt::None => @core.OptionAsAlt::OnlyLeft
       }
       window.set_option_as_alt(next)
-      println("OptionAsAlt=\{next}")
+      println("Setting option as alt \{next}")
     }
     Action::ToggleAnimatedFillColor => {
       let state_index = self.ensure_window_input_state(window_id)
@@ -620,6 +699,7 @@ fn Application::execute_action(
   window_id : @core.WindowId,
   action : Action,
 ) -> Unit {
+  println("Executing action: \{action}")
   match action {
     Action::CreateNewWindow =>
       self.create_window(event_loop, "Winit window", None) |> ignore
@@ -650,7 +730,7 @@ fn Application::handle_proxy_action(
 ) -> Unit {
   match action {
     Action::Message => {
-      println("Received proxy wake-up")
+      println("User wake up")
       for state in self.window_input_states {
         if state.emit_surface_size {
           let window_id = state.window_id
@@ -733,16 +813,35 @@ fn Application::handle_pointer_binding(
   match (button, self.window_by_id(window_id)) {
     (Some(@core.MouseButton::Left), Some(window)) =>
       if modifiers_match(modifiers, true, false, false, false) {
-        window.drag_window() catch {
-          err => println("Drag window failed: \{err}")
+        let started = try {
+          window.drag_window()
+          true
+        } catch {
+          err => {
+            println("Error starting window drag: \{err}")
+            false
+          }
+        }
+        if started {
+          println("Dragging window Window=\{window.id()}")
         }
       } else if modifiers_match(modifiers, false, true, false, false) {
         match drag_resize_direction(window, position) {
-          Some(direction) =>
-            window.drag_resize_window(direction) catch {
-              err => println("Drag resize failed: \{err}")
+          Some(direction) => {
+            let started = try {
+              window.drag_resize_window(direction)
+              true
+            } catch {
+              err => {
+                println("Error starting window drag-resize: \{err}")
+                false
+              }
             }
-          None => println("Drag resize requires pointer near a window edge")
+            if started {
+              println("Drag-resizing window Window=\{window.id()}")
+            }
+          }
+          None => println("Drag-resize requires cursor to be inside the window")
         }
       }
     (Some(@core.MouseButton::Right), Some(window)) =>
@@ -774,8 +873,7 @@ pub impl @macos.ApplicationHandler for Application with can_create_surfaces(
   self,
   event_loop,
 ) {
-  self.proxy = Some(event_loop.create_proxy())
-  self.load_custom_cursors(event_loop)
+  println("Ready to create surfaces")
   self.dump_monitors(event_loop)
   self.create_window(event_loop, "Winit window", None) |> ignore
   self.print_help()
@@ -798,8 +896,24 @@ pub impl @macos.ApplicationHandler for Application with about_to_wait(
   event_loop,
 ) {
   if self.windows.is_empty() {
+    println("No windows left, exiting...")
     event_loop.exit()
+    return
   }
+  let now = @util.now_millis()
+  if now >= self.next_proxy_wake_ms {
+    match self.proxy {
+      Some(proxy) => {
+        self.proxy_actions.push(Action::Message)
+        proxy.wake_up()
+      }
+      None => ()
+    }
+    self.next_proxy_wake_ms = now + (1000 : Int).to_int64()
+  }
+  let remaining_ms = self.next_proxy_wake_ms - now
+  let wait_ms = if remaining_ms <= 0 { 1 } else { remaining_ms.to_int() }
+  event_loop.set_control_flow(@core.ControlFlow::wait_duration(now, wait_ms))
 }
 
 ///|
@@ -819,21 +933,11 @@ pub impl @macos.ApplicationHandler for Application with window_event(
   window_id,
   event,
 ) {
-  for compat_event in event.into_winit_events() {
-    match compat_event {
-      @core.WinitWindowEvent::DroppedFile(path) =>
-        println("Dropped file in \{window_id}: \{path}")
-      @core.WinitWindowEvent::HoveredFile(path) =>
-        println("Hovering file in \{window_id}: \{path}")
-      @core.WinitWindowEvent::HoveredFileCancelled =>
-        println("File hover cancelled in \{window_id}")
-      _ => ()
-    }
-  }
-
   match event {
-    @core.WindowEvent::CloseRequested =>
+    @core.WindowEvent::CloseRequested => {
+      println("Closing Window=\{window_id}")
       self.execute_action(event_loop, window_id, Action::CloseWindow)
+    }
     @core.WindowEvent::Destroyed => {
       self.remove_window(window_id)
       if self.windows.is_empty() {
@@ -861,10 +965,12 @@ pub impl @macos.ApplicationHandler for Application with window_event(
     @core.WindowEvent::ThemeChanged(theme) => {
       let state_index = self.ensure_window_input_state(window_id)
       self.window_input_states[state_index].theme = theme
-      println("Window \{window_id} theme=\{theme}")
+      println("Theme changed to \{theme}")
     }
-    @core.WindowEvent::ModifiersChanged(modifiers) =>
+    @core.WindowEvent::ModifiersChanged(modifiers) => {
       self.set_window_modifiers(window_id, modifiers.state())
+      println("Modifiers changed to \{modifiers.state()}")
+    }
     @core.WindowEvent::MouseWheel(_device_id, delta, _phase) =>
       match delta {
         @core.MouseScrollDelta::LineDelta(x, y) =>
@@ -872,13 +978,53 @@ pub impl @macos.ApplicationHandler for Application with window_event(
         @core.MouseScrollDelta::PixelDelta(px) =>
           println("Mouse wheel Pixel Delta: (\{px.x()},\{px.y()})")
       }
+    @core.WindowEvent::PointerMoved(_device_id, position, _is_primary, _kind) =>
+      println("Moved pointer to \{position}")
+    @core.WindowEvent::PointerLeft(_device_id, _position, _is_primary, _kind) =>
+      println("Pointer left Window=\{window_id}")
     @core.WindowEvent::PointerButton(
       _device_id,
       state,
       position,
       _is_primary,
       source
-    ) => self.handle_pointer_binding(window_id, state, position, source)
+    ) => {
+      match source {
+        @core.ButtonSource::Mouse(button) =>
+          println("Pointer button \{button} \{state}")
+        _ => println("Pointer button \{source} \{state}")
+      }
+      self.handle_pointer_binding(window_id, state, position, source)
+    }
+    @core.WindowEvent::PinchGesture(_device_id, delta, _phase) => {
+      let state_index = self.ensure_window_input_state(window_id)
+      self.window_input_states[state_index].zoom += delta
+      let zoom = self.window_input_states[state_index].zoom
+      if delta > 0.0 {
+        println("Zoomed in \{delta} (now: \{zoom})")
+      } else {
+        println("Zoomed out \{delta} (now: \{zoom})")
+      }
+    }
+    @core.WindowEvent::RotationGesture(_device_id, delta, _phase) => {
+      let state_index = self.ensure_window_input_state(window_id)
+      self.window_input_states[state_index].rotated += delta
+      let rotated = self.window_input_states[state_index].rotated
+      if delta > 0.0 {
+        println("Rotated counterclockwise \{delta} (now: \{rotated})")
+      } else {
+        println("Rotated clockwise \{delta} (now: \{rotated})")
+      }
+    }
+    @core.WindowEvent::PanGesture(_device_id, delta, phase) => {
+      let state_index = self.ensure_window_input_state(window_id)
+      self.window_input_states[state_index].panned_x += delta.x()
+      self.window_input_states[state_index].panned_y += delta.y()
+      let panned_x = self.window_input_states[state_index].panned_x
+      let panned_y = self.window_input_states[state_index].panned_y
+      println("Panned (\{delta}) (now: (\{panned_x},\{panned_y})), \{phase}")
+    }
+    @core.WindowEvent::DoubleTapGesture(_device_id) => println("Smart zoom")
     @core.WindowEvent::KeyboardInput(_device_id, key_event, is_synthetic) =>
       if !is_synthetic && key_event.state() is @core.ElementState::Pressed {
         match self.action_from_key(window_id, key_event) {
@@ -886,16 +1032,19 @@ pub impl @macos.ApplicationHandler for Application with window_event(
           None => ()
         }
       }
-    @core.WindowEvent::SurfaceResized(_) =>
+    @core.WindowEvent::SurfaceResized(size) =>
       match self.window_by_id(window_id) {
-        Some(window) => window.request_redraw()
+        Some(window) => {
+          println("Surface resized to \{size}")
+          window.request_redraw()
+        }
         None => ()
       }
     @core.WindowEvent::RedrawRequested =>
       match self.window_state(window_id) {
         Some(state) =>
           if state.occluded {
-            ()
+            println("Skipping drawing occluded window=\{window_id}")
           } else {
             match self.window_by_id(window_id) {
               Some(window) => {
@@ -938,5 +1087,11 @@ pub impl @macos.ApplicationHandler for Application with standard_key_binding(
 fn main {
   @util.tracing_init()
   let event_loop = @macos.EventLoop::new()
-  event_loop.run_app(Application::new())
+  let app = Application::new()
+  let window_target = event_loop.window_target()
+  app.proxy = Some(window_target.create_proxy())
+  println("Starting to send user event every second")
+  app.load_custom_cursors(window_target)
+  event_loop.run_app(app)
+  println("Application exited")
 }

@@ -1256,6 +1256,22 @@ pub(all) enum ResizeDirection {
 pub impl Eq for ResizeDirection
 pub impl Show for ResizeDirection
 
+pub struct ScreenEdge {
+  // private fields
+}
+pub fn ScreenEdge::all() -> Self
+pub fn ScreenEdge::bits(Self) -> Int
+pub fn ScreenEdge::bottom() -> Self
+pub fn ScreenEdge::contains(Self, Self) -> Bool
+pub fn ScreenEdge::from_bits(Int) -> Self
+pub fn ScreenEdge::left() -> Self
+pub fn ScreenEdge::none() -> Self
+pub fn ScreenEdge::right() -> Self
+pub fn ScreenEdge::top() -> Self
+pub fn ScreenEdge::union(Self, Self) -> Self
+pub impl Eq for ScreenEdge
+pub impl Show for ScreenEdge
+
 pub(all) enum StartCause {
   Init
   Poll
@@ -1373,6 +1389,7 @@ pub struct WindowAttributes {
 }
 pub fn WindowAttributes::active(Self) -> Bool
 pub fn WindowAttributes::blur(Self) -> Bool
+pub fn WindowAttributes::clip_children(Self) -> Bool
 pub fn WindowAttributes::content_protected(Self) -> Bool
 pub fn WindowAttributes::cursor(Self) -> Cursor
 pub fn WindowAttributes::cursor_hittest(Self) -> Bool
@@ -1389,11 +1406,13 @@ pub fn WindowAttributes::max_surface_size(Self) -> @dpi.Size?
 pub fn WindowAttributes::maximized(Self) -> Bool
 pub fn WindowAttributes::min_inner_size(Self) -> @dpi.Size?
 pub fn WindowAttributes::min_surface_size(Self) -> @dpi.Size?
+pub fn WindowAttributes::name(Self) -> String?
 pub fn WindowAttributes::parent_window(Self) -> ParentWindow?
 pub fn WindowAttributes::platform_attributes(Self) -> PlatformWindowAttributes
 pub fn WindowAttributes::position(Self) -> @dpi.Position?
 pub fn WindowAttributes::resizable(Self) -> Bool
 pub fn WindowAttributes::resize_increments(Self) -> @dpi.Size?
+pub fn WindowAttributes::skip_taskbar(Self) -> Bool
 pub fn WindowAttributes::surface_resize_increments(Self) -> @dpi.Size?
 pub fn WindowAttributes::surface_size(Self) -> @dpi.Size?
 pub fn WindowAttributes::theme(Self) -> Theme?
@@ -1404,6 +1423,7 @@ pub fn WindowAttributes::window_icon(Self) -> Icon?
 pub fn WindowAttributes::window_level(Self) -> WindowLevel
 pub fn WindowAttributes::with_active(Self, Bool) -> Self
 pub fn WindowAttributes::with_blur(Self, Bool) -> Self
+pub fn WindowAttributes::with_clip_children(Self, Bool) -> Self
 pub fn WindowAttributes::with_content_protected(Self, Bool) -> Self
 pub fn WindowAttributes::with_cursor(Self, Cursor) -> Self
 pub fn WindowAttributes::with_cursor_hittest(Self, Bool) -> Self
@@ -1420,11 +1440,13 @@ pub fn WindowAttributes::with_max_surface_size(Self, @dpi.Size) -> Self
 pub fn WindowAttributes::with_maximized(Self, Bool) -> Self
 pub fn WindowAttributes::with_min_inner_size(Self, @dpi.Size) -> Self
 pub fn WindowAttributes::with_min_surface_size(Self, @dpi.Size) -> Self
+pub fn WindowAttributes::with_name(Self, String) -> Self
 pub fn WindowAttributes::with_parent_window(Self, ParentWindow?) -> Self
 pub fn WindowAttributes::with_platform_attributes(Self, PlatformWindowAttributes) -> Self
 pub fn WindowAttributes::with_position(Self, @dpi.Position) -> Self
 pub fn WindowAttributes::with_resizable(Self, Bool) -> Self
 pub fn WindowAttributes::with_resize_increments(Self, @dpi.Size) -> Self
+pub fn WindowAttributes::with_skip_taskbar(Self, Bool) -> Self
 pub fn WindowAttributes::with_surface_resize_increments(Self, @dpi.Size) -> Self
 pub fn WindowAttributes::with_surface_size(Self, @dpi.Size) -> Self
 pub fn WindowAttributes::with_theme(Self, Theme?) -> Self

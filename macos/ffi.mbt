@@ -82,41 +82,6 @@ fn cg_display_scale_factor(display_id : UInt64) -> Double {
 }
 
 ///|
-fn native_install_window_event_callback(
-  call_closure : FuncRef[
-    ((Int, Int, Int, Int, Int, Double) -> Unit, Int, Int, Int, Int, Int, Double) -> Unit,
-  ],
-  callback : (Int, Int, Int, Int, Int, Double) -> Unit,
-) -> Unit {
-  appkit_install_window_event_callback(call_closure, callback)
-}
-
-///|
-fn native_notification_center_add_observer(
-  call_closure : FuncRef[((Int) -> Unit, Int) -> Unit],
-  callback : (Int) -> Unit,
-  notification_kind : Int,
-  callback_kind : Int,
-) -> UInt64 {
-  appkit_notification_center_add_observer(
-    call_closure, callback, notification_kind, callback_kind,
-  )
-}
-
-///|
-fn native_main_run_loop_add_observer(
-  call_closure : FuncRef[((Int) -> Unit, Int) -> Unit],
-  callback : (Int) -> Unit,
-  activity_kind : Int,
-  callback_kind : Int,
-  order : Int,
-) -> UInt64 {
-  appkit_main_run_loop_add_observer(
-    call_closure, callback, activity_kind, callback_kind, order,
-  )
-}
-
-///|
 fn native_main_run_loop_remove_observer(observer_handle : UInt64) -> Unit {
   if observer_handle != (0 : Int).to_uint64() {
     appkit_main_run_loop_remove_observer(observer_handle)
@@ -128,146 +93,6 @@ fn native_notification_center_remove_observer(observer_handle : UInt64) -> Unit 
   if observer_handle != (0 : Int).to_uint64() {
     appkit_notification_center_remove_observer(observer_handle)
   }
-}
-
-///|
-fn native_install_input_event_callback(
-  call_closure : FuncRef[((UInt64) -> Unit, UInt64) -> Unit],
-  callback : (UInt64) -> Unit,
-) -> Unit {
-  appkit_install_input_event_callback(call_closure, callback)
-}
-
-///|
-fn native_input_event_payload_raw_id(payload_handle : UInt64) -> Int {
-  appkit_input_event_payload_raw_id(payload_handle)
-}
-
-///|
-fn native_input_event_payload_kind(payload_handle : UInt64) -> Int {
-  appkit_input_event_payload_kind(payload_handle)
-}
-
-///|
-fn native_input_event_payload_x(payload_handle : UInt64) -> Double {
-  appkit_input_event_payload_x(payload_handle)
-}
-
-///|
-fn native_input_event_payload_y(payload_handle : UInt64) -> Double {
-  appkit_input_event_payload_y(payload_handle)
-}
-
-///|
-fn native_input_event_payload_state(payload_handle : UInt64) -> Int {
-  appkit_input_event_payload_state(payload_handle)
-}
-
-///|
-fn native_input_event_payload_button(payload_handle : UInt64) -> Int {
-  appkit_input_event_payload_button(payload_handle)
-}
-
-///|
-fn native_input_event_payload_modifiers(payload_handle : UInt64) -> Int {
-  appkit_input_event_payload_modifiers(payload_handle)
-}
-
-///|
-fn native_input_event_payload_scancode(payload_handle : UInt64) -> Int {
-  appkit_input_event_payload_scancode(payload_handle)
-}
-
-///|
-fn native_input_event_payload_repeat(payload_handle : UInt64) -> Int {
-  appkit_input_event_payload_repeat(payload_handle)
-}
-
-///|
-fn native_input_event_payload_pointer_source(payload_handle : UInt64) -> Int {
-  appkit_input_event_payload_pointer_source(payload_handle)
-}
-
-///|
-fn native_input_event_payload_pointer_kind(payload_handle : UInt64) -> Int {
-  appkit_input_event_payload_pointer_kind(payload_handle)
-}
-
-///|
-fn native_input_event_payload_scroll_delta_kind(payload_handle : UInt64) -> Int {
-  appkit_input_event_payload_scroll_delta_kind(payload_handle)
-}
-
-///|
-fn native_input_event_payload_delta_x(payload_handle : UInt64) -> Double {
-  appkit_input_event_payload_delta_x(payload_handle)
-}
-
-///|
-fn native_input_event_payload_delta_y(payload_handle : UInt64) -> Double {
-  appkit_input_event_payload_delta_y(payload_handle)
-}
-
-///|
-fn native_input_event_payload_phase(payload_handle : UInt64) -> Int {
-  appkit_input_event_payload_phase(payload_handle)
-}
-
-///|
-fn native_input_event_payload_text_with_all_modifiers(
-  payload_handle : UInt64,
-) -> Bytes {
-  appkit_input_event_payload_text_with_all_modifiers(payload_handle)
-}
-
-///|
-fn native_input_event_payload_text_ignoring_modifiers(
-  payload_handle : UInt64,
-) -> Bytes {
-  appkit_input_event_payload_text_ignoring_modifiers(payload_handle)
-}
-
-///|
-fn native_input_event_payload_text_without_modifiers(
-  payload_handle : UInt64,
-) -> Bytes {
-  appkit_input_event_payload_text_without_modifiers(payload_handle)
-}
-
-///|
-fn native_install_text_input_event_callback(
-  call_closure : FuncRef[
-    (
-      (Int, Int, Double, Double, Int, Bytes, Int, Int, Bytes) -> Unit,
-      Int,
-      Int,
-      Double,
-      Double,
-      Int,
-      Bytes,
-      Int,
-      Int,
-      Bytes,
-    ) -> Unit,
-  ],
-  callback : (Int, Int, Double, Double, Int, Bytes, Int, Int, Bytes) -> Unit,
-) -> Unit {
-  appkit_install_text_input_event_callback(call_closure, callback)
-}
-
-///|
-fn native_install_device_event_callback(
-  call_closure : FuncRef[
-    ((Int, Int, Double, Double) -> Unit, Int, Int, Double, Double) -> Unit,
-  ],
-  callback : (Int, Int, Double, Double) -> Unit,
-) -> Unit {
-  appkit_install_device_event_callback(call_closure, callback)
-}
-
-///|
-fn native_override_send_event() -> Unit {
-  appkit_override_send_event()
 }
 
 ///|
@@ -353,6 +178,24 @@ fn native_window_is_decorated(handle : UInt64) -> Bool {
 ///|
 fn native_window_set_title(handle : UInt64, title : String) -> Unit {
   appkit_window_set_title(handle, @utf8.encode(title[:], bom=false))
+}
+
+///|
+fn native_window_set_name(handle : UInt64, name : String) -> Unit {
+  appkit_window_set_name(handle, @utf8.encode(name[:], bom=false))
+}
+
+///|
+fn native_window_set_skip_taskbar(handle : UInt64, skip_taskbar : Bool) -> Unit {
+  appkit_window_set_skip_taskbar(handle, if skip_taskbar { 1 } else { 0 })
+}
+
+///|
+fn native_window_set_clip_children(
+  handle : UInt64,
+  clip_children : Bool,
+) -> Unit {
+  appkit_window_set_clip_children(handle, if clip_children { 1 } else { 0 })
 }
 
 ///|
@@ -971,97 +814,6 @@ fn native_window_theme(handle : UInt64) -> Int {
 }
 
 ///|
-fn native_event_loop_wake_up_appkit() -> Unit {
-  appkit_event_loop_wake_up()
-}
-
-///|
-fn native_application_presentation_options() -> UInt64 {
-  appkit_application_presentation_options()
-}
-
-///|
-fn native_set_application_presentation_options(options : UInt64) -> Unit {
-  appkit_set_application_presentation_options(options)
-}
-
-///|
-fn native_application_hide() -> Unit {
-  appkit_application_hide()
-}
-
-///|
-fn native_application_hide_other_applications() -> Unit {
-  appkit_application_hide_other_applications()
-}
-
-///|
-fn native_application_set_allows_automatic_window_tabbing(
-  enabled : Bool,
-) -> Unit {
-  appkit_application_set_allows_automatic_window_tabbing(
-    if enabled {
-      1
-    } else {
-      0
-    },
-  )
-}
-
-///|
-fn native_application_allows_automatic_window_tabbing() -> Bool {
-  appkit_application_allows_automatic_window_tabbing() != 0
-}
-
-///|
-fn native_application_is_bundled() -> Bool {
-  appkit_application_is_bundled() != 0
-}
-
-///|
-fn native_application_theme() -> Int {
-  appkit_application_theme()
-}
-
-///|
-fn native_application_set_activation_policy(activation_policy : Int) -> Unit {
-  appkit_application_set_activation_policy(activation_policy)
-}
-
-///|
-fn native_application_set_activate_ignoring_other_apps(
-  activate_ignoring_other_apps : Bool,
-) -> Unit {
-  appkit_application_set_activate_ignoring_other_apps(
-    if activate_ignoring_other_apps {
-      1
-    } else {
-      0
-    },
-  )
-}
-
-///|
-fn native_application_initialize_default_menu(enabled : Bool) -> Unit {
-  appkit_application_initialize_default_menu(if enabled { 1 } else { 0 })
-}
-
-///|
-fn native_application_run() -> Unit {
-  appkit_application_run()
-}
-
-///|
-fn native_application_stop_immediately() -> Unit {
-  appkit_application_stop_immediately()
-}
-
-///|
-fn native_application_close_all_windows() -> Unit {
-  appkit_application_close_all_windows()
-}
-
-///|
 fn native_find_display_mode_handle(
   monitor_id : UInt64,
   width : Int,
@@ -1179,11 +931,6 @@ fn native_release_display_capture(monitor_id : UInt64) -> Bool {
 }
 
 ///|
-fn native_monitor_ns_screen(monitor_id : UInt64) -> UInt64 {
-  appkit_monitor_ns_screen(monitor_id)
-}
-
-///|
 extern "C" fn native_cg_display_create_uuid_from_display_id(
   display : UInt,
 ) -> UInt64 = "CGDisplayCreateUUIDFromDisplayID"
@@ -1230,7 +977,7 @@ extern "C" fn native_cg_display_scale_factor(display : UInt) -> Double = "mbw_cg
 ///|
 #borrow(call_closure)
 #owned(callback)
-extern "C" fn appkit_install_window_event_callback(
+extern "C" fn native_install_window_event_callback(
   call_closure : FuncRef[
     ((Int, Int, Int, Int, Int, Double) -> Unit, Int, Int, Int, Int, Int, Double) -> Unit,
   ],
@@ -1240,7 +987,7 @@ extern "C" fn appkit_install_window_event_callback(
 ///|
 #borrow(call_closure)
 #owned(callback)
-extern "C" fn appkit_notification_center_add_observer(
+extern "C" fn native_notification_center_add_observer(
   call_closure : FuncRef[((Int) -> Unit, Int) -> Unit],
   callback : (Int) -> Unit,
   notification_kind : Int,
@@ -1255,7 +1002,7 @@ extern "C" fn appkit_notification_center_remove_observer(
 ///|
 #borrow(call_closure)
 #owned(callback)
-extern "C" fn appkit_main_run_loop_add_observer(
+extern "C" fn native_main_run_loop_add_observer(
   call_closure : FuncRef[((Int) -> Unit, Int) -> Unit],
   callback : (Int) -> Unit,
   activity_kind : Int,
@@ -1271,89 +1018,89 @@ extern "C" fn appkit_main_run_loop_remove_observer(
 ///|
 #borrow(call_closure)
 #owned(callback)
-extern "C" fn appkit_install_input_event_callback(
+extern "C" fn native_install_input_event_callback(
   call_closure : FuncRef[((UInt64) -> Unit, UInt64) -> Unit],
   callback : (UInt64) -> Unit,
 ) -> Unit = "mbw_install_input_event_callback"
 
 ///|
-extern "C" fn appkit_input_event_payload_raw_id(payload_handle : UInt64) -> Int = "mbw_input_event_payload_raw_id"
+extern "C" fn native_input_event_payload_raw_id(payload_handle : UInt64) -> Int = "mbw_input_event_payload_raw_id"
 
 ///|
-extern "C" fn appkit_input_event_payload_kind(payload_handle : UInt64) -> Int = "mbw_input_event_payload_kind"
+extern "C" fn native_input_event_payload_kind(payload_handle : UInt64) -> Int = "mbw_input_event_payload_kind"
 
 ///|
-extern "C" fn appkit_input_event_payload_x(payload_handle : UInt64) -> Double = "mbw_input_event_payload_x"
+extern "C" fn native_input_event_payload_x(payload_handle : UInt64) -> Double = "mbw_input_event_payload_x"
 
 ///|
-extern "C" fn appkit_input_event_payload_y(payload_handle : UInt64) -> Double = "mbw_input_event_payload_y"
+extern "C" fn native_input_event_payload_y(payload_handle : UInt64) -> Double = "mbw_input_event_payload_y"
 
 ///|
-extern "C" fn appkit_input_event_payload_state(payload_handle : UInt64) -> Int = "mbw_input_event_payload_state"
+extern "C" fn native_input_event_payload_state(payload_handle : UInt64) -> Int = "mbw_input_event_payload_state"
 
 ///|
-extern "C" fn appkit_input_event_payload_button(payload_handle : UInt64) -> Int = "mbw_input_event_payload_button"
+extern "C" fn native_input_event_payload_button(payload_handle : UInt64) -> Int = "mbw_input_event_payload_button"
 
 ///|
-extern "C" fn appkit_input_event_payload_modifiers(
+extern "C" fn native_input_event_payload_modifiers(
   payload_handle : UInt64,
 ) -> Int = "mbw_input_event_payload_modifiers"
 
 ///|
-extern "C" fn appkit_input_event_payload_scancode(
+extern "C" fn native_input_event_payload_scancode(
   payload_handle : UInt64,
 ) -> Int = "mbw_input_event_payload_scancode"
 
 ///|
-extern "C" fn appkit_input_event_payload_repeat(payload_handle : UInt64) -> Int = "mbw_input_event_payload_repeat"
+extern "C" fn native_input_event_payload_repeat(payload_handle : UInt64) -> Int = "mbw_input_event_payload_repeat"
 
 ///|
-extern "C" fn appkit_input_event_payload_pointer_source(
+extern "C" fn native_input_event_payload_pointer_source(
   payload_handle : UInt64,
 ) -> Int = "mbw_input_event_payload_pointer_source"
 
 ///|
-extern "C" fn appkit_input_event_payload_pointer_kind(
+extern "C" fn native_input_event_payload_pointer_kind(
   payload_handle : UInt64,
 ) -> Int = "mbw_input_event_payload_pointer_kind"
 
 ///|
-extern "C" fn appkit_input_event_payload_scroll_delta_kind(
+extern "C" fn native_input_event_payload_scroll_delta_kind(
   payload_handle : UInt64,
 ) -> Int = "mbw_input_event_payload_scroll_delta_kind"
 
 ///|
-extern "C" fn appkit_input_event_payload_delta_x(
+extern "C" fn native_input_event_payload_delta_x(
   payload_handle : UInt64,
 ) -> Double = "mbw_input_event_payload_delta_x"
 
 ///|
-extern "C" fn appkit_input_event_payload_delta_y(
+extern "C" fn native_input_event_payload_delta_y(
   payload_handle : UInt64,
 ) -> Double = "mbw_input_event_payload_delta_y"
 
 ///|
-extern "C" fn appkit_input_event_payload_phase(payload_handle : UInt64) -> Int = "mbw_input_event_payload_phase"
+extern "C" fn native_input_event_payload_phase(payload_handle : UInt64) -> Int = "mbw_input_event_payload_phase"
 
 ///|
-extern "C" fn appkit_input_event_payload_text_with_all_modifiers(
+extern "C" fn native_input_event_payload_text_with_all_modifiers(
   payload_handle : UInt64,
 ) -> Bytes = "mbw_input_event_payload_text_with_all_modifiers"
 
 ///|
-extern "C" fn appkit_input_event_payload_text_ignoring_modifiers(
+extern "C" fn native_input_event_payload_text_ignoring_modifiers(
   payload_handle : UInt64,
 ) -> Bytes = "mbw_input_event_payload_text_ignoring_modifiers"
 
 ///|
-extern "C" fn appkit_input_event_payload_text_without_modifiers(
+extern "C" fn native_input_event_payload_text_without_modifiers(
   payload_handle : UInt64,
 ) -> Bytes = "mbw_input_event_payload_text_without_modifiers"
 
 ///|
 #borrow(call_closure)
 #owned(callback)
-extern "C" fn appkit_install_text_input_event_callback(
+extern "C" fn native_install_text_input_event_callback(
   call_closure : FuncRef[
     (
       (Int, Int, Double, Double, Int, Bytes, Int, Int, Bytes) -> Unit,
@@ -1374,7 +1121,7 @@ extern "C" fn appkit_install_text_input_event_callback(
 ///|
 #borrow(call_closure)
 #owned(callback)
-extern "C" fn appkit_install_device_event_callback(
+extern "C" fn native_install_device_event_callback(
   call_closure : FuncRef[
     ((Int, Int, Double, Double) -> Unit, Int, Int, Double, Double) -> Unit,
   ],
@@ -1382,7 +1129,7 @@ extern "C" fn appkit_install_device_event_callback(
 ) -> Unit = "mbw_install_device_event_callback"
 
 ///|
-extern "C" fn appkit_override_send_event() -> Unit = "mbw_override_send_event"
+extern "C" fn native_override_send_event() -> Unit = "mbw_override_send_event"
 
 ///|
 #borrow(title)
@@ -1425,6 +1172,22 @@ extern "C" fn appkit_window_is_decorated(handle : UInt64) -> Int = "mbw_window_i
 ///|
 #borrow(title)
 extern "C" fn appkit_window_set_title(handle : UInt64, title : Bytes) -> Unit = "mbw_window_set_title"
+
+///|
+#borrow(name)
+extern "C" fn appkit_window_set_name(handle : UInt64, name : Bytes) -> Unit = "mbw_window_set_name"
+
+///|
+extern "C" fn appkit_window_set_skip_taskbar(
+  handle : UInt64,
+  skip_taskbar : Int,
+) -> Unit = "mbw_window_set_skip_taskbar"
+
+///|
+extern "C" fn appkit_window_set_clip_children(
+  handle : UInt64,
+  clip_children : Int,
+) -> Unit = "mbw_window_set_clip_children"
 
 ///|
 extern "C" fn appkit_window_title_utf8(handle : UInt64) -> Bytes = "mbw_window_title_utf8"
@@ -1844,57 +1607,59 @@ extern "C" fn appkit_window_current_monitor_id(handle : UInt64) -> UInt64 = "mbw
 extern "C" fn appkit_window_theme(handle : UInt64) -> Int = "mbw_window_theme"
 
 ///|
-extern "C" fn appkit_event_loop_wake_up() -> Unit = "mbw_event_loop_wake_up"
+extern "C" fn native_event_loop_wake_up_appkit() -> Unit = "mbw_event_loop_wake_up"
 
 ///|
-extern "C" fn appkit_application_presentation_options() -> UInt64 = "mbw_application_presentation_options"
+extern "C" fn native_application_presentation_options() -> UInt64 = "mbw_application_presentation_options"
 
 ///|
-extern "C" fn appkit_set_application_presentation_options(
+extern "C" fn native_set_application_presentation_options(
   options : UInt64,
 ) -> Unit = "mbw_set_application_presentation_options"
 
 ///|
-extern "C" fn appkit_application_hide() -> Unit = "mbw_application_hide"
+extern "C" fn native_application_hide() -> Unit = "mbw_application_hide"
 
 ///|
-extern "C" fn appkit_application_hide_other_applications() -> Unit = "mbw_application_hide_other_applications"
+extern "C" fn native_application_hide_other_applications() -> Unit = "mbw_application_hide_other_applications"
 
 ///|
-extern "C" fn appkit_application_set_allows_automatic_window_tabbing(
-  enabled : Int,
+extern "C" fn native_application_set_allows_automatic_window_tabbing(
+  enabled : Bool,
 ) -> Unit = "mbw_application_set_allows_automatic_window_tabbing"
 
 ///|
-extern "C" fn appkit_application_allows_automatic_window_tabbing() -> Int = "mbw_application_allows_automatic_window_tabbing"
+extern "C" fn native_application_allows_automatic_window_tabbing() -> Bool = "mbw_application_allows_automatic_window_tabbing"
 
 ///|
-extern "C" fn appkit_application_is_bundled() -> Int = "mbw_application_is_bundled"
+extern "C" fn native_application_is_bundled() -> Bool = "mbw_application_is_bundled"
 
 ///|
-extern "C" fn appkit_application_theme() -> Int = "mbw_application_theme"
+extern "C" fn native_application_theme() -> Int = "mbw_application_theme"
 
 ///|
-extern "C" fn appkit_application_set_activation_policy(
+extern "C" fn native_application_set_activation_policy(
   activation_policy : Int,
 ) -> Unit = "mbw_application_set_activation_policy"
 
 ///|
-extern "C" fn appkit_application_set_activate_ignoring_other_apps(
-  activate_ignoring_other_apps : Int,
+extern "C" fn native_application_set_activate_ignoring_other_apps(
+  activate_ignoring_other_apps : Bool,
 ) -> Unit = "mbw_application_set_activate_ignoring_other_apps"
 
 ///|
-extern "C" fn appkit_application_initialize_default_menu(enabled : Int) -> Unit = "mbw_application_initialize_default_menu"
+extern "C" fn native_application_initialize_default_menu(
+  enabled : Bool,
+) -> Unit = "mbw_application_initialize_default_menu"
 
 ///|
-extern "C" fn appkit_application_run() -> Unit = "mbw_application_run"
+extern "C" fn native_application_run() -> Unit = "mbw_application_run"
 
 ///|
-extern "C" fn appkit_application_stop_immediately() -> Unit = "mbw_application_stop_immediately"
+extern "C" fn native_application_stop_immediately() -> Unit = "mbw_application_stop_immediately"
 
 ///|
-extern "C" fn appkit_application_close_all_windows() -> Unit = "mbw_application_close_all_windows"
+extern "C" fn native_application_close_all_windows() -> Unit = "mbw_application_close_all_windows"
 
 ///|
 extern "C" fn native_monitor_find_display_mode_handle(
@@ -1958,4 +1723,4 @@ extern "C" fn native_monitor_set_display_mode_handle(
 extern "C" fn native_monitor_release_display_capture(monitor_id : UInt) -> Int = "mbw_release_display_capture"
 
 ///|
-extern "C" fn appkit_monitor_ns_screen(monitor_id : UInt64) -> UInt64 = "mbw_monitor_ns_screen"
+extern "C" fn native_monitor_ns_screen(monitor_id : UInt64) -> UInt64 = "mbw_monitor_ns_screen"

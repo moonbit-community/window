@@ -222,9 +222,7 @@ fn app_state_maybe_dispatch_callback(callback : DeferredCallback) -> Unit {
     app_state_defer_callback(callback)
     return ()
   }
-  if app_state_dispatch_with_registered_callback(callback) {
-    app_state_dispatch_registered_deferred_callbacks()
-  } else {
+  if app_state_dispatch_with_registered_callback(callback) == false {
     app_state_defer_callback(callback)
   }
 }
@@ -522,6 +520,10 @@ fn app_state_on_before_waiting() -> Unit {
   if app_state_handler_ready() == false {
     return ()
   }
+  app_state_dispatch_registered_deferred_callbacks()
+  if app_state_handler_ready() == false {
+    return ()
+  }
   for raw_id in app_state_take_all_redraws() {
     app_state_maybe_dispatch_callback(
       DeferredCallback::WindowEvent(
@@ -545,6 +547,10 @@ fn app_state_on_before_waiting() -> Unit {
 
 ///|
 fn app_state_on_after_waiting() -> Unit {
+  if app_state_handler_ready() == false {
+    return ()
+  }
+  app_state_dispatch_registered_deferred_callbacks()
   if app_state_handler_ready() == false {
     return ()
   }
@@ -1055,54 +1061,16 @@ fn[A : ApplicationHandler] app_state_dispatch_deferred_callbacks(
 }
 
 ///|
-fn[A : ApplicationHandler] app_state_maybe_queue_with_handler(
-  app : A,
-  event_loop : ActiveEventLoop,
-  callback : DeferredCallback,
-) -> Unit {
-  if app_state_is_running() == false {
-    return ()
-  }
-  if app_state_runtime.val.event_handler_in_use {
-    app_state_runtime.val.deferred_callbacks.push(callback)
-    native_event_loop_wake_up()
-    return ()
-  }
-  app_state_with_handler(app, event_loop, callback)
-}
-
-///|
-fn[A : ApplicationHandler] app_state_dispatch_new_events(
-  app : A,
-  event_loop : ActiveEventLoop,
-  cause : @core.StartCause,
-) -> Unit {
-  app_state_maybe_queue_with_handler(
-    app,
-    event_loop,
-    DeferredCallback::NewEvents(cause),
-  )
-}
-
-///|
-fn[A : ApplicationHandler] app_state_dispatch_can_create_surfaces(
-  app : A,
-  event_loop : ActiveEventLoop,
-) -> Unit {
-  app_state_maybe_queue_with_handler(
-    app,
-    event_loop,
-    DeferredCallback::CanCreateSurfaces,
-  )
-}
-
-///|
 fn[A : ApplicationHandler] app_state_dispatch_init_events(
   app : A,
   event_loop : ActiveEventLoop,
 ) -> Unit {
-  app_state_dispatch_new_events(app, event_loop, @core.StartCause::Init)
-  app_state_dispatch_can_create_surfaces(app, event_loop)
+  app_state_with_handler(
+    app,
+    event_loop,
+    DeferredCallback::NewEvents(@core.StartCause::Init),
+  )
+  app_state_with_handler(app, event_loop, DeferredCallback::CanCreateSurfaces)
 }
 
 ///|

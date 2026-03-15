@@ -89,3 +89,20 @@ test "ime_initial_request_caps_match" {
   assert_true(is_cursor_bad_position("short", 110, 0))
   assert_true(is_cursor_bad_position("граница", 1, 0))
 }
+
+///|
+test "window_attributes_name_skip_taskbar_clip_children" {
+  let attrs = WindowAttributes::default()
+  assert_eq(attrs.name(), None)
+  assert_false(attrs.skip_taskbar())
+  assert_true(attrs.clip_children())
+
+  let attrs = attrs
+    .with_name("editor-main")
+    .with_skip_taskbar(true)
+    .with_clip_children(false)
+
+  assert_eq(attrs.name(), Some("editor-main"))
+  assert_true(attrs.skip_taskbar())
+  assert_false(attrs.clip_children())
+}

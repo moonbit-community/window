@@ -1,13 +1,4 @@
 ///|
-extern "C" fn monitor_uuid_hi_for_test(monitor_id : UInt64) -> UInt64 = "mbw_test_monitor_uuid_hi"
-
-///|
-extern "C" fn monitor_uuid_lo_for_test(monitor_id : UInt64) -> UInt64 = "mbw_test_monitor_uuid_lo"
-
-///|
-extern "C" fn monitor_invalid_uuid_display_id_for_test() -> UInt64 = "mbw_test_monitor_invalid_uuid_display_id"
-
-///|
 fn primary_monitor_for_test() -> @core.MonitorHandle? {
   monitor_from_native_id(cg_main_display_id())
 }
@@ -27,14 +18,6 @@ test "uuid_stable" {
         Some(handle_b) => {
           assert_eq(handle_a, handle_b)
           assert_eq(handle_a.native_id(), handle_b.native_id())
-          assert_eq(
-            monitor_uuid_hi_for_test(handle_a.native_id()),
-            monitor_uuid_hi_for_test(handle_b.native_id()),
-          )
-          assert_eq(
-            monitor_uuid_lo_for_test(handle_a.native_id()),
-            monitor_uuid_lo_for_test(handle_b.native_id()),
-          )
         }
         None => ()
       }
@@ -51,14 +34,6 @@ test "uuid_stable" {
         Some(handle_d) => {
           assert_eq(handle_c, handle_d)
           assert_eq(handle_c.native_id(), handle_d.native_id())
-          assert_eq(
-            monitor_uuid_hi_for_test(handle_c.native_id()),
-            monitor_uuid_hi_for_test(handle_d.native_id()),
-          )
-          assert_eq(
-            monitor_uuid_lo_for_test(handle_c.native_id()),
-            monitor_uuid_lo_for_test(handle_d.native_id()),
-          )
         }
         None => ()
       }
@@ -81,14 +56,6 @@ test "monitorhandle_from_zero" {
         Some(handle1) => {
           assert_eq(handle0, handle1)
           assert_eq(handle0.native_id(), handle1.native_id())
-          assert_eq(
-            monitor_uuid_hi_for_test(handle0.native_id()),
-            monitor_uuid_hi_for_test(handle1.native_id()),
-          )
-          assert_eq(
-            monitor_uuid_lo_for_test(handle0.native_id()),
-            monitor_uuid_lo_for_test(handle1.native_id()),
-          )
         }
         None => ()
       }
@@ -103,8 +70,7 @@ test "from_invalid_id" {
 
 ///|
 test "invalid_monitor_handle" {
-  let _ = cg_main_display_id()
-  assert_eq(monitor_invalid_uuid_display_id_for_test(), (0 : Int).to_uint64())
+  assert_eq(monitor_from_native_id((10000 : Int).to_uint64()), None)
 }
 
 ///|

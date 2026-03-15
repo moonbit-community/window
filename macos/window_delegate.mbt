@@ -116,6 +116,30 @@ fn set_title(window_handle : UInt64, title : String) -> Unit {
 }
 
 ///|
+fn set_window_name(window_handle : UInt64, name : String) -> Unit {
+  if registered_native_handle(window_handle) != (0 : Int).to_uint64() {
+    native_window_set_name(window_handle, name)
+  }
+}
+
+///|
+fn set_window_skip_taskbar(window_handle : UInt64, skip_taskbar : Bool) -> Unit {
+  if registered_native_handle(window_handle) != (0 : Int).to_uint64() {
+    native_window_set_skip_taskbar(window_handle, skip_taskbar)
+  }
+}
+
+///|
+fn set_window_clip_children(
+  window_handle : UInt64,
+  clip_children : Bool,
+) -> Unit {
+  if registered_native_handle(window_handle) != (0 : Int).to_uint64() {
+    native_window_set_clip_children(window_handle, clip_children)
+  }
+}
+
+///|
 fn focus_window(window_handle : UInt64) -> Unit {
   if registered_native_handle(window_handle) != (0 : Int).to_uint64() &&
     native_window_is_visible(window_handle) {
@@ -1149,6 +1173,12 @@ fn new_window(
     None => ()
   }
   app_state_register_window_handle(raw_id, raw_window_handle)
+  match attributes.name() {
+    Some(name) => set_window_name(raw_window_handle, name)
+    None => ()
+  }
+  set_window_skip_taskbar(raw_window_handle, attributes.skip_taskbar())
+  set_window_clip_children(raw_window_handle, attributes.clip_children())
   set_window_borderless_game(
     raw_window_handle,
     attributes.platform_attributes().borderless_game(),
@@ -1325,6 +1355,9 @@ fn new_window(
     fullscreen_state: initial_fullscreen_state(attributes),
     ime_capabilities_state: None,
     ime_surrounding_text_state: None,
+    prefers_home_indicator_hidden_state: false,
+    prefers_status_bar_hidden_state: false,
+    preferred_screen_edges_deferring_system_gestures_state: @core.ScreenEdge::none(),
     blur_state: attributes.blur(),
     disallow_hidpi_state: attributes.platform_attributes().disallow_hidpi(),
     borderless_game_state: attributes.platform_attributes().borderless_game(),
@@ -1741,6 +1774,33 @@ pub fn Window::set_option_as_alt(
 ///|
 pub fn Window::option_as_alt(self : Window) -> @core.OptionAsAlt {
   window_option_as_alt(self.raw_window_handle)
+}
+
+///|
+pub fn Window::set_prefers_home_indicator_hidden(
+  self : Window,
+  hidden : Bool,
+) -> Unit {
+  // AppKit has no home-indicator API; keep state for cross-platform parity.
+  self.prefers_home_indicator_hidden_state = hidden
+}
+
+///|
+pub fn Window::set_prefers_status_bar_hidden(
+  self : Window,
+  hidden : Bool,
+) -> Unit {
+  // AppKit has no status-bar API; keep state for cross-platform parity.
+  self.prefers_status_bar_hidden_state = hidden
+}
+
+///|
+pub fn Window::set_preferred_screen_edges_deferring_system_gestures(
+  self : Window,
+  edges : @core.ScreenEdge,
+) -> Unit {
+  // AppKit has no system-gesture deferral API; keep state for parity.
+  self.preferred_screen_edges_deferring_system_gestures_state = edges
 }
 
 ///|

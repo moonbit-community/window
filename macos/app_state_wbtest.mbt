@@ -406,3 +406,68 @@ test "did_finish_launching_updates_state_without_dispatch_handler" {
   assert_false(app_state_is_running())
   assert_eq(app_state_runtime.val.deferred_callbacks.length(), 0)
 }
+
+///|
+test "nested_proxy_wake_is_deferred_until_explicit_drain" {
+  reset_app_state_runtime_for_test()
+  app_state_set_running(true)
+  let seen : Ref[Array[String]] = Ref::new([])
+  app_state_runtime.val.dispatch_callback = Some(fn(callback) {
+    seen.val.push(callback_name_for_test(callback))
+    match callback {
+      DeferredCallback::AboutToWait => app_state_queue_proxy_wake_up()
+      _ => ()
+    }
+  })
+
+  app_state_maybe_dispatch_callback(DeferredCallback::AboutToWait)
+
+  assert_eq(seen.val, ["about_to_wait"])
+  assert_eq(callback_names_for_test(app_state_runtime.val.deferred_callbacks), [
+    "proxy_wake_up",
+  ])
+
+  app_state_dispatch_registered_deferred_callbacks()
+
+  assert_eq(seen.val, ["about_to_wait", "proxy_wake_up"])
+  assert_eq(app_state_runtime.val.deferred_callbacks.length(), 0)
+}
+
+///|
+test "nested_redraw_is_dropped_while_handler_is_in_use" {
+  reset_app_state_runtime_for_test()
+  app_state_set_running(true)
+  let seen : Ref[Array[String]] = Ref::new([])
+  app_state_runtime.val.dispatch_callback = Some(fn(callback) {
+    seen.val.push(callback_name_for_test(callback))
+    match callback {
+      DeferredCallback::AboutToWait =>
+        app_state_queue_window_callback(
+          @core.WindowId::from_raw(1),
+          @core.WindowEvent::RedrawRequested,
+        )
+      _ => ()
+    }
+  })
+
+  app_state_maybe_dispatch_callback(DeferredCallback::AboutToWait)
+
+  assert_eq(seen.val, ["about_to_wait"])
+  assert_eq(app_state_runtime.val.deferred_callbacks.length(), 0)
+}
+
+///|
+test "before_waiting_drains_deferred_callbacks_before_about_to_wait" {
+  reset_app_state_runtime_for_test()
+  app_state_set_running(true)
+  let seen : Ref[Array[String]] = Ref::new([])
+  app_state_runtime.val.dispatch_callback = Some(fn(callback) {
+    seen.val.push(callback_name_for_test(callback))
+  })
+  app_state_runtime.val.deferred_callbacks.push(DeferredCallback::ProxyWakeUp)
+
+  app_state_on_before_waiting()
+
+  assert_eq(seen.val, ["proxy_wake_up", "about_to_wait"])
+  assert_eq(app_state_runtime.val.deferred_callbacks.length(), 0)
+}

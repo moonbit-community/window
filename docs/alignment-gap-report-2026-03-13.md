@@ -196,8 +196,22 @@ The implementation is **not yet 1:1 aligned** with `winit-reference` semantics.
 - Completed: added whitebox coverage for dispatch-handler gating (`handler_ready_requires_registered_dispatch_handler`, plus before/after waiting no-op behavior when handler is absent).
 - Completed: callback enqueue behavior without active handler has been tightened: running callbacks are now dropped (not deferred), while lifecycle callbacks still advance launch/termination state, reducing cross-pump stale-event leakage and aligning closer to upstream `EventHandler` readiness semantics.
 - Completed: added whitebox tests for no-handler callback behavior (`running_callbacks_are_dropped_when_dispatch_handler_absent`, `did_finish_launching_updates_state_without_dispatch_handler`).
+- Completed: callback queueing now avoids eager same-stack deferred drains; re-entrant callbacks are queued and drained from observer dispatch phases, with whitebox coverage for nested proxy wake/redraw behavior in `app_state`.
+- Completed: `DidFinishLaunching` init callback dispatch (`NewEvents(Init)` + `CanCreateSurfaces`) now uses direct handler dispatch instead of re-entrant maybe-queueing, restoring upstream launch-order behavior while keeping deferred queueing for other re-entrant callbacks.
+- Completed: `examples/control_flow` log phrasing and startup hints now match upstream wording style more closely (`mode:`/`request_redraw:` plus quoted key-help lines).
+- Completed: `examples/application` monitor dump/log flow now follows upstream intent more closely (`Monitors information`, primary-vs-monitor labeling, position/scale reporting, and full available video-mode listing with bit-depth/refresh-rate suffixes), and startup/empty-window lifecycle logs now include upstream-style messages.
+- Completed: `examples/application` now initializes proxy/custom-cursor state from `main` via `window_target()` (closer to upstream constructor-time setup), while `can_create_surfaces` owns monitor dump + initial window creation.
+- Completed: `examples/application` close/exit and lifecycle logs were tightened again (`Created new window with id=...`, no immediate `CloseWindow` hard-exit), and monitor dump was moved back to `can_create_surfaces` to match upstream stage ordering.
+- Completed: `examples/application` action/event logging now tracks upstream observable flow more closely (`Executing action`, close request logs, pointer moved/left/button logs, and modifier/theme change logs).
+- Completed: `examples/application` no longer emits extra drag/drop compatibility logs that are not printed by upstream, reducing observable behavior drift.
+- Completed: `examples/application` now handles gesture events (`PinchGesture`, `RotationGesture`, `PanGesture`, `DoubleTapGesture`) with upstream-like state/log updates (`zoom`/`rotated`/`panned` tracking), reducing interactive-demo parity gaps.
+- Completed: `examples/application` window-state/action logs were further aligned to upstream (`Loading cursor assets`, per-window `Theme: ...`, resize-increment toggle logs, borderless-game toggle logs, cursor/cursor-grab logs, resize-request logs, surface-resized logs, and occluded-draw skip logs).
+- Completed: `examples/application` now schedules periodic proxy wake behavior in `about_to_wait` (once per second) and logs startup/shutdown messages (`Starting to send user event every second`, `Application exited`) for closer parity with upstream sample intent.
+- Completed: `examples/application` help output headings now use upstream wording (`Keyboard bindings` / `Mouse bindings`).
+- Completed: input-event callback ABI was flattened from `payload_handle + N getters` to direct field arguments (`raw_id/kind/coords/modifiers/text`), removing the `MBWInputEventPayload` C struct and the entire `mbw_input_event_payload_*` export family.
+- Completed: callback/install/application FFI bridge wrappers in `ffi.mbt` were reduced by converting pure-forward wrappers to direct `extern` declarations (`native_install_*`, `native_application_*`, `native_override_send_event`).
+- Completed: production native stubs no longer export test-only C symbols (`mbw_test_*`); corresponding whitebox tests were rewritten to validate behavior through normal backend APIs.
 
 ## Remaining Structural Work
 
-- Not completed: Final event-loop edge-case parity audit around nested stop/wake interleavings after the lifecycle-starvation fix.
 - Not completed: Full example behavior parity for all upstream demo semantics.

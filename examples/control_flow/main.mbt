@@ -66,19 +66,19 @@ pub impl @macos.ApplicationHandler for ControlFlowDemo with window_event(
         match key_event.logical_key() {
           @core.Key::Character("1") => {
             self.mode = Mode::Wait
-            println("mode = \{self.mode}")
+            println("mode: \{self.mode}")
           }
           @core.Key::Character("2") => {
             self.mode = Mode::WaitUntil
-            println("mode = \{self.mode}")
+            println("mode: \{self.mode}")
           }
           @core.Key::Character("3") => {
             self.mode = Mode::Poll
-            println("mode = \{self.mode}")
+            println("mode: \{self.mode}")
           }
           @core.Key::Character("r") => {
             self.request_redraw = !self.request_redraw
-            println("request_redraw = \{self.request_redraw}")
+            println("request_redraw: \{self.request_redraw}")
           }
           @core.Key::Named(@core.NamedKey::Escape) =>
             self.close_requested = true
@@ -131,8 +131,11 @@ pub impl @macos.ApplicationHandler for ControlFlowDemo with about_to_wait(
 ///|
 fn main {
   @util.tracing_init()
-  println("Press 1/2/3 to switch Wait/WaitUntil/Poll modes.")
-  println("Press R to toggle redraw requests; press Esc to close.")
+  println("Press '1' to switch to Wait mode.")
+  println("Press '2' to switch to WaitUntil mode.")
+  println("Press '3' to switch to Poll mode.")
+  println("Press 'R' to toggle request_redraw() calls.")
+  println("Press 'Esc' to close the window.")
   let event_loop = @macos.EventLoop::new()
   event_loop.run_app(ControlFlowDemo::new())
 }

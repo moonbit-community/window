@@ -10,6 +10,9 @@ pub struct Window {
   priv mut fullscreen_state : @core.Fullscreen?
   priv mut ime_capabilities_state : @core.ImeCapabilities?
   priv mut ime_surrounding_text_state : @core.ImeSurroundingText?
+  priv mut prefers_home_indicator_hidden_state : Bool
+  priv mut prefers_status_bar_hidden_state : Bool
+  priv mut preferred_screen_edges_deferring_system_gestures_state : @core.ScreenEdge
   priv mut blur_state : Bool
   priv disallow_hidpi_state : Bool
   priv mut borderless_game_state : Bool
