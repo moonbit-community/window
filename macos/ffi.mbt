@@ -1179,6 +1179,11 @@ fn native_release_display_capture(monitor_id : UInt64) -> Bool {
 }
 
 ///|
+fn native_monitor_ns_screen(monitor_id : UInt64) -> UInt64 {
+  appkit_monitor_ns_screen(monitor_id)
+}
+
+///|
 extern "C" fn native_cg_display_create_uuid_from_display_id(
   display : UInt,
 ) -> UInt64 = "CGDisplayCreateUUIDFromDisplayID"
@@ -1223,7 +1228,8 @@ extern "C" fn native_cg_display_bounds_y(display : UInt) -> Int = "mbw_cg_displa
 extern "C" fn native_cg_display_scale_factor(display : UInt) -> Double = "mbw_cg_display_scale_factor"
 
 ///|
-#borrow(callback)
+#borrow(call_closure)
+#owned(callback)
 extern "C" fn appkit_install_window_event_callback(
   call_closure : FuncRef[
     ((Int, Int, Int, Int, Int, Double) -> Unit, Int, Int, Int, Int, Int, Double) -> Unit,
@@ -1232,7 +1238,8 @@ extern "C" fn appkit_install_window_event_callback(
 ) -> Unit = "mbw_install_window_event_callback"
 
 ///|
-#borrow(callback)
+#borrow(call_closure)
+#owned(callback)
 extern "C" fn appkit_notification_center_add_observer(
   call_closure : FuncRef[((Int) -> Unit, Int) -> Unit],
   callback : (Int) -> Unit,
@@ -1246,7 +1253,8 @@ extern "C" fn appkit_notification_center_remove_observer(
 ) -> Unit = "mbw_notification_center_remove_observer"
 
 ///|
-#borrow(callback)
+#borrow(call_closure)
+#owned(callback)
 extern "C" fn appkit_main_run_loop_add_observer(
   call_closure : FuncRef[((Int) -> Unit, Int) -> Unit],
   callback : (Int) -> Unit,
@@ -1261,7 +1269,8 @@ extern "C" fn appkit_main_run_loop_remove_observer(
 ) -> Unit = "mbw_main_run_loop_remove_observer"
 
 ///|
-#borrow(callback)
+#borrow(call_closure)
+#owned(callback)
 extern "C" fn appkit_install_input_event_callback(
   call_closure : FuncRef[((UInt64) -> Unit, UInt64) -> Unit],
   callback : (UInt64) -> Unit,
@@ -1342,7 +1351,8 @@ extern "C" fn appkit_input_event_payload_text_without_modifiers(
 ) -> Bytes = "mbw_input_event_payload_text_without_modifiers"
 
 ///|
-#borrow(callback)
+#borrow(call_closure)
+#owned(callback)
 extern "C" fn appkit_install_text_input_event_callback(
   call_closure : FuncRef[
     (
@@ -1362,7 +1372,8 @@ extern "C" fn appkit_install_text_input_event_callback(
 ) -> Unit = "mbw_install_text_input_event_callback"
 
 ///|
-#borrow(callback)
+#borrow(call_closure)
+#owned(callback)
 extern "C" fn appkit_install_device_event_callback(
   call_closure : FuncRef[
     ((Int, Int, Double, Double) -> Unit, Int, Int, Double, Double) -> Unit,
@@ -1945,3 +1956,6 @@ extern "C" fn native_monitor_set_display_mode_handle(
 
 ///|
 extern "C" fn native_monitor_release_display_capture(monitor_id : UInt) -> Int = "mbw_release_display_capture"
+
+///|
+extern "C" fn appkit_monitor_ns_screen(monitor_id : UInt64) -> UInt64 = "mbw_monitor_ns_screen"

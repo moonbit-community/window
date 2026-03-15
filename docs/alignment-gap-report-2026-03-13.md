@@ -187,6 +187,11 @@ The implementation is **not yet 1:1 aligned** with `winit-reference` semantics.
 - Completed: `DidFinishLaunching` dispatch order now matches upstream intent more closely by dispatching init callbacks before `stop_on_launch` shutdown handling.
 - Completed: re-entrant `RedrawRequested` callbacks are now dropped (instead of deferred) while a handler is in use, matching upstream `handle_redraw` behavior boundaries.
 - Completed: expanded `macos/app_state_wbtest.mbt` coverage for launch-dispatch ordering and re-entrant redraw-vs-non-redraw queue behavior.
+- Completed: callback bridge lifetime ownership is now explicit and symmetric across MoonBit/C boundaries (`#owned(callback)` in FFI declarations; C callback registration paths no longer double-`incref` callback closures), reducing invalid callback pointer risk in long-running event loops.
+- Completed: added macOS monitor extension parity for `MonitorHandleExtMacOS::ns_screen` via MoonBit adaptation function `monitor_ns_screen(monitor)` (foreign-type method extension is disallowed), with native `NSScreen*` lookup by display ID and a primary-monitor whitebox assertion.
+- Completed: monitor `NSScreen` lookup now matches upstream strategy more closely by resolving screen identity via display UUID matching (not raw display-id equality), reducing stale-screen mismatch risk across display reconfiguration.
+- Completed: expanded `app_state` whitebox coverage for run-loop observer behavior (`before_waiting` redraw/about-to-wait ordering, `after_waiting` `StartCause` propagation, and launch-notification immediate dispatch when a handler is installed), improving confidence in stop/wake interleaving parity.
+- Completed: `examples/x11_embed` non-X11 fallback message now matches upstream wording (`This example is only supported on X11 platforms.`).
 
 ## Remaining Structural Work
 

@@ -106,3 +106,13 @@ test "invalid_monitor_handle" {
   let _ = cg_main_display_id()
   assert_eq(monitor_invalid_uuid_display_id_for_test(), (0 : Int).to_uint64())
 }
+
+///|
+test "primary_monitor_has_ns_screen_handle" {
+  let monitor = primary_monitor_for_test()
+  assert_true(monitor is Some(_))
+  match monitor {
+    Some(monitor) => assert_true(monitor_ns_screen(monitor) is Some(_))
+    None => ()
+  }
+}

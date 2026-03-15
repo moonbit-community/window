@@ -7,6 +7,7 @@ import {
 }
 
 // Values
+pub fn monitor_ns_screen(@core.MonitorHandle) -> UInt64?
 
 // Errors
 

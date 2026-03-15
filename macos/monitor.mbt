@@ -207,3 +207,15 @@ fn available_monitors() -> Array[@core.MonitorHandle] {
     monitors
   }
 }
+
+///|
+// Port target: winit-reference/winit-appkit/src/lib.rs::MonitorHandleExtMacOS::ns_screen
+// MoonBit adaptation: foreign type extension methods are not allowed, so expose a free function.
+pub fn monitor_ns_screen(monitor : @core.MonitorHandle) -> UInt64? {
+  let screen = native_monitor_ns_screen(monitor.native_id())
+  if screen == (0 : Int).to_uint64() {
+    None
+  } else {
+    Some(screen)
+  }
+}

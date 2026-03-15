@@ -1263,7 +1263,6 @@ uint64_t mbw_notification_center_add_observer(mbw_lifecycle_trampoline_t trampol
   if (observer == nil) {
     return 0;
   }
-  moonbit_incref(closure);
   observer.callbackKind = callback_kind;
   observer.trampoline = trampoline;
   observer.closure = closure;
@@ -1330,7 +1329,6 @@ uint64_t mbw_main_run_loop_add_observer(mbw_lifecycle_trampoline_t trampoline, v
     return 0;
   }
   memset(box, 0, sizeof(MBWMainRunLoopObserver));
-  moonbit_incref(closure);
   box->trampoline = trampoline;
   box->closure = closure;
   box->callback_kind = callback_kind;
@@ -1724,9 +1722,6 @@ void mbw_install_window_event_callback(mbw_window_event_trampoline_t trampoline,
   }
   g_window_event_trampoline = trampoline;
   g_window_event_closure = closure;
-  if (g_window_event_closure != NULL) {
-    moonbit_incref(g_window_event_closure);
-  }
 }
 
 MOONBIT_FFI_EXPORT
@@ -1736,9 +1731,6 @@ void mbw_install_input_event_callback(mbw_input_event_trampoline_t trampoline, v
   }
   g_input_event_trampoline = trampoline;
   g_input_event_closure = closure;
-  if (g_input_event_closure != NULL) {
-    moonbit_incref(g_input_event_closure);
-  }
 }
 
 static MBWInputEventPayload *mbw_input_event_payload_from_handle(uint64_t payload_handle) {
@@ -1881,9 +1873,6 @@ void mbw_install_text_input_event_callback(mbw_text_input_event_trampoline_t tra
   }
   g_text_input_event_trampoline = trampoline;
   g_text_input_event_closure = closure;
-  if (g_text_input_event_closure != NULL) {
-    moonbit_incref(g_text_input_event_closure);
-  }
 }
 
 MOONBIT_FFI_EXPORT
@@ -1893,9 +1882,6 @@ void mbw_install_device_event_callback(mbw_device_event_trampoline_t trampoline,
   }
   g_device_event_trampoline = trampoline;
   g_device_event_closure = closure;
-  if (g_device_event_closure != NULL) {
-    moonbit_incref(g_device_event_closure);
-  }
 }
 
 MOONBIT_FFI_EXPORT
@@ -2388,17 +2374,54 @@ uint64_t mbw_window_current_monitor_id(uint64_t handle) {
   return (uint64_t)[number unsignedIntValue];
 }
 
-MOONBIT_FFI_EXPORT
-int32_t mbw_display_refresh_rate_millihertz(uint32_t display_id) {
-  NSScreen *target = nil;
+static NSScreen *mbw_screen_for_display_id(uint32_t display_id) {
+  if (display_id == 0) {
+    return nil;
+  }
+
+  CFUUIDRef target_uuid = CGDisplayCreateUUIDFromDisplayID((CGDirectDisplayID)display_id);
+  if (target_uuid == NULL) {
+    return nil;
+  }
+
+  NSScreen *matched = nil;
   for (NSScreen *screen in [NSScreen screens]) {
     NSDictionary *description = [screen deviceDescription];
     NSNumber *number = [description objectForKey:@"NSScreenNumber"];
-    if (number != nil && [number unsignedIntValue] == display_id) {
-      target = screen;
+    if (number == nil) {
+      continue;
+    }
+    CGDirectDisplayID screen_display_id = (CGDirectDisplayID)[number unsignedIntValue];
+    CFUUIDRef screen_uuid = CGDisplayCreateUUIDFromDisplayID(screen_display_id);
+    if (screen_uuid == NULL) {
+      continue;
+    }
+    Boolean is_equal = CFEqual(target_uuid, screen_uuid);
+    CFRelease(screen_uuid);
+    if (is_equal) {
+      matched = screen;
       break;
     }
   }
+  CFRelease(target_uuid);
+  return matched;
+}
+
+MOONBIT_FFI_EXPORT
+uint64_t mbw_monitor_ns_screen(uint64_t display_id) {
+  if (display_id == 0) {
+    return 0;
+  }
+  NSScreen *screen = mbw_screen_for_display_id((uint32_t)display_id);
+  if (screen == nil) {
+    return 0;
+  }
+  return (uint64_t)(void *)screen;
+}
+
+MOONBIT_FFI_EXPORT
+int32_t mbw_display_refresh_rate_millihertz(uint32_t display_id) {
+  NSScreen *target = mbw_screen_for_display_id(display_id);
   if (target == nil) {
     target = [NSScreen mainScreen];
   }

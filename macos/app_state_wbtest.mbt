@@ -278,3 +278,65 @@ test "reentrant_non_redraw_window_event_is_queued" {
     "window_event",
   ])
 }
+
+///|
+test "before_waiting_dispatches_redraws_then_about_to_wait" {
+  reset_app_state_runtime_for_test()
+  app_state_set_running(true)
+  let seen : Ref[Array[String]] = Ref::new([])
+  app_state_runtime.val.dispatch_callback = Some(fn(callback) {
+    seen.val.push(callback_name_for_test(callback))
+  })
+  app_state_queue_redraw(7)
+  app_state_queue_redraw(7)
+  app_state_queue_redraw(8)
+
+  app_state_on_before_waiting()
+
+  assert_eq(seen.val, ["window_event", "window_event", "about_to_wait"])
+  assert_eq(app_state_runtime.val.pending_redraw_window_ids.length(), 0)
+  assert_true(app_state_runtime.val.start_time_ms is Some(_))
+}
+
+///|
+test "after_waiting_dispatches_new_events_with_wait_cause" {
+  reset_app_state_runtime_for_test()
+  app_state_set_running(true)
+  let captured_causes : Ref[Array[@core.StartCause]] = Ref::new([])
+  app_state_runtime.val.dispatch_callback = Some(fn(callback) {
+    match callback {
+      DeferredCallback::NewEvents(cause) => captured_causes.val.push(cause)
+      _ => ()
+    }
+  })
+  let start = runtime_now_ms() - (20 : Int).to_int64()
+  let requested_resume = runtime_now_ms() + (2000 : Int).to_int64()
+  app_state_runtime.val.start_time_ms = Some(start)
+  app_state_set_control_flow(@core.ControlFlow::WaitUntil(requested_resume))
+
+  app_state_on_after_waiting()
+
+  assert_eq(captured_causes.val, [
+    @core.StartCause::WaitCancelled(start, Some(requested_resume)),
+  ])
+}
+
+///|
+test "queue_did_finish_launching_dispatches_init_when_handler_registered" {
+  reset_app_state_runtime_for_test()
+  launch_init_callback_order_for_test.val = []
+  launch_init_stop_flag_seen_for_test.val = []
+  app_state_set_dispatch_handler(
+    LaunchInitCallbacksApp::{  },
+    active_event_loop_for_test(),
+  )
+
+  app_state_queue_did_finish_launching_notification()
+
+  assert_true(app_state_is_launched())
+  assert_true(app_state_is_running())
+  assert_eq(launch_init_callback_order_for_test.val, [
+    "new_events", "can_create_surfaces",
+  ])
+  app_state_clear_dispatch_handler()
+}
