@@ -194,6 +194,8 @@ The implementation is **not yet 1:1 aligned** with `winit-reference` semantics.
 - Completed: `examples/x11_embed` non-X11 fallback message now matches upstream wording (`This example is only supported on X11 platforms.`).
 - Completed: `app_state_handler_ready` now requires a registered dispatch handler in addition to running/not-in-handler state, aligning with upstream `EventHandler::ready()` gating and preventing observer callbacks from being processed during `pump_app_events` idle gaps with no active handler.
 - Completed: added whitebox coverage for dispatch-handler gating (`handler_ready_requires_registered_dispatch_handler`, plus before/after waiting no-op behavior when handler is absent).
+- Completed: callback enqueue behavior without active handler has been tightened: running callbacks are now dropped (not deferred), while lifecycle callbacks still advance launch/termination state, reducing cross-pump stale-event leakage and aligning closer to upstream `EventHandler` readiness semantics.
+- Completed: added whitebox tests for no-handler callback behavior (`running_callbacks_are_dropped_when_dispatch_handler_absent`, `did_finish_launching_updates_state_without_dispatch_handler`).
 
 ## Remaining Structural Work
 

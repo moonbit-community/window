@@ -201,6 +201,16 @@ fn app_state_maybe_dispatch_callback(callback : DeferredCallback) -> Unit {
     app_state_is_running() == false {
     return ()
   }
+  if app_state_runtime.val.dispatch_callback is None {
+    match callback {
+      // Port target: app_state.rs::did_finish_launching / will_terminate
+      // Even without an active handler, lifecycle state still advances.
+      DeferredCallback::DidFinishLaunching => app_state_did_finish_launching()
+      DeferredCallback::WillTerminate => app_state_will_terminate()
+      _ => ()
+    }
+    return ()
+  }
   if app_state_runtime.val.event_handler_in_use {
     match callback {
       // Port target: app_state.rs::handle_redraw

@@ -378,3 +378,31 @@ test "after_waiting_noops_without_dispatch_handler" {
 
   assert_eq(app_state_runtime.val.deferred_callbacks.length(), 0)
 }
+
+///|
+test "running_callbacks_are_dropped_when_dispatch_handler_absent" {
+  reset_app_state_runtime_for_test()
+  app_state_set_running(true)
+  app_state_set_handler_in_use(false)
+
+  app_state_queue_proxy_wake_up()
+  app_state_queue_window_callback(
+    @core.WindowId::from_raw(1),
+    @core.WindowEvent::Focused(true),
+  )
+
+  assert_eq(app_state_runtime.val.deferred_callbacks.length(), 0)
+}
+
+///|
+test "did_finish_launching_updates_state_without_dispatch_handler" {
+  reset_app_state_runtime_for_test()
+  assert_false(app_state_is_launched())
+  assert_false(app_state_is_running())
+
+  app_state_queue_did_finish_launching_notification()
+
+  assert_true(app_state_is_launched())
+  assert_false(app_state_is_running())
+  assert_eq(app_state_runtime.val.deferred_callbacks.length(), 0)
+}
