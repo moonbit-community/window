@@ -464,6 +464,49 @@ fn drag_paths_from_native_path_list(path_list_handle : UInt64) -> Array[String] 
 }
 
 ///|
+fn dnd_position_from_dragging_info(
+  raw_id : Int,
+  dragging_info_handle : UInt64,
+) -> @dpi.PhysicalPositionF64? {
+  if dragging_info_handle == (0 : Int).to_uint64() {
+    return None
+  }
+  let dragging_location_x = appkit_objc_msg_send_point_x(
+    dragging_info_handle,
+    objc_runtime_selector_handle("draggingLocation"),
+  )
+  let dragging_location_y = appkit_objc_msg_send_point_y(
+    dragging_info_handle,
+    objc_runtime_selector_handle("draggingLocation"),
+  )
+  let mut x = dragging_location_x
+  let mut y = dragging_location_y
+  match app_state_window_handle(raw_id) {
+    Some(window_handle) => {
+      let content_view = native_window_content_view_objc_handle(window_handle)
+      if content_view != (0 : Int).to_uint64() {
+        x = appkit_objc_msg_send_point_x_point_u64(
+          content_view,
+          objc_runtime_selector_handle("convertPoint:fromView:"),
+          dragging_location_x,
+          dragging_location_y,
+          (0 : Int).to_uint64(),
+        )
+        y = appkit_objc_msg_send_point_y_point_u64(
+          content_view,
+          objc_runtime_selector_handle("convertPoint:fromView:"),
+          dragging_location_x,
+          dragging_location_y,
+          (0 : Int).to_uint64(),
+        )
+      }
+      Some(@dpi.PhysicalPositionF64::new(x, y))
+    }
+    None => Some(@dpi.PhysicalPositionF64::new(x, y))
+  }
+}
+
+///|
 fn queue_native_input_event(
   raw_id : Int,
   kind : Int,
@@ -724,8 +767,7 @@ fn queue_native_input_event(
 fn queue_native_text_input_event(
   raw_id : Int,
   kind : Int,
-  x : Double,
-  y : Double,
+  event_handle : UInt64,
   state : Int,
   text_handle : UInt64,
   cursor_start : Int,
@@ -739,7 +781,7 @@ fn queue_native_text_input_event(
     objc_utf8_bytes_from_object(text_handle)
   }
   let window_id = @core.WindowId::from_raw(raw_id)
-  let position = @dpi.PhysicalPositionF64::new(x, y)
+  let position = dnd_position_from_dragging_info(raw_id, event_handle)
   match kind {
     8 =>
       queue_input_event(
@@ -749,25 +791,42 @@ fn queue_native_text_input_event(
     9 => {
       let paths = drag_paths_from_native_path_list(path_handle)
       if paths.length() > 0 {
-        app_state_queue_window_callback(
-          window_id,
-          @core.WindowEvent::DragEntered(paths, position),
-        )
+        match position {
+          Some(position) =>
+            app_state_queue_window_callback(
+              window_id,
+              @core.WindowEvent::DragEntered(paths, position),
+            )
+          None => ()
+        }
       }
     }
+    10 =>
+      match position {
+        Some(position) =>
+          app_state_queue_window_callback(
+            window_id,
+            @core.WindowEvent::DragMoved(position),
+          )
+        None => ()
+      }
     11 => {
       let paths = drag_paths_from_native_path_list(path_handle)
       if paths.length() > 0 {
-        app_state_queue_window_callback(
-          window_id,
-          @core.WindowEvent::DragDropped(paths, position),
-        )
+        match position {
+          Some(position) =>
+            app_state_queue_window_callback(
+              window_id,
+              @core.WindowEvent::DragDropped(paths, position),
+            )
+          None => ()
+        }
       }
     }
-    10 | 12 =>
-      queue_input_event(
-        raw_id, kind, x, y, state, 0, 0, 0, 0, 0, 0, 0, 0.0, 0.0, 0, empty_text,
-        empty_text, empty_text, 0, empty_text, -1, -1, empty_text,
+    12 =>
+      app_state_queue_window_callback(
+        window_id,
+        @core.WindowEvent::DragLeft(position),
       )
     18 =>
       queue_input_event(

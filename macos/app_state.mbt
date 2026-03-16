@@ -411,8 +411,7 @@ fn app_state_install_native_callbacks() -> Unit {
       callback,
       raw_id,
       kind,
-      x,
-      y,
+      event_handle,
       state,
       text_handle,
       cursor_start,
@@ -420,7 +419,8 @@ fn app_state_install_native_callbacks() -> Unit {
       path_handle,
     ) {
       callback(
-        raw_id, kind, x, y, state, text_handle, cursor_start, cursor_end, path_handle,
+        raw_id, kind, event_handle, state, text_handle, cursor_start, cursor_end,
+        path_handle,
       )
     },
     native_callback_text_input_event,
@@ -460,8 +460,7 @@ fn native_callback_input_event(
 fn native_callback_text_input_event(
   raw_id : Int,
   kind : Int,
-  x : Double,
-  y : Double,
+  event_handle : UInt64,
   state : Int,
   text_handle : UInt64,
   cursor_start : Int,
@@ -469,7 +468,7 @@ fn native_callback_text_input_event(
   path_handle : UInt64,
 ) -> Unit {
   queue_native_text_input_event(
-    raw_id, kind, x, y, state, text_handle, cursor_start, cursor_end, path_handle,
+    raw_id, kind, event_handle, state, text_handle, cursor_start, cursor_end, path_handle,
   )
 }
 

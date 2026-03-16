@@ -3091,11 +3091,10 @@ extern "C" fn native_objc_copy_utf8_bytes(object_handle : UInt64) -> Bytes = "mb
 extern "C" fn native_install_text_input_event_callback(
   call_closure : FuncRef[
     (
-      (Int, Int, Double, Double, Int, UInt64, Int, Int, UInt64) -> Unit,
+      (Int, Int, UInt64, Int, UInt64, Int, Int, UInt64) -> Unit,
       Int,
       Int,
-      Double,
-      Double,
+      UInt64,
       Int,
       UInt64,
       Int,
@@ -3103,7 +3102,7 @@ extern "C" fn native_install_text_input_event_callback(
       UInt64,
     ) -> Unit,
   ],
-  callback : (Int, Int, Double, Double, Int, UInt64, Int, Int, UInt64) -> Unit,
+  callback : (Int, Int, UInt64, Int, UInt64, Int, Int, UInt64) -> Unit,
 ) -> Unit = "mbw_install_text_input_event_callback"
 
 ///|
@@ -3377,6 +3376,24 @@ extern "C" fn appkit_objc_msg_send_point_y(
   target : UInt64,
   selector : UInt64,
 ) -> Double = "mbw_objc_msg_send_point_y"
+
+///|
+extern "C" fn appkit_objc_msg_send_point_x_point_u64(
+  target : UInt64,
+  selector : UInt64,
+  x : Double,
+  y : Double,
+  arg1 : UInt64,
+) -> Double = "mbw_objc_msg_send_point_x_point_u64"
+
+///|
+extern "C" fn appkit_objc_msg_send_point_y_point_u64(
+  target : UInt64,
+  selector : UInt64,
+  x : Double,
+  y : Double,
+  arg1 : UInt64,
+) -> Double = "mbw_objc_msg_send_point_y_point_u64"
 
 ///|
 extern "C" fn appkit_objc_msg_send_edge_insets_top(

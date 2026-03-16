@@ -17,7 +17,7 @@ typedef void (*mbw_window_event_trampoline_t)(void *closure, int32_t kind, int32
 typedef void (*mbw_input_event_trampoline_t)(void *closure, int32_t raw_id, int32_t kind,
                                              uint64_t event_handle);
 typedef void (*mbw_text_input_event_trampoline_t)(void *closure, int32_t raw_id, int32_t kind,
-                                                  double x, double y, int32_t state,
+                                                  uint64_t event_handle, int32_t state,
                                                   uint64_t text_handle, int32_t cursor_start,
                                                   int32_t cursor_end, uint64_t path_handle);
 typedef void (*mbw_device_event_trampoline_t)(void *closure, uint64_t event_handle);
@@ -71,12 +71,12 @@ static void mbw_call_input_event_trampoline(int32_t raw_id, int32_t kind, uint64
 }
 
 static void mbw_call_text_input_event_trampoline(
-    int32_t raw_id, int32_t kind, double x, double y, int32_t state, uint64_t text_handle,
+    int32_t raw_id, int32_t kind, uint64_t event_handle, int32_t state, uint64_t text_handle,
     int32_t cursor_start, int32_t cursor_end, uint64_t path_handle) {
   if (g_text_input_event_trampoline == NULL || g_text_input_event_closure == NULL) {
     return;
   }
-  g_text_input_event_trampoline(g_text_input_event_closure, raw_id, kind, x, y, state,
+  g_text_input_event_trampoline(g_text_input_event_closure, raw_id, kind, event_handle, state,
                                 text_handle, cursor_start, cursor_end, path_handle);
 }
 
@@ -106,21 +106,18 @@ static void mbw_call_lifecycle_trampoline(mbw_lifecycle_trampoline_t trampoline,
 @property(nonatomic, assign) int32_t imeCursorWidth;
 @property(nonatomic, assign) int32_t imeCursorHeight;
 @property(nonatomic, assign) int32_t rawId;
-@property(nonatomic, assign) double lastDragX;
-@property(nonatomic, assign) double lastDragY;
 @property(nonatomic, strong) NSTrackingArea *trackingArea;
 @property(nonatomic, copy) NSString *markedText;
 @property(nonatomic, copy) NSString *inputSource;
 @property(nonatomic, assign) BOOL forwardKeyToApp;
 @property(nonatomic, assign) MBWImeState imeState;
 - (void)mbw_emitTextInputWithKind:(int32_t)kind
-                                x:(double)x
-                                y:(double)y
-                             state:(int32_t)state
-                              text:(NSString *)text
-                       cursorStart:(int32_t)cursorStart
-                         cursorEnd:(int32_t)cursorEnd
-                         pathHandle:(uint64_t)pathHandle;
+                      eventHandle:(uint64_t)eventHandle
+                           state:(int32_t)state
+                            text:(NSString *)text
+                     cursorStart:(int32_t)cursorStart
+                       cursorEnd:(int32_t)cursorEnd
+                       pathHandle:(uint64_t)pathHandle;
 @end
 
 @interface MBWWindowDelegate : NSObject <NSWindowDelegate>
@@ -251,25 +248,31 @@ static void mbw_call_lifecycle_trampoline(mbw_lifecycle_trampoline_t trampoline,
 }
 
 - (void)mbw_emitTextInputWithKind:(int32_t)kind
-                                x:(double)x
-                                y:(double)y
-                             state:(int32_t)state
-                              text:(NSString *)text
-                       cursorStart:(int32_t)cursorStart
-                         cursorEnd:(int32_t)cursorEnd
-                         pathHandle:(uint64_t)pathHandle {
+                      eventHandle:(uint64_t)eventHandle
+                           state:(int32_t)state
+                            text:(NSString *)text
+                     cursorStart:(int32_t)cursorStart
+                       cursorEnd:(int32_t)cursorEnd
+                       pathHandle:(uint64_t)pathHandle {
   if (self.rawId <= 0) {
     return;
   }
   NSString *safe_text = text == nil ? @"" : text;
+  id event_object = eventHandle == 0 ? nil : (__bridge id)(void *)(uintptr_t)eventHandle;
   id path_object = pathHandle == 0 ? nil : (__bridge id)(void *)(uintptr_t)pathHandle;
   [safe_text retain];
+  if (event_object != nil) {
+    [event_object retain];
+  }
   if (path_object != nil) {
     [path_object retain];
   }
-  mbw_call_text_input_event_trampoline(self.rawId, kind, x, y, state,
+  mbw_call_text_input_event_trampoline(self.rawId, kind, eventHandle, state,
                                        (uint64_t)(uintptr_t)(__bridge void *)safe_text,
                                        cursorStart, cursorEnd, pathHandle);
+  if (event_object != nil) {
+    [event_object release];
+  }
   if (path_object != nil) {
     [path_object release];
   }
@@ -283,13 +286,12 @@ static void mbw_call_lifecycle_trampoline(mbw_lifecycle_trampoline_t trampoline,
   self.inputSource = [self mbw_currentInputSource];
   self.imeState = MBWImeStateGround;
   [self mbw_emitTextInputWithKind:8
-                                x:0.0
-                                y:0.0
+                      eventHandle:0
                              state:1
                               text:@""
                        cursorStart:-1
                          cursorEnd:-1
-                         pathHandle:0];
+                        pathHandle:0];
 }
 
 - (void)mbw_emitMouseMotion:(NSEvent *)event {
@@ -398,13 +400,12 @@ static void mbw_call_lifecycle_trampoline(mbw_lifecycle_trampoline_t trampoline,
       self.inputSource = current_input_source;
       self.imeState = MBWImeStateDisabled;
       [self mbw_emitTextInputWithKind:8
-                                    x:0.0
-                                    y:0.0
+                          eventHandle:0
                                  state:4
                                   text:@""
                            cursorStart:-1
                              cursorEnd:-1
-                             pathHandle:0];
+                            pathHandle:0];
     }
   }
 
@@ -496,13 +497,12 @@ static void mbw_call_lifecycle_trampoline(mbw_lifecycle_trampoline_t trampoline,
   }
 
   [self mbw_emitTextInputWithKind:8
-                                x:0.0
-                                y:0.0
+                      eventHandle:0
                              state:2
                               text:text
                        cursorStart:cursor_start
                          cursorEnd:cursor_end
-                         pathHandle:0];
+                        pathHandle:0];
 }
 
 - (void)unmarkText {
@@ -517,13 +517,12 @@ static void mbw_call_lifecycle_trampoline(mbw_lifecycle_trampoline_t trampoline,
   }
 
   [self mbw_emitTextInputWithKind:8
-                                x:0.0
-                                y:0.0
+                      eventHandle:0
                              state:2
                               text:@""
                        cursorStart:-1
                          cursorEnd:-1
-                         pathHandle:0];
+                        pathHandle:0];
 
   if ([self mbw_isImeEnabled]) {
     self.imeState = MBWImeStateGround;
@@ -571,21 +570,19 @@ static void mbw_call_lifecycle_trampoline(mbw_lifecycle_trampoline_t trampoline,
 
   if (self.hasMarkedText && [self mbw_isImeEnabled] && ![self mbw_isControlString:text]) {
     [self mbw_emitTextInputWithKind:8
-                                  x:0.0
-                                  y:0.0
+                        eventHandle:0
                                state:2
                                 text:@""
                          cursorStart:-1
                            cursorEnd:-1
-                           pathHandle:0];
+                          pathHandle:0];
     [self mbw_emitTextInputWithKind:8
-                                  x:0.0
-                                  y:0.0
+                        eventHandle:0
                                state:3
                                 text:text
                          cursorStart:-1
                            cursorEnd:-1
-                           pathHandle:0];
+                          pathHandle:0];
     self.imeState = MBWImeStateCommitted;
   }
 }
@@ -602,59 +599,51 @@ static void mbw_call_lifecycle_trampoline(mbw_lifecycle_trampoline_t trampoline,
 
   NSString *action = NSStringFromSelector(selector);
   [self mbw_emitTextInputWithKind:18
-                                x:0.0
-                                y:0.0
+                      eventHandle:0
                              state:0
                               text:(action == nil ? @"" : action)
                        cursorStart:-1
                          cursorEnd:-1
-                         pathHandle:0];
+                        pathHandle:0];
 }
 
 - (NSDragOperation)draggingEntered:(id<NSDraggingInfo>)sender {
-  NSPoint point = [self convertPoint:[sender draggingLocation] fromView:nil];
-  self.lastDragX = point.x;
-  self.lastDragY = point.y;
+  uint64_t dragging_info_handle = sender == nil ? 0 : (uint64_t)(uintptr_t)(__bridge void *)sender;
   uint64_t path_list_handle = [self mbw_dragPathListHandleFromDraggingInfo:sender];
   if (path_list_handle == 0) {
     return NSDragOperationNone;
   }
   [self mbw_emitTextInputWithKind:9
-                                x:point.x
-                                y:point.y
+                      eventHandle:dragging_info_handle
                              state:1
                               text:nil
                        cursorStart:-1
                          cursorEnd:-1
-                         pathHandle:path_list_handle];
+                        pathHandle:path_list_handle];
   return NSDragOperationCopy;
 }
 
 - (NSDragOperation)draggingUpdated:(id<NSDraggingInfo>)sender {
-  NSPoint point = [self convertPoint:[sender draggingLocation] fromView:nil];
-  self.lastDragX = point.x;
-  self.lastDragY = point.y;
+  uint64_t dragging_info_handle = sender == nil ? 0 : (uint64_t)(uintptr_t)(__bridge void *)sender;
   [self mbw_emitTextInputWithKind:10
-                                x:point.x
-                                y:point.y
+                      eventHandle:dragging_info_handle
                              state:0
                               text:nil
                        cursorStart:-1
                          cursorEnd:-1
-                         pathHandle:0];
+                        pathHandle:0];
   return NSDragOperationCopy;
 }
 
 - (void)draggingExited:(id<NSDraggingInfo>)sender {
-  (void)sender;
+  uint64_t dragging_info_handle = sender == nil ? 0 : (uint64_t)(uintptr_t)(__bridge void *)sender;
   [self mbw_emitTextInputWithKind:12
-                                x:self.lastDragX
-                                y:self.lastDragY
+                      eventHandle:dragging_info_handle
                              state:0
                               text:nil
                        cursorStart:-1
                          cursorEnd:-1
-                         pathHandle:0];
+                        pathHandle:0];
 }
 
 - (BOOL)prepareForDragOperation:(id<NSDraggingInfo>)sender {
@@ -663,21 +652,18 @@ static void mbw_call_lifecycle_trampoline(mbw_lifecycle_trampoline_t trampoline,
 }
 
 - (BOOL)performDragOperation:(id<NSDraggingInfo>)sender {
-  NSPoint point = [self convertPoint:[sender draggingLocation] fromView:nil];
-  self.lastDragX = point.x;
-  self.lastDragY = point.y;
+  uint64_t dragging_info_handle = sender == nil ? 0 : (uint64_t)(uintptr_t)(__bridge void *)sender;
   uint64_t path_list_handle = [self mbw_dragPathListHandleFromDraggingInfo:sender];
   if (path_list_handle == 0) {
     return NO;
   }
   [self mbw_emitTextInputWithKind:11
-                                x:point.x
-                                y:point.y
+                      eventHandle:dragging_info_handle
                              state:0
                               text:nil
                        cursorStart:-1
                          cursorEnd:-1
-                         pathHandle:path_list_handle];
+                        pathHandle:path_list_handle];
   return YES;
 }
 
@@ -1093,8 +1079,6 @@ uint64_t mbw_create_window(int32_t width, int32_t height) {
   content_view.imeCursorHeight = 1;
   content_view.markedText = @"";
   content_view.inputSource = [content_view mbw_currentInputSource];
-  content_view.lastDragX = 0.0;
-  content_view.lastDragY = 0.0;
   content_view.forwardKeyToApp = NO;
   content_view.imeState = MBWImeStateDisabled;
   content_view.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
@@ -1630,6 +1614,38 @@ double mbw_objc_msg_send_point_y(uint64_t target_handle, uint64_t selector_handl
   if (!mbw_objc_msg_send_value_no_args(target_handle, selector_handle, &point, sizeof(point))) {
     return 0.0;
   }
+  return (double)point.y;
+}
+
+MOONBIT_FFI_EXPORT
+double mbw_objc_msg_send_point_x_point_u64(uint64_t target_handle, uint64_t selector_handle,
+                                           double x, double y, uint64_t arg1_handle) {
+  if (target_handle == 0 || selector_handle == 0) {
+    return 0.0;
+  }
+  id target = (__bridge id)(void *)(uintptr_t)target_handle;
+  const char *selector_name = (const char *)(uintptr_t)selector_handle;
+  SEL selector = sel_registerName(selector_name);
+  NSPoint arg0 = NSMakePoint((CGFloat)x, (CGFloat)y);
+  id arg1 = arg1_handle == 0 ? nil : (__bridge id)(void *)(uintptr_t)arg1_handle;
+  NSPoint (*send_fn)(id, SEL, NSPoint, id) = (NSPoint(*)(id, SEL, NSPoint, id))objc_msgSend;
+  NSPoint point = send_fn(target, selector, arg0, arg1);
+  return (double)point.x;
+}
+
+MOONBIT_FFI_EXPORT
+double mbw_objc_msg_send_point_y_point_u64(uint64_t target_handle, uint64_t selector_handle,
+                                           double x, double y, uint64_t arg1_handle) {
+  if (target_handle == 0 || selector_handle == 0) {
+    return 0.0;
+  }
+  id target = (__bridge id)(void *)(uintptr_t)target_handle;
+  const char *selector_name = (const char *)(uintptr_t)selector_handle;
+  SEL selector = sel_registerName(selector_name);
+  NSPoint arg0 = NSMakePoint((CGFloat)x, (CGFloat)y);
+  id arg1 = arg1_handle == 0 ? nil : (__bridge id)(void *)(uintptr_t)arg1_handle;
+  NSPoint (*send_fn)(id, SEL, NSPoint, id) = (NSPoint(*)(id, SEL, NSPoint, id))objc_msgSend;
+  NSPoint point = send_fn(target, selector, arg0, arg1);
   return (double)point.y;
 }
 
