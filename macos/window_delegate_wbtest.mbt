@@ -127,3 +127,25 @@ test "fullscreen_target_surface_size_falls_back_to_primary_monitor" {
     None,
   )
 }
+
+///|
+test "ime_cursor_area_state_tracks_position_and_clamps_size" {
+  let handle = (91 : Int).to_uint64()
+  set_window_ime_cursor_area_state(handle, 12, 34, 0, -5)
+
+  assert_eq(window_ime_cursor_x_state(handle), 12)
+  assert_eq(window_ime_cursor_y_state(handle), 34)
+  assert_eq(window_ime_cursor_width_state(handle), 1)
+  assert_eq(window_ime_cursor_height_state(handle), 1)
+}
+
+///|
+test "ime_cursor_area_state_preserves_positive_size" {
+  let handle = (92 : Int).to_uint64()
+  set_window_ime_cursor_area_state(handle, 7, 8, 21, 22)
+
+  assert_eq(window_ime_cursor_x_state(handle), 7)
+  assert_eq(window_ime_cursor_y_state(handle), 8)
+  assert_eq(window_ime_cursor_width_state(handle), 21)
+  assert_eq(window_ime_cursor_height_state(handle), 22)
+}

@@ -114,10 +114,8 @@ static void mbw_emit_drag_event(int32_t raw_id, int32_t kind, id<NSDraggingInfo>
 @interface MBWContentView : NSView <NSTextInputClient>
 @property(nonatomic, assign) BOOL acceptsFirstMouseEnabled;
 @property(nonatomic, assign) BOOL imeAllowed;
-@property(nonatomic, assign) int32_t imeCursorX;
-@property(nonatomic, assign) int32_t imeCursorY;
-@property(nonatomic, assign) int32_t imeCursorWidth;
-@property(nonatomic, assign) int32_t imeCursorHeight;
+@property(nonatomic, assign) NSPoint imeCursorPosition;
+@property(nonatomic, assign) NSSize imeCursorSize;
 @property(nonatomic, assign) int32_t rawId;
 @property(nonatomic, assign) NSTrackingRectTag trackingRectTag;
 @property(nonatomic, assign) int32_t markedTextLength;
@@ -415,9 +413,15 @@ static void mbw_emit_drag_event(int32_t raw_id, int32_t kind, id<NSDraggingInfo>
 - (NSRect)firstRectForCharacterRange:(NSRange)range actualRange:(NSRangePointer)actualRange {
   (void)range;
   (void)actualRange;
-  NSRect local = NSMakeRect((CGFloat)self.imeCursorX, (CGFloat)self.imeCursorY,
-                            (CGFloat)(self.imeCursorWidth > 0 ? self.imeCursorWidth : 1),
-                            (CGFloat)(self.imeCursorHeight > 0 ? self.imeCursorHeight : 1));
+  NSSize size = self.imeCursorSize;
+  if (size.width <= 0) {
+    size.width = 1;
+  }
+  if (size.height <= 0) {
+    size.height = 1;
+  }
+  NSRect local = NSMakeRect(self.imeCursorPosition.x, self.imeCursorPosition.y, size.width,
+                            size.height);
   NSRect in_window = [self convertRect:local toView:nil];
   if (self.window == nil) {
     return NSZeroRect;
@@ -883,10 +887,8 @@ uint64_t mbw_create_window(int32_t width, int32_t height) {
   MBWContentView *content_view = [[MBWContentView alloc] initWithFrame:window.contentView.bounds];
   content_view.acceptsFirstMouseEnabled = NO;
   content_view.imeAllowed = NO;
-  content_view.imeCursorX = 0;
-  content_view.imeCursorY = 0;
-  content_view.imeCursorWidth = 1;
-  content_view.imeCursorHeight = 1;
+  content_view.imeCursorPosition = NSMakePoint(0, 0);
+  content_view.imeCursorSize = NSMakeSize(1, 1);
   content_view.trackingRectTag = 0;
   content_view.markedTextLength = 0;
   content_view.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;

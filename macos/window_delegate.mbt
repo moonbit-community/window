@@ -2952,32 +2952,24 @@ fn set_ime_cursor_area(
   if content_view == (0 : Int).to_uint64() {
     return ()
   }
-  appkit_objc_msg_send_void_u64(
+  appkit_objc_msg_send_void_point(
     content_view,
-    objc_runtime_selector_handle("setImeCursorX:"),
-    x.to_uint64(),
+    objc_runtime_selector_handle("setImeCursorPosition:"),
+    x.to_double(),
+    y.to_double(),
   )
-  appkit_objc_msg_send_void_u64(
+  appkit_objc_msg_send_void_size(
     content_view,
-    objc_runtime_selector_handle("setImeCursorY:"),
-    y.to_uint64(),
-  )
-  appkit_objc_msg_send_void_u64(
-    content_view,
-    objc_runtime_selector_handle("setImeCursorWidth:"),
+    objc_runtime_selector_handle("setImeCursorSize:"),
     if width > 0 {
-      width.to_uint64()
+      width.to_double()
     } else {
-      (1 : Int).to_uint64()
+      1.0
     },
-  )
-  appkit_objc_msg_send_void_u64(
-    content_view,
-    objc_runtime_selector_handle("setImeCursorHeight:"),
     if height > 0 {
-      height.to_uint64()
+      height.to_double()
     } else {
-      (1 : Int).to_uint64()
+      1.0
     },
   )
   let input_context = appkit_objc_msg_send_u64(
