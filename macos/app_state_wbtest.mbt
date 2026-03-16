@@ -164,6 +164,39 @@ test "will_terminate_notification_is_deduplicated_in_queue" {
 }
 
 ///|
+test "will_terminate_notification_noops_after_handled" {
+  reset_app_state_runtime_for_test()
+  app_state_runtime.val.will_terminate_handled = true
+
+  app_state_queue_will_terminate_notification()
+  assert_eq(app_state_runtime.val.deferred_callbacks.length(), 0)
+}
+
+///|
+test "will_terminate_callback_bypasses_registered_dispatch_handler" {
+  reset_app_state_runtime_for_test()
+  app_state_runtime.val.will_terminate_handled = true
+  let seen : Ref[Array[String]] = Ref::new([])
+  app_state_runtime.val.dispatch_callback = Some(fn(callback) {
+    seen.val.push(callback_name_for_test(callback))
+  })
+
+  app_state_maybe_dispatch_callback(DeferredCallback::WillTerminate)
+
+  assert_eq(seen.val.length(), 0)
+}
+
+///|
+test "will_terminate_clears_dispatch_handler" {
+  reset_app_state_runtime_for_test()
+  app_state_runtime.val.dispatch_callback = Some(fn(_callback) {  })
+
+  app_state_will_terminate()
+
+  assert_true(app_state_runtime.val.dispatch_callback is None)
+}
+
+///|
 test "callbacks_requiring_running_are_ignored_when_not_running" {
   reset_app_state_runtime_for_test()
   app_state_queue_proxy_wake_up()

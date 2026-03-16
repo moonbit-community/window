@@ -39,6 +39,7 @@ priv struct AppStateRuntime {
   mut stop_on_redraw : Bool
   mut is_launched : Bool
   mut is_running : Bool
+  mut will_terminate_handled : Bool
   mut exit_requested : Bool
   mut event_handler_in_use : Bool
   mut control_flow : @core.ControlFlow
@@ -65,6 +66,7 @@ fn AppStateRuntime::new() -> AppStateRuntime {
     stop_on_redraw: false,
     is_launched: false,
     is_running: false,
+    will_terminate_handled: false,
     exit_requested: false,
     event_handler_in_use: false,
     control_flow: @core.ControlFlow::Wait,
@@ -197,6 +199,10 @@ fn app_state_dispatch_registered_deferred_callbacks() -> Unit {
 
 ///|
 fn app_state_maybe_dispatch_callback(callback : DeferredCallback) -> Unit {
+  if callback is DeferredCallback::WillTerminate {
+    app_state_will_terminate()
+    return ()
+  }
   if app_state_callback_requires_running(callback) &&
     app_state_is_running() == false {
     return ()
@@ -242,6 +248,9 @@ fn app_state_queue_did_finish_launching_notification() -> Unit {
 
 ///|
 fn app_state_queue_will_terminate_notification() -> Unit {
+  if app_state_runtime.val.will_terminate_handled {
+    return ()
+  }
   for callback in app_state_runtime.val.deferred_callbacks {
     if callback is DeferredCallback::WillTerminate {
       return ()
@@ -995,7 +1004,12 @@ fn app_state_apply_launch_policy() -> Unit {
 
 ///|
 fn app_state_will_terminate() -> Unit {
+  if app_state_runtime.val.will_terminate_handled {
+    return ()
+  }
+  app_state_runtime.val.will_terminate_handled = true
   notify_windows_of_exit()
+  app_state_runtime.val.dispatch_callback = None
   app_state_runtime.val.deferred_callbacks = []
   app_state_exit()
   app_state_internal_exit()

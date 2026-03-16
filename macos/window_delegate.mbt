@@ -3229,16 +3229,11 @@ fn window_current_monitor_id(window_handle : UInt64) -> UInt64 {
 ///|
 fn initial_window_surface_size(
   surface_size : @dpi.Size?,
-  inner_size : @dpi.Size?,
   scale_factor : Double,
 ) -> @dpi.LogicalSize {
   match surface_size {
     Some(size) => size.to_logical(scale_factor)
-    None =>
-      match inner_size {
-        Some(size) => size.to_logical(scale_factor)
-        None => @dpi.LogicalSize::new(800.0, 600.0)
-      }
+    None => @dpi.LogicalSize::new(800.0, 600.0)
   }
 }
 
@@ -3254,11 +3249,8 @@ fn new_window(
     Some(monitor) => monitor.scale_factor()
     None => 1.0
   }
-  // MoonBit adaptation: honor `inner_size` as a fallback when incoming
-  // attributes are not pre-normalized to `surface_size`.
   let size = initial_window_surface_size(
     attributes.surface_size(),
-    attributes.inner_size(),
     scale_factor,
   )
   let raw_window_handle = create_window(
