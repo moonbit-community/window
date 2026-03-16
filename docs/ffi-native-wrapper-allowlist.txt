@@ -1,4 +1,0 @@
-native_application_shared_handle
-native_window_content_view_objc_handle
-native_window_delegate_objc_handle
-native_window_objc_handle

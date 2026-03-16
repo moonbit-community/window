@@ -91,52 +91,6 @@ fn objc_runtime_selector_handle(name : String) -> UInt64 {
 }
 
 ///|
-fn native_application_shared_handle() -> UInt64 {
-  let app_class = objc_runtime_class_handle("NSApplication")
-  if app_class == (0 : Int).to_uint64() {
-    return (0 : Int).to_uint64()
-  }
-  appkit_objc_msg_send_u64(
-    app_class,
-    objc_runtime_selector_handle("sharedApplication"),
-  )
-}
-
-///|
-fn native_window_objc_handle(handle : UInt64) -> UInt64 {
-  if handle == (0 : Int).to_uint64() {
-    return (0 : Int).to_uint64()
-  }
-  let window_or_self = appkit_objc_msg_send_u64(
-    handle,
-    objc_runtime_selector_handle("window"),
-  )
-  if window_or_self == (0 : Int).to_uint64() {
-    handle
-  } else {
-    window_or_self
-  }
-}
-
-///|
-fn native_window_content_view_objc_handle(handle : UInt64) -> UInt64 {
-  let window = native_window_objc_handle(handle)
-  if window == (0 : Int).to_uint64() {
-    return (0 : Int).to_uint64()
-  }
-  appkit_objc_msg_send_u64(window, objc_runtime_selector_handle("contentView"))
-}
-
-///|
-fn native_window_delegate_objc_handle(handle : UInt64) -> UInt64 {
-  let window = native_window_objc_handle(handle)
-  if window == (0 : Int).to_uint64() {
-    return (0 : Int).to_uint64()
-  }
-  appkit_objc_msg_send_u64(window, objc_runtime_selector_handle("delegate"))
-}
-
-///|
 fn objc_utf8_bytes_from_object(handle : UInt64) -> Bytes {
   if handle == (0 : Int).to_uint64() {
     return b""

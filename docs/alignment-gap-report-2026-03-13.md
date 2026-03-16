@@ -298,6 +298,7 @@ The implementation is **not yet 1:1 aligned** with `winit-reference` semantics.
 - Completed: moved monitor/display-mode wrapper logic (`native_find/copy/release/set/capture_*`, `native_monitor_ns_screen`, refresh-rate fallback) from `ffi.mbt` into `monitor.mbt`, and moved additional module-local wrappers (`native_create_window`, cursor-kind mapping, custom-cursor RGBA bridge, observer/notification remove guards, presentation-options accessors) to their owning modules.
 - Completed: moved app-state/menu-owned application wrappers out of `ffi.mbt` (`is_bundled`, activation-policy/app-activation setup, default-menu construction helpers), reducing `ffi` wrapper surface to 14 shared helpers (application run/wakeup/shared-handle and window-handle resolution primitives).
 - Completed: moved event-loop-owned application control wrappers (`run/stop`, app-defined wake event posting, hide/theme/tabbing controls, close-all-windows) from `ffi.mbt` into `event_loop.mbt`; `ffi` wrapper layer is now reduced to 4 shared handle-resolution helpers (`application_shared_handle`, `window_objc_handle`, `window_content_view_objc_handle`, `window_delegate_objc_handle`).
+- Completed: moved the final 4 shared handle-resolution helpers out of `ffi.mbt` into `util.mbt`; `ffi` now contains only low-level primitive bindings (`extern`) and primitive conversion helpers, with zero `fn native_*` behavior wrappers.
 
 ## Remaining Structural Work
 
