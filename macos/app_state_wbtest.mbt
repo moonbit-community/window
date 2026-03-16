@@ -197,6 +197,16 @@ test "will_terminate_clears_dispatch_handler" {
 }
 
 ///|
+test "will_terminate_does_not_set_exit_flag" {
+  reset_app_state_runtime_for_test()
+  assert_false(app_state_exiting())
+
+  app_state_will_terminate()
+
+  assert_false(app_state_exiting())
+}
+
+///|
 test "callbacks_requiring_running_are_ignored_when_not_running" {
   reset_app_state_runtime_for_test()
   app_state_queue_proxy_wake_up()

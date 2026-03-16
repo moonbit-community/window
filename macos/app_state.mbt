@@ -1011,7 +1011,6 @@ fn app_state_will_terminate() -> Unit {
   notify_windows_of_exit()
   app_state_runtime.val.dispatch_callback = None
   app_state_runtime.val.deferred_callbacks = []
-  app_state_exit()
   app_state_internal_exit()
 }
 

@@ -302,7 +302,7 @@ The implementation is **not yet 1:1 aligned** with `winit-reference` semantics.
 - Completed: moved the remaining non-`native_*` helper wrappers (`cg_*`, `objc_*`, and theme/string helpers) from `ffi.mbt` into `util.mbt`; `ffi.mbt` now contains only `extern` primitive bindings.
 - Completed: aligned `WillTerminate` handling to avoid handler-in-use re-entrancy coupling in the MoonBit callback bridge: termination is now handled directly with one-time guard (`will_terminate_handled`), reducing risk of close/destroy callbacks being queued and then discarded during shutdown.
 - Completed: aligned window-creation sizing with upstream `window_delegate::new_window`: `surface_size` is now the only explicit creation-size source, and missing size falls back directly to `800x600` (removed MoonBit-only `inner_size` fallback).
-- Completed: aligned termination handler ownership with upstream `event_handler.terminate()` intent by clearing the registered dispatch handler during `WillTerminate`.
+- Completed: aligned termination handler ownership with upstream `event_handler.terminate()` intent by clearing the registered dispatch handler during `WillTerminate`, and termination no longer force-sets `exit_requested` (it now only follows terminate + `internal_exit` flow).
 
 ## Remaining Structural Work
 
