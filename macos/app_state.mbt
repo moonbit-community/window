@@ -401,8 +401,8 @@ fn app_state_queue_native_window_event(
 ///|
 fn app_state_install_native_callbacks() -> Unit {
   native_install_input_event_callback(
-    fn(callback, input_event_payload_handle) {
-      callback(input_event_payload_handle)
+    fn(callback, raw_id, kind, event_handle) {
+      callback(raw_id, kind, event_handle)
     },
     native_callback_input_event,
   )
@@ -414,12 +414,14 @@ fn app_state_install_native_callbacks() -> Unit {
       x,
       y,
       state,
-      text,
+      text_handle,
       cursor_start,
       cursor_end,
-      path,
+      path_handle,
     ) {
-      callback(raw_id, kind, x, y, state, text, cursor_start, cursor_end, path)
+      callback(
+        raw_id, kind, x, y, state, text_handle, cursor_start, cursor_end, path_handle,
+      )
     },
     native_callback_text_input_event,
   )
@@ -430,9 +432,7 @@ fn app_state_install_native_callbacks() -> Unit {
     native_callback_window_event,
   )
   native_install_device_event_callback(
-    fn(callback, kind, button, delta_x, delta_y) {
-      callback(kind, button, delta_x, delta_y)
-    },
+    fn(callback, event_handle) { callback(event_handle) },
     native_callback_device_event,
   )
 }
@@ -448,44 +448,12 @@ fn native_callback_will_terminate() -> Unit {
 }
 
 ///|
-fn native_callback_input_event(input_event_payload_handle : UInt64) -> Unit {
-  let raw_id = native_input_event_payload_raw_id(input_event_payload_handle)
-  let kind = native_input_event_payload_kind(input_event_payload_handle)
-  let x = native_input_event_payload_x(input_event_payload_handle)
-  let y = native_input_event_payload_y(input_event_payload_handle)
-  let state = native_input_event_payload_state(input_event_payload_handle)
-  let button = native_input_event_payload_button(input_event_payload_handle)
-  let modifiers = native_input_event_payload_modifiers(
-    input_event_payload_handle,
-  )
-  let scancode = native_input_event_payload_scancode(input_event_payload_handle)
-  let repeat = native_input_event_payload_repeat(input_event_payload_handle)
-  let pointer_source = native_input_event_payload_pointer_source(
-    input_event_payload_handle,
-  )
-  let pointer_kind = native_input_event_payload_pointer_kind(
-    input_event_payload_handle,
-  )
-  let scroll_delta_kind = native_input_event_payload_scroll_delta_kind(
-    input_event_payload_handle,
-  )
-  let delta_x = native_input_event_payload_delta_x(input_event_payload_handle)
-  let delta_y = native_input_event_payload_delta_y(input_event_payload_handle)
-  let phase = native_input_event_payload_phase(input_event_payload_handle)
-  let text_with_all_modifiers = native_input_event_payload_text_with_all_modifiers(
-    input_event_payload_handle,
-  )
-  let text_ignoring_modifiers = native_input_event_payload_text_ignoring_modifiers(
-    input_event_payload_handle,
-  )
-  let text_without_modifiers = native_input_event_payload_text_without_modifiers(
-    input_event_payload_handle,
-  )
-  queue_native_input_event(
-    raw_id, kind, x, y, state, button, modifiers, scancode, repeat, pointer_source,
-    pointer_kind, scroll_delta_kind, delta_x, delta_y, phase, text_with_all_modifiers,
-    text_ignoring_modifiers, text_without_modifiers,
-  )
+fn native_callback_input_event(
+  raw_id : Int,
+  kind : Int,
+  event_handle : UInt64,
+) -> Unit {
+  queue_native_input_event(raw_id, kind, event_handle)
 }
 
 ///|
@@ -495,24 +463,64 @@ fn native_callback_text_input_event(
   x : Double,
   y : Double,
   state : Int,
-  text : Bytes,
+  text_handle : UInt64,
   cursor_start : Int,
   cursor_end : Int,
-  path : Bytes,
+  path_handle : UInt64,
 ) -> Unit {
   queue_native_text_input_event(
-    raw_id, kind, x, y, state, text, cursor_start, cursor_end, path,
+    raw_id, kind, x, y, state, text_handle, cursor_start, cursor_end, path_handle,
   )
 }
 
 ///|
-fn native_callback_device_event(
-  native_event_kind : Int,
-  button : Int,
-  delta_x : Double,
-  delta_y : Double,
-) -> Unit {
-  app_state_queue_device_event(native_event_kind, button, delta_x, delta_y)
+fn native_callback_device_event(event_handle : UInt64) -> Unit {
+  if event_handle == (0 : Int).to_uint64() {
+    return ()
+  }
+  let event_type = appkit_objc_msg_send_i64(
+    event_handle,
+    objc_runtime_selector_handle("type"),
+  ).to_int()
+  match event_type {
+    // NSEventTypeMouseMoved | LeftMouseDragged | RightMouseDragged | OtherMouseDragged.
+    5 | 6 | 7 | 27 => {
+      let delta_x = appkit_objc_msg_send_double(
+        event_handle,
+        objc_runtime_selector_handle("deltaX"),
+      )
+      let delta_y = appkit_objc_msg_send_double(
+        event_handle,
+        objc_runtime_selector_handle("deltaY"),
+      )
+      if delta_x != 0.0 || delta_y != 0.0 {
+        app_state_queue_device_event(1, 0, delta_x, delta_y)
+      }
+    }
+    // NSEventTypeLeftMouseDown | RightMouseDown | OtherMouseDown.
+    1 | 3 | 25 =>
+      app_state_queue_device_event(
+        2,
+        appkit_objc_msg_send_i64(
+          event_handle,
+          objc_runtime_selector_handle("buttonNumber"),
+        ).to_int(),
+        0.0,
+        0.0,
+      )
+    // NSEventTypeLeftMouseUp | RightMouseUp | OtherMouseUp.
+    2 | 4 | 26 =>
+      app_state_queue_device_event(
+        3,
+        appkit_objc_msg_send_i64(
+          event_handle,
+          objc_runtime_selector_handle("buttonNumber"),
+        ).to_int(),
+        0.0,
+        0.0,
+      )
+    _ => ()
+  }
 }
 
 ///|
@@ -695,9 +703,9 @@ fn app_state_process_queued_fullscreen_request(raw_id : Int) -> Unit {
     Some(fullscreen) =>
       match app_state_window_handle(raw_id) {
         Some(window_handle) =>
-          if native_window_in_fullscreen_transition(window_handle) == false {
+          if window_in_fullscreen_transition(window_handle) == false {
             app_state_clear_fullscreen_request(raw_id)
-            native_window_set_fullscreen(window_handle, fullscreen)
+            toggle_window_fullscreen(window_handle, fullscreen)
           }
         None => app_state_clear_fullscreen_request(raw_id)
       }

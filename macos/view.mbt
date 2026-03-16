@@ -319,10 +319,116 @@ fn queue_input_event(
         window_id,
         @core.WindowEvent::RedrawRequested,
       )
-    100 => native_callback_device_event(1, button, delta_x, delta_y)
-    101 => native_callback_device_event(2, button, 0.0, 0.0)
-    102 => native_callback_device_event(3, button, 0.0, 0.0)
+    100 => app_state_queue_device_event(1, button, delta_x, delta_y)
+    101 => app_state_queue_device_event(2, button, 0.0, 0.0)
+    102 => app_state_queue_device_event(3, button, 0.0, 0.0)
     _ => ()
+  }
+}
+
+///|
+fn native_modifiers_from_modifier_flags(modifier_flags : Int) -> Int {
+  let mut modifiers = 0
+  if (modifier_flags & 131_072) != 0 {
+    modifiers = modifiers | 1
+  }
+  if (modifier_flags & 262_144) != 0 {
+    modifiers = modifiers | 2
+  }
+  if (modifier_flags & 524_288) != 0 {
+    modifiers = modifiers | 4
+  }
+  if (modifier_flags & 1_048_576) != 0 {
+    modifiers = modifiers | 8
+  }
+  modifiers
+}
+
+///|
+fn option_as_alt_for_window(raw_id : Int) -> Int {
+  match app_state_window_handle(raw_id) {
+    Some(window_handle) => {
+      let content_view = native_window_content_view_objc_handle(window_handle)
+      if content_view == (0 : Int).to_uint64() {
+        0
+      } else {
+        appkit_objc_msg_send_u64(
+          content_view,
+          objc_runtime_selector_handle("optionAsAlt"),
+        ).to_int()
+      }
+    }
+    None => 0
+  }
+}
+
+///|
+fn pointer_button_state_from_event_type(event_type : Int) -> Int {
+  match event_type {
+    // NSEventTypeLeftMouseDown | RightMouseDown | OtherMouseDown.
+    1 | 3 | 25 => 1
+    // NSEventTypeLeftMouseUp | RightMouseUp | OtherMouseUp.
+    2 | 4 | 26 => 2
+    _ => 0
+  }
+}
+
+///|
+fn flags_changed_state_from_scancode_and_flags(
+  scancode : Int,
+  modifier_flags : Int,
+) -> Int {
+  let pressed = match scancode {
+    // Shift.
+    56 | 60 => (modifier_flags & 131_072) != 0
+    // Control.
+    59 | 62 => (modifier_flags & 262_144) != 0
+    // Option.
+    58 | 61 => (modifier_flags & 524_288) != 0
+    // Command.
+    55 | 54 => (modifier_flags & 1_048_576) != 0
+    // CapsLock.
+    57 => (modifier_flags & 65_536) != 0
+    // Function.
+    63 => (modifier_flags & 8_388_608) != 0
+    _ => return 0
+  }
+  if pressed {
+    1
+  } else {
+    2
+  }
+}
+
+///|
+fn keyboard_state_from_event_type(
+  event_type : Int,
+  scancode : Int,
+  modifier_flags : Int,
+) -> Int {
+  match event_type {
+    // NSEventTypeKeyDown.
+    10 => 1
+    // NSEventTypeKeyUp.
+    11 => 2
+    // NSEventTypeFlagsChanged.
+    12 => flags_changed_state_from_scancode_and_flags(scancode, modifier_flags)
+    _ => 0
+  }
+}
+
+///|
+fn nsevent_phase_to_native(phase : Int) -> Int {
+  match phase {
+    // NSEventPhaseMayBegin | NSEventPhaseBegan.
+    32 | 1 => 1
+    // NSEventPhaseChanged.
+    4 => 2
+    // NSEventPhaseEnded.
+    8 => 3
+    // NSEventPhaseCancelled.
+    16 => 4
+    _ => 0
   }
 }
 
@@ -330,24 +436,252 @@ fn queue_input_event(
 fn queue_native_input_event(
   raw_id : Int,
   kind : Int,
-  x : Double,
-  y : Double,
-  state : Int,
-  button : Int,
-  modifiers : Int,
-  scancode : Int,
-  repeat : Int,
-  pointer_source : Int,
-  pointer_kind : Int,
-  scroll_delta_kind : Int,
-  delta_x : Double,
-  delta_y : Double,
-  phase : Int,
-  text_with_all_modifiers : Bytes,
-  text_ignoring_modifiers : Bytes,
-  text_without_modifiers : Bytes,
+  event_handle : UInt64,
 ) -> Unit {
   let empty_text = @utf8.encode(""[:], bom=false)
+  let event_type = if event_handle == (0 : Int).to_uint64() {
+    0
+  } else {
+    appkit_objc_msg_send_i64(event_handle, objc_runtime_selector_handle("type")).to_int()
+  }
+  let modifier_flags = if event_handle == (0 : Int).to_uint64() {
+    0
+  } else {
+    appkit_objc_msg_send_i64(
+      event_handle,
+      objc_runtime_selector_handle("modifierFlags"),
+    ).to_int()
+  }
+  let modifiers = native_modifiers_from_modifier_flags(modifier_flags)
+  let x = if event_handle == (0 : Int).to_uint64() {
+    0.0
+  } else {
+    appkit_objc_msg_send_point_x(
+      event_handle,
+      objc_runtime_selector_handle("locationInWindow"),
+    )
+  }
+  let y = if event_handle == (0 : Int).to_uint64() {
+    0.0
+  } else {
+    appkit_objc_msg_send_point_y(
+      event_handle,
+      objc_runtime_selector_handle("locationInWindow"),
+    )
+  }
+  let mut state = 0
+  let mut button = 0
+  let mut scancode = 0
+  let mut repeat = 0
+  let mut pointer_source = 0
+  let mut pointer_kind = 0
+  let mut scroll_delta_kind = 0
+  let mut delta_x = 0.0
+  let mut delta_y = 0.0
+  let mut phase = 0
+  let mut text_with_all_modifiers = empty_text
+  let mut text_ignoring_modifiers = empty_text
+  let mut text_without_modifiers = empty_text
+  match kind {
+    1 => {
+      pointer_source = 1
+      pointer_kind = 1
+    }
+    2 => {
+      pointer_source = 1
+      pointer_kind = 1
+    }
+    3 => {
+      pointer_source = 1
+      pointer_kind = 1
+    }
+    4 => {
+      pointer_source = 1
+      pointer_kind = 1
+      state = pointer_button_state_from_event_type(event_type)
+      button = if event_handle == (0 : Int).to_uint64() {
+        0
+      } else {
+        appkit_objc_msg_send_i64(
+          event_handle,
+          objc_runtime_selector_handle("buttonNumber"),
+        ).to_int()
+      }
+    }
+    5 => {
+      pointer_source = 1
+      pointer_kind = 1
+      if event_handle != (0 : Int).to_uint64() {
+        scroll_delta_kind = if appkit_objc_msg_send_bool(
+            event_handle,
+            objc_runtime_selector_handle("hasPreciseScrollingDeltas"),
+          ) {
+          2
+        } else {
+          1
+        }
+        delta_x = appkit_objc_msg_send_double(
+          event_handle,
+          objc_runtime_selector_handle("scrollingDeltaX"),
+        )
+        delta_y = appkit_objc_msg_send_double(
+          event_handle,
+          objc_runtime_selector_handle("scrollingDeltaY"),
+        )
+        let momentum_phase = nsevent_phase_to_native(
+          appkit_objc_msg_send_i64(
+            event_handle,
+            objc_runtime_selector_handle("momentumPhase"),
+          ).to_int(),
+        )
+        if momentum_phase != 0 {
+          phase = momentum_phase
+        } else {
+          let event_phase = nsevent_phase_to_native(
+            appkit_objc_msg_send_i64(
+              event_handle,
+              objc_runtime_selector_handle("phase"),
+            ).to_int(),
+          )
+          phase = if event_phase != 0 { event_phase } else { 2 }
+        }
+      }
+    }
+    6 => ()
+    7 => {
+      if event_handle != (0 : Int).to_uint64() {
+        scancode = appkit_objc_msg_send_i64(
+          event_handle,
+          objc_runtime_selector_handle("keyCode"),
+        ).to_int()
+      }
+      state = keyboard_state_from_event_type(
+        event_type, scancode, modifier_flags,
+      )
+      repeat = if event_type == 10 &&
+        event_handle != (0 : Int).to_uint64() &&
+        appkit_objc_msg_send_bool(
+          event_handle,
+          objc_runtime_selector_handle("isARepeat"),
+        ) {
+        1
+      } else {
+        0
+      }
+      if (event_type == 10 || event_type == 11) &&
+        event_handle != (0 : Int).to_uint64() {
+        let characters = objc_utf8_bytes_from_object(
+          appkit_objc_msg_send_u64(
+            event_handle,
+            objc_runtime_selector_handle("characters"),
+          ),
+        )
+        let characters_ignoring_modifiers = objc_utf8_bytes_from_object(
+          appkit_objc_msg_send_u64(
+            event_handle,
+            objc_runtime_selector_handle("charactersIgnoringModifiers"),
+          ),
+        )
+        text_with_all_modifiers = characters
+        text_ignoring_modifiers = characters_ignoring_modifiers
+        text_without_modifiers = characters_ignoring_modifiers
+        let left_alt_pressed = (modifier_flags & 0x20) != 0
+        let right_alt_pressed = (modifier_flags & 0x40) != 0
+        let alt_pressed = left_alt_pressed || right_alt_pressed
+        let control_pressed = (modifier_flags & 262_144) != 0
+        let meta_pressed = (modifier_flags & 1_048_576) != 0
+        if !control_pressed && !meta_pressed {
+          let option_as_alt = option_as_alt_for_window(raw_id)
+          if (option_as_alt == 1 && left_alt_pressed) ||
+            (option_as_alt == 2 && right_alt_pressed) ||
+            (option_as_alt == 3 && alt_pressed) {
+            text_with_all_modifiers = characters_ignoring_modifiers
+          }
+        }
+      }
+    }
+    13 => {
+      pointer_source = 1
+      pointer_kind = 1
+      if event_handle != (0 : Int).to_uint64() {
+        delta_x = appkit_objc_msg_send_double(
+          event_handle,
+          objc_runtime_selector_handle("magnification"),
+        )
+        phase = nsevent_phase_to_native(
+          appkit_objc_msg_send_i64(
+            event_handle,
+            objc_runtime_selector_handle("phase"),
+          ).to_int(),
+        )
+      }
+    }
+    14 => {
+      pointer_source = 1
+      pointer_kind = 1
+      if event_handle != (0 : Int).to_uint64() {
+        delta_x = appkit_objc_msg_send_double(
+          event_handle,
+          objc_runtime_selector_handle("deltaX"),
+        )
+        delta_y = appkit_objc_msg_send_double(
+          event_handle,
+          objc_runtime_selector_handle("deltaY"),
+        )
+        phase = nsevent_phase_to_native(
+          appkit_objc_msg_send_i64(
+            event_handle,
+            objc_runtime_selector_handle("phase"),
+          ).to_int(),
+        )
+        if phase == 0 {
+          phase = 2
+        }
+      }
+    }
+    15 => {
+      pointer_source = 1
+      pointer_kind = 1
+    }
+    16 => {
+      pointer_source = 1
+      pointer_kind = 1
+      if event_handle != (0 : Int).to_uint64() {
+        delta_x = appkit_objc_msg_send_double(
+          event_handle,
+          objc_runtime_selector_handle("rotation"),
+        )
+        phase = nsevent_phase_to_native(
+          appkit_objc_msg_send_i64(
+            event_handle,
+            objc_runtime_selector_handle("phase"),
+          ).to_int(),
+        )
+      }
+    }
+    17 => {
+      pointer_source = 1
+      pointer_kind = 1
+      if event_handle != (0 : Int).to_uint64() {
+        state = appkit_objc_msg_send_i64(
+          event_handle,
+          objc_runtime_selector_handle("stage"),
+        ).to_int()
+        delta_x = appkit_objc_msg_send_double(
+          event_handle,
+          objc_runtime_selector_handle("pressure"),
+        )
+      }
+    }
+    19 => ()
+    _ => ()
+  }
+  if kind == 6 {
+    state = 0
+  }
+  if kind == 7 && state == 0 {
+    repeat = 0
+  }
   queue_input_event(
     raw_id, kind, x, y, state, button, modifiers, scancode, repeat, pointer_source,
     pointer_kind, scroll_delta_kind, delta_x, delta_y, phase, text_with_all_modifiers,
@@ -362,12 +696,22 @@ fn queue_native_text_input_event(
   x : Double,
   y : Double,
   state : Int,
-  text : Bytes,
+  text_handle : UInt64,
   cursor_start : Int,
   cursor_end : Int,
-  path : Bytes,
+  path_handle : UInt64,
 ) -> Unit {
   let empty_text = @utf8.encode(""[:], bom=false)
+  let text = if text_handle == (0 : Int).to_uint64() {
+    empty_text
+  } else {
+    objc_utf8_bytes_from_object(text_handle)
+  }
+  let path = if path_handle == (0 : Int).to_uint64() {
+    empty_text
+  } else {
+    objc_utf8_bytes_from_object(path_handle)
+  }
   match kind {
     8 =>
       queue_input_event(
