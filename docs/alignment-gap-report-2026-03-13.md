@@ -304,6 +304,7 @@ The implementation is **not yet 1:1 aligned** with `winit-reference` semantics.
 - Completed: aligned window-creation sizing with upstream `window_delegate::new_window`: `surface_size` is now the only explicit creation-size source, and missing size falls back directly to `800x600` (removed MoonBit-only `inner_size` fallback).
 - Completed: aligned termination handler ownership with upstream `event_handler.terminate()` intent by clearing the registered dispatch handler during `WillTerminate`, and termination no longer force-sets `exit_requested` (it now only follows terminate + `internal_exit` flow).
 - Completed: hardened FFI surface governance to full-symbol allowlisting: `scripts/check_ffi_surface.sh` now fails on any export-list drift (added or removed symbols), and `docs/ffi-export-allowlist.txt` is synchronized to the current primitive export set.
+- Completed: removed MoonBit-only manual `finishLaunching` tracking from `event_loop` native run/stop paths; `NSApplication::run`/`stop` are now called directly to match upstream control-flow ownership.
 
 ## Remaining Structural Work
 

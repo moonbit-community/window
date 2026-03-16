@@ -27,9 +27,6 @@ pub fn EventLoop::display_handle(self : EventLoop) -> UInt64 {
 }
 
 ///|
-let application_launch_finished : Ref[Bool] = Ref::new(false)
-
-///|
 fn native_application_hide() -> Unit {
   let app = native_application_shared_handle()
   if app == (0 : Int).to_uint64() {
@@ -169,13 +166,6 @@ fn native_application_run() -> Unit {
   if app == (0 : Int).to_uint64() {
     return ()
   }
-  if !application_launch_finished.val {
-    appkit_objc_msg_send_void(
-      app,
-      objc_runtime_selector_handle("finishLaunching"),
-    )
-    application_launch_finished.val = true
-  }
   appkit_objc_msg_send_void(app, objc_runtime_selector_handle("run"))
 }
 
@@ -184,13 +174,6 @@ fn native_application_stop_immediately() -> Unit {
   let app = native_application_shared_handle()
   if app == (0 : Int).to_uint64() {
     return ()
-  }
-  if !application_launch_finished.val {
-    appkit_objc_msg_send_void(
-      app,
-      objc_runtime_selector_handle("finishLaunching"),
-    )
-    application_launch_finished.val = true
   }
   appkit_objc_msg_send_void_u64(
     app,
