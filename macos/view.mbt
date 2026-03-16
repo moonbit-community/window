@@ -112,6 +112,30 @@ let view_ime_state_preedit = 2
 let view_ime_state_committed = 3
 
 ///|
+let native_view_state_query_ime_allowed = 1
+
+///|
+let native_view_state_query_marked_text_length = 2
+
+///|
+let native_view_state_query_selected_range_location = 3
+
+///|
+let native_view_state_query_selected_range_length = 4
+
+///|
+let native_view_state_query_ime_cursor_x = 5
+
+///|
+let native_view_state_query_ime_cursor_y = 6
+
+///|
+let native_view_state_query_ime_cursor_width = 7
+
+///|
+let native_view_state_query_ime_cursor_height = 8
+
+///|
 let view_ime_window_ids : Ref[Array[Int]] = Ref::new([])
 
 ///|
@@ -130,6 +154,15 @@ let view_ime_input_sources : Ref[Array[String]] = Ref::new([])
 let view_ime_has_marked_texts : Ref[Array[Bool]] = Ref::new([])
 
 ///|
+let view_ime_marked_text_lengths : Ref[Array[Int]] = Ref::new([])
+
+///|
+let view_ime_selected_range_locations : Ref[Array[Int]] = Ref::new([])
+
+///|
+let view_ime_selected_range_lengths : Ref[Array[Int]] = Ref::new([])
+
+///|
 fn view_ime_index(raw_id : Int) -> Int? {
   view_ime_window_ids.val.search_by(id => id == raw_id)
 }
@@ -145,6 +178,9 @@ fn view_ime_ensure_index(raw_id : Int) -> Int {
       view_ime_forward_key_to_apps.val.push(false)
       view_ime_input_sources.val.push("")
       view_ime_has_marked_texts.val.push(false)
+      view_ime_marked_text_lengths.val.push(0)
+      view_ime_selected_range_locations.val.push(-1)
+      view_ime_selected_range_lengths.val.push(0)
       view_ime_window_ids.val.length() - 1
     }
   }
@@ -221,6 +257,48 @@ fn view_set_has_marked_text(raw_id : Int, has_marked_text : Bool) -> Unit {
 }
 
 ///|
+fn view_marked_text_length(raw_id : Int) -> Int {
+  match view_ime_index(raw_id) {
+    Some(index) => view_ime_marked_text_lengths.val[index]
+    None => 0
+  }
+}
+
+///|
+fn view_set_marked_text_length(raw_id : Int, length : Int) -> Unit {
+  let index = view_ime_ensure_index(raw_id)
+  view_ime_marked_text_lengths.val[index] = clamp_non_negative(length)
+}
+
+///|
+fn view_selected_range_location(raw_id : Int) -> Int {
+  match view_ime_index(raw_id) {
+    Some(index) => view_ime_selected_range_locations.val[index]
+    None => -1
+  }
+}
+
+///|
+fn view_selected_range_length(raw_id : Int) -> Int {
+  match view_ime_index(raw_id) {
+    Some(index) => view_ime_selected_range_lengths.val[index]
+    None => 0
+  }
+}
+
+///|
+fn view_set_selected_range(raw_id : Int, location : Int, length : Int) -> Unit {
+  let index = view_ime_ensure_index(raw_id)
+  if location < 0 {
+    view_ime_selected_range_locations.val[index] = -1
+    view_ime_selected_range_lengths.val[index] = 0
+  } else {
+    view_ime_selected_range_locations.val[index] = location
+    view_ime_selected_range_lengths.val[index] = clamp_non_negative(length)
+  }
+}
+
+///|
 fn view_content_view_handle(raw_id : Int) -> UInt64 {
   match app_state_window_handle(raw_id) {
     Some(window_handle) => native_window_content_view_objc_handle(window_handle)
@@ -239,15 +317,46 @@ fn view_ime_allowed(raw_id : Int) -> Bool {
 ///|
 fn view_clear_marked_text(raw_id : Int) -> Unit {
   view_set_has_marked_text(raw_id, false)
-  let content_view = view_content_view_handle(raw_id)
-  if content_view == (0 : Int).to_uint64() {
-    ()
-  } else {
-    appkit_objc_msg_send_void_i32(
-      content_view,
-      objc_runtime_selector_handle("setMarkedTextLength:"),
-      0,
-    )
+  view_set_marked_text_length(raw_id, 0)
+  view_set_selected_range(raw_id, -1, 0)
+}
+
+///|
+fn view_native_query_state(raw_id : Int, kind : Int) -> Int {
+  match kind {
+    _ if kind == native_view_state_query_ime_allowed =>
+      if view_ime_allowed(raw_id) {
+        1
+      } else {
+        0
+      }
+    _ if kind == native_view_state_query_marked_text_length =>
+      view_marked_text_length(raw_id)
+    _ if kind == native_view_state_query_selected_range_location =>
+      view_selected_range_location(raw_id)
+    _ if kind == native_view_state_query_selected_range_length =>
+      view_selected_range_length(raw_id)
+    _ =>
+      match app_state_window_handle(raw_id) {
+        Some(window_handle) =>
+          match kind {
+            _ if kind == native_view_state_query_ime_cursor_x =>
+              window_ime_cursor_x(window_handle)
+            _ if kind == native_view_state_query_ime_cursor_y =>
+              window_ime_cursor_y(window_handle)
+            _ if kind == native_view_state_query_ime_cursor_width =>
+              window_ime_cursor_width(window_handle)
+            _ if kind == native_view_state_query_ime_cursor_height =>
+              window_ime_cursor_height(window_handle)
+            _ => 0
+          }
+        None =>
+          match kind {
+            _ if kind == native_view_state_query_ime_cursor_width => 1
+            _ if kind == native_view_state_query_ime_cursor_height => 1
+            _ => 0
+          }
+      }
   }
 }
 
@@ -309,6 +418,19 @@ fn view_utf8_offset_for_utf16_index(text_handle : UInt64, index : Int) -> Int {
   } else {
     objc_utf8_bytes_from_object(prefix).length()
   }
+}
+
+///|
+fn view_utf16_length(text_handle : UInt64) -> Int {
+  if text_handle == (0 : Int).to_uint64() {
+    return 0
+  }
+  clamp_non_negative(
+    appkit_objc_msg_send_i64(
+      text_handle,
+      objc_runtime_selector_handle("length"),
+    ).to_int(),
+  )
 }
 
 ///|
@@ -390,6 +512,7 @@ fn text_from_cstr_handle(cstr_handle : UInt64) -> String {
 
 ///|
 fn view_disable_ime(raw_id : Int) -> Unit {
+  view_clear_marked_text(raw_id)
   if view_ime_state(raw_id) != view_ime_state_disabled {
     view_set_ime_state(raw_id, view_ime_state_disabled)
     view_queue_ime_event(raw_id, @core.Ime::Disabled)
@@ -412,6 +535,9 @@ fn view_clear_ime_state(raw_id : Int) -> Unit {
       ignore(view_ime_forward_key_to_apps.val.remove(index))
       ignore(view_ime_input_sources.val.remove(index))
       ignore(view_ime_has_marked_texts.val.remove(index))
+      ignore(view_ime_marked_text_lengths.val.remove(index))
+      ignore(view_ime_selected_range_locations.val.remove(index))
+      ignore(view_ime_selected_range_lengths.val.remove(index))
     }
     None => ()
   }
@@ -1090,9 +1216,14 @@ fn queue_native_text_input_event(
       if text.length() > 0 {
         view_set_ime_state(raw_id, view_ime_state_preedit)
         view_set_has_marked_text(raw_id, true)
+        view_set_marked_text_length(
+          raw_id,
+          view_utf16_length(text_string_handle),
+        )
+        view_set_selected_range(raw_id, state, cursor_start)
       } else {
         view_set_ime_state(raw_id, view_ime_state_ground)
-        view_set_has_marked_text(raw_id, false)
+        view_clear_marked_text(raw_id)
       }
       view_queue_ime_event(raw_id, @core.Ime::Preedit(text, cursor))
     }
@@ -1102,7 +1233,7 @@ fn queue_native_text_input_event(
         return ()
       }
       view_set_ime_state(raw_id, view_ime_state_ground)
-      view_set_has_marked_text(raw_id, false)
+      view_clear_marked_text(raw_id)
       view_queue_ime_event(raw_id, @core.Ime::Preedit("", None))
     }
     // insertText:replacementRange:

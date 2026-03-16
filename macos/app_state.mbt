@@ -577,6 +577,10 @@ fn app_state_install_native_callbacks() -> Unit {
     fn(callback, event_handle) { callback(event_handle) },
     native_callback_device_event,
   )
+  native_install_view_state_query_callback(
+    fn(callback, raw_id, kind) { callback(raw_id, kind) },
+    native_callback_view_state_query,
+  )
 }
 
 ///|
@@ -667,6 +671,11 @@ fn native_callback_device_event(event_handle : UInt64) -> Unit {
       )
     _ => ()
   }
+}
+
+///|
+fn native_callback_view_state_query(raw_id : Int, kind : Int) -> Int {
+  view_native_query_state(raw_id, kind)
 }
 
 ///|

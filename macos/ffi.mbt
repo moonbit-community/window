@@ -154,6 +154,14 @@ extern "C" fn native_install_device_event_callback(
 ) -> Unit = "mbw_install_device_event_callback"
 
 ///|
+#borrow(call_closure)
+#owned(callback)
+extern "C" fn native_install_view_state_query_callback(
+  call_closure : FuncRef[((Int, Int) -> Int, Int, Int) -> Int],
+  callback : (Int, Int) -> Int,
+) -> Unit = "mbw_install_view_state_query_callback"
+
+///|
 extern "C" fn native_override_send_event() -> Unit = "mbw_override_send_event"
 
 ///|

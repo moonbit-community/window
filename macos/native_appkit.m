@@ -21,6 +21,7 @@ typedef void (*mbw_text_input_event_trampoline_t)(void *closure, int32_t raw_id,
                                                   uint64_t text_handle, int32_t cursor_start,
                                                   int32_t cursor_end, uint64_t path_handle);
 typedef void (*mbw_device_event_trampoline_t)(void *closure, uint64_t event_handle);
+typedef int32_t (*mbw_view_state_query_trampoline_t)(void *closure, int32_t raw_id, int32_t kind);
 typedef void (*mbw_lifecycle_trampoline_t)(void *closure, int32_t kind);
 typedef void (*mbw_send_event_impl_t)(id self, SEL _cmd, NSEvent *event);
 
@@ -32,6 +33,8 @@ static mbw_text_input_event_trampoline_t g_text_input_event_trampoline = NULL;
 static void *g_text_input_event_closure = NULL;
 static mbw_device_event_trampoline_t g_device_event_trampoline = NULL;
 static void *g_device_event_closure = NULL;
+static mbw_view_state_query_trampoline_t g_view_state_query_trampoline = NULL;
+static void *g_view_state_query_closure = NULL;
 static mbw_send_event_impl_t g_original_send_event_impl = NULL;
 static BOOL g_app_initialized = NO;
 
@@ -47,6 +50,17 @@ static void mbw_override_send_event_for_application(NSApplication *app, BOOL upd
 static CFRunLoopActivity mbw_main_run_loop_activity_from_kind(int32_t activity_kind);
 static void mbw_main_run_loop_observer_callback(CFRunLoopObserverRef observer,
                                                 CFRunLoopActivity activity, void *info);
+
+enum {
+  MBW_VIEW_STATE_QUERY_IME_ALLOWED = 1,
+  MBW_VIEW_STATE_QUERY_MARKED_TEXT_LENGTH = 2,
+  MBW_VIEW_STATE_QUERY_SELECTED_RANGE_LOCATION = 3,
+  MBW_VIEW_STATE_QUERY_SELECTED_RANGE_LENGTH = 4,
+  MBW_VIEW_STATE_QUERY_IME_CURSOR_X = 5,
+  MBW_VIEW_STATE_QUERY_IME_CURSOR_Y = 6,
+  MBW_VIEW_STATE_QUERY_IME_CURSOR_WIDTH = 7,
+  MBW_VIEW_STATE_QUERY_IME_CURSOR_HEIGHT = 8,
+};
 
 static void mbw_call_window_event_trampoline(int32_t kind, int32_t raw_id, int32_t arg0,
                                              int32_t arg1, int32_t arg2, double argd) {
@@ -78,6 +92,13 @@ static void mbw_call_device_event_trampoline(uint64_t event_handle) {
     return;
   }
   g_device_event_trampoline(g_device_event_closure, event_handle);
+}
+
+static int32_t mbw_query_view_state(int32_t raw_id, int32_t kind, int32_t default_value) {
+  if (raw_id <= 0 || g_view_state_query_trampoline == NULL || g_view_state_query_closure == NULL) {
+    return default_value;
+  }
+  return g_view_state_query_trampoline(g_view_state_query_closure, raw_id, kind);
 }
 
 static void mbw_call_lifecycle_trampoline(mbw_lifecycle_trampoline_t trampoline, void *closure,
@@ -113,12 +134,8 @@ static void mbw_emit_drag_event(int32_t raw_id, int32_t kind, id<NSDraggingInfo>
 
 @interface MBWContentView : NSView <NSTextInputClient>
 @property(nonatomic, assign) BOOL acceptsFirstMouseEnabled;
-@property(nonatomic, assign) BOOL imeAllowed;
-@property(nonatomic, assign) NSPoint imeCursorPosition;
-@property(nonatomic, assign) NSSize imeCursorSize;
 @property(nonatomic, assign) int32_t rawId;
 @property(nonatomic, assign) NSTrackingRectTag trackingRectTag;
-@property(nonatomic, assign) int32_t markedTextLength;
 - (void)mbw_emitTextInputWithKind:(int32_t)kind
                       eventHandle:(uint64_t)eventHandle
                            state:(int32_t)state
@@ -324,7 +341,7 @@ static void mbw_emit_drag_event(int32_t raw_id, int32_t kind, id<NSDraggingInfo>
                       cursorStart:0
                         cursorEnd:0
                        pathHandle:0];
-  if (self.imeAllowed) {
+  if (mbw_query_view_state(self.rawId, MBW_VIEW_STATE_QUERY_IME_ALLOWED, 0) != 0) {
     NSArray<NSEvent *> *events = @[ event ];
     [self interpretKeyEvents:events];
   }
@@ -346,29 +363,35 @@ static void mbw_emit_drag_event(int32_t raw_id, int32_t kind, id<NSDraggingInfo>
 }
 
 - (BOOL)hasMarkedText {
-  return self.markedTextLength > 0;
+  return mbw_query_view_state(self.rawId, MBW_VIEW_STATE_QUERY_MARKED_TEXT_LENGTH, 0) > 0;
 }
 
 - (NSRange)markedRange {
-  if (self.markedTextLength <= 0) {
+  int32_t marked_text_length =
+      mbw_query_view_state(self.rawId, MBW_VIEW_STATE_QUERY_MARKED_TEXT_LENGTH, 0);
+  if (marked_text_length <= 0) {
     return NSMakeRange(NSNotFound, 0);
   }
-  return NSMakeRange(0, (NSUInteger)self.markedTextLength);
+  return NSMakeRange(0, (NSUInteger)marked_text_length);
 }
 
 - (NSRange)selectedRange {
-  return NSMakeRange(NSNotFound, 0);
+  int32_t location =
+      mbw_query_view_state(self.rawId, MBW_VIEW_STATE_QUERY_SELECTED_RANGE_LOCATION, -1);
+  if (location < 0) {
+    return NSMakeRange(NSNotFound, 0);
+  }
+  int32_t length = mbw_query_view_state(self.rawId, MBW_VIEW_STATE_QUERY_SELECTED_RANGE_LENGTH, 0);
+  if (length < 0) {
+    length = 0;
+  }
+  return NSMakeRange((NSUInteger)location, (NSUInteger)length);
 }
 
 - (void)setMarkedText:(id)string
         selectedRange:(NSRange)selectedRange
      replacementRange:(NSRange)replacementRange {
   (void)replacementRange;
-  NSUInteger marked_text_length = 0;
-  if (string != nil && [string respondsToSelector:@selector(length)]) {
-    marked_text_length = [string length];
-  }
-  self.markedTextLength = [self mbw_i32FromRangeValue:marked_text_length];
   [self mbw_emitTextInputWithKind:22
                       eventHandle:0
                              state:[self mbw_i32FromRangeValue:selectedRange.location]
@@ -379,8 +402,6 @@ static void mbw_emit_drag_event(int32_t raw_id, int32_t kind, id<NSDraggingInfo>
 }
 
 - (void)unmarkText {
-  self.markedTextLength = 0;
-
   NSTextInputContext *input_context = [self inputContext];
   if (input_context != nil) {
     [input_context discardMarkedText];
@@ -413,15 +434,20 @@ static void mbw_emit_drag_event(int32_t raw_id, int32_t kind, id<NSDraggingInfo>
 - (NSRect)firstRectForCharacterRange:(NSRange)range actualRange:(NSRangePointer)actualRange {
   (void)range;
   (void)actualRange;
-  NSSize size = self.imeCursorSize;
+  CGFloat x =
+      (CGFloat)mbw_query_view_state(self.rawId, MBW_VIEW_STATE_QUERY_IME_CURSOR_X, 0);
+  CGFloat y =
+      (CGFloat)mbw_query_view_state(self.rawId, MBW_VIEW_STATE_QUERY_IME_CURSOR_Y, 0);
+  NSSize size = NSMakeSize(
+      (CGFloat)mbw_query_view_state(self.rawId, MBW_VIEW_STATE_QUERY_IME_CURSOR_WIDTH, 1),
+      (CGFloat)mbw_query_view_state(self.rawId, MBW_VIEW_STATE_QUERY_IME_CURSOR_HEIGHT, 1));
   if (size.width <= 0) {
     size.width = 1;
   }
   if (size.height <= 0) {
     size.height = 1;
   }
-  NSRect local = NSMakeRect(self.imeCursorPosition.x, self.imeCursorPosition.y, size.width,
-                            size.height);
+  NSRect local = NSMakeRect(x, y, size.width, size.height);
   NSRect in_window = [self convertRect:local toView:nil];
   if (self.window == nil) {
     return NSZeroRect;
@@ -840,6 +866,16 @@ void mbw_install_device_event_callback(mbw_device_event_trampoline_t trampoline,
 }
 
 MOONBIT_FFI_EXPORT
+void mbw_install_view_state_query_callback(mbw_view_state_query_trampoline_t trampoline,
+                                           void *closure) {
+  if (g_view_state_query_closure != NULL) {
+    moonbit_decref(g_view_state_query_closure);
+  }
+  g_view_state_query_trampoline = trampoline;
+  g_view_state_query_closure = closure;
+}
+
+MOONBIT_FFI_EXPORT
 double mbw_cgfloat_max(void) {
   return (double)CGFLOAT_MAX;
 }
@@ -886,11 +922,7 @@ uint64_t mbw_create_window(int32_t width, int32_t height) {
 
   MBWContentView *content_view = [[MBWContentView alloc] initWithFrame:window.contentView.bounds];
   content_view.acceptsFirstMouseEnabled = NO;
-  content_view.imeAllowed = NO;
-  content_view.imeCursorPosition = NSMakePoint(0, 0);
-  content_view.imeCursorSize = NSMakeSize(1, 1);
   content_view.trackingRectTag = 0;
-  content_view.markedTextLength = 0;
   content_view.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
   window.contentView = content_view;
   [window setInitialFirstResponder:content_view];

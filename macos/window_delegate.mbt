@@ -2906,10 +2906,7 @@ fn set_ime_allowed(window_handle : UInt64, allowed : Bool) -> Unit {
   }
   if !allowed {
     match app_state_window_raw_id(native_handle) {
-      Some(raw_id) => {
-        view_disable_ime(raw_id)
-        view_clear_marked_text(raw_id)
-      }
+      Some(raw_id) => view_disable_ime(raw_id)
       None => ()
     }
     let input_context = appkit_objc_msg_send_u64(
@@ -2923,11 +2920,6 @@ fn set_ime_allowed(window_handle : UInt64, allowed : Bool) -> Unit {
       )
     }
   }
-  appkit_objc_msg_send_void_bool(
-    content_view,
-    objc_runtime_selector_handle("setImeAllowed:"),
-    allowed,
-  )
 }
 
 ///|
@@ -2952,26 +2944,6 @@ fn set_ime_cursor_area(
   if content_view == (0 : Int).to_uint64() {
     return ()
   }
-  appkit_objc_msg_send_void_point(
-    content_view,
-    objc_runtime_selector_handle("setImeCursorPosition:"),
-    x.to_double(),
-    y.to_double(),
-  )
-  appkit_objc_msg_send_void_size(
-    content_view,
-    objc_runtime_selector_handle("setImeCursorSize:"),
-    if width > 0 {
-      width.to_double()
-    } else {
-      1.0
-    },
-    if height > 0 {
-      height.to_double()
-    } else {
-      1.0
-    },
-  )
   let input_context = appkit_objc_msg_send_u64(
     content_view,
     objc_runtime_selector_handle("inputContext"),
