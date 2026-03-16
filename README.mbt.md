@@ -17,7 +17,12 @@ moon add Milky2018/window
 You do **not** need to manually add AppKit/CoreGraphics link flags in your app;
 the subpackages provide native link configuration.
 
+Import the subpackages you need directly. This module does **not** expose a
+root `@Milky2018/window` package.
+
 ## Quick Start
+
+Use explicit subpackage imports:
 
 ```mbt nocheck
 import {
@@ -77,6 +82,8 @@ This library follows MoonBit `raise`-based error handling (typed errors), not
 - `Window::request_ime_update(...)` may raise `@core.ImeRequestError`
 
 ## API Overview
+
+Import only the subpackages you need:
 
 - `@Milky2018/window/core`: core event/types (`WindowEvent`, `ControlFlow`,
   `WindowAttributes`, keyboard/mouse/IME data types)
