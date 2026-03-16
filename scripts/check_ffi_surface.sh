@@ -39,11 +39,19 @@ if rg -q 'native_input_event_payload_' "$ROOT/macos/ffi.mbt"; then
   exit 1
 fi
 
-new_forbidden="$(comm -13 "$ALLOWLIST" <(printf '%s\n' "$current_exports") | rg '^(mbw_window_|mbw_application_|mbw_input_event_payload_)' || true)"
-if [[ -n "$new_forbidden" ]]; then
-  echo "found newly introduced high-level native exports:" >&2
-  printf '%s\n' "$new_forbidden" >&2
+new_exports="$(comm -13 "$ALLOWLIST" <(printf '%s\n' "$current_exports") || true)"
+if [[ -n "$new_exports" ]]; then
+  echo "found newly introduced native export symbol(s):" >&2
+  printf '%s\n' "$new_exports" >&2
   echo "update docs/ffi-export-allowlist.txt only after explicit review" >&2
+  exit 1
+fi
+
+removed_exports="$(comm -23 "$ALLOWLIST" <(printf '%s\n' "$current_exports") || true)"
+if [[ -n "$removed_exports" ]]; then
+  echo "allowlist contains missing export symbol(s):" >&2
+  printf '%s\n' "$removed_exports" >&2
+  echo "sync docs/ffi-export-allowlist.txt with current native exports" >&2
   exit 1
 fi
 
