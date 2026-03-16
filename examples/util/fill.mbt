@@ -5,6 +5,20 @@ extern "C" fn native_fill_window_with_color(
 ) -> Unit = "mbw_examples_fill_window_with_color"
 
 ///|
+extern "C" fn native_fill_window_with_safe_area(
+  raw_view_handle : UInt64,
+  inner_color : UInt64,
+  outer_color : UInt64,
+  left : Int,
+  top : Int,
+  right : Int,
+  bottom : Int,
+  width : Int,
+  height : Int,
+  scale_factor : Double,
+) -> Unit = "mbw_examples_fill_window_with_safe_area"
+
+///|
 extern "C" fn native_now_millis() -> Int64 = "mbw_examples_now_millis"
 
 ///|
@@ -26,6 +40,28 @@ pub fn fill_window(window : @macos.Window) -> Unit {
 // Port target: winit-reference/winit/examples/util/fill.rs::fill_window_with_color
 pub fn fill_window_with_color(window : @macos.Window, color : Int) -> Unit {
   fill_window_with_argb(window, color.to_int64().reinterpret_as_uint64())
+}
+
+///|
+pub fn fill_window_with_safe_area_colors(
+  window : @macos.Window,
+  inner_color : Int,
+  outer_color : Int,
+) -> Unit {
+  let insets = window.safe_area()
+  let size = window.surface_size()
+  native_fill_window_with_safe_area(
+    window.window_handle(),
+    inner_color.to_int64().reinterpret_as_uint64(),
+    outer_color.to_int64().reinterpret_as_uint64(),
+    insets.left(),
+    insets.top(),
+    insets.right(),
+    insets.bottom(),
+    size.width(),
+    size.height(),
+    window.scale_factor(),
+  )
 }
 
 ///|

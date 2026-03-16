@@ -35,13 +35,13 @@ fn TextInputState::pop(self : TextInputState) -> Unit {
 }
 
 ///|
-fn utf8_len(text : String) -> Int {
-  @utf8.encode(text[:], bom=false).length()
+fn utf8_bytes(text : String) -> Bytes {
+  @utf8.encode(text[:], bom=false)
 }
 
 ///|
-fn utf8_len_char(ch : Char) -> Int {
-  utf8_len(String::from_array([ch]))
+fn utf8_len(text : String) -> Int {
+  utf8_bytes(text).length()
 }
 
 ///|
@@ -59,35 +59,133 @@ fn bytes_is_char_boundary(bytes : Bytes, index : Int) -> Bool {
 }
 
 ///|
-fn TextInputState::delete_surrounding(
-  self : TextInputState,
-  before_bytes : Int,
-  after_bytes : Int,
-) -> Unit {
-  let text_utf8 = @utf8.encode(self.contents[:], bom=false)
-  let cursor = text_utf8.length()
-  let before = if before_bytes < 0 { 0 } else { before_bytes }
-  let after = if after_bytes < 0 { 0 } else { after_bytes }
-  let delete_start = if before > cursor { 0 } else { cursor - before }
-  let mut delete_end = cursor + after
-  if delete_end > text_utf8.length() {
-    delete_end = text_utf8.length()
+fn utf8_is_char_boundary(text : String, index : Int) -> Bool {
+  bytes_is_char_boundary(utf8_bytes(text), index)
+}
+
+///|
+fn utf8_slice(text : String, start : Int, end : Int) -> String? {
+  if start < 0 || end < start {
+    return None
   }
-  if bytes_is_char_boundary(text_utf8, delete_start) &&
-    bytes_is_char_boundary(text_utf8, delete_end) {
-    let prefix = @utf8.decode(text_utf8[:delete_start], ignore_bom=false) catch {
-      _ => return ()
-    }
-    let suffix = @utf8.decode(text_utf8[delete_end:], ignore_bom=false) catch {
-      _ => return ()
-    }
-    self.set_text(prefix + suffix)
+  let bytes = utf8_bytes(text)
+  if end > bytes.length() {
+    return None
+  }
+  if !bytes_is_char_boundary(bytes, start) ||
+    !bytes_is_char_boundary(bytes, end) {
+    return None
+  }
+  Some(@utf8.decode(bytes[start:end], ignore_bom=false)) catch {
+    _ => None
   }
 }
 
 ///|
+fn min_int(a : Int, b : Int) -> Int {
+  if a < b {
+    a
+  } else {
+    b
+  }
+}
+
+///|
+fn max_int(a : Int, b : Int) -> Int {
+  if a > b {
+    a
+  } else {
+    b
+  }
+}
+
+///|
+fn preedit_with_cursor_checked(
+  text : String,
+  cursor : Int,
+  anchor : Int,
+) -> String? {
+  let first = min_int(cursor, anchor)
+  let second = max_int(cursor, anchor)
+  let text_len = utf8_len(text)
+
+  let before = match utf8_slice(text, 0, first) {
+    Some(value) => value
+    None => return None
+  }
+  let end = match utf8_slice(text, second, text_len) {
+    Some(value) => value
+    None => return None
+  }
+
+  if second == first {
+    return Some("\{before}|\{end}")
+  }
+
+  let mid = match utf8_slice(text, first, second) {
+    Some(value) => value
+    None => return None
+  }
+
+  if first == cursor {
+    Some("\{before}|\{mid}_\{end}")
+  } else {
+    Some("\{before}_\{mid}|\{end}")
+  }
+}
+
+///|
+fn preedit_with_cursor(text : String, cursor : Int, anchor : Int) -> String {
+  match preedit_with_cursor_checked(text, cursor, anchor) {
+    Some(value) => value
+    None => "INVALID: cursor or anchor is not on char boundary"
+  }
+}
+
+///|
+fn TextInputState::delete_surrounding(
+  self : TextInputState,
+  before_bytes : Int,
+  after_bytes : Int,
+) -> Bool {
+  let text = self.contents
+  let text_len = utf8_len(text)
+  let cursor = text_len
+  let before = if before_bytes < 0 { 0 } else { before_bytes }
+  let after = if after_bytes < 0 { 0 } else { after_bytes }
+
+  let delete_start = if before > cursor { 0 } else { cursor - before }
+  let mut delete_end = cursor + after
+  if delete_end > text_len {
+    delete_end = text_len
+  }
+
+  let before_text = match utf8_slice(text, 0, delete_start) {
+    Some(value) => value
+    None => return false
+  }
+  let after_text = match utf8_slice(text, delete_end, text_len) {
+    Some(value) => value
+    None => return false
+  }
+
+  self.set_text(before_text + after_text)
+  true
+}
+
+///|
 fn ime_hint_all() -> @core.ImeHint {
-  @core.ImeHint::from_bits(1023)
+  @core.ImeHint::none()
+  .union(@core.ImeHint::completion())
+  .union(@core.ImeHint::spellcheck())
+  .union(@core.ImeHint::auto_capitalization())
+  .union(@core.ImeHint::lowercase())
+  .union(@core.ImeHint::uppercase())
+  .union(@core.ImeHint::titlecase())
+  .union(@core.ImeHint::hidden_text())
+  .union(@core.ImeHint::sensitive_data())
+  .union(@core.ImeHint::latin())
+  .union(@core.ImeHint::multiline())
 }
 
 ///|
@@ -97,6 +195,16 @@ fn bump_ime_hint(hint : @core.ImeHint) -> @core.ImeHint {
   } else {
     @core.ImeHint::from_bits(hint.bits() + 1)
   }
+}
+
+///|
+fn next_valid_ime_hint(hint : @core.ImeHint) -> @core.ImeHint {
+  let all_hints = ime_hint_all()
+  let mut next = bump_ime_hint(hint)
+  while !all_hints.contains(next) {
+    next = bump_ime_hint(next)
+  }
+  next
 }
 
 ///|
@@ -117,7 +225,9 @@ fn App::new() -> App {
 
 ///|
 fn App::print_input_state(self : App) -> Unit {
-  println("\{self.input_state.contents}|")
+  let text = self.input_state.contents
+  let cursor = utf8_len(text)
+  println(preedit_with_cursor(text, cursor, cursor))
 }
 
 ///|
@@ -139,17 +249,62 @@ fn App::cycle_purpose(self : App) -> Unit {
 
 ///|
 fn App::cycle_hint(self : App) -> Unit {
-  self.input_state.hint = bump_ime_hint(self.input_state.hint)
+  self.input_state.hint = next_valid_ime_hint(self.input_state.hint)
 }
 
 ///|
-fn App::ime_update_request(self : App) -> @core.ImeRequestData {
+fn App::get_ime_update(self : App) -> @core.ImeRequestData {
   let text = self.input_state.contents
-  let chars_before_caret = text.to_array().length()
+  let cursor = utf8_len(text)
+  let text_before_caret = match utf8_slice(text, 0, cursor) {
+    Some(value) => value
+    None => ""
+  }
+  let chars_before_caret = text_before_caret.to_array().length()
   let cursor_pos = @dpi.LogicalPosition::new(
-    (chars_before_caret * 10).to_double(),
+    (10 * chars_before_caret).to_double(),
     0.0,
   )
+
+  let max_bytes = @core.ImeSurroundingText::max_text_bytes()
+  let minimal_offset = cursor / max_bytes * max_bytes
+
+  let mut first_char_boundary = cursor
+  let mut first_offset = minimal_offset
+  while first_offset <= cursor {
+    if utf8_is_char_boundary(text, first_offset) {
+      first_char_boundary = first_offset
+      break
+    }
+    first_offset += 1
+  }
+
+  let text_len = utf8_len(text)
+  let mut search_end = first_char_boundary + max_bytes
+  if search_end > text_len {
+    search_end = text_len
+  }
+
+  let mut last_char_boundary = cursor
+  let mut last_offset = search_end
+  while last_offset >= cursor {
+    if utf8_is_char_boundary(text, last_offset) {
+      last_char_boundary = last_offset
+      break
+    }
+    if last_offset == 0 {
+      break
+    }
+    last_offset -= 1
+  }
+
+  let surrounding_text = match
+    utf8_slice(text, first_char_boundary, last_char_boundary) {
+    Some(value) => value
+    None => ""
+  }
+  let relative_cursor = cursor - first_char_boundary
+
   let mut request = @core.ImeRequestData::default()
     .with_hint_and_purpose(self.input_state.hint, self.input_state.purpose)
     .with_cursor_area(
@@ -157,34 +312,9 @@ fn App::ime_update_request(self : App) -> @core.ImeRequestData {
       @dpi.PhysicalSize::new(20, 20).into_size(),
     )
 
-  let mut surrounding_text = text
-  let max_text_bytes = @core.ImeSurroundingText::max_text_bytes()
-  if utf8_len(surrounding_text) > max_text_bytes {
-    let chars = surrounding_text.to_array()
-    let mut bytes = 0
-    let mut start_index = chars.length()
-    while start_index > 0 && bytes < max_text_bytes {
-      let ch = chars[start_index - 1]
-      let ch_bytes = utf8_len_char(ch)
-      if bytes + ch_bytes > max_text_bytes {
-        break
-      }
-      bytes += ch_bytes
-      start_index -= 1
-    }
-    let tail : Array[Char] = []
-    let mut i = start_index
-    while i < chars.length() {
-      tail.push(chars[i])
-      i += 1
-    }
-    surrounding_text = String::from_array(tail)
-  }
-
-  let surrounding_utf8_len = utf8_len(surrounding_text)
   let surrounding = Some(
     @core.ImeSurroundingText::new(
-      surrounding_text, surrounding_utf8_len, surrounding_utf8_len,
+      surrounding_text, relative_cursor, relative_cursor,
     ),
   ) catch {
     _ => None
@@ -194,6 +324,7 @@ fn App::ime_update_request(self : App) -> @core.ImeRequestData {
     Some(value) => request = request.with_surrounding_text(value)
     None => ()
   }
+
   request
 }
 
@@ -201,9 +332,7 @@ fn App::ime_update_request(self : App) -> @core.ImeRequestData {
 fn App::request_ime_update(self : App) -> Unit {
   match self.window {
     Some(window) =>
-      window.request_ime_update(
-        @core.ImeRequest::Update(self.ime_update_request()),
-      ) catch {
+      window.request_ime_update(@core.ImeRequest::Update(self.get_ime_update())) catch {
         err => println("request_ime_update failed: \{err}")
       }
     None => ()
@@ -213,6 +342,7 @@ fn App::request_ime_update(self : App) -> Unit {
 ///|
 fn App::toggle_ime(self : App) -> Unit {
   let enable = !self.input_state.ime_enabled
+
   match self.window {
     Some(window) =>
       if enable {
@@ -221,58 +351,53 @@ fn App::toggle_ime(self : App) -> Unit {
           .with_hint_and_purpose()
           .with_cursor_area()
           .with_surrounding_text(),
-          self.ime_update_request(),
+          self.get_ime_update(),
         )
         match enable_request {
           Some(request) =>
-            try {
-              window.request_ime_update(@core.ImeRequest::Enable(request))
-              self.input_state.ime_enabled = true
-            } catch {
-              err => println("enable IME failed: \{err}")
+            window.request_ime_update(@core.ImeRequest::Enable(request)) catch {
+              err => {
+                println("enable IME failed: \{err}")
+                return
+              }
             }
-          None => ()
+          None => return
         }
       } else {
-        try {
-          window.request_ime_update(@core.ImeRequest::Disable)
-          self.input_state.ime_enabled = false
-        } catch {
-          err => println("disable IME failed: \{err}")
+        window.request_ime_update(@core.ImeRequest::Disable) catch {
+          err => {
+            println("disable IME failed: \{err}")
+            return
+          }
         }
       }
-    None => ()
+    None => return
   }
+
+  self.input_state.ime_enabled = enable
+  println("IME enabled now \{self.input_state.ime_enabled}")
 }
 
 ///|
-fn App::handle_key_pressed(
-  self : App,
-  event_loop : @macos.ActiveEventLoop,
-  key_event : @core.KeyEvent,
-) -> Unit {
+fn App::handle_key_pressed(self : App, key_event : @core.KeyEvent) -> Unit {
   let key_without_modifiers = key_event.key_without_modifiers()
-  let _ = event_loop
 
   if self.modifiers == @core.ModifiersState::control() {
     match key_without_modifiers {
-      @core.Key::Character("i") | @core.Key::Character("I") => {
-        self.toggle_ime()
-        println("IME enabled now \{self.input_state.ime_enabled}")
-      }
+      @core.Key::Character("i") | @core.Key::Character("I") => self.toggle_ime()
       @core.Key::Character("p") | @core.Key::Character("P") => {
         self.cycle_purpose()
         if self.input_state.ime_enabled {
           self.request_ime_update()
         }
-        println("IME purpose now \{self.input_state.purpose}")
+        println("text input purpose now \{self.input_state.purpose}")
       }
       @core.Key::Character("h") | @core.Key::Character("H") => {
         self.cycle_hint()
         if self.input_state.ime_enabled {
           self.request_ime_update()
         }
-        println("IME hint now \{self.input_state.hint}")
+        println("text input IME hint now \{self.input_state.hint}")
       }
       _ => ()
     }
@@ -301,20 +426,31 @@ fn App::handle_key_pressed(
 
 ///|
 fn App::handle_ime_event(self : App, ime_event : @core.Ime) -> Unit {
-  println("IME event: \{ime_event}")
   match ime_event {
+    @core.Ime::Enabled =>
+      match self.window {
+        Some(window) => println("IME enabled for Window=\{window.id()}")
+        None => println("IME enabled")
+      }
+    @core.Ime::Preedit(text, caret_pos) =>
+      println("Preedit: \{text}, with caret at \{caret_pos}")
     @core.Ime::Commit(text) => {
       self.input_state.append_text(text)
-      if self.input_state.ime_enabled {
-        self.request_ime_update()
+      self.request_ime_update()
+      self.print_input_state()
+    }
+    @core.Ime::DeleteSurrounding(before_bytes, after_bytes) =>
+      if self.input_state.delete_surrounding(before_bytes, after_bytes) {
+        println("IME deleted bytes: \{before_bytes}, \{after_bytes}")
+        self.print_input_state()
+      } else {
+        println("Buggy IME tried to delete with indices not on char boundary.")
       }
-      self.print_input_state()
-    }
-    @core.Ime::DeleteSurrounding(before_bytes, after_bytes) => {
-      self.input_state.delete_surrounding(before_bytes, after_bytes)
-      self.print_input_state()
-    }
-    _ => ()
+    @core.Ime::Disabled =>
+      match self.window {
+        Some(window) => println("IME disabled for Window=\{window.id()}")
+        None => println("IME disabled")
+      }
   }
 }
 
@@ -323,11 +459,8 @@ pub impl @macos.ApplicationHandler for App with can_create_surfaces(
   self,
   event_loop,
 ) {
-  let window_attributes = @core.WindowAttributes::default().with_title(
-    "IME example (Ctrl+I/P/H)",
-  )
   let window : @macos.Window? = Some(
-    event_loop.try_create_window(window_attributes),
+    event_loop.try_create_window(@core.WindowAttributes::default()),
   ) catch {
     err => {
       println("error creating window: \{err}")
@@ -336,6 +469,7 @@ pub impl @macos.ApplicationHandler for App with can_create_surfaces(
     }
   }
   self.window = window
+
   match self.window {
     Some(current_window) => {
       let enable_request = @core.ImeEnableRequest::new(
@@ -343,7 +477,7 @@ pub impl @macos.ApplicationHandler for App with can_create_surfaces(
         .with_hint_and_purpose()
         .with_cursor_area()
         .with_surrounding_text(),
-        self.ime_update_request(),
+        self.get_ime_update(),
       )
       match enable_request {
         Some(request) =>
@@ -366,6 +500,7 @@ pub impl @macos.ApplicationHandler for App with window_event(
 ) {
   match event {
     @core.WindowEvent::CloseRequested => {
+      println("Close was requested; stopping")
       self.window = None
       event_loop.exit()
     }
@@ -383,11 +518,13 @@ pub impl @macos.ApplicationHandler for App with window_event(
         None => ()
       }
     @core.WindowEvent::Ime(ime_event) => self.handle_ime_event(ime_event)
-    @core.WindowEvent::ModifiersChanged(modifiers) =>
+    @core.WindowEvent::ModifiersChanged(modifiers) => {
       self.modifiers = modifiers.state()
+      println("Modifiers changed to \{self.modifiers}")
+    }
     @core.WindowEvent::KeyboardInput(_device_id, key_event, is_synthetic) =>
       if !is_synthetic && key_event.state() is @core.ElementState::Pressed {
-        self.handle_key_pressed(event_loop, key_event)
+        self.handle_key_pressed(key_event)
       }
     _ => ()
   }
@@ -395,10 +532,12 @@ pub impl @macos.ApplicationHandler for App with window_event(
 
 ///|
 fn main {
-  println("This showcases IME support by emulating a text field.")
-  println("Use Ctrl+I to toggle IME support.")
-  println("Use Ctrl+P to cycle content purpose values.")
-  println("Use Ctrl+H to cycle content hint permutations.")
+  println(
+    "This showcases the use of an input method engine (IME) by emulating a text edit field.",
+  )
+  println("Use CTRL+i to toggle IME support.")
+  println("Use CTRL+p to cycle content purpose values.")
+  println("Use CTRL+h to cycle content hint permutations.")
 
   @util.tracing_init()
   let event_loop = @macos.EventLoop::new()

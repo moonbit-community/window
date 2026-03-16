@@ -486,10 +486,18 @@ fn make_custom_cursor_source(value : Int) -> @core.CustomCursorSource? {
 }
 
 ///|
-fn fill_color_for_theme(theme : @core.Theme) -> Int {
+fn safe_area_inner_color_for_theme(theme : @core.Theme) -> Int {
   match theme {
     @core.Theme::Light => 0xffe8e8e8
     @core.Theme::Dark => 0xff525252
+  }
+}
+
+///|
+fn safe_area_outer_color_for_theme(theme : @core.Theme) -> Int {
+  match theme {
+    @core.Theme::Light => 0xffffffff
+    @core.Theme::Dark => 0xff181818
   }
 }
 
@@ -543,7 +551,9 @@ fn Application::print_help(_self : Application) -> Unit {
       binding.shift,
       binding.meta,
     )
-    println("  \{prefix}\{binding.key} \{binding.action.help()}")
+    println(
+      "  \{prefix}\{binding.key} - \{binding.action} (\{binding.action.help()})",
+    )
   }
   println("Mouse bindings:")
   for binding in mouse_bindings() {
@@ -554,10 +564,9 @@ fn Application::print_help(_self : Application) -> Unit {
       binding.meta,
     )
     println(
-      "  \{prefix}\{mouse_button_name(binding.button)} \{binding.action.help()}",
+      "  \{prefix}\{mouse_button_name(binding.button)} - \{binding.action} (\{binding.action.help()})",
     )
   }
-  println("  Esc Close window")
 }
 
 ///|
@@ -989,15 +998,23 @@ fn Application::perform_window_action(
       }
     }
     Action::RequestResize => {
-      let current = window.surface_size()
-      let next_size = if current.width() < 700 {
-        @dpi.LogicalSize::new(800.0, 600.0)
-      } else {
-        @dpi.LogicalSize::new(640.0, 480.0)
+      let old_surface_size = window.surface_size()
+      let requested_surface_size = @dpi.PhysicalSize::new(
+        old_surface_size.height(),
+        old_surface_size.width(),
+      )
+      println(
+        "Requesting resize from \{old_surface_size} to \{requested_surface_size}",
+      )
+      match window.request_surface_size(requested_surface_size.into_size()) {
+        Some(new_surface_size) =>
+          if old_surface_size == new_surface_size {
+            println("Inner size change got ignored")
+          } else {
+            println("Surface resized to \{new_surface_size}")
+          }
+        None => println("Requesting surface size is asynchronous")
       }
-      println("Requesting resize from \{current} to \{next_size}")
-      ignore(window.request_surface_size(next_size.into_size()))
-      println("Requesting surface size is asynchronous")
     }
     Action::SetTheme(theme) => {
       window.set_theme(theme)
@@ -1125,42 +1142,40 @@ fn Application::handle_proxy_action(
 fn drag_resize_direction(
   window : @macos.Window,
   position : @dpi.PhysicalPositionF64,
-) -> @core.ResizeDirection? {
+) -> @core.ResizeDirection {
   let size = window.surface_size()
   let border_size = border_size_points * window.scale_factor()
 
   let x_direction = if position.x() < border_size {
-    Some(@core.ResizeDirection::West)
+    @core.ResizeDirection::West
   } else if position.x() > size.width().to_double() - border_size {
-    Some(@core.ResizeDirection::East)
+    @core.ResizeDirection::East
   } else {
-    None
+    @core.ResizeDirection::SouthEast
   }
 
   let y_direction = if position.y() < border_size {
-    Some(@core.ResizeDirection::North)
+    @core.ResizeDirection::North
   } else if position.y() > size.height().to_double() - border_size {
-    Some(@core.ResizeDirection::South)
+    @core.ResizeDirection::South
   } else {
-    None
+    @core.ResizeDirection::SouthEast
   }
 
   match (x_direction, y_direction) {
-    (Some(@core.ResizeDirection::West), Some(@core.ResizeDirection::North)) =>
-      Some(@core.ResizeDirection::NorthWest)
-    (Some(@core.ResizeDirection::West), Some(@core.ResizeDirection::South)) =>
-      Some(@core.ResizeDirection::SouthWest)
-    (Some(@core.ResizeDirection::East), Some(@core.ResizeDirection::North)) =>
-      Some(@core.ResizeDirection::NorthEast)
-    (Some(@core.ResizeDirection::East), Some(@core.ResizeDirection::South)) =>
-      Some(@core.ResizeDirection::SouthEast)
-    (Some(@core.ResizeDirection::West), _) => Some(@core.ResizeDirection::West)
-    (Some(@core.ResizeDirection::East), _) => Some(@core.ResizeDirection::East)
-    (_, Some(@core.ResizeDirection::North)) =>
-      Some(@core.ResizeDirection::North)
-    (_, Some(@core.ResizeDirection::South)) =>
-      Some(@core.ResizeDirection::South)
-    _ => None
+    (@core.ResizeDirection::West, @core.ResizeDirection::North) =>
+      @core.ResizeDirection::NorthWest
+    (@core.ResizeDirection::West, @core.ResizeDirection::South) =>
+      @core.ResizeDirection::SouthWest
+    (@core.ResizeDirection::West, _) => @core.ResizeDirection::West
+    (@core.ResizeDirection::East, @core.ResizeDirection::North) =>
+      @core.ResizeDirection::NorthEast
+    (@core.ResizeDirection::East, @core.ResizeDirection::South) =>
+      @core.ResizeDirection::SouthEast
+    (@core.ResizeDirection::East, _) => @core.ResizeDirection::East
+    (_, @core.ResizeDirection::South) => @core.ResizeDirection::South
+    (_, @core.ResizeDirection::North) => @core.ResizeDirection::North
+    _ => @core.ResizeDirection::SouthEast
   }
 }
 
@@ -1196,22 +1211,18 @@ fn Application::handle_pointer_binding(
           println("Dragging window Window=\{window.id()}")
         }
       } else if modifiers_match(modifiers, false, true, false, false) {
-        match drag_resize_direction(window, position) {
-          Some(direction) => {
-            let started = try {
-              window.drag_resize_window(direction)
-              true
-            } catch {
-              err => {
-                println("Error starting window drag-resize: \{err}")
-                false
-              }
-            }
-            if started {
-              println("Drag-resizing window Window=\{window.id()}")
-            }
+        let direction = drag_resize_direction(window, position)
+        let started = try {
+          window.drag_resize_window(direction)
+          true
+        } catch {
+          err => {
+            println("Error starting window drag-resize: \{err}")
+            false
           }
-          None => println("Drag-resize requires cursor to be inside the window")
+        }
+        if started {
+          println("Drag-resizing window Window=\{window.id()}")
         }
       }
     (Some(@core.MouseButton::Right), Some(window)) =>
@@ -1425,9 +1436,10 @@ pub impl @macos.ApplicationHandler for Application with window_event(
                     self.start_time_ms,
                   )
                 } else {
-                  @util.fill_window_with_color(
+                  @util.fill_window_with_safe_area_colors(
                     window,
-                    fill_color_for_theme(state.theme),
+                    safe_area_inner_color_for_theme(state.theme),
+                    safe_area_outer_color_for_theme(state.theme),
                   )
                 }
                 if state.continuous_redraw {
