@@ -293,6 +293,8 @@ The implementation is **not yet 1:1 aligned** with `winit-reference` semantics.
 - Completed: moved minimize/unminimize sequencing from `ffi.mbt` helper into `window_delegate` MoonBit flow (`miniaturize:` / `deminiaturize:` ObjC primitive calls), removing `native_window_set_minimized` wrapper.
 - Completed: moved fullscreen transition probing + toggle sequencing from `ffi.mbt` helpers into MoonBit (`window_delegate`/`app_state`) via ObjC primitives (`inFullscreenTransition`, `setInFullscreenTransition:`, `toggleFullScreen:`), removing `native_window_in_fullscreen_transition` / `native_window_set_fullscreen` wrappers while preserving queued replay behavior.
 - Completed: narrowed input callback ABI from decoded scalar payloads to `raw_id + kind + event_handle`; keyboard/pointer/gesture field decoding (modifiers/scancode/repeat/text/scroll/phase/pressure) now runs in MoonBit `view.mbt`, and C `MBWContentView` no longer performs event semantic mapping for that path.
+- Completed: moved a broad remaining window semantic wrapper set from `ffi.mbt` into `window_delegate.mbt` (title/name/tabbing id, geometry/safe-area reads, style/theme/level/button/tab operations, request-attention, focus/visibility/state getters, cursor+maximize state paths), leaving `ffi` focused on ObjC/runtime primitives and app/monitor bridge helpers.
+- Completed: tightened `docs/ffi-native-wrapper-allowlist.txt` to the current reduced wrapper set so removed `native_window_*` wrappers cannot be reintroduced silently.
 
 ## Remaining Structural Work
 
