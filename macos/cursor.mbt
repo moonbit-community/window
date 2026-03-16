@@ -38,6 +38,24 @@ fn EventLoop::create_custom_cursor_from_rgba_source(
 }
 
 ///|
+fn native_custom_cursor_create_rgba(
+  rgba : Bytes,
+  width : Int,
+  height : Int,
+  hotspot_x : Int,
+  hotspot_y : Int,
+) -> UInt64 {
+  appkit_custom_cursor_create_rgba(
+    rgba,
+    rgba.length(),
+    width,
+    height,
+    hotspot_x,
+    hotspot_y,
+  )
+}
+
+///|
 fn validate_rgba_cursor_source(
   rgba : Bytes,
   width : Int,

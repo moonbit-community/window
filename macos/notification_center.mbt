@@ -28,6 +28,13 @@ fn create_will_terminate_observer() -> UInt64 {
 }
 
 ///|
+fn native_notification_center_remove_observer(observer_handle : UInt64) -> Unit {
+  if observer_handle != (0 : Int).to_uint64() {
+    appkit_notification_center_remove_observer(observer_handle)
+  }
+}
+
+///|
 fn release_notification_observer(observer_handle : UInt64) -> Unit {
   native_notification_center_remove_observer(observer_handle)
 }

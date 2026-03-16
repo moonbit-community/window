@@ -294,6 +294,67 @@ fn native_window_set_maximized(handle : UInt64, maximized : Bool) -> Unit {
 }
 
 ///|
+fn native_create_window(width : Int, height : Int) -> UInt64 {
+  appkit_create_window(width, height)
+}
+
+///|
+fn native_cursor_objc_handle_from_kind(cursor : Int) -> UInt64 {
+  let ns_cursor_class = objc_runtime_class_handle("NSCursor")
+  if ns_cursor_class == (0 : Int).to_uint64() {
+    return (0 : Int).to_uint64()
+  }
+  let selector_name = if cursor == 10 {
+    "openHandCursor"
+  } else if cursor == 11 {
+    "closedHandCursor"
+  } else if cursor == 12 || cursor == 19 || cursor == 20 || cursor == 24 {
+    "resizeLeftRightCursor"
+  } else if cursor == 13 || cursor == 16 || cursor == 21 || cursor == 25 {
+    "resizeUpDownCursor"
+  } else if cursor == 29 {
+    "pointingHandCursor"
+  } else if cursor == 30 {
+    "IBeamCursor"
+  } else if cursor == 31 {
+    "crosshairCursor"
+  } else if cursor == 33 {
+    "operationNotAllowedCursor"
+  } else {
+    "arrowCursor"
+  }
+  appkit_objc_msg_send_u64(
+    ns_cursor_class,
+    objc_runtime_selector_handle(selector_name),
+  )
+}
+
+///|
+fn native_application_presentation_options() -> UInt64 {
+  let app = native_application_shared_handle()
+  if app == (0 : Int).to_uint64() {
+    return (0 : Int).to_uint64()
+  }
+  appkit_objc_msg_send_u64(
+    app,
+    objc_runtime_selector_handle("presentationOptions"),
+  )
+}
+
+///|
+fn native_set_application_presentation_options(options : UInt64) -> Unit {
+  let app = native_application_shared_handle()
+  if app == (0 : Int).to_uint64() {
+    return ()
+  }
+  appkit_objc_msg_send_void_u64(
+    app,
+    objc_runtime_selector_handle("setPresentationOptions:"),
+    options,
+  )
+}
+
+///|
 fn window_title(window_handle : UInt64) -> String {
   let native_handle = registered_native_handle(window_handle)
   if native_handle == (0 : Int).to_uint64() {

@@ -923,6 +923,57 @@ fn app_state_did_finish_launching() -> Unit {
 }
 
 ///|
+fn native_application_is_bundled() -> Bool {
+  let running_application_class = objc_runtime_class_handle(
+    "NSRunningApplication",
+  )
+  if running_application_class == (0 : Int).to_uint64() {
+    return false
+  }
+  let app = appkit_objc_msg_send_u64(
+    running_application_class,
+    objc_runtime_selector_handle("currentApplication"),
+  )
+  if app == (0 : Int).to_uint64() {
+    return false
+  }
+  appkit_objc_msg_send_u64(
+    app,
+    objc_runtime_selector_handle("bundleIdentifier"),
+  ) !=
+  (0 : Int).to_uint64()
+}
+
+///|
+fn native_application_set_activation_policy(activation_policy : Int) -> Unit {
+  let app = native_application_shared_handle()
+  if app == (0 : Int).to_uint64() {
+    return ()
+  }
+  let policy = if activation_policy < 0 { 0 } else { activation_policy }
+  appkit_objc_msg_send_void_u64(
+    app,
+    objc_runtime_selector_handle("setActivationPolicy:"),
+    policy.to_uint64(),
+  )
+}
+
+///|
+fn native_application_set_activate_ignoring_other_apps(
+  activate_ignoring_other_apps : Bool,
+) -> Unit {
+  let app = native_application_shared_handle()
+  if app == (0 : Int).to_uint64() {
+    return ()
+  }
+  appkit_objc_msg_send_void_bool(
+    app,
+    objc_runtime_selector_handle("activateIgnoringOtherApps:"),
+    activate_ignoring_other_apps,
+  )
+}
+
+///|
 fn app_state_apply_launch_policy() -> Unit {
   let activation_policy = if app_state_runtime.val.activation_policy >= 0 {
     Some(app_state_runtime.val.activation_policy)

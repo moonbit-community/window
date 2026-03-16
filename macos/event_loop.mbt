@@ -27,6 +27,180 @@ pub fn EventLoop::display_handle(self : EventLoop) -> UInt64 {
 }
 
 ///|
+let application_launch_finished : Ref[Bool] = Ref::new(false)
+
+///|
+fn native_application_hide() -> Unit {
+  let app = native_application_shared_handle()
+  if app == (0 : Int).to_uint64() {
+    return ()
+  }
+  appkit_objc_msg_send_void_u64(
+    app,
+    objc_runtime_selector_handle("hide:"),
+    (0 : Int).to_uint64(),
+  )
+}
+
+///|
+fn native_application_hide_other_applications() -> Unit {
+  let app = native_application_shared_handle()
+  if app == (0 : Int).to_uint64() {
+    return ()
+  }
+  appkit_objc_msg_send_void_u64(
+    app,
+    objc_runtime_selector_handle("hideOtherApplications:"),
+    (0 : Int).to_uint64(),
+  )
+}
+
+///|
+fn native_application_set_allows_automatic_window_tabbing(
+  enabled : Bool,
+) -> Unit {
+  let window_class = objc_runtime_class_handle("NSWindow")
+  if window_class == (0 : Int).to_uint64() {
+    return ()
+  }
+  let responds_to_selector = objc_runtime_selector_handle("respondsToSelector:")
+  let setter = objc_runtime_selector_handle("setAllowsAutomaticWindowTabbing:")
+  if appkit_objc_msg_send_bool_u64(window_class, responds_to_selector, setter) {
+    appkit_objc_msg_send_void_bool(window_class, setter, enabled)
+  }
+}
+
+///|
+fn native_application_allows_automatic_window_tabbing() -> Bool {
+  let window_class = objc_runtime_class_handle("NSWindow")
+  if window_class == (0 : Int).to_uint64() {
+    return false
+  }
+  let responds_to_selector = objc_runtime_selector_handle("respondsToSelector:")
+  let getter = objc_runtime_selector_handle("allowsAutomaticWindowTabbing")
+  if appkit_objc_msg_send_bool_u64(window_class, responds_to_selector, getter) ==
+    false {
+    return false
+  }
+  appkit_objc_msg_send_bool(window_class, getter)
+}
+
+///|
+fn native_application_theme() -> Int {
+  let app = native_application_shared_handle()
+  if app == (0 : Int).to_uint64() {
+    return 0
+  }
+  let appearance = appkit_objc_msg_send_u64(
+    app,
+    objc_runtime_selector_handle("effectiveAppearance"),
+  )
+  objc_theme_from_appearance_handle(appearance)
+}
+
+///|
+fn native_application_close_all_windows() -> Unit {
+  let app = native_application_shared_handle()
+  if app == (0 : Int).to_uint64() {
+    return ()
+  }
+  let windows = appkit_objc_msg_send_u64(
+    app,
+    objc_runtime_selector_handle("windows"),
+  )
+  if windows == (0 : Int).to_uint64() {
+    return ()
+  }
+  appkit_objc_msg_send_void_u64(
+    windows,
+    objc_runtime_selector_handle("makeObjectsPerformSelector:"),
+    objc_runtime_selector_handle("close"),
+  )
+}
+
+///|
+fn native_post_application_defined_event(at_start : Bool) -> Unit {
+  let app = native_application_shared_handle()
+  if app == (0 : Int).to_uint64() {
+    return ()
+  }
+  let ns_event_class = objc_runtime_class_handle("NSEvent")
+  if ns_event_class == (0 : Int).to_uint64() {
+    return ()
+  }
+  // NSEventTypeApplicationDefined = 15.
+  let event = appkit_objc_msg_send_u64_i32_double_double_i32_u64_i32_i32_u64(
+    ns_event_class,
+    objc_runtime_selector_handle(
+      "otherEventWithType:location:modifierFlags:timestamp:windowNumber:context:subtype:data1:data2:",
+    ),
+    15,
+    0.0,
+    0.0,
+    0,
+    (0 : Int).to_uint64(),
+    0,
+    0,
+    (0 : Int).to_uint64(),
+  )
+  if event == (0 : Int).to_uint64() {
+    return ()
+  }
+  appkit_objc_msg_send_void_u64_u64(
+    app,
+    objc_runtime_selector_handle("postEvent:atStart:"),
+    event,
+    if at_start {
+      (1 : Int).to_uint64()
+    } else {
+      (0 : Int).to_uint64()
+    },
+  )
+}
+
+///|
+fn native_event_loop_wake_up_appkit() -> Unit {
+  native_post_application_defined_event(false)
+}
+
+///|
+fn native_application_run() -> Unit {
+  let app = native_application_shared_handle()
+  if app == (0 : Int).to_uint64() {
+    return ()
+  }
+  if !application_launch_finished.val {
+    appkit_objc_msg_send_void(
+      app,
+      objc_runtime_selector_handle("finishLaunching"),
+    )
+    application_launch_finished.val = true
+  }
+  appkit_objc_msg_send_void(app, objc_runtime_selector_handle("run"))
+}
+
+///|
+fn native_application_stop_immediately() -> Unit {
+  let app = native_application_shared_handle()
+  if app == (0 : Int).to_uint64() {
+    return ()
+  }
+  if !application_launch_finished.val {
+    appkit_objc_msg_send_void(
+      app,
+      objc_runtime_selector_handle("finishLaunching"),
+    )
+    application_launch_finished.val = true
+  }
+  appkit_objc_msg_send_void_u64(
+    app,
+    objc_runtime_selector_handle("stop:"),
+    (0 : Int).to_uint64(),
+  )
+  native_post_application_defined_event(true)
+}
+
+///|
 pub fn EventLoop::system_theme(_self : EventLoop) -> @core.Theme? {
   match theme_from_native(native_application_theme()) {
     Some(theme) => Some(theme)

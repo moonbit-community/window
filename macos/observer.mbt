@@ -53,6 +53,13 @@ fn create_after_waiting_observer() -> UInt64 {
 }
 
 ///|
+fn native_main_run_loop_remove_observer(observer_handle : UInt64) -> Unit {
+  if observer_handle != (0 : Int).to_uint64() {
+    appkit_main_run_loop_remove_observer(observer_handle)
+  }
+}
+
+///|
 fn release_main_run_loop_observer(observer_handle : UInt64) -> Unit {
   native_main_run_loop_remove_observer(observer_handle)
 }
