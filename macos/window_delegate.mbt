@@ -739,9 +739,19 @@ fn set_window_content_protected(
 
 ///|
 fn set_ime_purpose(window_handle : UInt64, purpose : Int) -> Unit {
-  if registered_native_handle(window_handle) != (0 : Int).to_uint64() {
-    native_window_set_ime_purpose(window_handle, purpose)
+  let native_handle = registered_native_handle(window_handle)
+  if native_handle == (0 : Int).to_uint64() {
+    return ()
   }
+  let content_view = native_window_content_view_objc_handle(native_handle)
+  if content_view == (0 : Int).to_uint64() {
+    return ()
+  }
+  appkit_objc_msg_send_void_i32(
+    content_view,
+    objc_runtime_selector_handle("setImePurpose:"),
+    purpose,
+  )
 }
 
 ///|
@@ -750,15 +760,33 @@ fn window_ime_purpose(window_handle : UInt64) -> Int {
   if native_handle == (0 : Int).to_uint64() {
     0
   } else {
-    native_window_ime_purpose(native_handle)
+    let content_view = native_window_content_view_objc_handle(native_handle)
+    if content_view == (0 : Int).to_uint64() {
+      0
+    } else {
+      appkit_objc_msg_send_u64(
+        content_view,
+        objc_runtime_selector_handle("imePurpose"),
+      ).to_int()
+    }
   }
 }
 
 ///|
 fn set_ime_hints(window_handle : UInt64, hints : Int) -> Unit {
-  if registered_native_handle(window_handle) != (0 : Int).to_uint64() {
-    native_window_set_ime_hints(window_handle, hints)
+  let native_handle = registered_native_handle(window_handle)
+  if native_handle == (0 : Int).to_uint64() {
+    return ()
   }
+  let content_view = native_window_content_view_objc_handle(native_handle)
+  if content_view == (0 : Int).to_uint64() {
+    return ()
+  }
+  appkit_objc_msg_send_void_i32(
+    content_view,
+    objc_runtime_selector_handle("setImeHints:"),
+    hints,
+  )
 }
 
 ///|
@@ -767,7 +795,15 @@ fn window_ime_hints(window_handle : UInt64) -> Int {
   if native_handle == (0 : Int).to_uint64() {
     0
   } else {
-    native_window_ime_hints(native_handle)
+    let content_view = native_window_content_view_objc_handle(native_handle)
+    if content_view == (0 : Int).to_uint64() {
+      0
+    } else {
+      appkit_objc_msg_send_u64(
+        content_view,
+        objc_runtime_selector_handle("imeHints"),
+      ).to_int()
+    }
   }
 }
 
@@ -845,7 +881,15 @@ fn window_ime_allowed(window_handle : UInt64) -> Bool {
   if native_handle == (0 : Int).to_uint64() {
     false
   } else {
-    native_window_ime_allowed(native_handle)
+    let content_view = native_window_content_view_objc_handle(native_handle)
+    if content_view == (0 : Int).to_uint64() {
+      false
+    } else {
+      appkit_objc_msg_send_bool(
+        content_view,
+        objc_runtime_selector_handle("imeAllowed"),
+      )
+    }
   }
 }
 
@@ -911,7 +955,15 @@ fn window_ime_cursor_x(window_handle : UInt64) -> Int {
   if native_handle == (0 : Int).to_uint64() {
     0
   } else {
-    native_window_ime_cursor_x(native_handle)
+    let content_view = native_window_content_view_objc_handle(native_handle)
+    if content_view == (0 : Int).to_uint64() {
+      0
+    } else {
+      appkit_objc_msg_send_i64(
+        content_view,
+        objc_runtime_selector_handle("imeCursorX"),
+      ).to_int()
+    }
   }
 }
 
@@ -921,7 +973,15 @@ fn window_ime_cursor_y(window_handle : UInt64) -> Int {
   if native_handle == (0 : Int).to_uint64() {
     0
   } else {
-    native_window_ime_cursor_y(native_handle)
+    let content_view = native_window_content_view_objc_handle(native_handle)
+    if content_view == (0 : Int).to_uint64() {
+      0
+    } else {
+      appkit_objc_msg_send_i64(
+        content_view,
+        objc_runtime_selector_handle("imeCursorY"),
+      ).to_int()
+    }
   }
 }
 
@@ -931,7 +991,20 @@ fn window_ime_cursor_width(window_handle : UInt64) -> Int {
   if native_handle == (0 : Int).to_uint64() {
     1
   } else {
-    native_window_ime_cursor_width(native_handle)
+    let content_view = native_window_content_view_objc_handle(native_handle)
+    if content_view == (0 : Int).to_uint64() {
+      1
+    } else {
+      let width = appkit_objc_msg_send_i64(
+        content_view,
+        objc_runtime_selector_handle("imeCursorWidth"),
+      ).to_int()
+      if width > 0 {
+        width
+      } else {
+        1
+      }
+    }
   }
 }
 
@@ -941,7 +1014,20 @@ fn window_ime_cursor_height(window_handle : UInt64) -> Int {
   if native_handle == (0 : Int).to_uint64() {
     1
   } else {
-    native_window_ime_cursor_height(native_handle)
+    let content_view = native_window_content_view_objc_handle(native_handle)
+    if content_view == (0 : Int).to_uint64() {
+      1
+    } else {
+      let height = appkit_objc_msg_send_i64(
+        content_view,
+        objc_runtime_selector_handle("imeCursorHeight"),
+      ).to_int()
+      if height > 0 {
+        height
+      } else {
+        1
+      }
+    }
   }
 }
 
