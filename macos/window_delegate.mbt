@@ -1953,6 +1953,16 @@ fn set_window_position(window_handle : UInt64, x : Int, y : Int) -> Unit {
 }
 
 ///|
+fn center_window(window_handle : UInt64) -> Unit {
+  if registered_native_handle(window_handle) != (0 : Int).to_uint64() {
+    let window = native_window_objc_handle(window_handle)
+    if window != (0 : Int).to_uint64() {
+      appkit_objc_msg_send_void(window, objc_runtime_selector_handle("center"))
+    }
+  }
+}
+
+///|
 fn set_window_outer_size(
   window_handle : UInt64,
   width : Int,
@@ -3246,6 +3256,14 @@ fn should_apply_initial_window_position(fullscreen : @core.Fullscreen?) -> Bool 
 }
 
 ///|
+fn should_center_initial_window(position : @dpi.Position?) -> Bool {
+  match position {
+    Some(_) => false
+    None => true
+  }
+}
+
+///|
 // Port target: window_delegate.rs::new
 fn new_window(
   event_loop : EventLoop,
@@ -3437,8 +3455,11 @@ fn new_window(
     }
     None => ()
   }
-  if should_apply_initial_window_position(attributes.fullscreen()) {
-    match attributes.position() {
+  let position = attributes.position()
+  if should_center_initial_window(position) {
+    center_window(raw_window_handle)
+  } else if should_apply_initial_window_position(attributes.fullscreen()) {
+    match position {
       Some(position) => {
         let physical_position = position.to_physical(scale_factor)
         set_window_position(

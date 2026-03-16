@@ -46,3 +46,13 @@ test "initial_window_position_is_applied_only_without_fullscreen" {
     ),
   )
 }
+
+///|
+test "initial_window_is_centered_when_explicit_position_is_missing" {
+  assert_true(should_center_initial_window(None))
+  assert_false(
+    should_center_initial_window(
+      Some(@dpi.LogicalPosition::new(12.0, 34.0).into_position()),
+    ),
+  )
+}
