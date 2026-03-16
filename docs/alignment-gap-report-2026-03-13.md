@@ -8,17 +8,17 @@ The implementation is **not yet 1:1 aligned** with `winit-reference` semantics.
 
 ## High-Priority Gaps
 
-1. Event-loop core architecture is still runtime/wait-loop driven instead of upstream `NSApplication::run + MainRunLoopObserver + AppState` ownership model.
-2. Full example behavior parity still has residual semantic differences in several demos (despite file-level coverage).
+1. Full example behavior parity still has residual semantic differences in several demos (despite file-level coverage).
+2. Lifecycle edge-ordering parity for `run/pump/on_demand` shutdown interleavings still needs end-to-end validation across all macOS examples.
 
 ## Medium-Priority Gaps
 
-1. Event-loop lifecycle flow still relies on a custom deferred-callback runtime rather than upstream run-loop observer ownership.
-2. AppState/EventLoop ownership split is closer but still not fully converged to upstream shape.
+1. Deferred-callback queueing remains a MoonBit adaptation layer and may still diverge in rare re-entrancy corners.
+2. A few module-level helper placements differ from upstream Rust file locality due MoonBit package constraints.
 
 ## Low-Priority Gaps
 
-1. Minor edge ordering/lifecycle differences still exist around startup/show timing in corner cases.
+1. Minor startup/show timing differences may still exist in corner cases.
 
 ## Action Plan for This Iteration
 
@@ -299,6 +299,7 @@ The implementation is **not yet 1:1 aligned** with `winit-reference` semantics.
 - Completed: moved app-state/menu-owned application wrappers out of `ffi.mbt` (`is_bundled`, activation-policy/app-activation setup, default-menu construction helpers), reducing `ffi` wrapper surface to 14 shared helpers (application run/wakeup/shared-handle and window-handle resolution primitives).
 - Completed: moved event-loop-owned application control wrappers (`run/stop`, app-defined wake event posting, hide/theme/tabbing controls, close-all-windows) from `ffi.mbt` into `event_loop.mbt`; `ffi` wrapper layer is now reduced to 4 shared handle-resolution helpers (`application_shared_handle`, `window_objc_handle`, `window_content_view_objc_handle`, `window_delegate_objc_handle`).
 - Completed: moved the final 4 shared handle-resolution helpers out of `ffi.mbt` into `util.mbt`; `ffi` now contains only low-level primitive bindings (`extern`) and primitive conversion helpers, with zero `fn native_*` behavior wrappers.
+- Completed: moved the remaining non-`native_*` helper wrappers (`cg_*`, `objc_*`, and theme/string helpers) from `ffi.mbt` into `util.mbt`; `ffi.mbt` now contains only `extern` primitive bindings.
 
 ## Remaining Structural Work
 
