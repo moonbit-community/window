@@ -459,9 +459,28 @@ fn set_window_enabled_buttons(
 
 ///|
 fn set_window_blur(window_handle : UInt64, blur : Bool) -> Unit {
-  if registered_native_handle(window_handle) != (0 : Int).to_uint64() {
-    native_window_set_blur(window_handle, blur)
+  let native_handle = registered_native_handle(window_handle)
+  if native_handle == (0 : Int).to_uint64() {
+    return ()
   }
+  let window = native_window_objc_handle(native_handle)
+  if window == (0 : Int).to_uint64() {
+    return ()
+  }
+  let window_number = appkit_objc_msg_send_i64(
+    window,
+    objc_runtime_selector_handle("windowNumber"),
+  ).to_int()
+  ignore(
+    native_cgs_set_window_background_blur_radius(
+      window_number,
+      if blur {
+        80
+      } else {
+        0
+      },
+    ),
+  )
 }
 
 ///|
@@ -491,16 +510,37 @@ fn set_window_titlebar_transparent(
   window_handle : UInt64,
   titlebar_transparent : Bool,
 ) -> Unit {
-  if registered_native_handle(window_handle) != (0 : Int).to_uint64() {
-    native_window_set_titlebar_transparent(window_handle, titlebar_transparent)
+  let native_handle = registered_native_handle(window_handle)
+  if native_handle == (0 : Int).to_uint64() {
+    return ()
   }
+  let window = native_window_objc_handle(native_handle)
+  if window == (0 : Int).to_uint64() {
+    return ()
+  }
+  appkit_objc_msg_send_void_bool(
+    window,
+    objc_runtime_selector_handle("setTitlebarAppearsTransparent:"),
+    titlebar_transparent,
+  )
 }
 
 ///|
 fn set_window_title_hidden(window_handle : UInt64, title_hidden : Bool) -> Unit {
-  if registered_native_handle(window_handle) != (0 : Int).to_uint64() {
-    native_window_set_title_hidden(window_handle, title_hidden)
+  let native_handle = registered_native_handle(window_handle)
+  if native_handle == (0 : Int).to_uint64() {
+    return ()
   }
+  let window = native_window_objc_handle(native_handle)
+  if window == (0 : Int).to_uint64() {
+    return ()
+  }
+  let visibility = if title_hidden { 1 } else { 0 }
+  appkit_objc_msg_send_void_u64(
+    window,
+    objc_runtime_selector_handle("setTitleVisibility:"),
+    visibility.to_uint64(),
+  )
 }
 
 ///|
@@ -508,9 +548,12 @@ fn set_window_titlebar_hidden(
   window_handle : UInt64,
   titlebar_hidden : Bool,
 ) -> Unit {
-  if registered_native_handle(window_handle) != (0 : Int).to_uint64() {
-    native_window_set_titlebar_hidden(window_handle, titlebar_hidden)
+  if registered_native_handle(window_handle) == (0 : Int).to_uint64() {
+    return ()
   }
+  set_window_title_hidden(window_handle, titlebar_hidden)
+  set_window_titlebar_transparent(window_handle, titlebar_hidden)
+  set_window_fullsize_content_view(window_handle, titlebar_hidden)
 }
 
 ///|
@@ -530,10 +573,17 @@ fn set_window_fullsize_content_view(
   window_handle : UInt64,
   fullsize_content_view : Bool,
 ) -> Unit {
-  if registered_native_handle(window_handle) != (0 : Int).to_uint64() {
-    native_window_set_fullsize_content_view(
-      window_handle, fullsize_content_view,
+  if registered_native_handle(window_handle) == (0 : Int).to_uint64() {
+    return ()
+  }
+  let fullsize_mask = (32768 : Int).to_uint64()
+  if fullsize_content_view {
+    native_window_set_style_mask(
+      window_handle,
+      native_window_style_mask(window_handle) | fullsize_mask,
     )
+  } else {
+    native_window_clear_style_mask_bits(window_handle, fullsize_mask)
   }
 }
 
@@ -668,7 +718,20 @@ fn window_cursor_visible(window_handle : UInt64) -> Bool {
 
 ///|
 fn set_window_cursor_hittest(window_handle : UInt64, hittest : Bool) -> Bool {
-  native_window_set_cursor_hittest(window_handle, hittest)
+  let native_handle = registered_native_handle(window_handle)
+  if native_handle == (0 : Int).to_uint64() {
+    return false
+  }
+  let window = native_window_objc_handle(native_handle)
+  if window == (0 : Int).to_uint64() {
+    return false
+  }
+  appkit_objc_msg_send_void_bool(
+    window,
+    objc_runtime_selector_handle("setIgnoresMouseEvents:"),
+    hittest == false,
+  )
+  true
 }
 
 ///|
@@ -677,7 +740,16 @@ fn window_cursor_hittest(window_handle : UInt64) -> Bool {
   if native_handle == (0 : Int).to_uint64() {
     true
   } else {
-    native_window_cursor_hittest(native_handle)
+    let window = native_window_objc_handle(native_handle)
+    if window == (0 : Int).to_uint64() {
+      true
+    } else {
+      appkit_objc_msg_send_bool(
+        window,
+        objc_runtime_selector_handle("ignoresMouseEvents"),
+      ) ==
+      false
+    }
   }
 }
 
@@ -1271,7 +1343,16 @@ fn window_transparent(window_handle : UInt64) -> Bool {
   if native_handle == (0 : Int).to_uint64() {
     false
   } else {
-    native_window_is_transparent(native_handle)
+    let window = native_window_objc_handle(native_handle)
+    if window == (0 : Int).to_uint64() {
+      false
+    } else {
+      appkit_objc_msg_send_bool(
+        window,
+        objc_runtime_selector_handle("isOpaque"),
+      ) ==
+      false
+    }
   }
 }
 
