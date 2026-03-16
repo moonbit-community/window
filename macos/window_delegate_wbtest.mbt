@@ -16,3 +16,33 @@ test "initial_window_surface_size_falls_back_to_default" {
     @dpi.LogicalSize::new(800.0, 600.0),
   )
 }
+
+///|
+test "initial_window_position_is_applied_only_without_fullscreen" {
+  assert_true(should_apply_initial_window_position(None))
+
+  let monitor = @core.MonitorHandle::new(
+    (1 : Int).to_uint64(),
+    None,
+    @dpi.PhysicalPosition::new(0, 0),
+    @dpi.PhysicalSize::new(1920, 1080),
+    2.0,
+    None,
+    [],
+  )
+  let video_mode = @core.VideoMode::new(
+    @dpi.PhysicalSize::new(1920, 1080),
+    Some(32),
+    Some(60000),
+  )
+  assert_false(
+    should_apply_initial_window_position(
+      Some(@core.Fullscreen::Borderless(None)),
+    ),
+  )
+  assert_false(
+    should_apply_initial_window_position(
+      Some(@core.Fullscreen::Exclusive(monitor, video_mode)),
+    ),
+  )
+}

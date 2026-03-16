@@ -3238,6 +3238,14 @@ fn initial_window_surface_size(
 }
 
 ///|
+fn should_apply_initial_window_position(fullscreen : @core.Fullscreen?) -> Bool {
+  match fullscreen {
+    Some(_) => false
+    None => true
+  }
+}
+
+///|
 // Port target: window_delegate.rs::new
 fn new_window(
   event_loop : EventLoop,
@@ -3429,16 +3437,18 @@ fn new_window(
     }
     None => ()
   }
-  match attributes.position() {
-    Some(position) => {
-      let physical_position = position.to_physical(scale_factor)
-      set_window_position(
-        raw_window_handle,
-        physical_position.x(),
-        physical_position.y(),
-      )
+  if should_apply_initial_window_position(attributes.fullscreen()) {
+    match attributes.position() {
+      Some(position) => {
+        let physical_position = position.to_physical(scale_factor)
+        set_window_position(
+          raw_window_handle,
+          physical_position.x(),
+          physical_position.y(),
+        )
+      }
+      None => ()
     }
-    None => ()
   }
   if attributes.visible() {
     show_window(raw_window_handle, attributes.active())
