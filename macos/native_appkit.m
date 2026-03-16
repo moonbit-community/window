@@ -1307,20 +1307,21 @@ void mbw_objc_msg_send_void_rect_bool(uint64_t target_handle, uint64_t selector_
 }
 
 MOONBIT_FFI_EXPORT
-void mbw_objc_msg_send_void_i32_double_double_i32_u64_i32_i32_u64(
-    uint64_t target_handle, uint64_t selector_handle, int32_t arg0, double arg1, double arg2,
-    int32_t arg3, uint64_t arg4, int32_t arg5, int32_t arg6, uint64_t arg7) {
+void mbw_objc_msg_send_void_i32_u64_i32_u64_i32_i32_u64(
+    uint64_t target_handle, uint64_t selector_handle, int32_t arg0, uint64_t arg1, int32_t arg2,
+    uint64_t arg3, int32_t arg4, int32_t arg5, uint64_t arg6) {
   if (target_handle == 0 || selector_handle == 0) {
     return;
   }
   id target = (__bridge id)(void *)(uintptr_t)target_handle;
   const char *selector_name = (const char *)(uintptr_t)selector_handle;
   SEL selector = sel_registerName(selector_name);
-  id arg4_obj = (__bridge id)(void *)(uintptr_t)arg4;
-  id arg7_obj = (__bridge id)(void *)(uintptr_t)arg7;
-  void (*send_fn)(id, SEL, int32_t, double, double, int32_t, id, int32_t, int32_t, id) =
-      (void (*)(id, SEL, int32_t, double, double, int32_t, id, int32_t, int32_t, id))objc_msgSend;
-  send_fn(target, selector, arg0, arg1, arg2, arg3, arg4_obj, arg5, arg6, arg7_obj);
+  id arg1_obj = (__bridge id)(void *)(uintptr_t)arg1;
+  id arg3_obj = (__bridge id)(void *)(uintptr_t)arg3;
+  id arg6_obj = (__bridge id)(void *)(uintptr_t)arg6;
+  void (*send_fn)(id, SEL, int32_t, id, int32_t, id, int32_t, int32_t, id) =
+      (void (*)(id, SEL, int32_t, id, int32_t, id, int32_t, int32_t, id))objc_msgSend;
+  send_fn(target, selector, arg0, arg1_obj, arg2, arg3_obj, arg4, arg5, arg6_obj);
 }
 
 MOONBIT_FFI_EXPORT

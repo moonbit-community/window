@@ -2217,71 +2217,6 @@ fn native_window_ime_hints(handle : UInt64) -> Int {
 }
 
 ///|
-fn native_window_set_ime_allowed(handle : UInt64, allowed : Bool) -> Unit {
-  let content_view = native_window_content_view_objc_handle(handle)
-  if content_view == (0 : Int).to_uint64() {
-    return ()
-  }
-  if !allowed {
-    if appkit_objc_msg_send_i64(
-        content_view,
-        objc_runtime_selector_handle("imeState"),
-      ) !=
-      0L {
-      let empty = objc_nsstring_from_string("")
-      appkit_objc_msg_send_void_i32_double_double_i32_u64_i32_i32_u64(
-        content_view,
-        objc_runtime_selector_handle(
-          "mbw_emitTextInputWithKind:x:y:state:text:cursorStart:cursorEnd:path:",
-        ),
-        8,
-        0.0,
-        0.0,
-        4,
-        empty,
-        -1,
-        -1,
-        (0 : Int).to_uint64(),
-      )
-    }
-    appkit_objc_msg_send_void_u64(
-      content_view,
-      objc_runtime_selector_handle("setImeState:"),
-      (0 : Int).to_uint64(),
-    )
-    appkit_objc_msg_send_void_u64(
-      content_view,
-      objc_runtime_selector_handle("setMarkedText:"),
-      objc_nsstring_from_string(""),
-    )
-    let input_context = appkit_objc_msg_send_u64(
-      content_view,
-      objc_runtime_selector_handle("inputContext"),
-    )
-    if input_context != (0 : Int).to_uint64() {
-      appkit_objc_msg_send_void(
-        input_context,
-        objc_runtime_selector_handle("discardMarkedText"),
-      )
-    }
-  } else {
-    appkit_objc_msg_send_void_u64(
-      content_view,
-      objc_runtime_selector_handle("setInputSource:"),
-      appkit_objc_msg_send_u64(
-        content_view,
-        objc_runtime_selector_handle("mbw_currentInputSource"),
-      ),
-    )
-  }
-  appkit_objc_msg_send_void_bool(
-    content_view,
-    objc_runtime_selector_handle("setImeAllowed:"),
-    allowed,
-  )
-}
-
-///|
 fn native_window_ime_allowed(handle : UInt64) -> Bool {
   let content_view = native_window_content_view_objc_handle(handle)
   if content_view == (0 : Int).to_uint64() {
@@ -2291,58 +2226,6 @@ fn native_window_ime_allowed(handle : UInt64) -> Bool {
     content_view,
     objc_runtime_selector_handle("imeAllowed"),
   )
-}
-
-///|
-fn native_window_set_ime_cursor_area(
-  handle : UInt64,
-  x : Int,
-  y : Int,
-  width : Int,
-  height : Int,
-) -> Unit {
-  let content_view = native_window_content_view_objc_handle(handle)
-  if content_view == (0 : Int).to_uint64() {
-    return ()
-  }
-  appkit_objc_msg_send_void_u64(
-    content_view,
-    objc_runtime_selector_handle("setImeCursorX:"),
-    x.to_uint64(),
-  )
-  appkit_objc_msg_send_void_u64(
-    content_view,
-    objc_runtime_selector_handle("setImeCursorY:"),
-    y.to_uint64(),
-  )
-  appkit_objc_msg_send_void_u64(
-    content_view,
-    objc_runtime_selector_handle("setImeCursorWidth:"),
-    if width > 0 {
-      width.to_uint64()
-    } else {
-      (1 : Int).to_uint64()
-    },
-  )
-  appkit_objc_msg_send_void_u64(
-    content_view,
-    objc_runtime_selector_handle("setImeCursorHeight:"),
-    if height > 0 {
-      height.to_uint64()
-    } else {
-      (1 : Int).to_uint64()
-    },
-  )
-  let input_context = appkit_objc_msg_send_u64(
-    content_view,
-    objc_runtime_selector_handle("inputContext"),
-  )
-  if input_context != (0 : Int).to_uint64() {
-    appkit_objc_msg_send_void(
-      input_context,
-      objc_runtime_selector_handle("invalidateCharacterCoordinates"),
-    )
-  }
 }
 
 ///|
@@ -3216,18 +3099,17 @@ extern "C" fn appkit_objc_msg_send_void_rect_bool(
 ) -> Unit = "mbw_objc_msg_send_void_rect_bool"
 
 ///|
-extern "C" fn appkit_objc_msg_send_void_i32_double_double_i32_u64_i32_i32_u64(
+extern "C" fn appkit_objc_msg_send_void_i32_u64_i32_u64_i32_i32_u64(
   target : UInt64,
   selector : UInt64,
   arg0 : Int,
-  arg1 : Double,
-  arg2 : Double,
-  arg3 : Int,
-  arg4 : UInt64,
+  arg1 : UInt64,
+  arg2 : Int,
+  arg3 : UInt64,
+  arg4 : Int,
   arg5 : Int,
-  arg6 : Int,
-  arg7 : UInt64,
-) -> Unit = "mbw_objc_msg_send_void_i32_double_double_i32_u64_i32_i32_u64"
+  arg6 : UInt64,
+) -> Unit = "mbw_objc_msg_send_void_i32_u64_i32_u64_i32_i32_u64"
 
 ///|
 extern "C" fn appkit_objc_msg_send_u64_i32_double_double_i32_u64_i32_i32_u64(
