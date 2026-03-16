@@ -21,9 +21,8 @@ typedef void (*mbw_text_input_event_trampoline_t)(void *closure, int32_t raw_id,
                                                   uint64_t text_handle, int32_t cursor_start,
                                                   int32_t cursor_end, uint64_t path_handle);
 typedef void (*mbw_device_event_trampoline_t)(void *closure, uint64_t event_handle);
-typedef int32_t (*mbw_view_state_query_trampoline_t)(void *closure, int32_t raw_id, int32_t kind);
-typedef int32_t (*mbw_drag_query_trampoline_t)(void *closure, int32_t raw_id,
-                                               uint64_t dragging_info_handle);
+typedef int32_t (*mbw_sync_query_trampoline_t)(void *closure, int32_t raw_id, int32_t kind,
+                                               uint64_t arg0);
 typedef void (*mbw_lifecycle_trampoline_t)(void *closure, int32_t kind);
 typedef void (*mbw_send_event_impl_t)(id self, SEL _cmd, NSEvent *event);
 
@@ -35,10 +34,8 @@ static mbw_text_input_event_trampoline_t g_text_input_event_trampoline = NULL;
 static void *g_text_input_event_closure = NULL;
 static mbw_device_event_trampoline_t g_device_event_trampoline = NULL;
 static void *g_device_event_closure = NULL;
-static mbw_view_state_query_trampoline_t g_view_state_query_trampoline = NULL;
-static void *g_view_state_query_closure = NULL;
-static mbw_drag_query_trampoline_t g_drag_query_trampoline = NULL;
-static void *g_drag_query_closure = NULL;
+static mbw_sync_query_trampoline_t g_sync_query_trampoline = NULL;
+static void *g_sync_query_closure = NULL;
 static mbw_send_event_impl_t g_original_send_event_impl = NULL;
 static BOOL g_app_initialized = NO;
 
@@ -65,6 +62,7 @@ enum {
   MBW_VIEW_STATE_QUERY_IME_CURSOR_WIDTH = 7,
   MBW_VIEW_STATE_QUERY_IME_CURSOR_HEIGHT = 8,
   MBW_VIEW_STATE_QUERY_ACCEPTS_FIRST_MOUSE = 9,
+  MBW_SYNC_QUERY_DRAG_ACCEPT = 100,
 };
 
 static void mbw_call_window_event_trampoline(int32_t kind, int32_t raw_id, int32_t arg0,
@@ -99,11 +97,12 @@ static void mbw_call_device_event_trampoline(uint64_t event_handle) {
   g_device_event_trampoline(g_device_event_closure, event_handle);
 }
 
-static int32_t mbw_query_view_state(int32_t raw_id, int32_t kind, int32_t default_value) {
-  if (raw_id <= 0 || g_view_state_query_trampoline == NULL || g_view_state_query_closure == NULL) {
+static int32_t mbw_sync_query(int32_t raw_id, int32_t kind, uint64_t arg0,
+                              int32_t default_value) {
+  if (raw_id <= 0 || g_sync_query_trampoline == NULL || g_sync_query_closure == NULL) {
     return default_value;
   }
-  return g_view_state_query_trampoline(g_view_state_query_closure, raw_id, kind);
+  return g_sync_query_trampoline(g_sync_query_closure, raw_id, kind, arg0);
 }
 
 static void mbw_call_lifecycle_trampoline(mbw_lifecycle_trampoline_t trampoline, void *closure,
@@ -123,11 +122,11 @@ static void mbw_emit_drag_event(int32_t raw_id, int32_t kind, id<NSDraggingInfo>
 }
 
 static BOOL mbw_query_drag_operation(int32_t raw_id, id<NSDraggingInfo> sender) {
-  if (raw_id <= 0 || sender == nil || g_drag_query_trampoline == NULL || g_drag_query_closure == NULL) {
+  if (raw_id <= 0 || sender == nil) {
     return NO;
   }
   uint64_t dragging_info_handle = (uint64_t)(uintptr_t)(__bridge void *)sender;
-  return g_drag_query_trampoline(g_drag_query_closure, raw_id, dragging_info_handle) != 0;
+  return mbw_sync_query(raw_id, MBW_SYNC_QUERY_DRAG_ACCEPT, dragging_info_handle, 0) != 0;
 }
 
 @interface MBWContentView : NSView <NSTextInputClient>
@@ -166,7 +165,7 @@ static BOOL mbw_query_drag_operation(int32_t raw_id, id<NSDraggingInfo> sender) 
 
 - (BOOL)acceptsFirstMouse:(NSEvent *)event {
   (void)event;
-  return mbw_query_view_state(self.rawId, MBW_VIEW_STATE_QUERY_ACCEPTS_FIRST_MOUSE, 0) != 0;
+  return mbw_sync_query(self.rawId, MBW_VIEW_STATE_QUERY_ACCEPTS_FIRST_MOUSE, 0, 0) != 0;
 }
 
 - (BOOL)acceptsFirstResponder {
@@ -338,7 +337,7 @@ static BOOL mbw_query_drag_operation(int32_t raw_id, id<NSDraggingInfo> sender) 
                       cursorStart:0
                         cursorEnd:0
                        pathHandle:0];
-  if (mbw_query_view_state(self.rawId, MBW_VIEW_STATE_QUERY_IME_ALLOWED, 0) != 0) {
+  if (mbw_sync_query(self.rawId, MBW_VIEW_STATE_QUERY_IME_ALLOWED, 0, 0) != 0) {
     NSArray<NSEvent *> *events = @[ event ];
     [self interpretKeyEvents:events];
   }
@@ -360,12 +359,12 @@ static BOOL mbw_query_drag_operation(int32_t raw_id, id<NSDraggingInfo> sender) 
 }
 
 - (BOOL)hasMarkedText {
-  return mbw_query_view_state(self.rawId, MBW_VIEW_STATE_QUERY_MARKED_TEXT_LENGTH, 0) > 0;
+  return mbw_sync_query(self.rawId, MBW_VIEW_STATE_QUERY_MARKED_TEXT_LENGTH, 0, 0) > 0;
 }
 
 - (NSRange)markedRange {
   int32_t marked_text_length =
-      mbw_query_view_state(self.rawId, MBW_VIEW_STATE_QUERY_MARKED_TEXT_LENGTH, 0);
+      mbw_sync_query(self.rawId, MBW_VIEW_STATE_QUERY_MARKED_TEXT_LENGTH, 0, 0);
   if (marked_text_length <= 0) {
     return NSMakeRange(NSNotFound, 0);
   }
@@ -374,11 +373,11 @@ static BOOL mbw_query_drag_operation(int32_t raw_id, id<NSDraggingInfo> sender) 
 
 - (NSRange)selectedRange {
   int32_t location =
-      mbw_query_view_state(self.rawId, MBW_VIEW_STATE_QUERY_SELECTED_RANGE_LOCATION, -1);
+      mbw_sync_query(self.rawId, MBW_VIEW_STATE_QUERY_SELECTED_RANGE_LOCATION, 0, -1);
   if (location < 0) {
     return NSMakeRange(NSNotFound, 0);
   }
-  int32_t length = mbw_query_view_state(self.rawId, MBW_VIEW_STATE_QUERY_SELECTED_RANGE_LENGTH, 0);
+  int32_t length = mbw_sync_query(self.rawId, MBW_VIEW_STATE_QUERY_SELECTED_RANGE_LENGTH, 0, 0);
   if (length < 0) {
     length = 0;
   }
@@ -432,12 +431,12 @@ static BOOL mbw_query_drag_operation(int32_t raw_id, id<NSDraggingInfo> sender) 
   (void)range;
   (void)actualRange;
   CGFloat x =
-      (CGFloat)mbw_query_view_state(self.rawId, MBW_VIEW_STATE_QUERY_IME_CURSOR_X, 0);
+      (CGFloat)mbw_sync_query(self.rawId, MBW_VIEW_STATE_QUERY_IME_CURSOR_X, 0, 0);
   CGFloat y =
-      (CGFloat)mbw_query_view_state(self.rawId, MBW_VIEW_STATE_QUERY_IME_CURSOR_Y, 0);
+      (CGFloat)mbw_sync_query(self.rawId, MBW_VIEW_STATE_QUERY_IME_CURSOR_Y, 0, 0);
   NSSize size = NSMakeSize(
-      (CGFloat)mbw_query_view_state(self.rawId, MBW_VIEW_STATE_QUERY_IME_CURSOR_WIDTH, 1),
-      (CGFloat)mbw_query_view_state(self.rawId, MBW_VIEW_STATE_QUERY_IME_CURSOR_HEIGHT, 1));
+      (CGFloat)mbw_sync_query(self.rawId, MBW_VIEW_STATE_QUERY_IME_CURSOR_WIDTH, 0, 1),
+      (CGFloat)mbw_sync_query(self.rawId, MBW_VIEW_STATE_QUERY_IME_CURSOR_HEIGHT, 0, 1));
   if (size.width <= 0) {
     size.width = 1;
   }
@@ -863,22 +862,12 @@ void mbw_install_device_event_callback(mbw_device_event_trampoline_t trampoline,
 }
 
 MOONBIT_FFI_EXPORT
-void mbw_install_view_state_query_callback(mbw_view_state_query_trampoline_t trampoline,
-                                           void *closure) {
-  if (g_view_state_query_closure != NULL) {
-    moonbit_decref(g_view_state_query_closure);
+void mbw_install_sync_query_callback(mbw_sync_query_trampoline_t trampoline, void *closure) {
+  if (g_sync_query_closure != NULL) {
+    moonbit_decref(g_sync_query_closure);
   }
-  g_view_state_query_trampoline = trampoline;
-  g_view_state_query_closure = closure;
-}
-
-MOONBIT_FFI_EXPORT
-void mbw_install_drag_query_callback(mbw_drag_query_trampoline_t trampoline, void *closure) {
-  if (g_drag_query_closure != NULL) {
-    moonbit_decref(g_drag_query_closure);
-  }
-  g_drag_query_trampoline = trampoline;
-  g_drag_query_closure = closure;
+  g_sync_query_trampoline = trampoline;
+  g_sync_query_closure = closure;
 }
 
 MOONBIT_FFI_EXPORT

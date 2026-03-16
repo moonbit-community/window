@@ -139,6 +139,9 @@ let native_view_state_query_ime_cursor_height = 8
 let native_view_state_query_accepts_first_mouse = 9
 
 ///|
+let native_sync_query_drag_accept = 100
+
+///|
 let view_ime_window_ids : Ref[Array[Int]] = Ref::new([])
 
 ///|

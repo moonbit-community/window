@@ -156,18 +156,10 @@ extern "C" fn native_install_device_event_callback(
 ///|
 #borrow(call_closure)
 #owned(callback)
-extern "C" fn native_install_view_state_query_callback(
-  call_closure : FuncRef[((Int, Int) -> Int, Int, Int) -> Int],
-  callback : (Int, Int) -> Int,
-) -> Unit = "mbw_install_view_state_query_callback"
-
-///|
-#borrow(call_closure)
-#owned(callback)
-extern "C" fn native_install_drag_query_callback(
-  call_closure : FuncRef[((Int, UInt64) -> Int, Int, UInt64) -> Int],
-  callback : (Int, UInt64) -> Int,
-) -> Unit = "mbw_install_drag_query_callback"
+extern "C" fn native_install_sync_query_callback(
+  call_closure : FuncRef[((Int, Int, UInt64) -> Int, Int, Int, UInt64) -> Int],
+  callback : (Int, Int, UInt64) -> Int,
+) -> Unit = "mbw_install_sync_query_callback"
 
 ///|
 extern "C" fn native_override_send_event() -> Unit = "mbw_override_send_event"
