@@ -103,7 +103,15 @@ static BOOL mbw_dragging_has_paths(id<NSDraggingInfo> sender) {
   return [property_list count] > 0;
 }
 
-@interface MBWContentView : NSView <NSTextInputClient, NSDraggingDestination>
+static void mbw_emit_drag_event(int32_t raw_id, int32_t kind, id<NSDraggingInfo> sender) {
+  if (raw_id <= 0) {
+    return;
+  }
+  uint64_t dragging_info_handle = sender == nil ? 0 : (uint64_t)(uintptr_t)(__bridge void *)sender;
+  mbw_call_text_input_event_trampoline(raw_id, kind, dragging_info_handle, 0, 0, 0, 0, 0);
+}
+
+@interface MBWContentView : NSView <NSTextInputClient>
 @property(nonatomic, assign) BOOL acceptsFirstMouseEnabled;
 @property(nonatomic, assign) BOOL imeAllowed;
 @property(nonatomic, assign) int32_t imeCursorX;
@@ -111,8 +119,8 @@ static BOOL mbw_dragging_has_paths(id<NSDraggingInfo> sender) {
 @property(nonatomic, assign) int32_t imeCursorWidth;
 @property(nonatomic, assign) int32_t imeCursorHeight;
 @property(nonatomic, assign) int32_t rawId;
-@property(nonatomic, strong) NSTrackingArea *trackingArea;
-@property(nonatomic, copy) id markedText;
+@property(nonatomic, assign) NSTrackingRectTag trackingRectTag;
+@property(nonatomic, assign) int32_t markedTextLength;
 - (void)mbw_emitTextInputWithKind:(int32_t)kind
                       eventHandle:(uint64_t)eventHandle
                            state:(int32_t)state
@@ -122,7 +130,7 @@ static BOOL mbw_dragging_has_paths(id<NSDraggingInfo> sender) {
                        pathHandle:(uint64_t)pathHandle;
 @end
 
-@interface MBWWindowDelegate : NSObject <NSWindowDelegate>
+@interface MBWWindowDelegate : NSObject <NSWindowDelegate, NSDraggingDestination>
 @property(nonatomic, assign) int32_t rawId;
 @end
 
@@ -153,21 +161,19 @@ static BOOL mbw_dragging_has_paths(id<NSDraggingInfo> sender) {
   return YES;
 }
 
-- (void)updateTrackingAreas {
-  [super updateTrackingAreas];
-  if (self.trackingArea != nil) {
-    [self removeTrackingArea:self.trackingArea];
-    self.trackingArea = nil;
+- (void)mbw_refreshTrackingRect {
+  if (self.trackingRectTag != 0) {
+    [self removeTrackingRect:self.trackingRectTag];
+    self.trackingRectTag = 0;
   }
-  NSTrackingAreaOptions options = NSTrackingMouseEnteredAndExited | NSTrackingMouseMoved |
-                                  NSTrackingActiveInKeyWindow | NSTrackingInVisibleRect;
-  self.trackingArea = [[[NSTrackingArea alloc] initWithRect:self.bounds
-                                                    options:options
-                                                      owner:self
-                                                   userInfo:nil] autorelease];
-  if (self.trackingArea != nil) {
-    [self addTrackingArea:self.trackingArea];
-  }
+  self.trackingRectTag = [self addTrackingRect:self.frame
+                                         owner:self
+                                      userData:NULL
+                                  assumeInside:NO];
+}
+
+- (void)viewDidMoveToWindow {
+  [self mbw_refreshTrackingRect];
 }
 
 - (void)mbw_emitInputWithKind:(int32_t)kind event:(NSEvent *)event {
@@ -235,6 +241,7 @@ static BOOL mbw_dragging_has_paths(id<NSDraggingInfo> sender) {
   if (self.rawId <= 0) {
     return;
   }
+  [self mbw_refreshTrackingRect];
   mbw_call_window_event_trampoline(8, self.rawId, 0, 0, 0, 0.0);
 }
 
@@ -341,14 +348,14 @@ static BOOL mbw_dragging_has_paths(id<NSDraggingInfo> sender) {
 }
 
 - (BOOL)hasMarkedText {
-  return self.markedText != nil && [self.markedText length] > 0;
+  return self.markedTextLength > 0;
 }
 
 - (NSRange)markedRange {
-  if (self.markedText == nil || [self.markedText length] == 0) {
+  if (self.markedTextLength <= 0) {
     return NSMakeRange(NSNotFound, 0);
   }
-  return NSMakeRange(0, [self.markedText length]);
+  return NSMakeRange(0, (NSUInteger)self.markedTextLength);
 }
 
 - (NSRange)selectedRange {
@@ -359,7 +366,11 @@ static BOOL mbw_dragging_has_paths(id<NSDraggingInfo> sender) {
         selectedRange:(NSRange)selectedRange
      replacementRange:(NSRange)replacementRange {
   (void)replacementRange;
-  self.markedText = string == nil ? @"" : string;
+  NSUInteger marked_text_length = 0;
+  if (string != nil && [string respondsToSelector:@selector(length)]) {
+    marked_text_length = [string length];
+  }
+  self.markedTextLength = [self mbw_i32FromRangeValue:marked_text_length];
   [self mbw_emitTextInputWithKind:22
                       eventHandle:0
                              state:[self mbw_i32FromRangeValue:selectedRange.location]
@@ -370,7 +381,7 @@ static BOOL mbw_dragging_has_paths(id<NSDraggingInfo> sender) {
 }
 
 - (void)unmarkText {
-  self.markedText = @"";
+  self.markedTextLength = 0;
 
   NSTextInputContext *input_context = [self inputContext];
   if (input_context != nil) {
@@ -433,74 +444,6 @@ static BOOL mbw_dragging_has_paths(id<NSDraggingInfo> sender) {
                        cursorStart:0
                          cursorEnd:0
                         pathHandle:(uint64_t)(uintptr_t)sel_getName(selector)];
-}
-
-- (NSDragOperation)draggingEntered:(id<NSDraggingInfo>)sender {
-  if (!mbw_dragging_has_paths(sender)) {
-    return NSDragOperationNone;
-  }
-  uint64_t dragging_info_handle = sender == nil ? 0 : (uint64_t)(uintptr_t)(__bridge void *)sender;
-  [self mbw_emitTextInputWithKind:9
-                      eventHandle:dragging_info_handle
-                             state:0
-                              text:nil
-                       cursorStart:0
-                         cursorEnd:0
-                        pathHandle:0];
-  return NSDragOperationCopy;
-}
-
-- (BOOL)wantsPeriodicDraggingUpdates {
-  return YES;
-}
-
-- (NSDragOperation)draggingUpdated:(id<NSDraggingInfo>)sender {
-  if (!mbw_dragging_has_paths(sender)) {
-    return NSDragOperationNone;
-  }
-  uint64_t dragging_info_handle = sender == nil ? 0 : (uint64_t)(uintptr_t)(__bridge void *)sender;
-  [self mbw_emitTextInputWithKind:10
-                      eventHandle:dragging_info_handle
-                             state:0
-                              text:nil
-                       cursorStart:0
-                         cursorEnd:0
-                        pathHandle:0];
-  return NSDragOperationCopy;
-}
-
-- (void)draggingExited:(id<NSDraggingInfo>)sender {
-  uint64_t dragging_info_handle = sender == nil ? 0 : (uint64_t)(uintptr_t)(__bridge void *)sender;
-  [self mbw_emitTextInputWithKind:12
-                      eventHandle:dragging_info_handle
-                             state:0
-                              text:nil
-                       cursorStart:0
-                         cursorEnd:0
-                        pathHandle:0];
-}
-
-- (BOOL)prepareForDragOperation:(id<NSDraggingInfo>)sender {
-  return mbw_dragging_has_paths(sender);
-}
-
-- (BOOL)performDragOperation:(id<NSDraggingInfo>)sender {
-  if (!mbw_dragging_has_paths(sender)) {
-    return NO;
-  }
-  uint64_t dragging_info_handle = sender == nil ? 0 : (uint64_t)(uintptr_t)(__bridge void *)sender;
-  [self mbw_emitTextInputWithKind:11
-                      eventHandle:dragging_info_handle
-                             state:0
-                              text:nil
-                       cursorStart:0
-                         cursorEnd:0
-                        pathHandle:0];
-  return YES;
-}
-
-- (void)concludeDragOperation:(id<NSDraggingInfo>)sender {
-  (void)sender;
 }
 
 @end
@@ -580,6 +523,46 @@ static BOOL mbw_dragging_has_paths(id<NSDraggingInfo> sender) {
 - (void)windowDidFailToEnterFullScreen:(NSWindow *)window {
   (void)window;
   mbw_call_window_event_trampoline(13, self.rawId, 0, 0, 0, 0.0);
+}
+
+- (NSDragOperation)draggingEntered:(id<NSDraggingInfo>)sender {
+  if (!mbw_dragging_has_paths(sender)) {
+    return NSDragOperationNone;
+  }
+  mbw_emit_drag_event(self.rawId, 9, sender);
+  return NSDragOperationCopy;
+}
+
+- (BOOL)wantsPeriodicDraggingUpdates {
+  return YES;
+}
+
+- (NSDragOperation)draggingUpdated:(id<NSDraggingInfo>)sender {
+  if (!mbw_dragging_has_paths(sender)) {
+    return NSDragOperationNone;
+  }
+  mbw_emit_drag_event(self.rawId, 10, sender);
+  return NSDragOperationCopy;
+}
+
+- (void)draggingExited:(id<NSDraggingInfo>)sender {
+  mbw_emit_drag_event(self.rawId, 12, sender);
+}
+
+- (BOOL)prepareForDragOperation:(id<NSDraggingInfo>)sender {
+  return mbw_dragging_has_paths(sender);
+}
+
+- (BOOL)performDragOperation:(id<NSDraggingInfo>)sender {
+  if (!mbw_dragging_has_paths(sender)) {
+    return NO;
+  }
+  mbw_emit_drag_event(self.rawId, 11, sender);
+  return YES;
+}
+
+- (void)concludeDragOperation:(id<NSDraggingInfo>)sender {
+  (void)sender;
 }
 
 @end
@@ -904,11 +887,12 @@ uint64_t mbw_create_window(int32_t width, int32_t height) {
   content_view.imeCursorY = 0;
   content_view.imeCursorWidth = 1;
   content_view.imeCursorHeight = 1;
-  content_view.markedText = @"";
+  content_view.trackingRectTag = 0;
+  content_view.markedTextLength = 0;
   content_view.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
-  [content_view registerForDraggedTypes:@[ NSPasteboardTypeFileURL ]];
   window.contentView = content_view;
   [window setInitialFirstResponder:content_view];
+  [window registerForDraggedTypes:@[ @"NSFilenamesPboardType" ]];
   [content_view setPostsFrameChangedNotifications:YES];
   [[NSNotificationCenter defaultCenter] addObserver:content_view
                                            selector:@selector(viewFrameDidChangeNotification:)

@@ -127,6 +127,9 @@ let view_ime_forward_key_to_apps : Ref[Array[Bool]] = Ref::new([])
 let view_ime_input_sources : Ref[Array[String]] = Ref::new([])
 
 ///|
+let view_ime_has_marked_texts : Ref[Array[Bool]] = Ref::new([])
+
+///|
 fn view_ime_index(raw_id : Int) -> Int? {
   view_ime_window_ids.val.search_by(id => id == raw_id)
 }
@@ -141,6 +144,7 @@ fn view_ime_ensure_index(raw_id : Int) -> Int {
       view_ime_old_states.val.push(view_ime_state_disabled)
       view_ime_forward_key_to_apps.val.push(false)
       view_ime_input_sources.val.push("")
+      view_ime_has_marked_texts.val.push(false)
       view_ime_window_ids.val.length() - 1
     }
   }
@@ -203,6 +207,20 @@ fn view_set_ime_input_source(raw_id : Int, input_source : String) -> Unit {
 }
 
 ///|
+fn view_has_marked_text(raw_id : Int) -> Bool {
+  match view_ime_index(raw_id) {
+    Some(index) => view_ime_has_marked_texts.val[index]
+    None => false
+  }
+}
+
+///|
+fn view_set_has_marked_text(raw_id : Int, has_marked_text : Bool) -> Unit {
+  let index = view_ime_ensure_index(raw_id)
+  view_ime_has_marked_texts.val[index] = has_marked_text
+}
+
+///|
 fn view_content_view_handle(raw_id : Int) -> UInt64 {
   match app_state_window_handle(raw_id) {
     Some(window_handle) => native_window_content_view_objc_handle(window_handle)
@@ -219,28 +237,16 @@ fn view_ime_allowed(raw_id : Int) -> Bool {
 }
 
 ///|
-fn view_has_marked_text(raw_id : Int) -> Bool {
-  let content_view = view_content_view_handle(raw_id)
-  if content_view == (0 : Int).to_uint64() {
-    false
-  } else {
-    appkit_objc_msg_send_bool(
-      content_view,
-      objc_runtime_selector_handle("hasMarkedText"),
-    )
-  }
-}
-
-///|
 fn view_clear_marked_text(raw_id : Int) -> Unit {
+  view_set_has_marked_text(raw_id, false)
   let content_view = view_content_view_handle(raw_id)
   if content_view == (0 : Int).to_uint64() {
     ()
   } else {
-    appkit_objc_msg_send_void_u64(
+    appkit_objc_msg_send_void_i32(
       content_view,
-      objc_runtime_selector_handle("setMarkedText:"),
-      objc_nsstring_from_string(""),
+      objc_runtime_selector_handle("setMarkedTextLength:"),
+      0,
     )
   }
 }
@@ -405,6 +411,7 @@ fn view_clear_ime_state(raw_id : Int) -> Unit {
       ignore(view_ime_old_states.val.remove(index))
       ignore(view_ime_forward_key_to_apps.val.remove(index))
       ignore(view_ime_input_sources.val.remove(index))
+      ignore(view_ime_has_marked_texts.val.remove(index))
     }
     None => ()
   }
@@ -1082,8 +1089,10 @@ fn queue_native_text_input_event(
       }
       if text.length() > 0 {
         view_set_ime_state(raw_id, view_ime_state_preedit)
+        view_set_has_marked_text(raw_id, true)
       } else {
         view_set_ime_state(raw_id, view_ime_state_ground)
+        view_set_has_marked_text(raw_id, false)
       }
       view_queue_ime_event(raw_id, @core.Ime::Preedit(text, cursor))
     }
@@ -1093,6 +1102,7 @@ fn queue_native_text_input_event(
         return ()
       }
       view_set_ime_state(raw_id, view_ime_state_ground)
+      view_set_has_marked_text(raw_id, false)
       view_queue_ime_event(raw_id, @core.Ime::Preedit("", None))
     }
     // insertText:replacementRange:
@@ -1117,6 +1127,7 @@ fn queue_native_text_input_event(
       if view_has_marked_text(raw_id) &&
         view_ime_state(raw_id) == view_ime_state_preedit {
         view_set_ime_state(raw_id, view_ime_state_ground)
+        view_clear_marked_text(raw_id)
       }
       queue_view_standard_key_binding(
         window_id,

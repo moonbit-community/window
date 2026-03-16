@@ -1,6 +1,9 @@
 ///|
 fn reset_app_state_runtime_for_test() -> Unit {
   app_state_runtime.val = AppStateRuntime::new()
+  app_state_window_position_raw_ids.val = []
+  app_state_window_position_xs.val = []
+  app_state_window_position_ys.val = []
 }
 
 ///|
@@ -525,4 +528,34 @@ test "before_waiting_drains_deferred_callbacks_before_about_to_wait" {
 
   assert_eq(seen.val, ["proxy_wake_up", "about_to_wait"])
   assert_eq(app_state_runtime.val.deferred_callbacks.length(), 0)
+}
+
+///|
+test "moved_event_is_deduplicated_when_position_is_unchanged" {
+  reset_app_state_runtime_for_test()
+  app_state_set_running(true)
+  app_state_set_handler_in_use(true)
+  app_state_runtime.val.dispatch_callback = Some(fn(_callback) {  })
+
+  app_state_queue_native_window_event(4, 7, 10, 20, 0, 0.0)
+  app_state_queue_native_window_event(4, 7, 10, 20, 0, 0.0)
+
+  assert_eq(callback_names_for_test(app_state_runtime.val.deferred_callbacks), [
+    "window_event",
+  ])
+}
+
+///|
+test "moved_event_is_queued_again_when_position_changes" {
+  reset_app_state_runtime_for_test()
+  app_state_set_running(true)
+  app_state_set_handler_in_use(true)
+  app_state_runtime.val.dispatch_callback = Some(fn(_callback) {  })
+
+  app_state_queue_native_window_event(4, 7, 10, 20, 0, 0.0)
+  app_state_queue_native_window_event(4, 7, 11, 20, 0, 0.0)
+
+  assert_eq(callback_names_for_test(app_state_runtime.val.deferred_callbacks), [
+    "window_event", "window_event",
+  ])
 }
