@@ -305,6 +305,7 @@ The implementation is **not yet 1:1 aligned** with `winit-reference` semantics.
 - Completed: aligned initial window positioning with upstream `window_delegate::new_window`: `attributes.position` is now ignored when fullscreen is configured, and missing position now follows upstream centering behavior (`window.center()`).
 - Completed: aligned fullscreen creation sizing closer to upstream `screen.frame` strategy: when fullscreen is requested, initial window size now prefers the fullscreen target monitor (or primary monitor for borderless-without-target) instead of generic default/surface-size fallback.
 - Completed: aligned termination handler ownership with upstream `event_handler.terminate()` intent by clearing the registered dispatch handler during `WillTerminate`, and termination no longer force-sets `exit_requested` (it now only follows terminate + `internal_exit` flow).
+- Completed: aligned `app_state_internal_exit` with upstream scope by no longer resetting `stop_on_launch` there; launch-stop semantics now remain owned by launch handling paths.
 - Completed: hardened FFI surface governance to full-symbol allowlisting: `scripts/check_ffi_surface.sh` now fails on any export-list drift (added or removed symbols), and `docs/ffi-export-allowlist.txt` is synchronized to the current primitive export set.
 - Completed: removed MoonBit-only manual `finishLaunching` tracking from `event_loop` native run/stop paths; `NSApplication::run`/`stop` are now called directly to match upstream control-flow ownership.
 

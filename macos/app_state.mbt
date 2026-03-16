@@ -1019,7 +1019,6 @@ fn app_state_internal_exit() -> Unit {
   app_state_runtime.val.is_running = false
   app_state_runtime.val.event_handler_in_use = false
   app_state_runtime.val.stop_on_redraw = false
-  app_state_runtime.val.stop_on_launch = false
   app_state_runtime.val.stop_before_wait = false
   app_state_runtime.val.stop_after_wait = false
   app_state_runtime.val.waker.stop()

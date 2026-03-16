@@ -214,6 +214,18 @@ test "callbacks_requiring_running_are_ignored_when_not_running" {
 }
 
 ///|
+test "internal_exit_preserves_stop_on_launch_flag" {
+  reset_app_state_runtime_for_test()
+  app_state_set_stop_on_launch(true)
+  app_state_set_running(true)
+
+  app_state_internal_exit()
+
+  assert_true(app_state_runtime.val.stop_on_launch)
+  assert_false(app_state_is_running())
+}
+
+///|
 test "dispatch_registered_deferred_callbacks_keeps_order_when_running" {
   reset_app_state_runtime_for_test()
   let seen : Ref[Array[String]] = Ref::new([])
