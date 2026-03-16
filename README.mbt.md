@@ -15,7 +15,7 @@ moon add Milky2018/window
 ```
 
 You do **not** need to manually add AppKit/CoreGraphics link flags in your app;
-the package provides native link configuration.
+the subpackages provide native link configuration.
 
 ## Quick Start
 
@@ -83,7 +83,6 @@ This library follows MoonBit `raise`-based error handling (typed errors), not
 - `@Milky2018/window/macos`: macOS runtime API (`EventLoop`, `ActiveEventLoop`,
   `Window`, `EventLoopProxy`, `ApplicationHandler`)
 - `@Milky2018/window/dpi`: logical/physical size and position types
-- `@Milky2018/window`: convenience constructors
 
 `WindowEvent::into_winit_events()` is available when you want a
 `winit`-style compatibility projection.

@@ -63,7 +63,7 @@ The implementation is **not yet 1:1 aligned** with `winit-reference` semantics.
 - Completed: `application` example now implements `device_event` and `standard_key_binding` callbacks for closer behavioral coverage to upstream demo.
 - Completed: lifecycle notifications (`did_finish_launching` / `will_terminate`) are now fed directly into deferred callbacks; synthetic notification polling and the temporary `notification_center` bridge were removed.
 - Completed: removed synthetic `hide_application` / `hide_other_applications` / `automatic_window_tabbing` shadow state caches from `event_loop`.
-- Completed: moved `Window` cursor/IME API surface from `view.mbt` back into `window.mbt` to better match upstream file-level ownership.
+- Completed: moved `Window` cursor/IME API surface from `view.mbt` back into `window_delegate.mbt` to better match upstream file-level ownership.
 - Completed: keyboard payload extraction in native AppKit view now uses guarded accessors for repeat/character fields, preventing `FlagsChanged` invalid-message crashes.
 - Completed: monitor backend now enumerates native display modes (resolution/bit-depth/refresh-rate) via minimal mode-handle primitives instead of exposing only a single fallback mode.
 - Completed: removed synthetic `will_terminate` injection from `EventLoop::finish_exit`; termination notification handling is now lifecycle-driven only.
