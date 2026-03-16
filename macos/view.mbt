@@ -100,6 +100,326 @@ fn view_clear_pressed_modifiers(window_id : Int) -> Unit {
 }
 
 ///|
+let view_ime_state_disabled = 0
+
+///|
+let view_ime_state_ground = 1
+
+///|
+let view_ime_state_preedit = 2
+
+///|
+let view_ime_state_committed = 3
+
+///|
+let view_ime_window_ids : Ref[Array[Int]] = Ref::new([])
+
+///|
+let view_ime_states : Ref[Array[Int]] = Ref::new([])
+
+///|
+let view_ime_old_states : Ref[Array[Int]] = Ref::new([])
+
+///|
+let view_ime_forward_key_to_apps : Ref[Array[Bool]] = Ref::new([])
+
+///|
+let view_ime_input_sources : Ref[Array[String]] = Ref::new([])
+
+///|
+fn view_ime_index(raw_id : Int) -> Int? {
+  view_ime_window_ids.val.search_by(id => id == raw_id)
+}
+
+///|
+fn view_ime_ensure_index(raw_id : Int) -> Int {
+  match view_ime_index(raw_id) {
+    Some(index) => index
+    None => {
+      view_ime_window_ids.val.push(raw_id)
+      view_ime_states.val.push(view_ime_state_disabled)
+      view_ime_old_states.val.push(view_ime_state_disabled)
+      view_ime_forward_key_to_apps.val.push(false)
+      view_ime_input_sources.val.push("")
+      view_ime_window_ids.val.length() - 1
+    }
+  }
+}
+
+///|
+fn view_ime_state(raw_id : Int) -> Int {
+  match view_ime_index(raw_id) {
+    Some(index) => view_ime_states.val[index]
+    None => view_ime_state_disabled
+  }
+}
+
+///|
+fn view_set_ime_state(raw_id : Int, state : Int) -> Unit {
+  let index = view_ime_ensure_index(raw_id)
+  view_ime_states.val[index] = state
+}
+
+///|
+fn view_ime_old_state(raw_id : Int) -> Int {
+  match view_ime_index(raw_id) {
+    Some(index) => view_ime_old_states.val[index]
+    None => view_ime_state_disabled
+  }
+}
+
+///|
+fn view_set_ime_old_state(raw_id : Int, state : Int) -> Unit {
+  let index = view_ime_ensure_index(raw_id)
+  view_ime_old_states.val[index] = state
+}
+
+///|
+fn view_ime_forward_key_to_app(raw_id : Int) -> Bool {
+  match view_ime_index(raw_id) {
+    Some(index) => view_ime_forward_key_to_apps.val[index]
+    None => false
+  }
+}
+
+///|
+fn view_set_ime_forward_key_to_app(raw_id : Int, forward : Bool) -> Unit {
+  let index = view_ime_ensure_index(raw_id)
+  view_ime_forward_key_to_apps.val[index] = forward
+}
+
+///|
+fn view_ime_input_source(raw_id : Int) -> String {
+  match view_ime_index(raw_id) {
+    Some(index) => view_ime_input_sources.val[index]
+    None => ""
+  }
+}
+
+///|
+fn view_set_ime_input_source(raw_id : Int, input_source : String) -> Unit {
+  let index = view_ime_ensure_index(raw_id)
+  view_ime_input_sources.val[index] = input_source
+}
+
+///|
+fn view_content_view_handle(raw_id : Int) -> UInt64 {
+  match app_state_window_handle(raw_id) {
+    Some(window_handle) => native_window_content_view_objc_handle(window_handle)
+    None => (0 : Int).to_uint64()
+  }
+}
+
+///|
+fn view_ime_allowed(raw_id : Int) -> Bool {
+  match app_state_window_handle(raw_id) {
+    Some(window_handle) => window_ime_allowed(window_handle)
+    None => false
+  }
+}
+
+///|
+fn view_has_marked_text(raw_id : Int) -> Bool {
+  let content_view = view_content_view_handle(raw_id)
+  if content_view == (0 : Int).to_uint64() {
+    false
+  } else {
+    appkit_objc_msg_send_bool(
+      content_view,
+      objc_runtime_selector_handle("hasMarkedText"),
+    )
+  }
+}
+
+///|
+fn view_clear_marked_text(raw_id : Int) -> Unit {
+  let content_view = view_content_view_handle(raw_id)
+  if content_view == (0 : Int).to_uint64() {
+    ()
+  } else {
+    appkit_objc_msg_send_void_u64(
+      content_view,
+      objc_runtime_selector_handle("setMarkedText:"),
+      objc_nsstring_from_string(""),
+    )
+  }
+}
+
+///|
+fn view_current_input_source(raw_id : Int) -> String {
+  let content_view = view_content_view_handle(raw_id)
+  if content_view == (0 : Int).to_uint64() {
+    return ""
+  }
+  let input_context = appkit_objc_msg_send_u64(
+    content_view,
+    objc_runtime_selector_handle("inputContext"),
+  )
+  if input_context == (0 : Int).to_uint64() {
+    return ""
+  }
+  let input_source = appkit_objc_msg_send_u64(
+    input_context,
+    objc_runtime_selector_handle("selectedKeyboardInputSource"),
+  )
+  if input_source == (0 : Int).to_uint64() {
+    return ""
+  }
+  let description = appkit_objc_msg_send_u64(
+    input_source,
+    objc_runtime_selector_handle("description"),
+  )
+  text_from_native(
+    objc_utf8_bytes_from_object(
+      if description == (0 : Int).to_uint64() {
+        input_source
+      } else {
+        description
+      },
+    ),
+  )
+}
+
+///|
+fn view_utf8_offset_for_utf16_index(text_handle : UInt64, index : Int) -> Int {
+  if text_handle == (0 : Int).to_uint64() || index < 0 {
+    return -1
+  }
+  let length = appkit_objc_msg_send_i64(
+    text_handle,
+    objc_runtime_selector_handle("length"),
+  ).to_int()
+  if length < 0 {
+    return -1
+  }
+  let clamped = if index <= length { index } else { length }
+  let prefix = appkit_objc_msg_send_u64_u64(
+    text_handle,
+    objc_runtime_selector_handle("substringToIndex:"),
+    clamped.to_uint64(),
+  )
+  if prefix == (0 : Int).to_uint64() {
+    -1
+  } else {
+    objc_utf8_bytes_from_object(prefix).length()
+  }
+}
+
+///|
+fn view_text_object_string_handle(text_object_handle : UInt64) -> UInt64 {
+  if text_object_handle == (0 : Int).to_uint64() {
+    return (0 : Int).to_uint64()
+  }
+  let nsstring_class = objc_runtime_class_handle("NSString")
+  if nsstring_class != (0 : Int).to_uint64() &&
+    appkit_objc_msg_send_bool_u64(
+      text_object_handle,
+      objc_runtime_selector_handle("isKindOfClass:"),
+      nsstring_class,
+    ) {
+    return text_object_handle
+  }
+  let attributed_string_class = objc_runtime_class_handle("NSAttributedString")
+  if attributed_string_class != (0 : Int).to_uint64() &&
+    appkit_objc_msg_send_bool_u64(
+      text_object_handle,
+      objc_runtime_selector_handle("isKindOfClass:"),
+      attributed_string_class,
+    ) {
+    return appkit_objc_msg_send_u64(
+      text_object_handle,
+      objc_runtime_selector_handle("string"),
+    )
+  }
+  if appkit_objc_msg_send_bool_u64(
+      text_object_handle,
+      objc_runtime_selector_handle("respondsToSelector:"),
+      objc_runtime_selector_handle("description"),
+    ) {
+    return appkit_objc_msg_send_u64(
+      text_object_handle,
+      objc_runtime_selector_handle("description"),
+    )
+  }
+  (0 : Int).to_uint64()
+}
+
+///|
+fn view_string_is_control(text_handle : UInt64) -> Bool {
+  let string_handle = view_text_object_string_handle(text_handle)
+  if string_handle == (0 : Int).to_uint64() {
+    return false
+  }
+  let length = appkit_objc_msg_send_i64(
+    string_handle,
+    objc_runtime_selector_handle("length"),
+  ).to_int()
+  if length <= 0 {
+    return false
+  }
+  let char0 = appkit_objc_msg_send_u64_u64(
+    string_handle,
+    objc_runtime_selector_handle("characterAtIndex:"),
+    (0 : Int).to_uint64(),
+  ).to_int()
+  char0 < 32 || char0 == 127
+}
+
+///|
+fn view_queue_ime_event(raw_id : Int, ime : @core.Ime) -> Unit {
+  app_state_queue_window_callback(
+    @core.WindowId::from_raw(raw_id),
+    @core.WindowEvent::Ime(ime),
+  )
+}
+
+///|
+fn text_from_cstr_handle(cstr_handle : UInt64) -> String {
+  if cstr_handle == (0 : Int).to_uint64() {
+    ""
+  } else {
+    text_from_native(native_copy_utf8_cstr_bytes(cstr_handle))
+  }
+}
+
+///|
+fn view_disable_ime(raw_id : Int) -> Unit {
+  if view_ime_state(raw_id) != view_ime_state_disabled {
+    view_set_ime_state(raw_id, view_ime_state_disabled)
+    view_queue_ime_event(raw_id, @core.Ime::Disabled)
+  }
+}
+
+///|
+fn view_ime_allows_key_up(raw_id : Int) -> Bool {
+  let state = view_ime_state(raw_id)
+  state == view_ime_state_disabled || state == view_ime_state_ground
+}
+
+///|
+fn view_clear_ime_state(raw_id : Int) -> Unit {
+  match view_ime_index(raw_id) {
+    Some(index) => {
+      ignore(view_ime_window_ids.val.remove(index))
+      ignore(view_ime_states.val.remove(index))
+      ignore(view_ime_old_states.val.remove(index))
+      ignore(view_ime_forward_key_to_apps.val.remove(index))
+      ignore(view_ime_input_sources.val.remove(index))
+    }
+    None => ()
+  }
+}
+
+///|
+fn queue_pointer_motion_event(raw_id : Int, x : Double, y : Double) -> Unit {
+  let empty_text = @utf8.encode(""[:], bom=false)
+  queue_input_event(
+    raw_id, 1, x, y, 0, 0, 0, 0, 0, 1, 1, 0, 0.0, 0.0, 0, empty_text, empty_text,
+    empty_text, 0, empty_text, -1, -1, empty_text,
+  )
+}
+
+///|
 fn queue_input_event(
   raw_id : Int,
   kind : Int,
@@ -244,32 +564,8 @@ fn queue_input_event(
           )
         None => ()
       }
-    9 =>
-      app_state_queue_window_callback(
-        window_id,
-        @core.WindowEvent::DragEntered(drag_paths_from_native(path), position),
-      )
-    10 =>
-      app_state_queue_window_callback(
-        window_id,
-        @core.WindowEvent::DragMoved(position),
-      )
-    11 =>
-      app_state_queue_window_callback(
-        window_id,
-        @core.WindowEvent::DragDropped(drag_paths_from_native(path), position),
-      )
-    12 =>
-      app_state_queue_window_callback(
-        window_id,
-        @core.WindowEvent::DragLeft(
-          if state != 0 {
-            Some(position)
-          } else {
-            None
-          },
-        ),
-      )
+    9 | 10 | 11 | 12 =>
+      queue_drag_event_from_payload(raw_id, kind, position, path, state != 0)
     13 =>
       match touch_phase_from_native(phase) {
         Some(phase) =>
@@ -347,17 +643,7 @@ fn native_modifiers_from_modifier_flags(modifier_flags : Int) -> Int {
 ///|
 fn option_as_alt_for_window(raw_id : Int) -> Int {
   match app_state_window_handle(raw_id) {
-    Some(window_handle) => {
-      let content_view = native_window_content_view_objc_handle(window_handle)
-      if content_view == (0 : Int).to_uint64() {
-        0
-      } else {
-        appkit_objc_msg_send_u64(
-          content_view,
-          objc_runtime_selector_handle("optionAsAlt"),
-        ).to_int()
-      }
-    }
+    Some(window_handle) => window_option_as_alt_native(window_handle)
     None => 0
   }
 }
@@ -433,86 +719,13 @@ fn nsevent_phase_to_native(phase : Int) -> Int {
 }
 
 ///|
-fn drag_paths_from_native_path_list(path_list_handle : UInt64) -> Array[String] {
-  if path_list_handle == (0 : Int).to_uint64() {
-    return []
-  }
-  let count = appkit_objc_msg_send_u64(
-    path_list_handle,
-    objc_runtime_selector_handle("count"),
-  ).to_int()
-  if count <= 0 {
-    return []
-  }
-  let paths : Array[String] = []
-  let mut index = 0
-  while index < count {
-    let path_object = appkit_objc_msg_send_u64_u64(
-      path_list_handle,
-      objc_runtime_selector_handle("objectAtIndex:"),
-      index.to_uint64(),
-    )
-    if path_object != (0 : Int).to_uint64() {
-      let path = text_from_native(objc_utf8_bytes_from_object(path_object))
-      if path.length() > 0 {
-        paths.push(path)
-      }
-    }
-    index = index + 1
-  }
-  paths
-}
-
-///|
-fn dnd_position_from_dragging_info(
-  raw_id : Int,
-  dragging_info_handle : UInt64,
-) -> @dpi.PhysicalPositionF64? {
-  if dragging_info_handle == (0 : Int).to_uint64() {
-    return None
-  }
-  let dragging_location_x = appkit_objc_msg_send_point_x(
-    dragging_info_handle,
-    objc_runtime_selector_handle("draggingLocation"),
-  )
-  let dragging_location_y = appkit_objc_msg_send_point_y(
-    dragging_info_handle,
-    objc_runtime_selector_handle("draggingLocation"),
-  )
-  let mut x = dragging_location_x
-  let mut y = dragging_location_y
-  match app_state_window_handle(raw_id) {
-    Some(window_handle) => {
-      let content_view = native_window_content_view_objc_handle(window_handle)
-      if content_view != (0 : Int).to_uint64() {
-        x = appkit_objc_msg_send_point_x_point_u64(
-          content_view,
-          objc_runtime_selector_handle("convertPoint:fromView:"),
-          dragging_location_x,
-          dragging_location_y,
-          (0 : Int).to_uint64(),
-        )
-        y = appkit_objc_msg_send_point_y_point_u64(
-          content_view,
-          objc_runtime_selector_handle("convertPoint:fromView:"),
-          dragging_location_x,
-          dragging_location_y,
-          (0 : Int).to_uint64(),
-        )
-      }
-      Some(@dpi.PhysicalPositionF64::new(x, y))
-    }
-    None => Some(@dpi.PhysicalPositionF64::new(x, y))
-  }
-}
-
-///|
 fn queue_native_input_event(
   raw_id : Int,
   kind : Int,
   event_handle : UInt64,
 ) -> Unit {
   let empty_text = @utf8.encode(""[:], bom=false)
+  let window_id = @core.WindowId::from_raw(raw_id)
   let event_type = if event_handle == (0 : Int).to_uint64() {
     0
   } else {
@@ -570,6 +783,7 @@ fn queue_native_input_event(
       pointer_kind = 1
     }
     4 => {
+      queue_pointer_motion_event(raw_id, x, y)
       pointer_source = 1
       pointer_kind = 1
       state = pointer_button_state_from_event_type(event_type)
@@ -583,6 +797,7 @@ fn queue_native_input_event(
       }
     }
     5 => {
+      queue_pointer_motion_event(raw_id, x, y)
       pointer_source = 1
       pointer_kind = 1
       if event_handle != (0 : Int).to_uint64() {
@@ -623,6 +838,23 @@ fn queue_native_input_event(
     }
     6 => ()
     7 => {
+      if event_type == 12 {
+        let state = modifiers_state_from_native(modifiers)
+        let pressed_modifiers = normalize_pressed_modifier_keys(
+          state,
+          view_pressed_modifiers(raw_id),
+        )
+        view_set_pressed_modifiers(raw_id, pressed_modifiers)
+        app_state_queue_window_callback(
+          window_id,
+          @core.WindowEvent::ModifiersChanged(
+            @core.Modifiers::from_state(state, pressed_modifiers),
+          ),
+        )
+      }
+      if event_type == 11 && !view_ime_allows_key_up(raw_id) {
+        return ()
+      }
       if event_handle != (0 : Int).to_uint64() {
         scancode = appkit_objc_msg_send_i64(
           event_handle,
@@ -675,6 +907,7 @@ fn queue_native_input_event(
       }
     }
     13 => {
+      queue_pointer_motion_event(raw_id, x, y)
       pointer_source = 1
       pointer_kind = 1
       if event_handle != (0 : Int).to_uint64() {
@@ -691,6 +924,7 @@ fn queue_native_input_event(
       }
     }
     14 => {
+      queue_pointer_motion_event(raw_id, x, y)
       pointer_source = 1
       pointer_kind = 1
       if event_handle != (0 : Int).to_uint64() {
@@ -714,10 +948,12 @@ fn queue_native_input_event(
       }
     }
     15 => {
+      queue_pointer_motion_event(raw_id, x, y)
       pointer_source = 1
       pointer_kind = 1
     }
     16 => {
+      queue_pointer_motion_event(raw_id, x, y)
       pointer_source = 1
       pointer_kind = 1
       if event_handle != (0 : Int).to_uint64() {
@@ -734,6 +970,7 @@ fn queue_native_input_event(
       }
     }
     17 => {
+      queue_pointer_motion_event(raw_id, x, y)
       pointer_source = 1
       pointer_kind = 1
       if event_handle != (0 : Int).to_uint64() {
@@ -774,65 +1011,118 @@ fn queue_native_text_input_event(
   cursor_end : Int,
   path_handle : UInt64,
 ) -> Unit {
-  let empty_text = @utf8.encode(""[:], bom=false)
-  let text = if text_handle == (0 : Int).to_uint64() {
-    empty_text
+  ignore(cursor_end)
+  let text_string_handle = view_text_object_string_handle(text_handle)
+  let text_bytes = if text_string_handle == (0 : Int).to_uint64() {
+    @utf8.encode(""[:], bom=false)
   } else {
-    objc_utf8_bytes_from_object(text_handle)
+    objc_utf8_bytes_from_object(text_string_handle)
   }
+  let text = text_from_native(text_bytes)
   let window_id = @core.WindowId::from_raw(raw_id)
-  let position = dnd_position_from_dragging_info(raw_id, event_handle)
   match kind {
-    8 =>
-      queue_input_event(
-        raw_id, 8, 0.0, 0.0, 0, 0, 0, 0, 0, 0, 0, 0, 0.0, 0.0, 0, empty_text, empty_text,
-        empty_text, state, text, cursor_start, cursor_end, empty_text,
-      )
-    9 => {
-      let paths = drag_paths_from_native_path_list(path_handle)
-      if paths.length() > 0 {
-        match position {
-          Some(position) =>
-            app_state_queue_window_callback(
-              window_id,
-              @core.WindowEvent::DragEntered(paths, position),
-            )
-          None => ()
+    // keyDown begin
+    20 => {
+      if view_ime_allowed(raw_id) {
+        if view_ime_state(raw_id) != view_ime_state_disabled {
+          let current_input_source = view_current_input_source(raw_id)
+          if current_input_source != view_ime_input_source(raw_id) {
+            view_set_ime_input_source(raw_id, current_input_source)
+            view_disable_ime(raw_id)
+          }
+        } else {
+          view_set_ime_input_source(raw_id, view_current_input_source(raw_id))
         }
       }
+      view_set_ime_old_state(raw_id, view_ime_state(raw_id))
+      view_set_ime_forward_key_to_app(raw_id, false)
     }
-    10 =>
-      match position {
-        Some(position) =>
-          app_state_queue_window_callback(
-            window_id,
-            @core.WindowEvent::DragMoved(position),
-          )
-        None => ()
-      }
-    11 => {
-      let paths = drag_paths_from_native_path_list(path_handle)
-      if paths.length() > 0 {
-        match position {
-          Some(position) =>
-            app_state_queue_window_callback(
-              window_id,
-              @core.WindowEvent::DragDropped(paths, position),
-            )
-          None => ()
+    // keyDown end
+    21 => {
+      let old_ime_state = view_ime_old_state(raw_id)
+      let mut had_ime_input = false
+      match view_ime_state(raw_id) {
+        _ if view_ime_state(raw_id) == view_ime_state_committed => {
+          view_set_ime_state(raw_id, view_ime_state_ground)
+          view_clear_marked_text(raw_id)
+          had_ime_input = true
         }
+        _ if view_ime_state(raw_id) == view_ime_state_preedit =>
+          had_ime_input = true
+        _ => had_ime_input = old_ime_state != view_ime_state(raw_id)
+      }
+      if !had_ime_input || view_ime_forward_key_to_app(raw_id) {
+        queue_native_input_event(raw_id, 7, event_handle)
+      }
+      view_set_ime_forward_key_to_app(raw_id, false)
+    }
+    // setMarkedText:selectedRange:replacementRange:
+    22 => {
+      if !view_ime_allowed(raw_id) {
+        return ()
+      }
+      if view_ime_state(raw_id) == view_ime_state_disabled {
+        view_set_ime_input_source(raw_id, view_current_input_source(raw_id))
+        view_set_ime_state(raw_id, view_ime_state_ground)
+        view_queue_ime_event(raw_id, @core.Ime::Enabled)
+      }
+      let cursor = if state >= 0 {
+        let start = view_utf8_offset_for_utf16_index(text_string_handle, state)
+        let utf16_end = state + clamp_non_negative(cursor_start)
+        let end = view_utf8_offset_for_utf16_index(
+          text_string_handle, utf16_end,
+        )
+        if start >= 0 && end >= start {
+          Some(@core.ImeCursorRange::new(start, end))
+        } else {
+          None
+        }
+      } else {
+        None
+      }
+      if text.length() > 0 {
+        view_set_ime_state(raw_id, view_ime_state_preedit)
+      } else {
+        view_set_ime_state(raw_id, view_ime_state_ground)
+      }
+      view_queue_ime_event(raw_id, @core.Ime::Preedit(text, cursor))
+    }
+    // unmarkText
+    23 => {
+      if !view_ime_allowed(raw_id) {
+        return ()
+      }
+      view_set_ime_state(raw_id, view_ime_state_ground)
+      view_queue_ime_event(raw_id, @core.Ime::Preedit("", None))
+    }
+    // insertText:replacementRange:
+    24 => {
+      if !view_ime_allowed(raw_id) || text.length() == 0 {
+        return ()
+      }
+      if view_has_marked_text(raw_id) &&
+        view_ime_state(raw_id) != view_ime_state_disabled &&
+        !view_string_is_control(text_handle) {
+        view_queue_ime_event(raw_id, @core.Ime::Preedit("", None))
+        view_queue_ime_event(raw_id, @core.Ime::Commit(text))
+        view_set_ime_state(raw_id, view_ime_state_committed)
       }
     }
-    12 =>
-      app_state_queue_window_callback(
+    // doCommandBySelector:
+    25 => {
+      if view_ime_state(raw_id) == view_ime_state_committed {
+        return ()
+      }
+      view_set_ime_forward_key_to_app(raw_id, true)
+      if view_has_marked_text(raw_id) &&
+        view_ime_state(raw_id) == view_ime_state_preedit {
+        view_set_ime_state(raw_id, view_ime_state_ground)
+      }
+      queue_view_standard_key_binding(
         window_id,
-        @core.WindowEvent::DragLeft(position),
+        text_from_cstr_handle(path_handle),
       )
-    18 =>
-      queue_input_event(
-        raw_id, 18, 0.0, 0.0, 0, 0, 0, 0, 0, 0, 0, 0, 0.0, 0.0, 0, empty_text, empty_text,
-        empty_text, 0, text, -1, -1, empty_text,
-      )
+    }
     _ => ()
   }
 }

@@ -123,6 +123,9 @@ extern "C" fn native_install_input_event_callback(
 extern "C" fn native_objc_copy_utf8_bytes(object_handle : UInt64) -> Bytes = "mbw_objc_copy_utf8_bytes"
 
 ///|
+extern "C" fn native_copy_utf8_cstr_bytes(cstr_handle : UInt64) -> Bytes = "mbw_copy_utf8_cstr_bytes"
+
+///|
 #borrow(call_closure)
 #owned(callback)
 extern "C" fn native_install_text_input_event_callback(
@@ -229,19 +232,6 @@ extern "C" fn appkit_objc_msg_send_void_rect_bool(
   height : Double,
   arg1 : Bool,
 ) -> Unit = "mbw_objc_msg_send_void_rect_bool"
-
-///|
-extern "C" fn appkit_objc_msg_send_void_i32_u64_i32_u64_i32_i32_u64(
-  target : UInt64,
-  selector : UInt64,
-  arg0 : Int,
-  arg1 : UInt64,
-  arg2 : Int,
-  arg3 : UInt64,
-  arg4 : Int,
-  arg5 : Int,
-  arg6 : UInt64,
-) -> Unit = "mbw_objc_msg_send_void_i32_u64_i32_u64_i32_i32_u64"
 
 ///|
 extern "C" fn appkit_objc_msg_send_u64_i32_double_double_i32_u64_i32_i32_u64(

@@ -85,6 +85,71 @@ fn AppStateRuntime::new() -> AppStateRuntime {
 let app_state_runtime : Ref[AppStateRuntime] = Ref::new(AppStateRuntime::new())
 
 ///|
+let app_state_window_position_raw_ids : Ref[Array[Int]] = Ref::new([])
+
+///|
+let app_state_window_position_xs : Ref[Array[Int]] = Ref::new([])
+
+///|
+let app_state_window_position_ys : Ref[Array[Int]] = Ref::new([])
+
+///|
+fn app_state_window_position_index(raw_id : Int) -> Int? {
+  app_state_window_position_raw_ids.val.search_by(id => id == raw_id)
+}
+
+///|
+fn app_state_set_window_position_state(raw_id : Int, x : Int, y : Int) -> Unit {
+  match app_state_window_position_index(raw_id) {
+    Some(index) => {
+      app_state_window_position_xs.val[index] = x
+      app_state_window_position_ys.val[index] = y
+    }
+    None => {
+      app_state_window_position_raw_ids.val.push(raw_id)
+      app_state_window_position_xs.val.push(x)
+      app_state_window_position_ys.val.push(y)
+    }
+  }
+}
+
+///|
+fn app_state_clear_window_position_state(raw_id : Int) -> Unit {
+  match app_state_window_position_index(raw_id) {
+    Some(index) => {
+      ignore(app_state_window_position_raw_ids.val.remove(index))
+      ignore(app_state_window_position_xs.val.remove(index))
+      ignore(app_state_window_position_ys.val.remove(index))
+    }
+    None => ()
+  }
+}
+
+///|
+fn app_state_queue_window_moved_if_changed(
+  raw_id : Int,
+  window_id : @core.WindowId,
+  logical_x : Int,
+  logical_y : Int,
+) -> Unit {
+  let should_queue = match app_state_window_position_index(raw_id) {
+    Some(index) =>
+      app_state_window_position_xs.val[index] != logical_x ||
+      app_state_window_position_ys.val[index] != logical_y
+    None => true
+  }
+  app_state_set_window_position_state(raw_id, logical_x, logical_y)
+  if should_queue {
+    app_state_queue_window_callback(
+      window_id,
+      @core.WindowEvent::Moved(
+        app_state_logical_position_to_physical(raw_id, logical_x, logical_y),
+      ),
+    )
+  }
+}
+
+///|
 fn runtime_now_ms() -> Int64 {
   (native_cf_absolute_time_get_current() * 1000.0).to_int64()
 }
@@ -320,7 +385,37 @@ fn app_state_queue_native_window_event(
   _arg2 : Int,
   argd : Double,
 ) -> Unit {
+  ignore(_arg2)
   let window_id = @core.WindowId::from_raw(raw_id)
+  let window_handle = app_state_window_handle(raw_id)
+  let focused = match window_handle {
+    Some(window_handle) => native_window_has_focus(window_handle)
+    None => arg0 != 0
+  }
+  let occluded = match window_handle {
+    Some(window_handle) => native_window_is_occluded(window_handle)
+    None => arg0 != 0
+  }
+  let logical_x = match window_handle {
+    Some(window_handle) => native_window_x(window_handle)
+    None => arg0
+  }
+  let logical_y = match window_handle {
+    Some(window_handle) => native_window_y(window_handle)
+    None => arg1
+  }
+  let logical_width = match window_handle {
+    Some(window_handle) => native_window_content_width(window_handle)
+    None => arg0
+  }
+  let logical_height = match window_handle {
+    Some(window_handle) => native_window_content_height(window_handle)
+    None => arg1
+  }
+  let scale_factor = match window_handle {
+    Some(window_handle) => native_window_scale_factor(window_handle)
+    None => if argd > 0.0 { argd } else { 1.0 }
+  }
   match kind {
     1 =>
       app_state_queue_window_callback(
@@ -328,14 +423,22 @@ fn app_state_queue_native_window_event(
         @core.WindowEvent::CloseRequested,
       )
     2 => {
+      match window_handle {
+        Some(window_handle) => {
+          clear_window_fullscreen_transition_state(window_handle)
+          clear_window_platform_state(window_handle)
+        }
+        None => ()
+      }
       app_state_clear_window_redraw(raw_id)
       view_clear_pressed_modifiers(raw_id)
+      view_clear_ime_state(raw_id)
       app_state_clear_fullscreen_request(raw_id)
+      app_state_clear_window_position_state(raw_id)
       app_state_unregister_window_handle(raw_id)
       app_state_queue_window_callback(window_id, @core.WindowEvent::Destroyed)
     }
     3 => {
-      let focused = arg0 != 0
       app_state_queue_window_callback(
         window_id,
         @core.WindowEvent::Focused(focused),
@@ -349,16 +452,13 @@ fn app_state_queue_native_window_event(
       }
     }
     4 =>
-      app_state_queue_window_callback(
-        window_id,
-        @core.WindowEvent::Moved(
-          app_state_logical_position_to_physical(raw_id, arg0, arg1),
-        ),
+      app_state_queue_window_moved_if_changed(
+        raw_id, window_id, logical_x, logical_y,
       )
     5 =>
       app_state_maybe_dispatch_callback(
         DeferredCallback::ScaleFactorChanged(
-          raw_id, window_id, argd, arg0, arg1,
+          raw_id, window_id, scale_factor, logical_width, logical_height,
         ),
       )
     6 =>
@@ -373,36 +473,69 @@ fn app_state_queue_native_window_event(
     7 =>
       app_state_queue_window_callback(
         window_id,
-        @core.WindowEvent::Occluded(arg0 != 0),
+        @core.WindowEvent::Occluded(occluded),
       )
     8 =>
       app_state_queue_window_callback(
         window_id,
         @core.WindowEvent::SurfaceResized(
-          app_state_logical_size_to_physical(raw_id, arg0, arg1),
+          app_state_logical_size_to_physical(
+            raw_id, logical_width, logical_height,
+          ),
         ),
       )
-    9 => ()
-    10 => ()
+    9 =>
+      match window_handle {
+        Some(window_handle) =>
+          set_window_fullscreen_transition_state(window_handle, true)
+        None => ()
+      }
+    10 =>
+      match window_handle {
+        Some(window_handle) =>
+          set_window_fullscreen_transition_state(window_handle, true)
+        None => ()
+      }
     11 => {
+      match window_handle {
+        Some(window_handle) =>
+          set_window_fullscreen_transition_state(window_handle, false)
+        None => ()
+      }
       app_state_process_queued_fullscreen_request(raw_id)
       app_state_queue_window_callback(
         window_id,
         @core.WindowEvent::SurfaceResized(
-          app_state_logical_size_to_physical(raw_id, arg0, arg1),
+          app_state_logical_size_to_physical(
+            raw_id, logical_width, logical_height,
+          ),
         ),
       )
     }
     12 => {
+      match window_handle {
+        Some(window_handle) =>
+          set_window_fullscreen_transition_state(window_handle, false)
+        None => ()
+      }
       app_state_process_queued_fullscreen_request(raw_id)
       app_state_queue_window_callback(
         window_id,
         @core.WindowEvent::SurfaceResized(
-          app_state_logical_size_to_physical(raw_id, arg0, arg1),
+          app_state_logical_size_to_physical(
+            raw_id, logical_width, logical_height,
+          ),
         ),
       )
     }
-    13 => app_state_process_queued_fullscreen_request(raw_id)
+    13 => {
+      match window_handle {
+        Some(window_handle) =>
+          set_window_fullscreen_transition_state(window_handle, false)
+        None => ()
+      }
+      app_state_process_queued_fullscreen_request(raw_id)
+    }
     _ => ()
   }
 }
@@ -476,9 +609,14 @@ fn native_callback_text_input_event(
   cursor_end : Int,
   path_handle : UInt64,
 ) -> Unit {
-  queue_native_text_input_event(
-    raw_id, kind, event_handle, state, text_handle, cursor_start, cursor_end, path_handle,
-  )
+  match kind {
+    9 | 10 | 11 | 12 => queue_native_drag_event(raw_id, kind, event_handle)
+    _ =>
+      queue_native_text_input_event(
+        raw_id, kind, event_handle, state, text_handle, cursor_start, cursor_end,
+        path_handle,
+      )
+  }
 }
 
 ///|
@@ -620,6 +758,11 @@ fn app_state_register_window_handle(
     next_entries.push({ raw_id, handle: window_handle })
   }
   app_state_runtime.val.window_handles = next_entries
+  app_state_set_window_position_state(
+    raw_id,
+    native_window_x(window_handle),
+    native_window_y(window_handle),
+  )
 }
 
 ///|
@@ -632,6 +775,7 @@ fn app_state_unregister_window_handle(raw_id : Int) -> Unit {
   }
   app_state_runtime.val.window_handles = remaining_entries
   app_state_clear_fullscreen_request(raw_id)
+  app_state_clear_window_position_state(raw_id)
 }
 
 ///|

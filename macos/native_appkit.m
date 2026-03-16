@@ -42,13 +42,6 @@ typedef struct {
   int32_t callback_kind;
 } MBWMainRunLoopObserver;
 
-typedef NS_ENUM(int32_t, MBWImeState) {
-  MBWImeStateDisabled = 0,
-  MBWImeStateGround = 1,
-  MBWImeStatePreedit = 2,
-  MBWImeStateCommitted = 3,
-};
-
 static void mbw_ensure_app_initialized(void);
 static void mbw_override_send_event_for_application(NSApplication *app, BOOL update_original);
 static CFRunLoopActivity mbw_main_run_loop_activity_from_kind(int32_t activity_kind);
@@ -95,11 +88,23 @@ static void mbw_call_lifecycle_trampoline(mbw_lifecycle_trampoline_t trampoline,
   trampoline(closure, callback_kind);
 }
 
+static BOOL mbw_dragging_has_paths(id<NSDraggingInfo> sender) {
+  if (sender == nil) {
+    return NO;
+  }
+  NSPasteboard *pasteboard = [sender draggingPasteboard];
+  if (pasteboard == nil) {
+    return NO;
+  }
+  id property_list = [pasteboard propertyListForType:@"NSFilenamesPboardType"];
+  if (property_list == nil || ![property_list respondsToSelector:@selector(count)]) {
+    return NO;
+  }
+  return [property_list count] > 0;
+}
+
 @interface MBWContentView : NSView <NSTextInputClient, NSDraggingDestination>
 @property(nonatomic, assign) BOOL acceptsFirstMouseEnabled;
-@property(nonatomic, assign) int32_t optionAsAlt;
-@property(nonatomic, assign) int32_t imePurpose;
-@property(nonatomic, assign) int32_t imeHints;
 @property(nonatomic, assign) BOOL imeAllowed;
 @property(nonatomic, assign) int32_t imeCursorX;
 @property(nonatomic, assign) int32_t imeCursorY;
@@ -107,14 +112,11 @@ static void mbw_call_lifecycle_trampoline(mbw_lifecycle_trampoline_t trampoline,
 @property(nonatomic, assign) int32_t imeCursorHeight;
 @property(nonatomic, assign) int32_t rawId;
 @property(nonatomic, strong) NSTrackingArea *trackingArea;
-@property(nonatomic, copy) NSString *markedText;
-@property(nonatomic, copy) NSString *inputSource;
-@property(nonatomic, assign) BOOL forwardKeyToApp;
-@property(nonatomic, assign) MBWImeState imeState;
+@property(nonatomic, copy) id markedText;
 - (void)mbw_emitTextInputWithKind:(int32_t)kind
                       eventHandle:(uint64_t)eventHandle
                            state:(int32_t)state
-                            text:(NSString *)text
+                            text:(id)text
                      cursorStart:(int32_t)cursorStart
                        cursorEnd:(int32_t)cursorEnd
                        pathHandle:(uint64_t)pathHandle;
@@ -122,8 +124,6 @@ static void mbw_call_lifecycle_trampoline(mbw_lifecycle_trampoline_t trampoline,
 
 @interface MBWWindowDelegate : NSObject <NSWindowDelegate>
 @property(nonatomic, assign) int32_t rawId;
-@property(nonatomic, assign) BOOL allowClose;
-@property(nonatomic, assign) BOOL inFullscreenTransition;
 @end
 
 @interface MBWNotificationObserver : NSObject
@@ -181,127 +181,43 @@ static void mbw_call_lifecycle_trampoline(mbw_lifecycle_trampoline_t trampoline,
   mbw_call_input_event_trampoline(self.rawId, kind, event_handle);
 }
 
-- (int32_t)mbw_utf8OffsetForUTF16Index:(NSUInteger)index inString:(NSString *)string {
-  if (string == nil || index == NSNotFound) {
+- (int32_t)mbw_i32FromRangeValue:(NSUInteger)value {
+  if (value == NSNotFound) {
     return -1;
   }
-  NSUInteger clamped = index <= string.length ? index : string.length;
-  NSString *prefix = [string substringToIndex:clamped];
-  return (int32_t)[prefix lengthOfBytesUsingEncoding:NSUTF8StringEncoding];
-}
-
-- (NSString *)mbw_plainStringFromTextObject:(id)object {
-  if (object == nil) {
-    return @"";
+  if (value > INT32_MAX) {
+    return INT32_MAX;
   }
-  if ([object isKindOfClass:[NSAttributedString class]]) {
-    return [(NSAttributedString *)object string];
-  }
-  if ([object isKindOfClass:[NSString class]]) {
-    return (NSString *)object;
-  }
-  return @"";
-}
-
-- (NSString *)mbw_currentInputSource {
-  NSTextInputContext *input_context = [self inputContext];
-  if (input_context == nil) {
-    return @"";
-  }
-
-  id source = [input_context selectedKeyboardInputSource];
-  if ([source isKindOfClass:[NSString class]]) {
-    return (NSString *)source;
-  }
-  if ([source respondsToSelector:@selector(description)]) {
-    NSString *description = [source description];
-    return description == nil ? @"" : description;
-  }
-  return @"";
-}
-
-- (BOOL)mbw_isImeEnabled {
-  return self.imeState != MBWImeStateDisabled;
-}
-
-- (BOOL)mbw_isControlString:(NSString *)text {
-  if (text == nil || text.length == 0) {
-    return NO;
-  }
-  NSCharacterSet *control = [NSCharacterSet controlCharacterSet];
-  return [control characterIsMember:[text characterAtIndex:0]];
-}
-
-- (uint64_t)mbw_dragPathListHandleFromDraggingInfo:(id<NSDraggingInfo>)sender {
-  NSPasteboard *pasteboard = [sender draggingPasteboard];
-  if (pasteboard == nil) {
-    return 0;
-  }
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wdeprecated-declarations"
-  id property_list = [pasteboard propertyListForType:NSFilenamesPboardType];
-#pragma clang diagnostic pop
-  if (property_list == nil) {
-    return 0;
-  }
-  return (uint64_t)(uintptr_t)(__bridge void *)property_list;
+  return (int32_t)value;
 }
 
 - (void)mbw_emitTextInputWithKind:(int32_t)kind
                       eventHandle:(uint64_t)eventHandle
                            state:(int32_t)state
-                            text:(NSString *)text
+                            text:(id)text
                      cursorStart:(int32_t)cursorStart
                        cursorEnd:(int32_t)cursorEnd
                        pathHandle:(uint64_t)pathHandle {
   if (self.rawId <= 0) {
     return;
   }
-  NSString *safe_text = text == nil ? @"" : text;
+  id text_object = text == nil ? nil : text;
   id event_object = eventHandle == 0 ? nil : (__bridge id)(void *)(uintptr_t)eventHandle;
-  id path_object = pathHandle == 0 ? nil : (__bridge id)(void *)(uintptr_t)pathHandle;
-  [safe_text retain];
+  if (text_object != nil) {
+    [text_object retain];
+  }
   if (event_object != nil) {
     [event_object retain];
   }
-  if (path_object != nil) {
-    [path_object retain];
-  }
   mbw_call_text_input_event_trampoline(self.rawId, kind, eventHandle, state,
-                                       (uint64_t)(uintptr_t)(__bridge void *)safe_text,
+                                       (uint64_t)(uintptr_t)(__bridge void *)text_object,
                                        cursorStart, cursorEnd, pathHandle);
   if (event_object != nil) {
     [event_object release];
   }
-  if (path_object != nil) {
-    [path_object release];
+  if (text_object != nil) {
+    [text_object release];
   }
-  [safe_text release];
-}
-
-- (void)mbw_emitImeEnabledIfNeeded {
-  if (!self.imeAllowed || self.imeState != MBWImeStateDisabled) {
-    return;
-  }
-  self.inputSource = [self mbw_currentInputSource];
-  self.imeState = MBWImeStateGround;
-  [self mbw_emitTextInputWithKind:8
-                      eventHandle:0
-                             state:1
-                              text:@""
-                       cursorStart:-1
-                         cursorEnd:-1
-                        pathHandle:0];
-}
-
-- (void)mbw_emitMouseMotion:(NSEvent *)event {
-  [self mbw_emitInputWithKind:1 event:event];
-}
-
-- (void)mbw_emitMouseButton:(NSEvent *)event state:(int32_t)state {
-  (void)state;
-  [self mbw_emitMouseMotion:event];
-  [self mbw_emitInputWithKind:4 event:event];
 }
 
 - (void)mbw_emitKeyboard:(NSEvent *)event state:(int32_t)state {
@@ -314,20 +230,28 @@ static void mbw_call_lifecycle_trampoline(mbw_lifecycle_trampoline_t trampoline,
   [self mbw_emitInputWithKind:19 event:nil];
 }
 
+- (void)viewFrameDidChangeNotification:(NSNotification *)notification {
+  (void)notification;
+  if (self.rawId <= 0) {
+    return;
+  }
+  mbw_call_window_event_trampoline(8, self.rawId, 0, 0, 0, 0.0);
+}
+
 - (void)mouseMoved:(NSEvent *)event {
-  [self mbw_emitMouseMotion:event];
+  [self mbw_emitInputWithKind:1 event:event];
 }
 
 - (void)mouseDragged:(NSEvent *)event {
-  [self mbw_emitMouseMotion:event];
+  [self mbw_emitInputWithKind:1 event:event];
 }
 
 - (void)rightMouseDragged:(NSEvent *)event {
-  [self mbw_emitMouseMotion:event];
+  [self mbw_emitInputWithKind:1 event:event];
 }
 
 - (void)otherMouseDragged:(NSEvent *)event {
-  [self mbw_emitMouseMotion:event];
+  [self mbw_emitInputWithKind:1 event:event];
 }
 
 - (void)mouseEntered:(NSEvent *)event {
@@ -339,127 +263,92 @@ static void mbw_call_lifecycle_trampoline(mbw_lifecycle_trampoline_t trampoline,
 }
 
 - (void)mouseDown:(NSEvent *)event {
-  [self mbw_emitMouseButton:event state:1];
+  [self mbw_emitInputWithKind:4 event:event];
 }
 
 - (void)mouseUp:(NSEvent *)event {
-  [self mbw_emitMouseButton:event state:2];
+  [self mbw_emitInputWithKind:4 event:event];
 }
 
 - (void)rightMouseDown:(NSEvent *)event {
-  [self mbw_emitMouseButton:event state:1];
+  [self mbw_emitInputWithKind:4 event:event];
 }
 
 - (void)rightMouseUp:(NSEvent *)event {
-  [self mbw_emitMouseButton:event state:2];
+  [self mbw_emitInputWithKind:4 event:event];
 }
 
 - (void)otherMouseDown:(NSEvent *)event {
-  [self mbw_emitMouseButton:event state:1];
+  [self mbw_emitInputWithKind:4 event:event];
 }
 
 - (void)otherMouseUp:(NSEvent *)event {
-  [self mbw_emitMouseButton:event state:2];
+  [self mbw_emitInputWithKind:4 event:event];
 }
 
 - (void)scrollWheel:(NSEvent *)event {
-  [self mbw_emitMouseMotion:event];
   [self mbw_emitInputWithKind:5 event:event];
 }
 
 - (void)magnifyWithEvent:(NSEvent *)event {
-  [self mbw_emitMouseMotion:event];
   [self mbw_emitInputWithKind:13 event:event];
 }
 
 - (void)swipeWithEvent:(NSEvent *)event {
-  [self mbw_emitMouseMotion:event];
   [self mbw_emitInputWithKind:14 event:event];
 }
 
 - (void)smartMagnifyWithEvent:(NSEvent *)event {
-  [self mbw_emitMouseMotion:event];
   [self mbw_emitInputWithKind:15 event:event];
 }
 
 - (void)rotateWithEvent:(NSEvent *)event {
-  [self mbw_emitMouseMotion:event];
   [self mbw_emitInputWithKind:16 event:event];
 }
 
 - (void)pressureChangeWithEvent:(NSEvent *)event {
-  [self mbw_emitMouseMotion:event];
   [self mbw_emitInputWithKind:17 event:event];
 }
 
 - (void)keyDown:(NSEvent *)event {
-  if (self.imeAllowed && [self mbw_isImeEnabled]) {
-    NSString *current_input_source = [self mbw_currentInputSource];
-    NSString *previous_input_source = self.inputSource == nil ? @"" : self.inputSource;
-    if (![previous_input_source isEqualToString:current_input_source]) {
-      self.inputSource = current_input_source;
-      self.imeState = MBWImeStateDisabled;
-      [self mbw_emitTextInputWithKind:8
-                          eventHandle:0
-                                 state:4
-                                  text:@""
-                           cursorStart:-1
-                             cursorEnd:-1
-                            pathHandle:0];
-    }
-  }
-
-  MBWImeState old_ime_state = self.imeState;
-  self.forwardKeyToApp = NO;
-
+  uint64_t event_handle = event == nil ? 0 : (uint64_t)(uintptr_t)(__bridge void *)event;
+  [self mbw_emitTextInputWithKind:20
+                      eventHandle:event_handle
+                            state:0
+                             text:nil
+                      cursorStart:0
+                        cursorEnd:0
+                       pathHandle:0];
   if (self.imeAllowed) {
     NSArray<NSEvent *> *events = @[ event ];
     [self interpretKeyEvents:events];
-    if (self.imeState == MBWImeStateCommitted) {
-      self.markedText = @"";
-    }
   }
-
-  BOOL had_ime_input = NO;
-  switch (self.imeState) {
-  case MBWImeStateCommitted:
-    self.imeState = MBWImeStateGround;
-    had_ime_input = YES;
-    break;
-  case MBWImeStatePreedit:
-    had_ime_input = YES;
-    break;
-  case MBWImeStateGround:
-  case MBWImeStateDisabled:
-    had_ime_input = old_ime_state != self.imeState;
-    break;
-  }
-
-  if (!had_ime_input || self.forwardKeyToApp) {
-    [self mbw_emitKeyboard:event state:1];
-  }
+  [self mbw_emitTextInputWithKind:21
+                      eventHandle:event_handle
+                            state:0
+                             text:nil
+                      cursorStart:0
+                        cursorEnd:0
+                       pathHandle:0];
 }
 
 - (void)keyUp:(NSEvent *)event {
-  if (self.imeState == MBWImeStateGround || self.imeState == MBWImeStateDisabled) {
-    [self mbw_emitKeyboard:event state:2];
-  }
+  [self mbw_emitKeyboard:event state:2];
 }
 
 - (void)flagsChanged:(NSEvent *)event {
-  [self mbw_emitInputWithKind:6 event:event];
   [self mbw_emitKeyboard:event state:0];
 }
 
 - (BOOL)hasMarkedText {
-  return self.markedText.length > 0;
+  return self.markedText != nil && [self.markedText length] > 0;
 }
 
 - (NSRange)markedRange {
-  if (self.markedText.length == 0) {
+  if (self.markedText == nil || [self.markedText length] == 0) {
     return NSMakeRange(NSNotFound, 0);
   }
-  return NSMakeRange(0, self.markedText.length);
+  return NSMakeRange(0, [self.markedText length]);
 }
 
 - (NSRange)selectedRange {
@@ -470,63 +359,30 @@ static void mbw_call_lifecycle_trampoline(mbw_lifecycle_trampoline_t trampoline,
         selectedRange:(NSRange)selectedRange
      replacementRange:(NSRange)replacementRange {
   (void)replacementRange;
-  if (!self.imeAllowed) {
-    return;
-  }
-  NSString *text = [self mbw_plainStringFromTextObject:string];
-  if (text == nil) {
-    text = @"";
-  }
-  self.markedText = text;
-  [self mbw_emitImeEnabledIfNeeded];
-
-  int32_t cursor_start = -1;
-  int32_t cursor_end = -1;
-  if (selectedRange.location != NSNotFound) {
-    NSUInteger clamped_start = selectedRange.location <= text.length ? selectedRange.location : text.length;
-    NSUInteger utf16_end = selectedRange.location + selectedRange.length;
-    NSUInteger clamped_end = utf16_end <= text.length ? utf16_end : text.length;
-    cursor_start = [self mbw_utf8OffsetForUTF16Index:clamped_start inString:text];
-    cursor_end = [self mbw_utf8OffsetForUTF16Index:clamped_end inString:text];
-  }
-
-  if (self.hasMarkedText) {
-    self.imeState = MBWImeStatePreedit;
-  } else {
-    self.imeState = MBWImeStateGround;
-  }
-
-  [self mbw_emitTextInputWithKind:8
+  self.markedText = string == nil ? @"" : string;
+  [self mbw_emitTextInputWithKind:22
                       eventHandle:0
-                             state:2
-                              text:text
-                       cursorStart:cursor_start
-                         cursorEnd:cursor_end
+                             state:[self mbw_i32FromRangeValue:selectedRange.location]
+                              text:string
+                       cursorStart:[self mbw_i32FromRangeValue:selectedRange.length]
+                         cursorEnd:0
                         pathHandle:0];
 }
 
 - (void)unmarkText {
-  if (!self.imeAllowed) {
-    return;
-  }
   self.markedText = @"";
 
   NSTextInputContext *input_context = [self inputContext];
   if (input_context != nil) {
     [input_context discardMarkedText];
   }
-
-  [self mbw_emitTextInputWithKind:8
+  [self mbw_emitTextInputWithKind:23
                       eventHandle:0
-                             state:2
+                             state:0
                               text:@""
-                       cursorStart:-1
-                         cursorEnd:-1
+                       cursorStart:0
+                         cursorEnd:0
                         pathHandle:0];
-
-  if ([self mbw_isImeEnabled]) {
-    self.imeState = MBWImeStateGround;
-  }
 }
 
 - (NSArray<NSAttributedStringKey> *)validAttributesForMarkedText {
@@ -560,77 +416,55 @@ static void mbw_call_lifecycle_trampoline(mbw_lifecycle_trampoline_t trampoline,
 
 - (void)insertText:(id)string replacementRange:(NSRange)replacementRange {
   (void)replacementRange;
-  if (!self.imeAllowed) {
-    return;
-  }
-  NSString *text = [self mbw_plainStringFromTextObject:string];
-  if (text == nil || text.length == 0) {
-    return;
-  }
-
-  if (self.hasMarkedText && [self mbw_isImeEnabled] && ![self mbw_isControlString:text]) {
-    [self mbw_emitTextInputWithKind:8
-                        eventHandle:0
-                               state:2
-                                text:@""
-                         cursorStart:-1
-                           cursorEnd:-1
-                          pathHandle:0];
-    [self mbw_emitTextInputWithKind:8
-                        eventHandle:0
-                               state:3
-                                text:text
-                         cursorStart:-1
-                           cursorEnd:-1
-                          pathHandle:0];
-    self.imeState = MBWImeStateCommitted;
-  }
+  [self mbw_emitTextInputWithKind:24
+                      eventHandle:0
+                            state:0
+                             text:string
+                      cursorStart:0
+                        cursorEnd:0
+                       pathHandle:0];
 }
 
 - (void)doCommandBySelector:(SEL)selector {
-  if (self.imeState == MBWImeStateCommitted) {
-    return;
-  }
-
-  self.forwardKeyToApp = YES;
-  if (self.hasMarkedText && self.imeState == MBWImeStatePreedit) {
-    self.imeState = MBWImeStateGround;
-  }
-
-  NSString *action = NSStringFromSelector(selector);
-  [self mbw_emitTextInputWithKind:18
+  [self mbw_emitTextInputWithKind:25
                       eventHandle:0
                              state:0
-                              text:(action == nil ? @"" : action)
-                       cursorStart:-1
-                         cursorEnd:-1
-                        pathHandle:0];
+                              text:nil
+                       cursorStart:0
+                         cursorEnd:0
+                        pathHandle:(uint64_t)(uintptr_t)sel_getName(selector)];
 }
 
 - (NSDragOperation)draggingEntered:(id<NSDraggingInfo>)sender {
-  uint64_t dragging_info_handle = sender == nil ? 0 : (uint64_t)(uintptr_t)(__bridge void *)sender;
-  uint64_t path_list_handle = [self mbw_dragPathListHandleFromDraggingInfo:sender];
-  if (path_list_handle == 0) {
+  if (!mbw_dragging_has_paths(sender)) {
     return NSDragOperationNone;
   }
+  uint64_t dragging_info_handle = sender == nil ? 0 : (uint64_t)(uintptr_t)(__bridge void *)sender;
   [self mbw_emitTextInputWithKind:9
                       eventHandle:dragging_info_handle
-                             state:1
+                             state:0
                               text:nil
-                       cursorStart:-1
-                         cursorEnd:-1
-                        pathHandle:path_list_handle];
+                       cursorStart:0
+                         cursorEnd:0
+                        pathHandle:0];
   return NSDragOperationCopy;
 }
 
+- (BOOL)wantsPeriodicDraggingUpdates {
+  return YES;
+}
+
 - (NSDragOperation)draggingUpdated:(id<NSDraggingInfo>)sender {
+  if (!mbw_dragging_has_paths(sender)) {
+    return NSDragOperationNone;
+  }
   uint64_t dragging_info_handle = sender == nil ? 0 : (uint64_t)(uintptr_t)(__bridge void *)sender;
   [self mbw_emitTextInputWithKind:10
                       eventHandle:dragging_info_handle
                              state:0
                               text:nil
-                       cursorStart:-1
-                         cursorEnd:-1
+                       cursorStart:0
+                         cursorEnd:0
                         pathHandle:0];
   return NSDragOperationCopy;
 }
@@ -641,29 +475,27 @@ static void mbw_call_lifecycle_trampoline(mbw_lifecycle_trampoline_t trampoline,
                       eventHandle:dragging_info_handle
                              state:0
                               text:nil
-                       cursorStart:-1
-                         cursorEnd:-1
+                       cursorStart:0
+                         cursorEnd:0
                         pathHandle:0];
 }
 
 - (BOOL)prepareForDragOperation:(id<NSDraggingInfo>)sender {
-  (void)sender;
-  return YES;
+  return mbw_dragging_has_paths(sender);
 }
 
 - (BOOL)performDragOperation:(id<NSDraggingInfo>)sender {
-  uint64_t dragging_info_handle = sender == nil ? 0 : (uint64_t)(uintptr_t)(__bridge void *)sender;
-  uint64_t path_list_handle = [self mbw_dragPathListHandleFromDraggingInfo:sender];
-  if (path_list_handle == 0) {
+  if (!mbw_dragging_has_paths(sender)) {
     return NO;
   }
+  uint64_t dragging_info_handle = sender == nil ? 0 : (uint64_t)(uintptr_t)(__bridge void *)sender;
   [self mbw_emitTextInputWithKind:11
                       eventHandle:dragging_info_handle
                              state:0
                               text:nil
-                       cursorStart:-1
-                         cursorEnd:-1
-                        pathHandle:path_list_handle];
+                       cursorStart:0
+                         cursorEnd:0
+                        pathHandle:0];
   return YES;
 }
 
@@ -678,11 +510,20 @@ static void mbw_call_lifecycle_trampoline(mbw_lifecycle_trampoline_t trampoline,
 - (BOOL)windowShouldClose:(id)sender {
   (void)sender;
   mbw_call_window_event_trampoline(1, self.rawId, 0, 0, 0, 0.0);
-  return self.allowClose;
+  return NO;
 }
 
 - (void)windowWillClose:(NSNotification *)notification {
-  (void)notification;
+  NSWindow *window = notification.object;
+  if ([window isKindOfClass:[NSWindow class]]) {
+    NSView *content_view = [window contentView];
+    if (content_view != nil) {
+      [[NSNotificationCenter defaultCenter] removeObserver:content_view
+                                                      name:NSViewFrameDidChangeNotification
+                                                    object:content_view];
+    }
+    [window setDelegate:nil];
+  }
   mbw_call_window_event_trampoline(2, self.rawId, 0, 0, 0, 0.0);
 }
 
@@ -698,69 +539,46 @@ static void mbw_call_lifecycle_trampoline(mbw_lifecycle_trampoline_t trampoline,
 
 - (void)windowDidMove:(NSNotification *)notification {
   (void)notification;
-  NSWindow *window = (NSWindow *)notification.object;
-  NSRect frame = window.frame;
-  mbw_call_window_event_trampoline(4, self.rawId, (int32_t)frame.origin.x,
-                                   (int32_t)frame.origin.y, 0, 0.0);
+  mbw_call_window_event_trampoline(4, self.rawId, 0, 0, 0, 0.0);
 }
 
 - (void)windowDidResize:(NSNotification *)notification {
   (void)notification;
-  NSWindow *window = (NSWindow *)notification.object;
-  NSRect contentRect = [window contentRectForFrameRect:window.frame];
-  mbw_call_window_event_trampoline(8, self.rawId, (int32_t)contentRect.size.width,
-                                   (int32_t)contentRect.size.height, 0, 0.0);
+  mbw_call_window_event_trampoline(4, self.rawId, 0, 0, 0, 0.0);
 }
 
 - (void)windowDidChangeBackingProperties:(NSNotification *)notification {
   (void)notification;
-  NSWindow *window = (NSWindow *)notification.object;
-  NSRect contentRect = [window contentRectForFrameRect:window.frame];
-  mbw_call_window_event_trampoline(5, self.rawId, (int32_t)contentRect.size.width,
-                                   (int32_t)contentRect.size.height, 0,
-                                   window.backingScaleFactor);
+  mbw_call_window_event_trampoline(5, self.rawId, 0, 0, 0, 0.0);
 }
 
 - (void)windowDidChangeOcclusionState:(NSNotification *)notification {
   (void)notification;
-  NSWindow *window = (NSWindow *)notification.object;
-  BOOL occluded = (window.occlusionState & NSWindowOcclusionStateVisible) == 0;
-  mbw_call_window_event_trampoline(7, self.rawId, occluded ? 1 : 0, 0, 0, 0.0);
+  mbw_call_window_event_trampoline(7, self.rawId, 0, 0, 0, 0.0);
 }
 
 - (void)windowWillEnterFullScreen:(NSNotification *)notification {
   (void)notification;
-  self.inFullscreenTransition = YES;
   mbw_call_window_event_trampoline(9, self.rawId, 0, 0, 0, 0.0);
 }
 
 - (void)windowWillExitFullScreen:(NSNotification *)notification {
   (void)notification;
-  self.inFullscreenTransition = YES;
   mbw_call_window_event_trampoline(10, self.rawId, 0, 0, 0, 0.0);
 }
 
 - (void)windowDidEnterFullScreen:(NSNotification *)notification {
   (void)notification;
-  self.inFullscreenTransition = NO;
-  NSWindow *window = (NSWindow *)notification.object;
-  NSRect contentRect = [window contentRectForFrameRect:window.frame];
-  mbw_call_window_event_trampoline(11, self.rawId, (int32_t)contentRect.size.width,
-                                   (int32_t)contentRect.size.height, 0, 0.0);
+  mbw_call_window_event_trampoline(11, self.rawId, 0, 0, 0, 0.0);
 }
 
 - (void)windowDidExitFullScreen:(NSNotification *)notification {
   (void)notification;
-  self.inFullscreenTransition = NO;
-  NSWindow *window = (NSWindow *)notification.object;
-  NSRect contentRect = [window contentRectForFrameRect:window.frame];
-  mbw_call_window_event_trampoline(12, self.rawId, (int32_t)contentRect.size.width,
-                                   (int32_t)contentRect.size.height, 0, 0.0);
+  mbw_call_window_event_trampoline(12, self.rawId, 0, 0, 0, 0.0);
 }
 
 - (void)windowDidFailToEnterFullScreen:(NSWindow *)window {
   (void)window;
-  self.inFullscreenTransition = NO;
   mbw_call_window_event_trampoline(13, self.rawId, 0, 0, 0, 0.0);
 }
 
@@ -1002,6 +820,20 @@ moonbit_bytes_t mbw_objc_copy_utf8_bytes(uint64_t object_handle) {
 }
 
 MOONBIT_FFI_EXPORT
+moonbit_bytes_t mbw_copy_utf8_cstr_bytes(uint64_t cstr_handle) {
+  if (cstr_handle == 0) {
+    return moonbit_make_bytes(0, 0);
+  }
+  const char *utf8 = (const char *)(uintptr_t)cstr_handle;
+  size_t len = strlen(utf8);
+  moonbit_bytes_t bytes = moonbit_make_bytes((int32_t)len, 0);
+  if (len > 0) {
+    memcpy(bytes, utf8, len);
+  }
+  return bytes;
+}
+
+MOONBIT_FFI_EXPORT
 void mbw_install_text_input_event_callback(mbw_text_input_event_trampoline_t trampoline,
                                            void *closure) {
   if (g_text_input_event_closure != NULL) {
@@ -1063,27 +895,25 @@ uint64_t mbw_create_window(int32_t width, int32_t height) {
   window.releasedWhenClosed = NO;
 
   MBWWindowDelegate *delegate = [[MBWWindowDelegate alloc] init];
-  delegate.allowClose = NO;
-  delegate.inFullscreenTransition = NO;
   window.delegate = delegate;
 
   MBWContentView *content_view = [[MBWContentView alloc] initWithFrame:window.contentView.bounds];
   content_view.acceptsFirstMouseEnabled = NO;
-  content_view.optionAsAlt = 0;
-  content_view.imePurpose = 0;
-  content_view.imeHints = 0;
   content_view.imeAllowed = NO;
   content_view.imeCursorX = 0;
   content_view.imeCursorY = 0;
   content_view.imeCursorWidth = 1;
   content_view.imeCursorHeight = 1;
   content_view.markedText = @"";
-  content_view.inputSource = [content_view mbw_currentInputSource];
-  content_view.forwardKeyToApp = NO;
-  content_view.imeState = MBWImeStateDisabled;
   content_view.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
   [content_view registerForDraggedTypes:@[ NSPasteboardTypeFileURL ]];
   window.contentView = content_view;
+  [window setInitialFirstResponder:content_view];
+  [content_view setPostsFrameChangedNotifications:YES];
+  [[NSNotificationCenter defaultCenter] addObserver:content_view
+                                           selector:@selector(viewFrameDidChangeNotification:)
+                                               name:NSViewFrameDidChangeNotification
+                                             object:content_view];
   [content_view setWantsLayer:YES];
   if (content_view.layer != nil) {
     content_view.layer.masksToBounds = YES;
@@ -1304,24 +1134,6 @@ void mbw_objc_msg_send_void_rect_bool(uint64_t target_handle, uint64_t selector_
   BOOL arg1_bool = arg1 ? YES : NO;
   void (*send_fn)(id, SEL, NSRect, BOOL) = (void (*)(id, SEL, NSRect, BOOL))objc_msgSend;
   send_fn(target, selector, arg0, arg1_bool);
-}
-
-MOONBIT_FFI_EXPORT
-void mbw_objc_msg_send_void_i32_u64_i32_u64_i32_i32_u64(
-    uint64_t target_handle, uint64_t selector_handle, int32_t arg0, uint64_t arg1, int32_t arg2,
-    uint64_t arg3, int32_t arg4, int32_t arg5, uint64_t arg6) {
-  if (target_handle == 0 || selector_handle == 0) {
-    return;
-  }
-  id target = (__bridge id)(void *)(uintptr_t)target_handle;
-  const char *selector_name = (const char *)(uintptr_t)selector_handle;
-  SEL selector = sel_registerName(selector_name);
-  id arg1_obj = (__bridge id)(void *)(uintptr_t)arg1;
-  id arg3_obj = (__bridge id)(void *)(uintptr_t)arg3;
-  id arg6_obj = (__bridge id)(void *)(uintptr_t)arg6;
-  void (*send_fn)(id, SEL, int32_t, id, int32_t, id, int32_t, int32_t, id) =
-      (void (*)(id, SEL, int32_t, id, int32_t, id, int32_t, int32_t, id))objc_msgSend;
-  send_fn(target, selector, arg0, arg1_obj, arg2, arg3_obj, arg4, arg5, arg6_obj);
 }
 
 MOONBIT_FFI_EXPORT
