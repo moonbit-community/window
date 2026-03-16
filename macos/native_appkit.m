@@ -22,6 +22,8 @@ typedef void (*mbw_text_input_event_trampoline_t)(void *closure, int32_t raw_id,
                                                   int32_t cursor_end, uint64_t path_handle);
 typedef void (*mbw_device_event_trampoline_t)(void *closure, uint64_t event_handle);
 typedef int32_t (*mbw_view_state_query_trampoline_t)(void *closure, int32_t raw_id, int32_t kind);
+typedef int32_t (*mbw_drag_query_trampoline_t)(void *closure, int32_t raw_id,
+                                               uint64_t dragging_info_handle);
 typedef void (*mbw_lifecycle_trampoline_t)(void *closure, int32_t kind);
 typedef void (*mbw_send_event_impl_t)(id self, SEL _cmd, NSEvent *event);
 
@@ -35,6 +37,8 @@ static mbw_device_event_trampoline_t g_device_event_trampoline = NULL;
 static void *g_device_event_closure = NULL;
 static mbw_view_state_query_trampoline_t g_view_state_query_trampoline = NULL;
 static void *g_view_state_query_closure = NULL;
+static mbw_drag_query_trampoline_t g_drag_query_trampoline = NULL;
+static void *g_drag_query_closure = NULL;
 static mbw_send_event_impl_t g_original_send_event_impl = NULL;
 static BOOL g_app_initialized = NO;
 
@@ -109,27 +113,20 @@ static void mbw_call_lifecycle_trampoline(mbw_lifecycle_trampoline_t trampoline,
   trampoline(closure, callback_kind);
 }
 
-static BOOL mbw_dragging_has_paths(id<NSDraggingInfo> sender) {
-  if (sender == nil) {
-    return NO;
-  }
-  NSPasteboard *pasteboard = [sender draggingPasteboard];
-  if (pasteboard == nil) {
-    return NO;
-  }
-  id property_list = [pasteboard propertyListForType:@"NSFilenamesPboardType"];
-  if (property_list == nil || ![property_list respondsToSelector:@selector(count)]) {
-    return NO;
-  }
-  return [property_list count] > 0;
-}
-
 static void mbw_emit_drag_event(int32_t raw_id, int32_t kind, id<NSDraggingInfo> sender) {
   if (raw_id <= 0) {
     return;
   }
   uint64_t dragging_info_handle = sender == nil ? 0 : (uint64_t)(uintptr_t)(__bridge void *)sender;
   mbw_call_text_input_event_trampoline(raw_id, kind, dragging_info_handle, 0, 0, 0, 0, 0);
+}
+
+static BOOL mbw_query_drag_operation(int32_t raw_id, id<NSDraggingInfo> sender) {
+  if (raw_id <= 0 || sender == nil || g_drag_query_trampoline == NULL || g_drag_query_closure == NULL) {
+    return NO;
+  }
+  uint64_t dragging_info_handle = (uint64_t)(uintptr_t)(__bridge void *)sender;
+  return g_drag_query_trampoline(g_drag_query_closure, raw_id, dragging_info_handle) != 0;
 }
 
 @interface MBWContentView : NSView <NSTextInputClient>
@@ -556,7 +553,7 @@ static void mbw_emit_drag_event(int32_t raw_id, int32_t kind, id<NSDraggingInfo>
 }
 
 - (NSDragOperation)draggingEntered:(id<NSDraggingInfo>)sender {
-  if (!mbw_dragging_has_paths(sender)) {
+  if (!mbw_query_drag_operation(self.rawId, sender)) {
     return NSDragOperationNone;
   }
   mbw_emit_drag_event(self.rawId, 9, sender);
@@ -568,7 +565,7 @@ static void mbw_emit_drag_event(int32_t raw_id, int32_t kind, id<NSDraggingInfo>
 }
 
 - (NSDragOperation)draggingUpdated:(id<NSDraggingInfo>)sender {
-  if (!mbw_dragging_has_paths(sender)) {
+  if (!mbw_query_drag_operation(self.rawId, sender)) {
     return NSDragOperationNone;
   }
   mbw_emit_drag_event(self.rawId, 10, sender);
@@ -580,11 +577,11 @@ static void mbw_emit_drag_event(int32_t raw_id, int32_t kind, id<NSDraggingInfo>
 }
 
 - (BOOL)prepareForDragOperation:(id<NSDraggingInfo>)sender {
-  return mbw_dragging_has_paths(sender);
+  return mbw_query_drag_operation(self.rawId, sender);
 }
 
 - (BOOL)performDragOperation:(id<NSDraggingInfo>)sender {
-  if (!mbw_dragging_has_paths(sender)) {
+  if (!mbw_query_drag_operation(self.rawId, sender)) {
     return NO;
   }
   mbw_emit_drag_event(self.rawId, 11, sender);
@@ -873,6 +870,15 @@ void mbw_install_view_state_query_callback(mbw_view_state_query_trampoline_t tra
   }
   g_view_state_query_trampoline = trampoline;
   g_view_state_query_closure = closure;
+}
+
+MOONBIT_FFI_EXPORT
+void mbw_install_drag_query_callback(mbw_drag_query_trampoline_t trampoline, void *closure) {
+  if (g_drag_query_closure != NULL) {
+    moonbit_decref(g_drag_query_closure);
+  }
+  g_drag_query_trampoline = trampoline;
+  g_drag_query_closure = closure;
 }
 
 MOONBIT_FFI_EXPORT

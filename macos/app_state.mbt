@@ -581,6 +581,12 @@ fn app_state_install_native_callbacks() -> Unit {
     fn(callback, raw_id, kind) { callback(raw_id, kind) },
     native_callback_view_state_query,
   )
+  native_install_drag_query_callback(
+    fn(callback, raw_id, dragging_info_handle) {
+      callback(raw_id, dragging_info_handle)
+    },
+    native_callback_drag_query,
+  )
 }
 
 ///|
@@ -676,6 +682,18 @@ fn native_callback_device_event(event_handle : UInt64) -> Unit {
 ///|
 fn native_callback_view_state_query(raw_id : Int, kind : Int) -> Int {
   view_native_query_state(raw_id, kind)
+}
+
+///|
+fn native_callback_drag_query(
+  raw_id : Int,
+  dragging_info_handle : UInt64,
+) -> Int {
+  if native_drag_should_accept(raw_id, dragging_info_handle) {
+    1
+  } else {
+    0
+  }
 }
 
 ///|

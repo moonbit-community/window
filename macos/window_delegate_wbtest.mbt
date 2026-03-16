@@ -149,3 +149,13 @@ test "ime_cursor_area_state_preserves_positive_size" {
   assert_eq(window_ime_cursor_width_state(handle), 21)
   assert_eq(window_ime_cursor_height_state(handle), 22)
 }
+
+///|
+test "dragging_info_has_paths_rejects_null_handle" {
+  assert_false(dragging_info_has_paths((0 : Int).to_uint64()))
+}
+
+///|
+test "native_drag_should_accept_rejects_null_handle" {
+  assert_false(native_drag_should_accept(1, (0 : Int).to_uint64()))
+}

@@ -303,6 +303,19 @@ fn drag_paths_from_dragging_info(
 }
 
 ///|
+fn dragging_info_has_paths(dragging_info_handle : UInt64) -> Bool {
+  drag_paths_from_dragging_info(dragging_info_handle).length() > 0
+}
+
+///|
+fn native_drag_should_accept(
+  _raw_id : Int,
+  dragging_info_handle : UInt64,
+) -> Bool {
+  dragging_info_has_paths(dragging_info_handle)
+}
+
+///|
 fn dnd_position_from_dragging_info(
   raw_id : Int,
   dragging_info_handle : UInt64,
