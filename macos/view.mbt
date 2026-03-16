@@ -433,6 +433,37 @@ fn nsevent_phase_to_native(phase : Int) -> Int {
 }
 
 ///|
+fn drag_paths_from_native_path_list(path_list_handle : UInt64) -> Array[String] {
+  if path_list_handle == (0 : Int).to_uint64() {
+    return []
+  }
+  let count = appkit_objc_msg_send_u64(
+    path_list_handle,
+    objc_runtime_selector_handle("count"),
+  ).to_int()
+  if count <= 0 {
+    return []
+  }
+  let paths : Array[String] = []
+  let mut index = 0
+  while index < count {
+    let path_object = appkit_objc_msg_send_u64_u64(
+      path_list_handle,
+      objc_runtime_selector_handle("objectAtIndex:"),
+      index.to_uint64(),
+    )
+    if path_object != (0 : Int).to_uint64() {
+      let path = text_from_native(objc_utf8_bytes_from_object(path_object))
+      if path.length() > 0 {
+        paths.push(path)
+      }
+    }
+    index = index + 1
+  }
+  paths
+}
+
+///|
 fn queue_native_input_event(
   raw_id : Int,
   kind : Int,
@@ -707,21 +738,36 @@ fn queue_native_text_input_event(
   } else {
     objc_utf8_bytes_from_object(text_handle)
   }
-  let path = if path_handle == (0 : Int).to_uint64() {
-    empty_text
-  } else {
-    objc_utf8_bytes_from_object(path_handle)
-  }
+  let window_id = @core.WindowId::from_raw(raw_id)
+  let position = @dpi.PhysicalPositionF64::new(x, y)
   match kind {
     8 =>
       queue_input_event(
         raw_id, 8, 0.0, 0.0, 0, 0, 0, 0, 0, 0, 0, 0, 0.0, 0.0, 0, empty_text, empty_text,
         empty_text, state, text, cursor_start, cursor_end, empty_text,
       )
-    9 | 10 | 11 | 12 =>
+    9 => {
+      let paths = drag_paths_from_native_path_list(path_handle)
+      if paths.length() > 0 {
+        app_state_queue_window_callback(
+          window_id,
+          @core.WindowEvent::DragEntered(paths, position),
+        )
+      }
+    }
+    11 => {
+      let paths = drag_paths_from_native_path_list(path_handle)
+      if paths.length() > 0 {
+        app_state_queue_window_callback(
+          window_id,
+          @core.WindowEvent::DragDropped(paths, position),
+        )
+      }
+    }
+    10 | 12 =>
       queue_input_event(
         raw_id, kind, x, y, state, 0, 0, 0, 0, 0, 0, 0, 0.0, 0.0, 0, empty_text,
-        empty_text, empty_text, 0, empty_text, -1, -1, path,
+        empty_text, empty_text, 0, empty_text, -1, -1, empty_text,
       )
     18 =>
       queue_input_event(

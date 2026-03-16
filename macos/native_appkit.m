@@ -120,7 +120,7 @@ static void mbw_call_lifecycle_trampoline(mbw_lifecycle_trampoline_t trampoline,
                               text:(NSString *)text
                        cursorStart:(int32_t)cursorStart
                          cursorEnd:(int32_t)cursorEnd
-                              path:(NSString *)path;
+                         pathHandle:(uint64_t)pathHandle;
 @end
 
 @interface MBWWindowDelegate : NSObject <NSWindowDelegate>
@@ -235,32 +235,19 @@ static void mbw_call_lifecycle_trampoline(mbw_lifecycle_trampoline_t trampoline,
   return [control characterIsMember:[text characterAtIndex:0]];
 }
 
-- (NSString *)mbw_dragPathsFromDraggingInfo:(id<NSDraggingInfo>)sender {
+- (uint64_t)mbw_dragPathListHandleFromDraggingInfo:(id<NSDraggingInfo>)sender {
   NSPasteboard *pasteboard = [sender draggingPasteboard];
   if (pasteboard == nil) {
-    return @"";
+    return 0;
   }
-  NSArray<NSURL *> *urls = [pasteboard readObjectsForClasses:@[ [NSURL class] ]
-                                                     options:@{
-                                                       NSPasteboardURLReadingFileURLsOnlyKey : @YES
-                                                     }];
-  if (urls == nil || urls.count == 0) {
-    return @"";
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+  id property_list = [pasteboard propertyListForType:NSFilenamesPboardType];
+#pragma clang diagnostic pop
+  if (property_list == nil) {
+    return 0;
   }
-  NSMutableArray<NSString *> *paths = [NSMutableArray arrayWithCapacity:urls.count];
-  for (NSURL *url in urls) {
-    if (url == nil || !url.fileURL) {
-      continue;
-    }
-    NSString *path = url.path;
-    if (path != nil && path.length > 0) {
-      [paths addObject:path];
-    }
-  }
-  if (paths.count == 0) {
-    return @"";
-  }
-  return [paths componentsJoinedByString:@"\n"];
+  return (uint64_t)(uintptr_t)(__bridge void *)property_list;
 }
 
 - (void)mbw_emitTextInputWithKind:(int32_t)kind
@@ -270,19 +257,22 @@ static void mbw_call_lifecycle_trampoline(mbw_lifecycle_trampoline_t trampoline,
                               text:(NSString *)text
                        cursorStart:(int32_t)cursorStart
                          cursorEnd:(int32_t)cursorEnd
-                              path:(NSString *)path {
+                         pathHandle:(uint64_t)pathHandle {
   if (self.rawId <= 0) {
     return;
   }
   NSString *safe_text = text == nil ? @"" : text;
-  NSString *safe_path = path == nil ? @"" : path;
+  id path_object = pathHandle == 0 ? nil : (__bridge id)(void *)(uintptr_t)pathHandle;
   [safe_text retain];
-  [safe_path retain];
+  if (path_object != nil) {
+    [path_object retain];
+  }
   mbw_call_text_input_event_trampoline(self.rawId, kind, x, y, state,
                                        (uint64_t)(uintptr_t)(__bridge void *)safe_text,
-                                       cursorStart, cursorEnd,
-                                       (uint64_t)(uintptr_t)(__bridge void *)safe_path);
-  [safe_path release];
+                                       cursorStart, cursorEnd, pathHandle);
+  if (path_object != nil) {
+    [path_object release];
+  }
   [safe_text release];
 }
 
@@ -299,7 +289,7 @@ static void mbw_call_lifecycle_trampoline(mbw_lifecycle_trampoline_t trampoline,
                               text:@""
                        cursorStart:-1
                          cursorEnd:-1
-                              path:nil];
+                         pathHandle:0];
 }
 
 - (void)mbw_emitMouseMotion:(NSEvent *)event {
@@ -414,7 +404,7 @@ static void mbw_call_lifecycle_trampoline(mbw_lifecycle_trampoline_t trampoline,
                                   text:@""
                            cursorStart:-1
                              cursorEnd:-1
-                                  path:nil];
+                             pathHandle:0];
     }
   }
 
@@ -512,7 +502,7 @@ static void mbw_call_lifecycle_trampoline(mbw_lifecycle_trampoline_t trampoline,
                               text:text
                        cursorStart:cursor_start
                          cursorEnd:cursor_end
-                              path:nil];
+                         pathHandle:0];
 }
 
 - (void)unmarkText {
@@ -533,7 +523,7 @@ static void mbw_call_lifecycle_trampoline(mbw_lifecycle_trampoline_t trampoline,
                               text:@""
                        cursorStart:-1
                          cursorEnd:-1
-                              path:nil];
+                         pathHandle:0];
 
   if ([self mbw_isImeEnabled]) {
     self.imeState = MBWImeStateGround;
@@ -587,7 +577,7 @@ static void mbw_call_lifecycle_trampoline(mbw_lifecycle_trampoline_t trampoline,
                                 text:@""
                          cursorStart:-1
                            cursorEnd:-1
-                                path:nil];
+                           pathHandle:0];
     [self mbw_emitTextInputWithKind:8
                                   x:0.0
                                   y:0.0
@@ -595,7 +585,7 @@ static void mbw_call_lifecycle_trampoline(mbw_lifecycle_trampoline_t trampoline,
                                 text:text
                          cursorStart:-1
                            cursorEnd:-1
-                                path:nil];
+                           pathHandle:0];
     self.imeState = MBWImeStateCommitted;
   }
 }
@@ -618,15 +608,15 @@ static void mbw_call_lifecycle_trampoline(mbw_lifecycle_trampoline_t trampoline,
                               text:(action == nil ? @"" : action)
                        cursorStart:-1
                          cursorEnd:-1
-                              path:nil];
+                         pathHandle:0];
 }
 
 - (NSDragOperation)draggingEntered:(id<NSDraggingInfo>)sender {
   NSPoint point = [self convertPoint:[sender draggingLocation] fromView:nil];
   self.lastDragX = point.x;
   self.lastDragY = point.y;
-  NSString *paths = [self mbw_dragPathsFromDraggingInfo:sender];
-  if (paths.length == 0) {
+  uint64_t path_list_handle = [self mbw_dragPathListHandleFromDraggingInfo:sender];
+  if (path_list_handle == 0) {
     return NSDragOperationNone;
   }
   [self mbw_emitTextInputWithKind:9
@@ -636,7 +626,7 @@ static void mbw_call_lifecycle_trampoline(mbw_lifecycle_trampoline_t trampoline,
                               text:nil
                        cursorStart:-1
                          cursorEnd:-1
-                              path:paths];
+                         pathHandle:path_list_handle];
   return NSDragOperationCopy;
 }
 
@@ -651,7 +641,7 @@ static void mbw_call_lifecycle_trampoline(mbw_lifecycle_trampoline_t trampoline,
                               text:nil
                        cursorStart:-1
                          cursorEnd:-1
-                              path:nil];
+                         pathHandle:0];
   return NSDragOperationCopy;
 }
 
@@ -664,7 +654,7 @@ static void mbw_call_lifecycle_trampoline(mbw_lifecycle_trampoline_t trampoline,
                               text:nil
                        cursorStart:-1
                          cursorEnd:-1
-                              path:nil];
+                         pathHandle:0];
 }
 
 - (BOOL)prepareForDragOperation:(id<NSDraggingInfo>)sender {
@@ -676,8 +666,8 @@ static void mbw_call_lifecycle_trampoline(mbw_lifecycle_trampoline_t trampoline,
   NSPoint point = [self convertPoint:[sender draggingLocation] fromView:nil];
   self.lastDragX = point.x;
   self.lastDragY = point.y;
-  NSString *paths = [self mbw_dragPathsFromDraggingInfo:sender];
-  if (paths.length == 0) {
+  uint64_t path_list_handle = [self mbw_dragPathListHandleFromDraggingInfo:sender];
+  if (path_list_handle == 0) {
     return NO;
   }
   [self mbw_emitTextInputWithKind:11
@@ -687,7 +677,7 @@ static void mbw_call_lifecycle_trampoline(mbw_lifecycle_trampoline_t trampoline,
                               text:nil
                        cursorStart:-1
                          cursorEnd:-1
-                              path:paths];
+                         pathHandle:path_list_handle];
   return YES;
 }
 
