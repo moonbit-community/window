@@ -16,6 +16,9 @@ enum Action {
   NextCursor
   NextCustomCursor
   CycleCursorGrab
+  DragWindow
+  DragResizeWindow
+  ShowWindowMenu
   RequestResize
   SetTheme(@core.Theme?)
   CreateNewTab
@@ -26,6 +29,306 @@ enum Action {
   ToggleContinuousRedraw
   EmitSurfaceSize
 } derive(Eq, Show)
+
+///|
+fn Action::help(self : Action) -> String {
+  match self {
+    Action::CloseWindow => "Close window"
+    Action::PrintHelp => "Print help"
+    Action::CreateNewWindow => "Create new window"
+    Action::ToggleResizeIncrements =>
+      "Use resize increments when resizing window"
+    Action::ToggleCursorVisibility => "Hide cursor"
+    Action::ToggleResizable => "Toggle window resizable state"
+    Action::ToggleDecorations => "Toggle decorations"
+    Action::ToggleFullscreen => "Toggle fullscreen"
+    Action::ToggleSimpleFullscreen => "Toggle simple fullscreen"
+    Action::ToggleBorderlessGame => "Toggle borderless game mode"
+    Action::ToggleMaximize => "Maximize"
+    Action::Minimize => "Minimize"
+    Action::NextCursor => "Advance the cursor to the next value"
+    Action::NextCustomCursor => "Advance custom cursor to the next value"
+    Action::CycleCursorGrab => "Cycle through cursor grab mode"
+    Action::DragWindow => "Start window drag"
+    Action::DragResizeWindow => "Start window drag-resize"
+    Action::ShowWindowMenu => "Show window menu"
+    Action::RequestResize => "Request a resize"
+    Action::SetTheme(None) => "Change to the system theme"
+    Action::SetTheme(Some(@core.Theme::Light)) => "Change to a light theme"
+    Action::SetTheme(Some(@core.Theme::Dark)) => "Change to a dark theme"
+    Action::CreateNewTab => "Create new tab"
+    Action::CycleOptionAsAlt => "Cycle option as alt mode"
+    Action::DumpMonitors => "Dump monitor information"
+    Action::Message => "Prints a message through a user wake up"
+    Action::ToggleAnimatedFillColor => "Toggle animated fill color"
+    Action::ToggleContinuousRedraw => "Toggle continuous redraw"
+    Action::EmitSurfaceSize => "Periodically print the surface size"
+  }
+}
+
+///|
+priv struct KeyBinding {
+  key : String
+  control : Bool
+  alt : Bool
+  shift : Bool
+  meta : Bool
+  action : Action
+}
+
+///|
+priv struct MouseBinding {
+  button : @core.MouseButton
+  control : Bool
+  alt : Bool
+  shift : Bool
+  meta : Bool
+  action : Action
+}
+
+///|
+fn key_bindings() -> Array[KeyBinding] {
+  [
+    {
+      key: "Q",
+      control: true,
+      alt: false,
+      shift: false,
+      meta: false,
+      action: Action::CloseWindow,
+    },
+    {
+      key: "H",
+      control: true,
+      alt: false,
+      shift: false,
+      meta: false,
+      action: Action::PrintHelp,
+    },
+    {
+      key: "F",
+      control: false,
+      alt: false,
+      shift: true,
+      meta: false,
+      action: Action::ToggleAnimatedFillColor,
+    },
+    {
+      key: "F",
+      control: true,
+      alt: false,
+      shift: false,
+      meta: false,
+      action: Action::ToggleFullscreen,
+    },
+    {
+      key: "F",
+      control: false,
+      alt: true,
+      shift: false,
+      meta: false,
+      action: Action::ToggleSimpleFullscreen,
+    },
+    {
+      key: "D",
+      control: true,
+      alt: false,
+      shift: false,
+      meta: false,
+      action: Action::ToggleDecorations,
+    },
+    {
+      key: "L",
+      control: true,
+      alt: false,
+      shift: false,
+      meta: false,
+      action: Action::CycleCursorGrab,
+    },
+    {
+      key: "P",
+      control: true,
+      alt: false,
+      shift: false,
+      meta: false,
+      action: Action::ToggleResizeIncrements,
+    },
+    {
+      key: "R",
+      control: true,
+      alt: false,
+      shift: false,
+      meta: false,
+      action: Action::ToggleResizable,
+    },
+    {
+      key: "R",
+      control: false,
+      alt: true,
+      shift: false,
+      meta: false,
+      action: Action::RequestResize,
+    },
+    {
+      key: "R",
+      control: false,
+      alt: false,
+      shift: true,
+      meta: false,
+      action: Action::ToggleContinuousRedraw,
+    },
+    {
+      key: "M",
+      control: true,
+      alt: true,
+      shift: false,
+      meta: false,
+      action: Action::DumpMonitors,
+    },
+    {
+      key: "M",
+      control: true,
+      alt: false,
+      shift: false,
+      meta: false,
+      action: Action::ToggleMaximize,
+    },
+    {
+      key: "M",
+      control: false,
+      alt: true,
+      shift: false,
+      meta: false,
+      action: Action::Minimize,
+    },
+    {
+      key: "N",
+      control: true,
+      alt: false,
+      shift: false,
+      meta: false,
+      action: Action::CreateNewWindow,
+    },
+    {
+      key: "C",
+      control: true,
+      alt: false,
+      shift: false,
+      meta: false,
+      action: Action::NextCursor,
+    },
+    {
+      key: "C",
+      control: false,
+      alt: true,
+      shift: false,
+      meta: false,
+      action: Action::NextCustomCursor,
+    },
+    {
+      key: "Z",
+      control: true,
+      alt: false,
+      shift: false,
+      meta: false,
+      action: Action::ToggleCursorVisibility,
+    },
+    {
+      key: "K",
+      control: false,
+      alt: false,
+      shift: false,
+      meta: false,
+      action: Action::SetTheme(None),
+    },
+    {
+      key: "K",
+      control: false,
+      alt: false,
+      shift: false,
+      meta: true,
+      action: Action::SetTheme(Some(@core.Theme::Light)),
+    },
+    {
+      key: "K",
+      control: true,
+      alt: false,
+      shift: false,
+      meta: false,
+      action: Action::SetTheme(Some(@core.Theme::Dark)),
+    },
+    {
+      key: "T",
+      control: false,
+      alt: false,
+      shift: false,
+      meta: true,
+      action: Action::CreateNewTab,
+    },
+    {
+      key: "O",
+      control: true,
+      alt: false,
+      shift: false,
+      meta: false,
+      action: Action::CycleOptionAsAlt,
+    },
+    {
+      key: "B",
+      control: true,
+      alt: false,
+      shift: false,
+      meta: false,
+      action: Action::ToggleBorderlessGame,
+    },
+    {
+      key: "S",
+      control: false,
+      alt: true,
+      shift: false,
+      meta: false,
+      action: Action::EmitSurfaceSize,
+    },
+    {
+      key: "S",
+      control: true,
+      alt: false,
+      shift: false,
+      meta: false,
+      action: Action::Message,
+    },
+  ]
+}
+
+///|
+fn mouse_bindings() -> Array[MouseBinding] {
+  [
+    {
+      button: @core.MouseButton::Left,
+      control: false,
+      alt: true,
+      shift: false,
+      meta: false,
+      action: Action::DragResizeWindow,
+    },
+    {
+      button: @core.MouseButton::Left,
+      control: true,
+      alt: false,
+      shift: false,
+      meta: false,
+      action: Action::DragWindow,
+    },
+    {
+      button: @core.MouseButton::Right,
+      control: true,
+      alt: false,
+      shift: false,
+      meta: false,
+      action: Action::ShowWindowMenu,
+    },
+  ]
+}
 
 ///|
 struct Application {
@@ -114,6 +417,67 @@ fn modifiers_match(
 }
 
 ///|
+fn modifiers_prefix(
+  control : Bool,
+  alt : Bool,
+  shift : Bool,
+  meta : Bool,
+) -> String {
+  let mut prefix = ""
+  if meta {
+    prefix = prefix + "Cmd+"
+  }
+  if alt {
+    prefix = prefix + "Alt+"
+  }
+  if control {
+    prefix = prefix + "Ctrl+"
+  }
+  if shift {
+    prefix = prefix + "Shift+"
+  }
+  prefix
+}
+
+///|
+fn mouse_button_name(button : @core.MouseButton) -> String {
+  match button {
+    @core.MouseButton::Left => "Left"
+    @core.MouseButton::Right => "Right"
+    @core.MouseButton::Middle => "Middle"
+    @core.MouseButton::Back => "Back"
+    @core.MouseButton::Forward => "Forward"
+    @core.MouseButton::Button6 => "Button6"
+    @core.MouseButton::Button7 => "Button7"
+    @core.MouseButton::Button8 => "Button8"
+    @core.MouseButton::Button9 => "Button9"
+    @core.MouseButton::Button10 => "Button10"
+    @core.MouseButton::Button11 => "Button11"
+    @core.MouseButton::Button12 => "Button12"
+    @core.MouseButton::Button13 => "Button13"
+    @core.MouseButton::Button14 => "Button14"
+    @core.MouseButton::Button15 => "Button15"
+    @core.MouseButton::Button16 => "Button16"
+    @core.MouseButton::Button17 => "Button17"
+    @core.MouseButton::Button18 => "Button18"
+    @core.MouseButton::Button19 => "Button19"
+    @core.MouseButton::Button20 => "Button20"
+    @core.MouseButton::Button21 => "Button21"
+    @core.MouseButton::Button22 => "Button22"
+    @core.MouseButton::Button23 => "Button23"
+    @core.MouseButton::Button24 => "Button24"
+    @core.MouseButton::Button25 => "Button25"
+    @core.MouseButton::Button26 => "Button26"
+    @core.MouseButton::Button27 => "Button27"
+    @core.MouseButton::Button28 => "Button28"
+    @core.MouseButton::Button29 => "Button29"
+    @core.MouseButton::Button30 => "Button30"
+    @core.MouseButton::Button31 => "Button31"
+    @core.MouseButton::Button32 => "Button32"
+  }
+}
+
+///|
 fn make_custom_cursor_source(value : Int) -> @core.CustomCursorSource? {
   let rgba = Bytes::make(4, value.to_byte())
   Some(@core.CustomCursorSource::from_rgba(rgba, 1, 1, 0, 0)) catch {
@@ -172,25 +536,28 @@ fn Application::new() -> Application {
 ///|
 fn Application::print_help(_self : Application) -> Unit {
   println("Keyboard bindings:")
-  println("  Ctrl+Q close current window")
-  println("  Ctrl+H print this help")
-  println("  Ctrl+N create a new window")
-  println("  Ctrl+F toggle fullscreen; Alt+F toggle simple fullscreen")
-  println("  Ctrl+D toggle decorations; Ctrl+R toggle resizable")
-  println("  Ctrl+P toggle resize increments; Alt+R request resize")
-  println("  Ctrl+M maximize; Alt+M minimize; Ctrl+Alt+M dump monitors")
-  println("  Ctrl+C next system cursor; Alt+C next custom cursor")
-  println("  Ctrl+L cycle cursor grab; Ctrl+Z toggle cursor visibility")
-  println("  K system theme; Cmd+K light; Ctrl+K dark")
-  println(
-    "  Cmd+T create tab; Ctrl+O cycle OptionAsAlt; Ctrl+B toggle borderless game",
-  )
-  println("  Shift+F toggle animated fill; Shift+R toggle continuous redraw")
-  println("  Alt+S toggle periodic surface-size logs; Ctrl+S proxy message")
+  for binding in key_bindings() {
+    let prefix = modifiers_prefix(
+      binding.control,
+      binding.alt,
+      binding.shift,
+      binding.meta,
+    )
+    println("  \{prefix}\{binding.key} \{binding.action.help()}")
+  }
   println("Mouse bindings:")
-  println("  Ctrl+Left drag window")
-  println("  Alt+Left drag-resize (direction depends on pointer edge/corner)")
-  println("  Ctrl+Right show window menu")
+  for binding in mouse_bindings() {
+    let prefix = modifiers_prefix(
+      binding.control,
+      binding.alt,
+      binding.shift,
+      binding.meta,
+    )
+    println(
+      "  \{prefix}\{mouse_button_name(binding.button)} \{binding.action.help()}",
+    )
+  }
+  println("  Esc Close window")
 }
 
 ///|
@@ -688,7 +1055,10 @@ fn Application::perform_window_action(
     Action::CreateNewWindow
     | Action::PrintHelp
     | Action::DumpMonitors
-    | Action::Message => ()
+    | Action::Message
+    | Action::DragWindow
+    | Action::DragResizeWindow
+    | Action::ShowWindowMenu => ()
   }
 }
 

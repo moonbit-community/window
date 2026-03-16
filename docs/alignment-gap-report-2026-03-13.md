@@ -308,6 +308,7 @@ The implementation is **not yet 1:1 aligned** with `winit-reference` semantics.
 - Completed: aligned `app_state_internal_exit` with upstream scope by no longer resetting `stop_on_launch` there; launch-stop semantics now remain owned by launch handling paths.
 - Completed: hardened FFI surface governance to full-symbol allowlisting: `scripts/check_ffi_surface.sh` now fails on any export-list drift (added or removed symbols), and `docs/ffi-export-allowlist.txt` is synchronized to the current primitive export set.
 - Completed: removed MoonBit-only manual `finishLaunching` tracking from `event_loop` native run/stop paths; `NSApplication::run`/`stop` are now called directly to match upstream control-flow ownership.
+- Completed: `examples/application` help output is now generated from explicit key/mouse binding tables plus `Action::help` mapping (instead of hardcoded prose lines), reducing drift against upstream binding-to-help structure.
 
 ## Remaining Structural Work
 
