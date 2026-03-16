@@ -690,12 +690,24 @@ fn set_window_custom_cursor(
 ///|
 fn set_parent_window(window_handle : UInt64, parent_window : UInt64) -> Bool {
   let native_handle = registered_native_handle(window_handle)
-  let parent_handle = parent_window
+  let parent_handle = registered_native_handle(parent_window)
   if native_handle == (0 : Int).to_uint64() ||
     parent_handle == (0 : Int).to_uint64() {
     false
   } else {
-    native_window_set_parent(native_handle, parent_handle)
+    let window = native_window_objc_handle(native_handle)
+    let parent = native_window_objc_handle(parent_handle)
+    if window == (0 : Int).to_uint64() || parent == (0 : Int).to_uint64() {
+      false
+    } else {
+      appkit_objc_msg_send_void_u64_u64(
+        parent,
+        objc_runtime_selector_handle("addChildWindow:ordered:"),
+        window,
+        (1 : Int).to_uint64(),
+      )
+      true
+    }
   }
 }
 
@@ -780,8 +792,38 @@ fn show_window_menu(window_handle : UInt64, x : Int, y : Int) -> Bool {
 
 ///|
 fn set_window_transparent(window_handle : UInt64, transparent : Bool) -> Unit {
-  if registered_native_handle(window_handle) != (0 : Int).to_uint64() {
-    native_window_set_transparent(window_handle, transparent)
+  let native_handle = registered_native_handle(window_handle)
+  if native_handle == (0 : Int).to_uint64() {
+    return ()
+  }
+  let window = native_window_objc_handle(native_handle)
+  if window == (0 : Int).to_uint64() {
+    return ()
+  }
+  appkit_objc_msg_send_void_bool(
+    window,
+    objc_runtime_selector_handle("setOpaque:"),
+    transparent == false,
+  )
+  let ns_color = objc_runtime_class_handle("NSColor")
+  if ns_color == (0 : Int).to_uint64() {
+    return ()
+  }
+  let color_selector = if transparent {
+    "clearColor"
+  } else {
+    "windowBackgroundColor"
+  }
+  let color = appkit_objc_msg_send_u64(
+    ns_color,
+    objc_runtime_selector_handle(color_selector),
+  )
+  if color != (0 : Int).to_uint64() {
+    appkit_objc_msg_send_void_u64(
+      window,
+      objc_runtime_selector_handle("setBackgroundColor:"),
+      color,
+    )
   }
 }
 

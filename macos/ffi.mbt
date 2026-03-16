@@ -2431,55 +2431,6 @@ fn native_window_enabled_buttons_mask(handle : UInt64) -> Int {
 }
 
 ///|
-fn native_window_set_transparent(handle : UInt64, transparent : Bool) -> Unit {
-  let window = native_window_objc_handle(handle)
-  if window == (0 : Int).to_uint64() {
-    return ()
-  }
-  appkit_objc_msg_send_void_bool(
-    window,
-    objc_runtime_selector_handle("setOpaque:"),
-    transparent == false,
-  )
-  let ns_color = objc_runtime_class_handle("NSColor")
-  if ns_color == (0 : Int).to_uint64() {
-    return ()
-  }
-  let color_selector = if transparent {
-    "clearColor"
-  } else {
-    "windowBackgroundColor"
-  }
-  let color = appkit_objc_msg_send_u64(
-    ns_color,
-    objc_runtime_selector_handle(color_selector),
-  )
-  if color != (0 : Int).to_uint64() {
-    appkit_objc_msg_send_void_u64(
-      window,
-      objc_runtime_selector_handle("setBackgroundColor:"),
-      color,
-    )
-  }
-}
-
-///|
-fn native_window_set_parent(handle : UInt64, parent_handle : UInt64) -> Bool {
-  let window = native_window_objc_handle(handle)
-  let parent_window = native_window_objc_handle(parent_handle)
-  if window == (0 : Int).to_uint64() || parent_window == (0 : Int).to_uint64() {
-    return false
-  }
-  appkit_objc_msg_send_void_u64_u64(
-    parent_window,
-    objc_runtime_selector_handle("addChildWindow:ordered:"),
-    window,
-    (1 : Int).to_uint64(),
-  )
-  true
-}
-
-///|
 fn native_window_current_monitor_id(handle : UInt64) -> UInt64 {
   let window = native_window_objc_handle(handle)
   if window == (0 : Int).to_uint64() {
