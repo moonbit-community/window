@@ -159,3 +159,13 @@ test "dragging_info_has_paths_rejects_null_handle" {
 test "native_drag_should_accept_rejects_null_handle" {
   assert_false(native_drag_should_accept(1, (0 : Int).to_uint64()))
 }
+
+///|
+test "accepts_first_mouse_state_defaults_to_false_and_tracks_updates" {
+  let handle = (94 : Int).to_uint64()
+
+  assert_false(window_accepts_first_mouse_state(handle))
+
+  set_window_accepts_first_mouse_state(handle, true)
+  assert_true(window_accepts_first_mouse_state(handle))
+}

@@ -49,6 +49,9 @@ let window_platform_state_handles : Ref[Array[UInt64]] = Ref::new([])
 let window_ime_allowed_values : Ref[Array[Bool]] = Ref::new([])
 
 ///|
+let window_accepts_first_mouse_values : Ref[Array[Bool]] = Ref::new([])
+
+///|
 let window_option_as_alt_values : Ref[Array[Int]] = Ref::new([])
 
 ///|
@@ -113,6 +116,7 @@ fn window_platform_state_ensure_index(window_handle : UInt64) -> Int {
     None => {
       window_platform_state_handles.val.push(window_handle)
       window_ime_allowed_values.val.push(false)
+      window_accepts_first_mouse_values.val.push(false)
       window_option_as_alt_values.val.push(0)
       window_ime_purpose_values.val.push(0)
       window_ime_hints_values.val.push(0)
@@ -131,6 +135,7 @@ fn clear_window_platform_state(window_handle : UInt64) -> Unit {
     Some(index) => {
       ignore(window_platform_state_handles.val.remove(index))
       ignore(window_ime_allowed_values.val.remove(index))
+      ignore(window_accepts_first_mouse_values.val.remove(index))
       ignore(window_option_as_alt_values.val.remove(index))
       ignore(window_ime_purpose_values.val.remove(index))
       ignore(window_ime_hints_values.val.remove(index))
@@ -171,6 +176,23 @@ fn window_option_as_alt_native(window_handle : UInt64) -> Int {
   match window_platform_state_index(window_handle) {
     Some(index) => window_option_as_alt_values.val[index]
     None => 0
+  }
+}
+
+///|
+fn set_window_accepts_first_mouse_state(
+  window_handle : UInt64,
+  accepts_first_mouse : Bool,
+) -> Unit {
+  let index = window_platform_state_ensure_index(window_handle)
+  window_accepts_first_mouse_values.val[index] = accepts_first_mouse
+}
+
+///|
+fn window_accepts_first_mouse_state(window_handle : UInt64) -> Bool {
+  match window_platform_state_index(window_handle) {
+    Some(index) => window_accepts_first_mouse_values.val[index]
+    None => false
   }
 }
 
@@ -1668,22 +1690,6 @@ fn native_window_is_fullscreen(handle : UInt64) -> Bool {
 }
 
 ///|
-fn native_window_set_accepts_first_mouse(
-  handle : UInt64,
-  accepts_first_mouse : Bool,
-) -> Unit {
-  let content_view = native_window_content_view_objc_handle(handle)
-  if content_view == (0 : Int).to_uint64() {
-    return ()
-  }
-  appkit_objc_msg_send_void_bool(
-    content_view,
-    objc_runtime_selector_handle("setAcceptsFirstMouseEnabled:"),
-    accepts_first_mouse,
-  )
-}
-
-///|
 fn native_window_set_unified_titlebar(
   handle : UInt64,
   unified_titlebar : Bool,
@@ -2525,9 +2531,7 @@ fn set_window_accepts_first_mouse(
   window_handle : UInt64,
   accepts_first_mouse : Bool,
 ) -> Unit {
-  if registered_native_handle(window_handle) != (0 : Int).to_uint64() {
-    native_window_set_accepts_first_mouse(window_handle, accepts_first_mouse)
-  }
+  set_window_accepts_first_mouse_state(window_handle, accepts_first_mouse)
 }
 
 ///|

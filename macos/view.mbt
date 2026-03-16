@@ -136,6 +136,9 @@ let native_view_state_query_ime_cursor_width = 7
 let native_view_state_query_ime_cursor_height = 8
 
 ///|
+let native_view_state_query_accepts_first_mouse = 9
+
+///|
 let view_ime_window_ids : Ref[Array[Int]] = Ref::new([])
 
 ///|
@@ -348,6 +351,12 @@ fn view_native_query_state(raw_id : Int, kind : Int) -> Int {
               window_ime_cursor_width(window_handle)
             _ if kind == native_view_state_query_ime_cursor_height =>
               window_ime_cursor_height(window_handle)
+            _ if kind == native_view_state_query_accepts_first_mouse =>
+              if window_accepts_first_mouse_state(window_handle) {
+                1
+              } else {
+                0
+              }
             _ => 0
           }
         None =>

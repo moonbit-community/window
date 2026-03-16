@@ -17,6 +17,7 @@ fn reset_view_state_for_test() -> Unit {
 
   window_platform_state_handles.val = []
   window_ime_allowed_values.val = []
+  window_accepts_first_mouse_values.val = []
   window_option_as_alt_values.val = []
   window_ime_purpose_values.val = []
   window_ime_hints_values.val = []
@@ -73,6 +74,27 @@ test "native view state query reads moonbit ime state" {
   )
   assert_eq(
     view_native_query_state(raw_id, native_view_state_query_ime_cursor_height),
+    1,
+  )
+}
+
+///|
+test "native view state query reads accepts first mouse from moonbit" {
+  reset_view_state_for_test()
+
+  let raw_id = 19
+  let window_handle = (93 : Int).to_uint64()
+  app_state_runtime.val.window_handles.push({ raw_id, handle: window_handle })
+
+  assert_eq(
+    view_native_query_state(raw_id, native_view_state_query_accepts_first_mouse),
+    0,
+  )
+
+  set_window_accepts_first_mouse_state(window_handle, true)
+
+  assert_eq(
+    view_native_query_state(raw_id, native_view_state_query_accepts_first_mouse),
     1,
   )
 }

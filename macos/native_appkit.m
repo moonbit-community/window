@@ -64,6 +64,7 @@ enum {
   MBW_VIEW_STATE_QUERY_IME_CURSOR_Y = 6,
   MBW_VIEW_STATE_QUERY_IME_CURSOR_WIDTH = 7,
   MBW_VIEW_STATE_QUERY_IME_CURSOR_HEIGHT = 8,
+  MBW_VIEW_STATE_QUERY_ACCEPTS_FIRST_MOUSE = 9,
 };
 
 static void mbw_call_window_event_trampoline(int32_t kind, int32_t raw_id, int32_t arg0,
@@ -130,7 +131,6 @@ static BOOL mbw_query_drag_operation(int32_t raw_id, id<NSDraggingInfo> sender) 
 }
 
 @interface MBWContentView : NSView <NSTextInputClient>
-@property(nonatomic, assign) BOOL acceptsFirstMouseEnabled;
 @property(nonatomic, assign) int32_t rawId;
 @property(nonatomic, assign) NSTrackingRectTag trackingRectTag;
 - (void)mbw_emitTextInputWithKind:(int32_t)kind
@@ -166,7 +166,7 @@ static BOOL mbw_query_drag_operation(int32_t raw_id, id<NSDraggingInfo> sender) 
 
 - (BOOL)acceptsFirstMouse:(NSEvent *)event {
   (void)event;
-  return self.acceptsFirstMouseEnabled;
+  return mbw_query_view_state(self.rawId, MBW_VIEW_STATE_QUERY_ACCEPTS_FIRST_MOUSE, 0) != 0;
 }
 
 - (BOOL)acceptsFirstResponder {
@@ -927,7 +927,6 @@ uint64_t mbw_create_window(int32_t width, int32_t height) {
   window.delegate = delegate;
 
   MBWContentView *content_view = [[MBWContentView alloc] initWithFrame:window.contentView.bounds];
-  content_view.acceptsFirstMouseEnabled = NO;
   content_view.trackingRectTag = 0;
   content_view.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
   window.contentView = content_view;
