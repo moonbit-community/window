@@ -3248,6 +3248,26 @@ fn initial_window_surface_size(
 }
 
 ///|
+fn fullscreen_target_surface_size(
+  fullscreen : @core.Fullscreen?,
+  primary_monitor : @core.MonitorHandle?,
+) -> @dpi.LogicalSize? {
+  match fullscreen {
+    Some(@core.Fullscreen::Borderless(Some(monitor))) =>
+      Some(monitor.surface_size().to_logical(monitor.scale_factor()))
+    Some(@core.Fullscreen::Exclusive(monitor, _video_mode)) =>
+      Some(monitor.surface_size().to_logical(monitor.scale_factor()))
+    Some(@core.Fullscreen::Borderless(None)) =>
+      match primary_monitor {
+        Some(monitor) =>
+          Some(monitor.surface_size().to_logical(monitor.scale_factor()))
+        None => None
+      }
+    None => None
+  }
+}
+
+///|
 fn should_apply_initial_window_position(fullscreen : @core.Fullscreen?) -> Bool {
   match fullscreen {
     Some(_) => false
@@ -3275,10 +3295,12 @@ fn new_window(
     Some(monitor) => monitor.scale_factor()
     None => 1.0
   }
-  let size = initial_window_surface_size(
-    attributes.surface_size(),
-    scale_factor,
-  )
+  let fullscreen = attributes.fullscreen()
+  let size = match
+    fullscreen_target_surface_size(fullscreen, event_loop.primary_monitor()) {
+    Some(size) => size
+    None => initial_window_surface_size(attributes.surface_size(), scale_factor)
+  }
   let raw_window_handle = create_window(
     clamp_size(size.width().to_int()),
     clamp_size(size.height().to_int()),
@@ -3417,7 +3439,7 @@ fn new_window(
     ),
   )
   set_window_transparent(raw_window_handle, attributes.transparent())
-  match attributes.fullscreen() {
+  match fullscreen {
     Some(@core.Fullscreen::Borderless(target_monitor)) => {
       match target_monitor {
         Some(monitor) =>
@@ -3458,7 +3480,7 @@ fn new_window(
   let position = attributes.position()
   if should_center_initial_window(position) {
     center_window(raw_window_handle)
-  } else if should_apply_initial_window_position(attributes.fullscreen()) {
+  } else if should_apply_initial_window_position(fullscreen) {
     match position {
       Some(position) => {
         let physical_position = position.to_physical(scale_factor)
