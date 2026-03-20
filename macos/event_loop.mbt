@@ -676,6 +676,15 @@ fn stop_app_immediately() -> Unit {
 }
 
 ///|
+/// Run the application on the calling thread and return control to the caller
+/// after `exit()`.
+///
+/// Unlike `run_app()`, this does not consume the `EventLoop`, so the same loop
+/// may be run again after the previous run exits.
+///
+/// This API is intended for re-running orthogonal application sessions, not
+/// for per-frame burst execution. If you need a host-controlled polling loop,
+/// use `pump_app_events()`. For normal applications, prefer `run_app()`.
 pub fn[A : ApplicationHandler] EventLoop::run_app_on_demand(
   self : EventLoop,
   app : A,
@@ -684,6 +693,7 @@ pub fn[A : ApplicationHandler] EventLoop::run_app_on_demand(
 }
 
 ///|
+/// See `run_app_on_demand()`.
 pub fn[A : ApplicationHandler] EventLoop::try_run_app_on_demand(
   self : EventLoop,
   app : A,
@@ -706,6 +716,30 @@ pub fn[A : ApplicationHandler] EventLoop::try_run_app_on_demand(
 }
 
 ///|
+/// Pump the event loop and dispatch pending events without consuming the
+/// `EventLoop`.
+///
+/// This API exists to integrate the window loop into an external host loop.
+/// For normal applications, prefer `run_app()`.
+///
+/// Passing `Some(0)` never blocks. Passing `None` may wait indefinitely for
+/// new events before returning control back to the caller.
+///
+/// This is a caveat-heavy API. Some events must be handled synchronously inside
+/// the supplied `ApplicationHandler` callbacks and should not be buffered for
+/// later processing. In particular, buffering `RedrawRequested` or lifecycle
+/// events is likely to cause portability problems.
+///
+/// On macOS, this implementation works by stopping the global `NSApplication`
+/// when the AppKit run loop is about to wait for new events. This is less
+/// efficient than polling on other platforms, and code outside this package can
+/// observe that the application is stopped between pumps. Rendering outside
+/// `window_event(..., RedrawRequested)` may also show resize artifacts because
+/// AppKit expects drawing to complete synchronously.
+///
+/// If you are building a frame-driven app, prefer `run_app()` with
+/// `ControlFlow::Poll` or `ControlFlow::WaitUntil` instead of calling
+/// `pump_app_events()` every tick.
 pub fn[A : ApplicationHandler] EventLoop::pump_app_events(
   self : EventLoop,
   timeout_ms : Int?,
@@ -715,6 +749,7 @@ pub fn[A : ApplicationHandler] EventLoop::pump_app_events(
 }
 
 ///|
+/// See `pump_app_events()`.
 pub fn[A : ApplicationHandler] EventLoop::try_pump_app_events(
   self : EventLoop,
   timeout_ms : Int?,
