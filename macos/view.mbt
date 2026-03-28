@@ -313,6 +313,60 @@ fn view_content_view_handle(raw_id : Int) -> UInt64 {
 }
 
 ///|
+fn view_window_scale_factor(raw_id : Int) -> Double {
+  match app_state_window_handle(raw_id) {
+    Some(window_handle) => native_window_scale_factor(window_handle)
+    None => 1.0
+  }
+}
+
+///|
+fn view_event_pointer_position(
+  raw_id : Int,
+  event_handle : UInt64,
+) -> @dpi.PhysicalPositionF64 {
+  if event_handle == (0 : Int).to_uint64() {
+    return @dpi.PhysicalPositionF64::new(0.0, 0.0)
+  }
+  let window_x = appkit_objc_msg_send_point_x(
+    event_handle,
+    objc_runtime_selector_handle("locationInWindow"),
+  )
+  let window_y = appkit_objc_msg_send_point_y(
+    event_handle,
+    objc_runtime_selector_handle("locationInWindow"),
+  )
+  let content_view = view_content_view_handle(raw_id)
+  let logical_x = if content_view == (0 : Int).to_uint64() {
+    window_x
+  } else {
+    appkit_objc_msg_send_point_x_point_u64(
+      content_view,
+      objc_runtime_selector_handle("convertPoint:fromView:"),
+      window_x,
+      window_y,
+      (0 : Int).to_uint64(),
+    )
+  }
+  let logical_y = if content_view == (0 : Int).to_uint64() {
+    window_y
+  } else {
+    appkit_objc_msg_send_point_y_point_u64(
+      content_view,
+      objc_runtime_selector_handle("convertPoint:fromView:"),
+      window_x,
+      window_y,
+      (0 : Int).to_uint64(),
+    )
+  }
+  let scale_factor = view_window_scale_factor(raw_id)
+  @dpi.PhysicalPositionF64::new(
+    logical_x * scale_factor,
+    logical_y * scale_factor,
+  )
+}
+
+///|
 fn view_ime_allowed(raw_id : Int) -> Bool {
   match app_state_window_handle(raw_id) {
     Some(window_handle) => window_ime_allowed(window_handle)
@@ -885,22 +939,9 @@ fn queue_native_input_event(
     ).to_int()
   }
   let modifiers = native_modifiers_from_modifier_flags(modifier_flags)
-  let x = if event_handle == (0 : Int).to_uint64() {
-    0.0
-  } else {
-    appkit_objc_msg_send_point_x(
-      event_handle,
-      objc_runtime_selector_handle("locationInWindow"),
-    )
-  }
-  let y = if event_handle == (0 : Int).to_uint64() {
-    0.0
-  } else {
-    appkit_objc_msg_send_point_y(
-      event_handle,
-      objc_runtime_selector_handle("locationInWindow"),
-    )
-  }
+  let position = view_event_pointer_position(raw_id, event_handle)
+  let x = position.x()
+  let y = position.y()
   let mut state = 0
   let mut button = 0
   let mut scancode = 0
