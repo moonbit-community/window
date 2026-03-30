@@ -76,6 +76,32 @@ test "window_position_to_logical_converts_physical_input" {
 }
 
 ///|
+test "physical_outer_position_to_logical_converts_physical_input" {
+  let logical = physical_outer_position_to_logical(
+    @dpi.PhysicalPosition::new(120, 64),
+    2.0,
+  )
+  assert_eq(logical, @dpi.LogicalPosition::new(60.0, 32.0))
+}
+
+///|
+test "monitor_position_to_logical_uses_monitor_scale_factor" {
+  let monitor = @core.MonitorHandle::new(
+    (9 : Int).to_uint64(),
+    Some("scaled"),
+    @dpi.PhysicalPosition::new(3840, 0),
+    @dpi.PhysicalSize::new(3840, 2160),
+    2.0,
+    None,
+    [],
+  )
+  assert_eq(
+    monitor_position_to_logical(monitor),
+    @dpi.LogicalPosition::new(1920.0, 0.0),
+  )
+}
+
+///|
 test "fullscreen_target_surface_size_prefers_target_monitor" {
   let primary = @core.MonitorHandle::new(
     (1 : Int).to_uint64(),

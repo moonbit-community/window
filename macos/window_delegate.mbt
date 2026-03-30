@@ -2455,14 +2455,7 @@ fn set_max_surface_size(
 ///|
 fn set_window_position(window_handle : UInt64, x : Int, y : Int) -> Unit {
   if registered_native_handle(window_handle) != (0 : Int).to_uint64() {
-    let logical_position = @dpi.PhysicalPosition::new(x, y).to_logical(
-      window_native_scale_factor(window_handle),
-    )
-    native_window_set_position(
-      window_handle,
-      logical_position.x().to_int(),
-      logical_position.y().to_int(),
-    )
+    native_window_set_position(window_handle, x, y)
   }
 }
 
@@ -3605,6 +3598,21 @@ fn window_position_to_logical(
 }
 
 ///|
+fn physical_outer_position_to_logical(
+  position : @dpi.PhysicalPosition,
+  scale_factor : Double,
+) -> @dpi.LogicalPosition {
+  position.to_logical(scale_factor)
+}
+
+///|
+fn monitor_position_to_logical(
+  monitor : @core.MonitorHandle,
+) -> @dpi.LogicalPosition {
+  physical_outer_position_to_logical(monitor.position(), monitor.scale_factor())
+}
+
+///|
 // Port target: window_delegate.rs::new
 fn new_window(
   event_loop : EventLoop,
@@ -3763,12 +3771,14 @@ fn new_window(
   match fullscreen {
     Some(@core.Fullscreen::Borderless(target_monitor)) => {
       match target_monitor {
-        Some(monitor) =>
+        Some(monitor) => {
+          let logical_position = monitor_position_to_logical(monitor)
           set_window_position(
             raw_window_handle,
-            monitor.position().x(),
-            monitor.position().y(),
+            logical_position.x().to_int(),
+            logical_position.y().to_int(),
           )
+        }
         None => ()
       }
       set_window_fullscreen(raw_window_handle, true)
@@ -4339,12 +4349,14 @@ pub fn Window::set_fullscreen(
           ignore(self.exit_exclusive_fullscreen())
         }
         match target_monitor {
-          Some(monitor) =>
+          Some(monitor) => {
+            let logical_position = monitor_position_to_logical(monitor)
             set_window_position(
               raw_id,
-              monitor.position().x(),
-              monitor.position().y(),
+              logical_position.x().to_int(),
+              logical_position.y().to_int(),
             )
+          }
           None => ()
         }
         set_window_fullscreen(raw_id, true)
@@ -4411,6 +4423,7 @@ pub fn Window::set_simple_fullscreen(self : Window, fullscreen : Bool) -> Bool {
       Some(saved_outer_position) =>
         match current_monitor {
           Some(monitor) => {
+            let logical_position = monitor_position_to_logical(monitor)
             self.simple_fullscreen_saved_style_mask_state = Some(
               window_style_mask_bits(raw_id),
             )
@@ -4433,8 +4446,8 @@ pub fn Window::set_simple_fullscreen(self : Window, fullscreen : Bool) -> Bool {
             )
             set_window_position(
               raw_id,
-              monitor.position().x(),
-              monitor.position().y(),
+              logical_position.x().to_int(),
+              logical_position.y().to_int(),
             )
             set_window_outer_size(
               raw_id,
@@ -4463,7 +4476,17 @@ pub fn Window::set_simple_fullscreen(self : Window, fullscreen : Bool) -> Bool {
       None => ()
     }
     match saved_outer_position {
-      Some(position) => set_window_position(raw_id, position.x(), position.y())
+      Some(position) => {
+        let logical_position = physical_outer_position_to_logical(
+          position,
+          self.scale_factor(),
+        )
+        set_window_position(
+          raw_id,
+          logical_position.x().to_int(),
+          logical_position.y().to_int(),
+        )
+      }
       None => ()
     }
     match saved_outer_size {
@@ -4536,10 +4559,11 @@ fn Window::enter_exclusive_fullscreen(
       self.exclusive_fullscreen_saved_outer_size_state = Some(saved_outer_size)
       set_window_exclusive_runtime_state(raw_id, true, display_id, saved_mode)
       clear_window_style_mask_bits(raw_id, fullscreen_removed_style_bits())
+      let logical_target_position = monitor_position_to_logical(target_monitor)
       set_window_position(
         raw_id,
-        target_monitor.position().x(),
-        target_monitor.position().y(),
+        logical_target_position.x().to_int(),
+        logical_target_position.y().to_int(),
       )
       set_window_outer_size(
         raw_id,
@@ -4597,7 +4621,17 @@ fn Window::exit_exclusive_fullscreen(self : Window) -> Bool {
     None => ()
   }
   match saved_outer_position {
-    Some(position) => set_window_position(raw_id, position.x(), position.y())
+    Some(position) => {
+      let logical_position = physical_outer_position_to_logical(
+        position,
+        self.scale_factor(),
+      )
+      set_window_position(
+        raw_id,
+        logical_position.x().to_int(),
+        logical_position.y().to_int(),
+      )
+    }
     None => ()
   }
   match saved_outer_size {
