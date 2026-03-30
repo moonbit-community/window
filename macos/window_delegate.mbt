@@ -19,7 +19,7 @@ fn clamp_size(size : Int) -> Int {
 }
 
 ///|
-let cursor_hidden_state : Ref[Bool] = Ref::new(false)
+let invisible_cursor_obj_handle : Ref[UInt64] = Ref::new((0 : Int).to_uint64())
 
 ///|
 let maximized_standard_frame_window_handles : Ref[Array[UInt64]] = Ref::new([])
@@ -47,6 +47,9 @@ let window_platform_state_handles : Ref[Array[UInt64]] = Ref::new([])
 
 ///|
 let window_ime_allowed_values : Ref[Array[Bool]] = Ref::new([])
+
+///|
+let window_cursor_visible_values : Ref[Array[Bool]] = Ref::new([])
 
 ///|
 let window_accepts_first_mouse_values : Ref[Array[Bool]] = Ref::new([])
@@ -116,6 +119,7 @@ fn window_platform_state_ensure_index(window_handle : UInt64) -> Int {
     None => {
       window_platform_state_handles.val.push(window_handle)
       window_ime_allowed_values.val.push(false)
+      window_cursor_visible_values.val.push(true)
       window_accepts_first_mouse_values.val.push(false)
       window_option_as_alt_values.val.push(0)
       window_ime_purpose_values.val.push(0)
@@ -135,6 +139,7 @@ fn clear_window_platform_state(window_handle : UInt64) -> Unit {
     Some(index) => {
       ignore(window_platform_state_handles.val.remove(index))
       ignore(window_ime_allowed_values.val.remove(index))
+      ignore(window_cursor_visible_values.val.remove(index))
       ignore(window_accepts_first_mouse_values.val.remove(index))
       ignore(window_option_as_alt_values.val.remove(index))
       ignore(window_ime_purpose_values.val.remove(index))
@@ -159,6 +164,23 @@ fn window_ime_allowed_state(window_handle : UInt64) -> Bool {
   match window_platform_state_index(window_handle) {
     Some(index) => window_ime_allowed_values.val[index]
     None => false
+  }
+}
+
+///|
+fn set_window_cursor_visible_state(
+  window_handle : UInt64,
+  visible : Bool,
+) -> Unit {
+  let index = window_platform_state_ensure_index(window_handle)
+  window_cursor_visible_values.val[index] = visible
+}
+
+///|
+fn window_cursor_visible_state(window_handle : UInt64) -> Bool {
+  match window_platform_state_index(window_handle) {
+    Some(index) => window_cursor_visible_values.val[index]
+    None => true
   }
 }
 
@@ -338,6 +360,16 @@ fn native_drag_should_accept(
 }
 
 ///|
+fn logical_position_f64_to_physical(
+  x : Double,
+  y : Double,
+  scale_factor : Double,
+) -> @dpi.PhysicalPositionF64 {
+  let normalized_scale = if scale_factor > 0.0 { scale_factor } else { 1.0 }
+  @dpi.PhysicalPositionF64::new(x * normalized_scale, y * normalized_scale)
+}
+
+///|
 fn dnd_position_from_dragging_info(
   raw_id : Int,
   dragging_info_handle : UInt64,
@@ -353,6 +385,7 @@ fn dnd_position_from_dragging_info(
     dragging_info_handle,
     objc_runtime_selector_handle("draggingLocation"),
   )
+  let scale_factor = app_state_window_scale_factor(raw_id)
   let mut x = dragging_location_x
   let mut y = dragging_location_y
   match app_state_window_handle(raw_id) {
@@ -374,9 +407,9 @@ fn dnd_position_from_dragging_info(
           (0 : Int).to_uint64(),
         )
       }
-      Some(@dpi.PhysicalPositionF64::new(x, y))
+      Some(logical_position_f64_to_physical(x, y, scale_factor))
     }
-    None => Some(@dpi.PhysicalPositionF64::new(x, y))
+    None => Some(logical_position_f64_to_physical(x, y, scale_factor))
   }
 }
 
@@ -554,6 +587,26 @@ fn native_window_apply_cursor_obj(handle : UInt64, cursor_obj : UInt64) -> Bool 
 }
 
 ///|
+fn native_invisible_cursor_obj() -> UInt64 {
+  let cached = invisible_cursor_obj_handle.val
+  if cached != (0 : Int).to_uint64() {
+    return cached
+  }
+  let cursor = appkit_custom_cursor_create_rgba(
+    Bytes::make(4, (0 : Int).to_byte()),
+    4,
+    1,
+    1,
+    0,
+    0,
+  )
+  if cursor != (0 : Int).to_uint64() {
+    invisible_cursor_obj_handle.val = cursor
+  }
+  cursor
+}
+
+///|
 fn native_window_set_cursor(handle : UInt64, cursor : Int) -> Unit {
   ignore(
     native_window_apply_cursor_obj(
@@ -586,29 +639,17 @@ fn native_window_set_custom_cursor(
 
 ///|
 fn native_window_set_cursor_visible(handle : UInt64, visible : Bool) -> Unit {
-  ignore(handle)
-  if visible && cursor_hidden_state.val {
-    let ns_cursor = objc_runtime_class_handle("NSCursor")
-    if ns_cursor != (0 : Int).to_uint64() {
-      appkit_objc_msg_send_void(
-        ns_cursor,
-        objc_runtime_selector_handle("unhide"),
-      )
-      cursor_hidden_state.val = false
-    }
-  } else if !visible && !cursor_hidden_state.val {
-    let ns_cursor = objc_runtime_class_handle("NSCursor")
-    if ns_cursor != (0 : Int).to_uint64() {
-      appkit_objc_msg_send_void(ns_cursor, objc_runtime_selector_handle("hide"))
-      cursor_hidden_state.val = true
-    }
+  set_window_cursor_visible_state(handle, visible)
+  if !visible {
+    ignore(
+      native_window_apply_cursor_obj(handle, native_invisible_cursor_obj()),
+    )
   }
 }
 
 ///|
 fn native_window_cursor_visible(handle : UInt64) -> Bool {
-  ignore(handle)
-  !cursor_hidden_state.val
+  window_cursor_visible_state(handle)
 }
 
 ///|
@@ -646,10 +687,8 @@ fn native_window_set_cursor_position(handle : UInt64, x : Int, y : Int) -> Bool 
   let content_height = appkit_objc_msg_send_rect_height_rect(
     window, content_rect_selector, frame_x, frame_y, frame_width, frame_height,
   )
-  if native_cg_warp_mouse_cursor_position(
-      content_x + x.to_double(),
-      content_y + content_height - y.to_double(),
-    ) ==
+  let screen_y = cursor_screen_y_from_content_rect(content_y, content_height, y)
+  if native_cg_warp_mouse_cursor_position(content_x + x.to_double(), screen_y) ==
     false {
     return false
   }
@@ -1059,16 +1098,47 @@ fn native_window_set_resize_increments(
 }
 
 ///|
+fn flip_window_screen_coordinate_y(y : Double, frame_height : Double) -> Double {
+  cg_main_display_bounds_height() - frame_height - y
+}
+
+///|
+fn window_surface_offset_y_from_frame_and_content(
+  frame_y : Double,
+  frame_height : Double,
+  content_y : Double,
+  content_height : Double,
+) -> Double {
+  let frame_screen_y = flip_window_screen_coordinate_y(frame_y, frame_height)
+  let content_screen_y = flip_window_screen_coordinate_y(
+    content_y, content_height,
+  )
+  content_screen_y - frame_screen_y
+}
+
+///|
+fn cursor_screen_y_from_content_rect(
+  content_y : Double,
+  content_height : Double,
+  cursor_y : Int,
+) -> Double {
+  flip_window_screen_coordinate_y(content_y, content_height) +
+  cursor_y.to_double()
+}
+
+///|
 fn native_window_set_position(handle : UInt64, x : Int, y : Int) -> Unit {
   let window = native_window_objc_handle(handle)
   if window == (0 : Int).to_uint64() {
     return ()
   }
+  let frame_selector = objc_runtime_selector_handle("frame")
+  let frame_height = appkit_objc_msg_send_rect_height(window, frame_selector)
   appkit_objc_msg_send_void_point(
     window,
     objc_runtime_selector_handle("setFrameOrigin:"),
     x.to_double(),
-    y.to_double(),
+    flip_window_screen_coordinate_y(y.to_double(), frame_height),
   )
 }
 
@@ -1306,7 +1376,55 @@ fn native_window_y(handle : UInt64) -> Int {
   if window == (0 : Int).to_uint64() {
     return 0
   }
-  appkit_objc_msg_send_rect_y(window, objc_runtime_selector_handle("frame")).to_int()
+  let frame_selector = objc_runtime_selector_handle("frame")
+  let frame_y = appkit_objc_msg_send_rect_y(window, frame_selector)
+  let frame_height = appkit_objc_msg_send_rect_height(window, frame_selector)
+  flip_window_screen_coordinate_y(frame_y, frame_height).to_int()
+}
+
+///|
+fn native_window_surface_x(handle : UInt64) -> Int {
+  let window = native_window_objc_handle(handle)
+  if window == (0 : Int).to_uint64() {
+    return 0
+  }
+  let frame_selector = objc_runtime_selector_handle("frame")
+  let frame_x = appkit_objc_msg_send_rect_x(window, frame_selector)
+  let frame_y = appkit_objc_msg_send_rect_y(window, frame_selector)
+  let frame_width = appkit_objc_msg_send_rect_width(window, frame_selector)
+  let frame_height = appkit_objc_msg_send_rect_height(window, frame_selector)
+  let content_rect_selector = objc_runtime_selector_handle(
+    "contentRectForFrameRect:",
+  )
+  let content_x = appkit_objc_msg_send_rect_x_rect(
+    window, content_rect_selector, frame_x, frame_y, frame_width, frame_height,
+  )
+  (content_x - frame_x).to_int()
+}
+
+///|
+fn native_window_surface_y(handle : UInt64) -> Int {
+  let window = native_window_objc_handle(handle)
+  if window == (0 : Int).to_uint64() {
+    return 0
+  }
+  let frame_selector = objc_runtime_selector_handle("frame")
+  let frame_x = appkit_objc_msg_send_rect_x(window, frame_selector)
+  let frame_y = appkit_objc_msg_send_rect_y(window, frame_selector)
+  let frame_width = appkit_objc_msg_send_rect_width(window, frame_selector)
+  let frame_height = appkit_objc_msg_send_rect_height(window, frame_selector)
+  let content_rect_selector = objc_runtime_selector_handle(
+    "contentRectForFrameRect:",
+  )
+  let content_y = appkit_objc_msg_send_rect_y_rect(
+    window, content_rect_selector, frame_x, frame_y, frame_width, frame_height,
+  )
+  let content_height = appkit_objc_msg_send_rect_height_rect(
+    window, content_rect_selector, frame_x, frame_y, frame_width, frame_height,
+  )
+  window_surface_offset_y_from_frame_and_content(
+    frame_y, frame_height, content_y, content_height,
+  ).to_int()
 }
 
 ///|
@@ -2752,8 +2870,9 @@ fn set_parent_window(window_handle : UInt64, parent_window : UInt64) -> Bool {
 
 ///|
 fn set_window_cursor_visible(window_handle : UInt64, visible : Bool) -> Unit {
-  if registered_native_handle(window_handle) != (0 : Int).to_uint64() {
-    native_window_set_cursor_visible(window_handle, visible)
+  let native_handle = registered_native_handle(window_handle)
+  if native_handle != (0 : Int).to_uint64() {
+    native_window_set_cursor_visible(native_handle, visible)
   }
 }
 
@@ -3079,7 +3198,7 @@ fn window_surface_x(window_handle : UInt64) -> Int {
   if native_handle == (0 : Int).to_uint64() {
     0
   } else {
-    native_window_x(native_handle)
+    native_window_surface_x(native_handle)
   }
 }
 
@@ -3089,7 +3208,7 @@ fn window_surface_y(window_handle : UInt64) -> Int {
   if native_handle == (0 : Int).to_uint64() {
     0
   } else {
-    native_window_y(native_handle)
+    native_window_surface_y(native_handle)
   }
 }
 
@@ -3155,12 +3274,22 @@ fn window_resize_increment_height(window_handle : UInt64) -> Int {
 
 ///|
 fn window_x(window_handle : UInt64) -> Int {
-  window_surface_x(window_handle)
+  let native_handle = registered_native_handle(window_handle)
+  if native_handle == (0 : Int).to_uint64() {
+    0
+  } else {
+    native_window_x(native_handle)
+  }
 }
 
 ///|
 fn window_y(window_handle : UInt64) -> Int {
-  window_surface_y(window_handle)
+  let native_handle = registered_native_handle(window_handle)
+  if native_handle == (0 : Int).to_uint64() {
+    0
+  } else {
+    native_window_y(native_handle)
+  }
 }
 
 ///|
@@ -3468,6 +3597,14 @@ fn should_center_initial_window(position : @dpi.Position?) -> Bool {
 }
 
 ///|
+fn window_position_to_logical(
+  position : @dpi.Position,
+  scale_factor : Double,
+) -> @dpi.LogicalPosition {
+  position.to_logical(scale_factor)
+}
+
+///|
 // Port target: window_delegate.rs::new
 fn new_window(
   event_loop : EventLoop,
@@ -3667,11 +3804,13 @@ fn new_window(
   } else if should_apply_initial_window_position(fullscreen) {
     match position {
       Some(position) => {
-        let physical_position = position.to_physical(scale_factor)
+        let logical_position = window_position_to_logical(
+          position, scale_factor,
+        )
         set_window_position(
           raw_window_handle,
-          physical_position.x(),
-          physical_position.y(),
+          logical_position.x().to_int(),
+          logical_position.y().to_int(),
         )
       }
       None => ()
@@ -3930,11 +4069,14 @@ pub fn Window::set_outer_position(
   self : Window,
   position : @dpi.Position,
 ) -> Unit {
-  let physical_position = position.to_physical(self.scale_factor())
+  let logical_position = window_position_to_logical(
+    position,
+    self.scale_factor(),
+  )
   set_window_position(
     self.raw_window_handle,
-    physical_position.x(),
-    physical_position.y(),
+    logical_position.x().to_int(),
+    logical_position.y().to_int(),
   )
 }
 

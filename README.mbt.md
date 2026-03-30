@@ -81,6 +81,19 @@ This library follows MoonBit `raise`-based error handling (typed errors), not
 - `Window::set_cursor_position(...)` may raise `@core.RequestError`
 - `Window::request_ime_update(...)` may raise `@core.ImeRequestError`
 
+## macOS Caveats
+
+- `EventLoop::pump_app_events(...)` is for host-loop integration, not frame-by-frame rendering.
+  For frame-driven apps, prefer `run_app()` with `ControlFlow::Poll` or `ControlFlow::WaitUntil`.
+- `Window::set_cursor_grab(@core.CursorGrabMode::Confined)` raises `@core.RequestError::NotSupported`.
+- `Window::drag_resize_window(...)` raises `@core.RequestError::NotSupported` on macOS.
+- `Window::show_window_menu(...)` currently has no native AppKit implementation.
+- `@core.CustomCursorSource::Url(...)` and animation cursors are not supported on macOS.
+- `Window::set_prefers_home_indicator_hidden(...)`,
+  `Window::set_prefers_status_bar_hidden(...)`,
+  and `Window::set_preferred_screen_edges_deferring_system_gestures(...)`
+  are parity state setters on macOS (no native AppKit effect).
+
 ## API Overview
 
 Import only the subpackages you need:

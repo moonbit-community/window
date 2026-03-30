@@ -69,6 +69,27 @@ fn cg_display_bounds_y(display_id : UInt64) -> Int {
 }
 
 ///|
+fn cg_display_bounds_height(display_id : UInt64) -> Double {
+  let height = native_cg_display_bounds_height(display_id.to_uint())
+  if height > 0.0 {
+    height
+  } else {
+    0.0
+  }
+}
+
+///|
+fn cg_main_display_bounds_height() -> Double {
+  let main_display_id = cg_main_display_id()
+  let bounds_height = cg_display_bounds_height(main_display_id)
+  if bounds_height > 0.0 {
+    bounds_height
+  } else {
+    cg_display_pixels_high(main_display_id).to_double()
+  }
+}
+
+///|
 fn cg_display_scale_factor(display_id : UInt64) -> Double {
   let factor = native_cg_display_scale_factor(display_id.to_uint())
   if factor > 0.0 {

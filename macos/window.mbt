@@ -99,23 +99,30 @@ pub fn Window::drop(self : Window) -> Unit {
 
 ///|
 pub fn Window::set_cursor(self : Window, cursor : @core.Cursor) -> Unit {
+  let cursor_visible = self.is_cursor_visible()
   match cursor {
     @core.Cursor::Icon(icon) => {
       self.cursor_state = cursor
-      set_window_cursor(self.raw_window_handle, cursor_icon_to_native(icon))
+      if cursor_visible {
+        set_window_cursor(self.raw_window_handle, cursor_icon_to_native(icon))
+      }
     }
     @core.Cursor::Custom(custom_cursor) =>
-      if set_window_custom_cursor(
-          self.raw_window_handle,
-          custom_cursor.into_raw(),
-        ) {
-        self.cursor_state = cursor
+      if cursor_visible {
+        if set_window_custom_cursor(
+            self.raw_window_handle,
+            custom_cursor.into_raw(),
+          ) {
+          self.cursor_state = cursor
+        } else {
+          self.cursor_state = @core.Cursor::Icon(@core.CursorIcon::Default)
+          set_window_cursor(
+            self.raw_window_handle,
+            cursor_icon_to_native(@core.CursorIcon::Default),
+          )
+        }
       } else {
-        self.cursor_state = @core.Cursor::Icon(@core.CursorIcon::Default)
-        set_window_cursor(
-          self.raw_window_handle,
-          cursor_icon_to_native(@core.CursorIcon::Default),
-        )
+        self.cursor_state = cursor
       }
   }
 }
@@ -131,6 +138,9 @@ pub fn Window::set_cursor_icon(
 ///|
 pub fn Window::set_cursor_visible(self : Window, visible : Bool) -> Unit {
   set_window_cursor_visible(self.raw_window_handle, visible)
+  if visible {
+    self.set_cursor(self.cursor_state)
+  }
 }
 
 ///|
@@ -144,15 +154,26 @@ pub fn Window::set_cursor_hittest(
 }
 
 ///|
+fn cursor_position_to_logical(
+  position : @dpi.Position,
+  scale_factor : Double,
+) -> @dpi.LogicalPosition {
+  position.to_logical(scale_factor)
+}
+
+///|
 pub fn Window::set_cursor_position(
   self : Window,
   position : @dpi.Position,
 ) -> Unit raise @core.RequestError {
-  let physical_position = position.to_physical(self.scale_factor())
+  let logical_position = cursor_position_to_logical(
+    position,
+    self.scale_factor(),
+  )
   if set_cursor_position(
       self.raw_window_handle,
-      physical_position.x(),
-      physical_position.y(),
+      logical_position.x().to_int(),
+      logical_position.y().to_int(),
     ) ==
     false {
     raise @core.RequestError::NotSupported

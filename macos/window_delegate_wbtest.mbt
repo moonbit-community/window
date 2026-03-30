@@ -58,6 +58,24 @@ test "initial_window_is_centered_when_explicit_position_is_missing" {
 }
 
 ///|
+test "window_position_to_logical_preserves_logical_input" {
+  let logical = window_position_to_logical(
+    @dpi.LogicalPosition::new(40.0, 25.0).into_position(),
+    2.0,
+  )
+  assert_eq(logical, @dpi.LogicalPosition::new(40.0, 25.0))
+}
+
+///|
+test "window_position_to_logical_converts_physical_input" {
+  let logical = window_position_to_logical(
+    @dpi.PhysicalPosition::new(80, 50).into_position(),
+    2.0,
+  )
+  assert_eq(logical, @dpi.LogicalPosition::new(40.0, 25.0))
+}
+
+///|
 test "fullscreen_target_surface_size_prefers_target_monitor" {
   let primary = @core.MonitorHandle::new(
     (1 : Int).to_uint64(),
@@ -161,6 +179,61 @@ test "native_drag_should_accept_rejects_null_handle" {
 }
 
 ///|
+test "logical_position_f64_to_physical_applies_scale_factor" {
+  assert_eq(
+    logical_position_f64_to_physical(10.5, 20.25, 2.0),
+    @dpi.PhysicalPositionF64::new(21.0, 40.5),
+  )
+}
+
+///|
+test "logical_position_f64_to_physical_falls_back_to_identity_scale" {
+  assert_eq(
+    logical_position_f64_to_physical(3.25, 4.5, 0.0),
+    @dpi.PhysicalPositionF64::new(3.25, 4.5),
+  )
+  assert_eq(
+    logical_position_f64_to_physical(3.25, 4.5, -2.0),
+    @dpi.PhysicalPositionF64::new(3.25, 4.5),
+  )
+}
+
+///|
+test "flip_window_screen_coordinate_y_is_symmetric" {
+  let logical_y = 128.0
+  let frame_height = 320.0
+  let appkit_y = flip_window_screen_coordinate_y(logical_y, frame_height)
+  assert_eq(flip_window_screen_coordinate_y(appkit_y, frame_height), logical_y)
+}
+
+///|
+test "window_surface_offset_y_from_frame_and_content_matches_expected" {
+  assert_eq(
+    window_surface_offset_y_from_frame_and_content(100.0, 600.0, 120.0, 560.0),
+    20.0,
+  )
+}
+
+///|
+test "cursor_screen_y_from_content_rect_matches_top_edge_at_zero_offset" {
+  let content_y = 120.0
+  let content_height = 560.0
+  assert_eq(
+    cursor_screen_y_from_content_rect(content_y, content_height, 0),
+    flip_window_screen_coordinate_y(content_y, content_height),
+  )
+}
+
+///|
+test "cursor_screen_y_from_content_rect_increases_with_cursor_offset" {
+  let content_y = 120.0
+  let content_height = 560.0
+  let base = cursor_screen_y_from_content_rect(content_y, content_height, 0)
+  let moved = cursor_screen_y_from_content_rect(content_y, content_height, 37)
+  assert_eq(moved - base, 37.0)
+}
+
+///|
 test "accepts_first_mouse_state_defaults_to_false_and_tracks_updates" {
   let handle = (94 : Int).to_uint64()
 
@@ -168,4 +241,28 @@ test "accepts_first_mouse_state_defaults_to_false_and_tracks_updates" {
 
   set_window_accepts_first_mouse_state(handle, true)
   assert_true(window_accepts_first_mouse_state(handle))
+}
+
+///|
+test "cursor_visible_state_defaults_to_true_and_tracks_updates" {
+  let handle = (95 : Int).to_uint64()
+
+  assert_true(window_cursor_visible_state(handle))
+
+  set_window_cursor_visible_state(handle, false)
+  assert_false(window_cursor_visible_state(handle))
+
+  set_window_cursor_visible_state(handle, true)
+  assert_true(window_cursor_visible_state(handle))
+}
+
+///|
+test "clear_window_platform_state_resets_cursor_visible_state" {
+  let handle = (96 : Int).to_uint64()
+
+  set_window_cursor_visible_state(handle, false)
+  assert_false(window_cursor_visible_state(handle))
+
+  clear_window_platform_state(handle)
+  assert_true(window_cursor_visible_state(handle))
 }

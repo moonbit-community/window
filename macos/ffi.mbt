@@ -68,6 +68,9 @@ extern "C" fn native_cg_display_bounds_x(display : UInt) -> Int = "mbw_cg_displa
 extern "C" fn native_cg_display_bounds_y(display : UInt) -> Int = "mbw_cg_display_bounds_y"
 
 ///|
+extern "C" fn native_cg_display_bounds_height(display : UInt) -> Double = "mbw_cg_display_bounds_height"
+
+///|
 extern "C" fn native_cg_display_scale_factor(display : UInt) -> Double = "mbw_cg_display_scale_factor"
 
 ///|

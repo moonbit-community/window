@@ -117,8 +117,16 @@ static void mbw_emit_drag_event(int32_t raw_id, int32_t kind, id<NSDraggingInfo>
   if (raw_id <= 0) {
     return;
   }
-  uint64_t dragging_info_handle = sender == nil ? 0 : (uint64_t)(uintptr_t)(__bridge void *)sender;
+  id dragging_info = sender;
+  if (dragging_info != nil) {
+    [dragging_info retain];
+  }
+  uint64_t dragging_info_handle =
+      dragging_info == nil ? 0 : (uint64_t)(uintptr_t)(__bridge void *)dragging_info;
   mbw_call_text_input_event_trampoline(raw_id, kind, dragging_info_handle, 0, 0, 0, 0, 0);
+  if (dragging_info != nil) {
+    [dragging_info release];
+  }
 }
 
 static BOOL mbw_query_drag_operation(int32_t raw_id, id<NSDraggingInfo> sender) {
@@ -132,6 +140,7 @@ static BOOL mbw_query_drag_operation(int32_t raw_id, id<NSDraggingInfo> sender) 
 @interface MBWContentView : NSView <NSTextInputClient>
 @property(nonatomic, assign) int32_t rawId;
 @property(nonatomic, assign) NSTrackingRectTag trackingRectTag;
+@property(nonatomic, retain) NSMutableAttributedString *markedText;
 - (void)mbw_emitTextInputWithKind:(int32_t)kind
                       eventHandle:(uint64_t)eventHandle
                            state:(int32_t)state
@@ -158,6 +167,19 @@ static BOOL mbw_query_drag_operation(int32_t raw_id, id<NSDraggingInfo> sender) 
 @end
 
 @implementation MBWContentView
+
+- (instancetype)initWithFrame:(NSRect)frame {
+  self = [super initWithFrame:frame];
+  if (self != nil) {
+    self.markedText = [[[NSMutableAttributedString alloc] initWithString:@""] autorelease];
+  }
+  return self;
+}
+
+- (void)dealloc {
+  [_markedText release];
+  [super dealloc];
+}
 
 - (BOOL)isFlipped {
   return YES;
@@ -193,9 +215,13 @@ static BOOL mbw_query_drag_operation(int32_t raw_id, id<NSDraggingInfo> sender) 
   }
   uint64_t event_handle = 0;
   if (event != nil) {
+    [event retain];
     event_handle = (uint64_t)(uintptr_t)(__bridge void *)event;
   }
   mbw_call_input_event_trampoline(self.rawId, kind, event_handle);
+  if (event != nil) {
+    [event release];
+  }
 }
 
 - (int32_t)mbw_i32FromRangeValue:(NSUInteger)value {
@@ -240,6 +266,25 @@ static BOOL mbw_query_drag_operation(int32_t raw_id, id<NSDraggingInfo> sender) 
 - (void)mbw_emitKeyboard:(NSEvent *)event state:(int32_t)state {
   (void)state;
   [self mbw_emitInputWithKind:7 event:event];
+}
+
+// Normalize NSTextInputClient text payload into an attributed string snapshot.
+- (NSMutableAttributedString *)mbw_markedTextFromObject:(id)text {
+  if ([text isKindOfClass:[NSAttributedString class]]) {
+    return [[[NSMutableAttributedString alloc] initWithAttributedString:(NSAttributedString *)text]
+        autorelease];
+  }
+  if ([text isKindOfClass:[NSString class]]) {
+    return [[[NSMutableAttributedString alloc] initWithString:(NSString *)text] autorelease];
+  }
+  if (text != nil) {
+    return [[[NSMutableAttributedString alloc] initWithString:[text description]] autorelease];
+  }
+  return [[[NSMutableAttributedString alloc] initWithString:@""] autorelease];
+}
+
+- (void)mbw_clearMarkedText {
+  self.markedText = [[[NSMutableAttributedString alloc] initWithString:@""] autorelease];
 }
 
 - (void)drawRect:(NSRect)dirtyRect {
@@ -388,6 +433,7 @@ static BOOL mbw_query_drag_operation(int32_t raw_id, id<NSDraggingInfo> sender) 
         selectedRange:(NSRange)selectedRange
      replacementRange:(NSRange)replacementRange {
   (void)replacementRange;
+  self.markedText = [self mbw_markedTextFromObject:string];
   [self mbw_emitTextInputWithKind:22
                       eventHandle:0
                              state:[self mbw_i32FromRangeValue:selectedRange.location]
@@ -402,6 +448,7 @@ static BOOL mbw_query_drag_operation(int32_t raw_id, id<NSDraggingInfo> sender) 
   if (input_context != nil) {
     [input_context discardMarkedText];
   }
+  [self mbw_clearMarkedText];
   [self mbw_emitTextInputWithKind:23
                       eventHandle:0
                              state:0
@@ -417,14 +464,34 @@ static BOOL mbw_query_drag_operation(int32_t raw_id, id<NSDraggingInfo> sender) 
 
 - (NSAttributedString *)attributedSubstringForProposedRange:(NSRange)range
                                                  actualRange:(NSRangePointer)actualRange {
-  (void)range;
-  (void)actualRange;
-  return nil;
+  NSUInteger marked_length = self.markedText.length;
+  if (marked_length == 0 || range.location == NSNotFound || range.location >= marked_length) {
+    if (actualRange != NULL) {
+      *actualRange = NSMakeRange(NSNotFound, 0);
+    }
+    return nil;
+  }
+
+  NSUInteger length = range.length;
+  NSUInteger max_length = marked_length - range.location;
+  if (length > max_length) {
+    length = max_length;
+  }
+  NSRange clamped = NSMakeRange(range.location, length);
+  if (actualRange != NULL) {
+    *actualRange = clamped;
+  }
+  return [self.markedText attributedSubstringFromRange:clamped];
 }
 
 - (NSUInteger)characterIndexForPoint:(NSPoint)point {
   (void)point;
-  return 0;
+  int32_t location =
+      mbw_sync_query(self.rawId, MBW_VIEW_STATE_QUERY_SELECTED_RANGE_LOCATION, 0, -1);
+  if (location < 0) {
+    return NSNotFound;
+  }
+  return (NSUInteger)location;
 }
 
 - (NSRect)firstRectForCharacterRange:(NSRange)range actualRange:(NSRangePointer)actualRange {
@@ -453,6 +520,7 @@ static BOOL mbw_query_drag_operation(int32_t raw_id, id<NSDraggingInfo> sender) 
 
 - (void)insertText:(id)string replacementRange:(NSRange)replacementRange {
   (void)replacementRange;
+  [self mbw_clearMarkedText];
   [self mbw_emitTextInputWithKind:24
                       eventHandle:0
                             state:0

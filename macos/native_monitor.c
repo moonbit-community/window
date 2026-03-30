@@ -53,6 +53,11 @@ int32_t mbw_cg_display_bounds_y(uint32_t display_id) {
   return (int32_t)bounds.origin.y;
 }
 
+double mbw_cg_display_bounds_height(uint32_t display_id) {
+  CGRect bounds = CGDisplayBounds((CGDirectDisplayID)display_id);
+  return (double)bounds.size.height;
+}
+
 double mbw_cg_display_scale_factor(uint32_t display_id) {
   CGRect bounds = CGDisplayBounds((CGDirectDisplayID)display_id);
   double width = bounds.size.width;
