@@ -11,9 +11,7 @@ import {
 // Errors
 
 // Types and methods
-type Action
-pub impl Eq for Action
-pub impl Show for Action
+type Action derive(Eq, Show)
 
 type Application
 pub impl @macos.ApplicationHandler for Application

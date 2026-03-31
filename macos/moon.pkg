@@ -4,8 +4,9 @@ import {
   "Milky2018/window/dpi",
 }
 
+supported_targets = "native"
+
 options(
   "native-stub": [ "native_monitor.c", "native_appkit.m" ],
-  "supported-targets": "native",
   targets: { "ffi.mbt": [ "native" ] },
 )

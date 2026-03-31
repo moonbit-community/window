@@ -3,9 +3,10 @@ import {
   "Milky2018/window/macos",
 }
 
+supported_targets = "native"
+
 options(
   "native-stub": [ "sleep.c", "fill_native.m" ],
-  "supported-targets": "native",
   targets: {
     "fill.mbt": [ "native" ],
     "sleep.mbt": [ "native" ],

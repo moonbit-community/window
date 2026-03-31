@@ -14,9 +14,7 @@ import {
 type ControlFlowDemo
 pub impl @macos.ApplicationHandler for ControlFlowDemo
 
-type Mode
-pub impl Eq for Mode
-pub impl Show for Mode
+type Mode derive(Eq, Show)
 
 // Type aliases
 
