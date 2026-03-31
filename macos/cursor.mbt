@@ -269,7 +269,7 @@ fn cursor_from_icon(cursor : @core.CursorIcon) -> Int {
     @core.CursorIcon::ContextMenu => 1
     @core.CursorIcon::Help => _helpCursor()
     @core.CursorIcon::Progress => busyButClickableCursor()
-    @core.CursorIcon::Wait => _waitCursor()
+    @core.CursorIcon::Wait => busyButClickableCursor()
     @core.CursorIcon::Cell => webkit_cell()
     @core.CursorIcon::VerticalText => 6
     @core.CursorIcon::Alias => 7

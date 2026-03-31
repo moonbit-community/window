@@ -1,6 +1,6 @@
 # macOS Issue Tracker
 
-Last updated: 2026-03-30
+Last updated: 2026-03-31
 
 This tracker records macOS-only gaps and fix progress in this repository.
 
@@ -8,7 +8,7 @@ This tracker records macOS-only gaps and fix progress in this repository.
 
 - `TODO`: not started
 - `IN_PROGRESS`: currently being fixed
-- `BLOCKED_PLATFORM`: blocked by macOS/AppKit public API limitations
+- `BLOCKED`: blocked by platform/public API limitations or external dependency constraints
 - `DONE`: fixed and verified locally
 
 ## Issues
@@ -26,17 +26,21 @@ This tracker records macOS-only gaps and fix progress in this repository.
 | MBW-MAC-017 | Upstream parity audit | `set_cursor_position` Y-axis warp conversion used AppKit bottom-left arithmetic (`content_y + content_height - y`) instead of winit-style top-left screen coordinates, producing mirrored Y placement. | DONE | Replaced with `flip_window_screen_coordinate_y(content_y, content_height) + y` conversion and added wbtests for monotonic cursor-offset behavior |
 | MBW-MAC-018 | Upstream parity audit | Fullscreen/restore window positioning paths were passing physical monitor/window positions directly into AppKit logical setters (`setFrameOrigin`), causing HiDPI offset on enter/exit fullscreen. | DONE | Added physical→logical normalization helpers for monitor and saved outer positions, and updated fullscreen/simplified-fullscreen/exclusive restore call paths |
 | MBW-MAC-019 | Upstream parity audit | Internal `set_window_position` helper still re-converted input coordinates from physical to logical, causing double scaling after callers were normalized to logical positions. | DONE | Simplified `set_window_position` to pass logical coordinates through directly and normalized the remaining fullscreen-creation monitor-position call site |
+| MBW-MAC-020 | Upstream parity audit (`window_delegate.rs`) | Active window creation/focus path diverges from winit ordering, causing Space switch anomalies (`show_window` was activating app from create path; `focus_window` order differed). | DONE | Aligned `show_window`/`focus_window` to upstream order in `macos/window_delegate.mbt` (`show`: key/front only when active; `focus`: `activateIgnoringOtherApps(true)` then `makeKeyAndOrderFront`) |
+| MBW-MAC-021 | Upstream commit `4d81f4aa` | Native view tracking still used legacy `addTrackingRect/removeTrackingRect`; missing `NSTrackingArea` (`ActiveAlways + InVisibleRect`) semantics from latest winit main. | DONE | Migrated to `NSTrackingArea` in `macos/native_appkit.m` with `MouseEnteredAndExited | MouseMoved | ActiveAlways | InVisibleRect`; removed legacy tracking-rect refresh path |
+| MBW-MAC-022 | Upstream commit `a8c7d809` | Cursor mapping behind latest winit: missing macOS 15 frame-resize/row/column cursor paths and fallback branching for many cursor icons. | DONE | Completed cursor mapping in `macos/window_delegate.mbt` (macOS 15 frame-resize API + fallbacks, row/column/zoom paths, webkit move/cell), plus FFI bridge `appkit_objc_msg_send_u64_u64_u64` |
+| MBW-MAC-023 | Upstream commit `0b6b794f` | IME toggling semantics need revalidation against latest upstream enable/disable handling. | DONE | Aligned `request_ime_update` flow in `macos/window.mbt`: `Enable/Update` gate on `ime_capabilities_state`, `Disable` clears state + native disable path; `set_ime_allowed` default request shape synced to upstream core helper |
+| MBW-MAC-024 | Example parity requirement | Missing executable transcript diff workflow for upstream-vs-MoonBit example output comparison. | DONE | Added `scripts/check_example_transcripts.sh` (ANSI/prefix normalization + strict diff) and aligned `examples/pump_events/main.mbt`; current run result: `example transcript check passed` |
+| MBW-MAC-025 | Upstream pin sync | `docs/upstream.md` and local parity baseline were pinned to old `winit` commit `5e2f421...`. | DONE | Updated upstream pin to `b5252f136632aac27937ad00fbd6764f812d4922`; local `winit-reference` checked out to this commit for audit |
 | MBW-MAC-005 | GitHub issue #4 | `with_inner_size` not applied on window creation. | DONE | `with_inner_size` maps to `with_surface_size`, and creation path reads `attributes.surface_size()` |
 | MBW-MAC-006 | GitHub issue #2 | `flagsChanged` path crash due invalid character extraction. | DONE | Current path handles modifier events without unsafe text extraction in `flagsChanged` |
 | MBW-MAC-011 | GitHub issue #1 | `rwh_06_window_handle` should expose `NSView*` semantics instead of `NSWindow*`. | DONE | `Window::rwh_06_window_handle()` returns `raw_view_handle` first and only falls back to window handle |
 | MBW-MAC-012 | GitHub issue #5 | Intermittent invalid memory access around callback bridge object lifetimes. | DONE | Added defensive retain/release around `NSEvent` and `NSDraggingInfo` callback handoff in `native_appkit.m` |
-| MBW-MAC-007 | API parity gap | `CursorGrabMode::Confined` is not implemented on macOS. | BLOCKED_PLATFORM | AppKit has no public confined-cursor API equivalent; README now documents this contract |
-| MBW-MAC-008 | API parity gap | `drag_resize_window` and `show_window_menu` are stubs that do not perform native behavior. | BLOCKED_PLATFORM | No public AppKit equivalent for full winit parity; README documents current behavior |
-| MBW-MAC-009 | API parity gap | Custom cursor `Url`/`Animation` sources are unsupported on macOS backend. | BLOCKED_PLATFORM | README documents unsupported cursor source kinds |
+| MBW-MAC-007 | API parity gap | `CursorGrabMode::Confined` is not implemented on macOS. | DONE | Matches upstream winit (`window_delegate.rs`: `CursorGrabMode::Confined => Err(NotSupportedError)`) |
+| MBW-MAC-008 | API parity gap | `drag_resize_window` and `show_window_menu` are stubs that do not perform native behavior. | DONE | Matches upstream winit (`drag_resize_window` returns `NotSupported`; `show_window_menu` is no-op) |
+| MBW-MAC-009 | API parity gap | Custom cursor `Url`/`Animation` sources are unsupported on macOS backend. | DONE | Matches upstream winit cursor provider (`CustomCursorSource::Animation/Url => NotSupported`) |
 | MBW-MAC-010 | API parity gap | `set_prefers_home_indicator_hidden` / `set_prefers_status_bar_hidden` / `set_preferred_screen_edges_deferring_system_gestures` are state-only no-op on macOS. | DONE | Contract documented as parity-state setters with no native AppKit effect |
 
 ## Current Work Queue
 
-1. MBW-MAC-007
-2. MBW-MAC-008
-3. MBW-MAC-009
+_empty_

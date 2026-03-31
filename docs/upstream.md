@@ -1,7 +1,7 @@
 # Upstream Pin
 
 - Repository: `rust-windowing/winit`
-- Commit: `5e2f421e346cae601a6211b43ff7a2f7c8e61a46`
+- Commit: `b5252f136632aac27937ad00fbd6764f812d4922`
 - Workspace version: `0.31.0-beta.2`
 
 # Migration Scope

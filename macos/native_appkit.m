@@ -139,7 +139,6 @@ static BOOL mbw_query_drag_operation(int32_t raw_id, id<NSDraggingInfo> sender) 
 
 @interface MBWContentView : NSView <NSTextInputClient>
 @property(nonatomic, assign) int32_t rawId;
-@property(nonatomic, assign) NSTrackingRectTag trackingRectTag;
 @property(nonatomic, retain) NSMutableAttributedString *markedText;
 - (void)mbw_emitTextInputWithKind:(int32_t)kind
                       eventHandle:(uint64_t)eventHandle
@@ -172,6 +171,16 @@ static BOOL mbw_query_drag_operation(int32_t raw_id, id<NSDraggingInfo> sender) 
   self = [super initWithFrame:frame];
   if (self != nil) {
     self.markedText = [[[NSMutableAttributedString alloc] initWithString:@""] autorelease];
+    NSTrackingAreaOptions options = NSTrackingMouseEnteredAndExited | NSTrackingMouseMoved |
+                                    NSTrackingActiveAlways | NSTrackingInVisibleRect;
+    NSTrackingArea *tracking_area = [[NSTrackingArea alloc] initWithRect:NSZeroRect
+                                                                  options:options
+                                                                    owner:self
+                                                                 userInfo:nil];
+    if (tracking_area != nil) {
+      [self addTrackingArea:tracking_area];
+      [tracking_area release];
+    }
   }
   return self;
 }
@@ -192,21 +201,6 @@ static BOOL mbw_query_drag_operation(int32_t raw_id, id<NSDraggingInfo> sender) 
 
 - (BOOL)acceptsFirstResponder {
   return YES;
-}
-
-- (void)mbw_refreshTrackingRect {
-  if (self.trackingRectTag != 0) {
-    [self removeTrackingRect:self.trackingRectTag];
-    self.trackingRectTag = 0;
-  }
-  self.trackingRectTag = [self addTrackingRect:self.frame
-                                         owner:self
-                                      userData:NULL
-                                  assumeInside:NO];
-}
-
-- (void)viewDidMoveToWindow {
-  [self mbw_refreshTrackingRect];
 }
 
 - (void)mbw_emitInputWithKind:(int32_t)kind event:(NSEvent *)event {
@@ -297,7 +291,6 @@ static BOOL mbw_query_drag_operation(int32_t raw_id, id<NSDraggingInfo> sender) 
   if (self.rawId <= 0) {
     return;
   }
-  [self mbw_refreshTrackingRect];
   mbw_call_window_event_trampoline(8, self.rawId, 0, 0, 0, 0.0);
 }
 
@@ -984,7 +977,6 @@ uint64_t mbw_create_window(int32_t width, int32_t height) {
   window.delegate = delegate;
 
   MBWContentView *content_view = [[MBWContentView alloc] initWithFrame:window.contentView.bounds];
-  content_view.trackingRectTag = 0;
   content_view.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
   window.contentView = content_view;
   [window setInitialFirstResponder:content_view];
@@ -1148,6 +1140,19 @@ uint64_t mbw_objc_msg_send_u64_u64(uint64_t target_handle, uint64_t selector_han
   SEL selector = sel_registerName(selector_name);
   uint64_t (*send_fn)(id, SEL, uint64_t) = (uint64_t(*)(id, SEL, uint64_t))objc_msgSend;
   return send_fn(target, selector, arg0);
+}
+
+uint64_t mbw_objc_msg_send_u64_u64_u64(uint64_t target_handle, uint64_t selector_handle,
+                                       uint64_t arg0, uint64_t arg1) {
+  if (target_handle == 0 || selector_handle == 0) {
+    return 0;
+  }
+  id target = (__bridge id)(void *)(uintptr_t)target_handle;
+  const char *selector_name = (const char *)(uintptr_t)selector_handle;
+  SEL selector = sel_registerName(selector_name);
+  uint64_t (*send_fn)(id, SEL, uint64_t, uint64_t) =
+      (uint64_t(*)(id, SEL, uint64_t, uint64_t))objc_msgSend;
+  return send_fn(target, selector, arg0, arg1);
 }
 
 MOONBIT_FFI_EXPORT

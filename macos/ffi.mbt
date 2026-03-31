@@ -203,6 +203,14 @@ extern "C" fn appkit_objc_msg_send_u64_u64(
 ) -> UInt64 = "mbw_objc_msg_send_u64_u64"
 
 ///|
+extern "C" fn appkit_objc_msg_send_u64_u64_u64(
+  target : UInt64,
+  selector : UInt64,
+  arg0 : UInt64,
+  arg1 : UInt64,
+) -> UInt64 = "mbw_objc_msg_send_u64_u64_u64"
+
+///|
 extern "C" fn appkit_objc_msg_send_void(
   target : UInt64,
   selector : UInt64,

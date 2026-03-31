@@ -783,34 +783,325 @@ fn native_create_window(width : Int, height : Int) -> UInt64 {
 }
 
 ///|
+fn native_cursor_class_cursor(
+  cursor_class : UInt64,
+  selector_name : String,
+) -> UInt64 {
+  if cursor_class == (0 : Int).to_uint64() {
+    return (0 : Int).to_uint64()
+  }
+  let selector = objc_runtime_selector_handle(selector_name)
+  if appkit_objc_msg_send_bool_u64(
+      cursor_class,
+      objc_runtime_selector_handle("respondsToSelector:"),
+      selector,
+    ) {
+    appkit_objc_msg_send_u64(cursor_class, selector)
+  } else {
+    (0 : Int).to_uint64()
+  }
+}
+
+///|
+fn native_cursor_class_cursor_with_utf8_arg(
+  cursor_class : UInt64,
+  selector_name : String,
+  arg : String,
+) -> UInt64 {
+  if cursor_class == (0 : Int).to_uint64() {
+    return (0 : Int).to_uint64()
+  }
+  let selector = objc_runtime_selector_handle(selector_name)
+  if appkit_objc_msg_send_bool_u64(
+      cursor_class,
+      objc_runtime_selector_handle("respondsToSelector:"),
+      selector,
+    ) {
+    appkit_objc_msg_send_u64_bytes(
+      cursor_class,
+      selector,
+      @utf8.encode(arg[:], bom=false),
+    )
+  } else {
+    (0 : Int).to_uint64()
+  }
+}
+
+///|
+fn native_cursor_frame_resize(
+  cursor_class : UInt64,
+  position : UInt64,
+  directions : UInt64,
+) -> UInt64 {
+  if cursor_class == (0 : Int).to_uint64() {
+    return (0 : Int).to_uint64()
+  }
+  let selector = objc_runtime_selector_handle(
+    "frameResizeCursorFromPosition:inDirections:",
+  )
+  if appkit_objc_msg_send_bool_u64(
+      cursor_class,
+      objc_runtime_selector_handle("respondsToSelector:"),
+      selector,
+    ) {
+    appkit_objc_msg_send_u64_u64_u64(
+      cursor_class, selector, position, directions,
+    )
+  } else {
+    (0 : Int).to_uint64()
+  }
+}
+
+///|
+fn native_cursor_fallback(cursor : UInt64, cursor_class : UInt64) -> UInt64 {
+  if cursor != (0 : Int).to_uint64() {
+    cursor
+  } else {
+    native_cursor_class_cursor(cursor_class, "arrowCursor")
+  }
+}
+
+///|
 fn native_cursor_objc_handle_from_kind(cursor : Int) -> UInt64 {
   let ns_cursor_class = objc_runtime_class_handle("NSCursor")
   if ns_cursor_class == (0 : Int).to_uint64() {
     return (0 : Int).to_uint64()
   }
-  let selector_name = if cursor == 10 {
-    "openHandCursor"
-  } else if cursor == 11 {
-    "closedHandCursor"
-  } else if cursor == 12 || cursor == 19 || cursor == 20 || cursor == 24 {
-    "resizeLeftRightCursor"
-  } else if cursor == 13 || cursor == 16 || cursor == 21 || cursor == 25 {
-    "resizeUpDownCursor"
-  } else if cursor == 29 {
-    "pointingHandCursor"
-  } else if cursor == 30 {
-    "IBeamCursor"
-  } else if cursor == 31 {
-    "crosshairCursor"
-  } else if cursor == 33 {
-    "operationNotAllowedCursor"
-  } else {
-    "arrowCursor"
+  let mut resolved = (0 : Int).to_uint64()
+  let direction_outward = (2 : Int).to_uint64()
+  let direction_all = (3 : Int).to_uint64()
+  match cursor {
+    1 =>
+      resolved = native_cursor_class_cursor(
+        ns_cursor_class, "contextualMenuCursor",
+      )
+    2 => resolved = native_cursor_class_cursor(ns_cursor_class, "_helpCursor")
+    3 =>
+      resolved = native_cursor_class_cursor(
+        ns_cursor_class, "busyButClickableCursor",
+      )
+    4 =>
+      resolved = native_cursor_class_cursor(
+        ns_cursor_class, "busyButClickableCursor",
+      )
+    5 =>
+      resolved = native_cursor_class_cursor_with_utf8_arg(
+        ns_cursor_class, "_webKitCursor:", "cell",
+      )
+    6 => {
+      resolved = native_cursor_class_cursor(
+        ns_cursor_class, "IBeamCursorForVerticalLayout",
+      )
+      if resolved == (0 : Int).to_uint64() {
+        resolved = native_cursor_class_cursor(ns_cursor_class, "IBeamCursor")
+      }
+    }
+    7 =>
+      resolved = native_cursor_class_cursor(ns_cursor_class, "dragLinkCursor")
+    8 =>
+      resolved = native_cursor_class_cursor(ns_cursor_class, "dragCopyCursor")
+    9 =>
+      resolved = native_cursor_class_cursor(
+        ns_cursor_class, "operationNotAllowedCursor",
+      )
+    10 =>
+      resolved = native_cursor_class_cursor(ns_cursor_class, "openHandCursor")
+    11 =>
+      resolved = native_cursor_class_cursor(ns_cursor_class, "closedHandCursor")
+    12 => {
+      resolved = native_cursor_frame_resize(
+        ns_cursor_class,
+        (8 : Int).to_uint64(),
+        direction_outward,
+      )
+      if resolved == (0 : Int).to_uint64() {
+        resolved = native_cursor_class_cursor(
+          ns_cursor_class, "resizeRightCursor",
+        )
+      }
+    }
+    13 => {
+      resolved = native_cursor_frame_resize(
+        ns_cursor_class,
+        (1 : Int).to_uint64(),
+        direction_outward,
+      )
+      if resolved == (0 : Int).to_uint64() {
+        resolved = native_cursor_class_cursor(ns_cursor_class, "resizeUpCursor")
+      }
+    }
+    14 => {
+      resolved = native_cursor_frame_resize(
+        ns_cursor_class,
+        (9 : Int).to_uint64(),
+        direction_outward,
+      )
+      if resolved == (0 : Int).to_uint64() {
+        resolved = native_cursor_class_cursor(
+          ns_cursor_class, "_windowResizeNorthEastCursor",
+        )
+      }
+    }
+    15 => {
+      resolved = native_cursor_frame_resize(
+        ns_cursor_class,
+        (3 : Int).to_uint64(),
+        direction_outward,
+      )
+      if resolved == (0 : Int).to_uint64() {
+        resolved = native_cursor_class_cursor(
+          ns_cursor_class, "_windowResizeNorthWestCursor",
+        )
+      }
+    }
+    16 => {
+      resolved = native_cursor_frame_resize(
+        ns_cursor_class,
+        (4 : Int).to_uint64(),
+        direction_outward,
+      )
+      if resolved == (0 : Int).to_uint64() {
+        resolved = native_cursor_class_cursor(
+          ns_cursor_class, "resizeDownCursor",
+        )
+      }
+    }
+    17 => {
+      resolved = native_cursor_frame_resize(
+        ns_cursor_class,
+        (12 : Int).to_uint64(),
+        direction_outward,
+      )
+      if resolved == (0 : Int).to_uint64() {
+        resolved = native_cursor_class_cursor(
+          ns_cursor_class, "_windowResizeSouthEastCursor",
+        )
+      }
+    }
+    18 => {
+      resolved = native_cursor_frame_resize(
+        ns_cursor_class,
+        (6 : Int).to_uint64(),
+        direction_outward,
+      )
+      if resolved == (0 : Int).to_uint64() {
+        resolved = native_cursor_class_cursor(
+          ns_cursor_class, "_windowResizeSouthWestCursor",
+        )
+      }
+    }
+    19 => {
+      resolved = native_cursor_frame_resize(
+        ns_cursor_class,
+        (2 : Int).to_uint64(),
+        direction_outward,
+      )
+      if resolved == (0 : Int).to_uint64() {
+        resolved = native_cursor_class_cursor(
+          ns_cursor_class, "resizeLeftCursor",
+        )
+      }
+    }
+    20 => {
+      resolved = native_cursor_frame_resize(
+        ns_cursor_class,
+        (8 : Int).to_uint64(),
+        direction_all,
+      )
+      if resolved == (0 : Int).to_uint64() {
+        resolved = native_cursor_class_cursor(
+          ns_cursor_class, "resizeLeftRightCursor",
+        )
+      }
+    }
+    21 => {
+      resolved = native_cursor_frame_resize(
+        ns_cursor_class,
+        (1 : Int).to_uint64(),
+        direction_all,
+      )
+      if resolved == (0 : Int).to_uint64() {
+        resolved = native_cursor_class_cursor(
+          ns_cursor_class, "resizeUpDownCursor",
+        )
+      }
+    }
+    22 => {
+      resolved = native_cursor_frame_resize(
+        ns_cursor_class,
+        (9 : Int).to_uint64(),
+        direction_all,
+      )
+      if resolved == (0 : Int).to_uint64() {
+        resolved = native_cursor_class_cursor(
+          ns_cursor_class, "_windowResizeNorthEastSouthWestCursor",
+        )
+      }
+    }
+    23 => {
+      resolved = native_cursor_frame_resize(
+        ns_cursor_class,
+        (3 : Int).to_uint64(),
+        direction_all,
+      )
+      if resolved == (0 : Int).to_uint64() {
+        resolved = native_cursor_class_cursor(
+          ns_cursor_class, "_windowResizeNorthWestSouthEastCursor",
+        )
+      }
+    }
+    24 => {
+      resolved = native_cursor_class_cursor(
+        ns_cursor_class, "columnResizeCursor",
+      )
+      if resolved == (0 : Int).to_uint64() {
+        resolved = native_cursor_class_cursor(
+          ns_cursor_class, "resizeLeftRightCursor",
+        )
+      }
+    }
+    25 => {
+      resolved = native_cursor_class_cursor(ns_cursor_class, "rowResizeCursor")
+      if resolved == (0 : Int).to_uint64() {
+        resolved = native_cursor_class_cursor(
+          ns_cursor_class, "resizeUpDownCursor",
+        )
+      }
+    }
+    27 => {
+      resolved = native_cursor_class_cursor(ns_cursor_class, "zoomInCursor")
+      if resolved == (0 : Int).to_uint64() {
+        resolved = native_cursor_class_cursor(ns_cursor_class, "_zoomInCursor")
+      }
+    }
+    28 => {
+      resolved = native_cursor_class_cursor(ns_cursor_class, "zoomOutCursor")
+      if resolved == (0 : Int).to_uint64() {
+        resolved = native_cursor_class_cursor(ns_cursor_class, "_zoomOutCursor")
+      }
+    }
+    29 =>
+      resolved = native_cursor_class_cursor(
+        ns_cursor_class, "pointingHandCursor",
+      )
+    30 => resolved = native_cursor_class_cursor(ns_cursor_class, "IBeamCursor")
+    31 =>
+      resolved = native_cursor_class_cursor(ns_cursor_class, "crosshairCursor")
+    32 => {
+      resolved = native_cursor_class_cursor_with_utf8_arg(
+        ns_cursor_class, "_webKitCursor:", "move",
+      )
+      if resolved == (0 : Int).to_uint64() {
+        resolved = native_cursor_class_cursor(ns_cursor_class, "_moveCursor")
+      }
+    }
+    33 =>
+      resolved = native_cursor_class_cursor(
+        ns_cursor_class, "operationNotAllowedCursor",
+      )
+    _ => resolved = native_cursor_class_cursor(ns_cursor_class, "arrowCursor")
   }
-  appkit_objc_msg_send_u64(
-    ns_cursor_class,
-    objc_runtime_selector_handle(selector_name),
-  )
+  native_cursor_fallback(resolved, ns_cursor_class)
 }
 
 ///|
@@ -2286,14 +2577,6 @@ fn show_window(window_handle : UInt64, active : Bool) -> Unit {
         objc_runtime_selector_handle("makeKeyAndOrderFront:"),
         (0 : Int).to_uint64(),
       )
-      let app = native_application_shared_handle()
-      if app != (0 : Int).to_uint64() {
-        appkit_objc_msg_send_void_bool(
-          app,
-          objc_runtime_selector_handle("activateIgnoringOtherApps:"),
-          true,
-        )
-      }
     } else {
       appkit_objc_msg_send_void_u64(
         window,
@@ -2382,7 +2665,23 @@ fn set_window_clip_children(
 fn focus_window(window_handle : UInt64) -> Unit {
   if registered_native_handle(window_handle) != (0 : Int).to_uint64() &&
     native_window_is_visible(window_handle) {
-    show_window(window_handle, true)
+    let window = native_window_objc_handle(window_handle)
+    if window == (0 : Int).to_uint64() {
+      return ()
+    }
+    let app = native_application_shared_handle()
+    if app != (0 : Int).to_uint64() {
+      appkit_objc_msg_send_void_bool(
+        app,
+        objc_runtime_selector_handle("activateIgnoringOtherApps:"),
+        true,
+      )
+    }
+    appkit_objc_msg_send_void_u64(
+      window,
+      objc_runtime_selector_handle("makeKeyAndOrderFront:"),
+      (0 : Int).to_uint64(),
+    )
   }
 }
 

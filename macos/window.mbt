@@ -268,17 +268,6 @@ pub fn Window::set_ime_purpose(
 }
 
 ///|
-fn Window::set_ime_purpose_raw(
-  self : Window,
-  purpose : @core.ImePurpose,
-) -> Unit {
-  set_ime_purpose(
-    self.raw_window_handle,
-    normalize_ime_purpose_native(ime_purpose_to_native(purpose)),
-  )
-}
-
-///|
 pub fn Window::set_ime_hints(self : Window, hints : @core.ImeHint) -> Unit {
   set_ime_hints(self.raw_window_handle, normalize_ime_hints_bits(hints.bits()))
 }
@@ -286,11 +275,15 @@ pub fn Window::set_ime_hints(self : Window, hints : @core.ImeHint) -> Unit {
 ///|
 pub fn Window::set_ime_allowed(self : Window, allowed : Bool) -> Unit {
   let request : @core.ImeRequest? = if allowed {
-    let capabilities = @core.ImeCapabilities::default().with_cursor_area()
-    let request_data = @core.ImeRequestData::default().with_cursor_area(
-      @dpi.LogicalPosition::new(0.0, 0.0).into_position(),
-      @dpi.LogicalSize::new(0.0, 0.0).into_size(),
-    )
+    let capabilities = @core.ImeCapabilities::default()
+      .with_hint_and_purpose()
+      .with_cursor_area()
+    let request_data = @core.ImeRequestData::default()
+      .with_hint_and_purpose(@core.ImeHint::none(), @core.ImePurpose::Normal)
+      .with_cursor_area(
+        @dpi.LogicalPosition::new(0.0, 0.0).into_position(),
+        @dpi.LogicalSize::new(0.0, 0.0).into_size(),
+      )
     match @core.ImeEnableRequest::new(capabilities, request_data) {
       Some(enable_request) => Some(@core.ImeRequest::Enable(enable_request))
       None => None
@@ -420,33 +413,13 @@ fn Window::apply_ime_request_data(
   self : Window,
   request_data : @core.ImeRequestData,
 ) -> Unit raise @core.ImeRequestError {
-  if self.ime_allowed() == false {
+  if self.ime_capabilities_state is None {
     raise @core.ImeRequestError::NotEnabled
-  }
-  if request_data.has_hint_and_purpose() {
-    if self.ime_supports_hint_and_purpose() {
-      match request_data.hint_and_purpose() {
-        Some((hints, purpose)) => {
-          self.set_ime_hints(hints)
-          self.set_ime_purpose_raw(purpose)
-        }
-        None => ()
-      }
-    }
   }
   if request_data.has_cursor_area() {
     if self.ime_supports_cursor_area() {
       match request_data.cursor_area() {
         Some((position, size)) => self.set_ime_cursor_area_raw(position, size)
-        None => ()
-      }
-    }
-  }
-  if request_data.has_surrounding_text() {
-    if self.ime_supports_surrounding_text() {
-      match request_data.surrounding_text() {
-        Some(surrounding_text) =>
-          self.set_ime_surrounding_text(Some(surrounding_text))
         None => ()
       }
     }
@@ -458,29 +431,28 @@ pub fn Window::request_ime_update(
   self : Window,
   request : @core.ImeRequest,
 ) -> Unit raise @core.ImeRequestError {
-  match request {
+  let current_caps = self.ime_capabilities_state
+  let request_data = match request {
     @core.ImeRequest::Enable(enable_request) =>
-      if self.ime_allowed() {
-        raise @core.ImeRequestError::AlreadyEnabled
-      } else {
-        let requested_capabilities = enable_request.capabilities()
-        let capabilities = @core.ImeCapabilities::new(
-          false,
-          requested_capabilities.cursor_area(),
-          false,
-        )
-        let request_data = enable_request.request_data()
-        self.set_ime_allowed_raw(true)
-        self.ime_capabilities_state = Some(capabilities)
-        self.apply_ime_request_data(request_data)
+      match current_caps {
+        Some(_) => raise @core.ImeRequestError::AlreadyEnabled
+        None => {
+          self.set_ime_allowed_raw(true)
+          self.ime_capabilities_state = Some(enable_request.capabilities())
+          enable_request.request_data()
+        }
       }
     @core.ImeRequest::Update(request_data) =>
-      self.apply_ime_request_data(request_data)
+      match current_caps {
+        Some(_) => request_data
+        None => raise @core.ImeRequestError::NotEnabled
+      }
     @core.ImeRequest::Disable => {
       self.set_ime_allowed_raw(false)
-      ()
+      return ()
     }
   }
+  self.apply_ime_request_data(request_data)
 }
 
 ///|
@@ -489,25 +461,9 @@ pub fn Window::ime_capabilities(self : Window) -> @core.ImeCapabilities? {
 }
 
 ///|
-fn Window::ime_supports_hint_and_purpose(self : Window) -> Bool {
-  match self.ime_capabilities_state {
-    Some(capabilities) => capabilities.hint_and_purpose()
-    None => false
-  }
-}
-
-///|
 fn Window::ime_supports_cursor_area(self : Window) -> Bool {
   match self.ime_capabilities_state {
     Some(capabilities) => capabilities.cursor_area()
-    None => false
-  }
-}
-
-///|
-fn Window::ime_supports_surrounding_text(self : Window) -> Bool {
-  match self.ime_capabilities_state {
-    Some(capabilities) => capabilities.surrounding_text()
     None => false
   }
 }
