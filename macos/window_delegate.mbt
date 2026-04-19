@@ -3917,7 +3917,11 @@ fn new_window(
   event_loop : EventLoop,
   attributes : @core.WindowAttributes,
 ) -> Window raise @core.RequestError {
-  guard is_main_thread() else { raise @core.RequestError::Os }
+  guard is_main_thread() else {
+    raise @core.RequestError::os(
+      "Window creation must happen on the main thread",
+    )
+  }
   let raw_id = app_state_next_window_id()
   let scale_factor = match event_loop.primary_monitor() {
     Some(monitor) => monitor.scale_factor()
@@ -3938,7 +3942,9 @@ fn new_window(
     Some(parent_window) => {
       guard set_parent_window(raw_window_handle, parent_window.into_raw()) else {
         close_window(raw_window_handle)
-        raise @core.RequestError::Os
+        raise @core.RequestError::os(
+          "Failed to attach native parent window handle",
+        )
       }
     }
     None => ()

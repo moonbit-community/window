@@ -149,7 +149,9 @@ pub fn Window::set_cursor_hittest(
   hittest : Bool,
 ) -> Unit raise @core.RequestError {
   if set_window_cursor_hittest(self.raw_window_handle, hittest) == false {
-    raise @core.RequestError::NotSupported
+    raise @core.RequestError::not_supported(
+      "Setting cursor hittest is not supported for this window",
+    )
   }
 }
 
@@ -176,7 +178,9 @@ pub fn Window::set_cursor_position(
       logical_position.y().to_int(),
     ) ==
     false {
-    raise @core.RequestError::NotSupported
+    raise @core.RequestError::not_supported(
+      "Setting cursor position is not supported for this window",
+    )
   }
 }
 
@@ -186,11 +190,15 @@ pub fn Window::set_cursor_grab(
   mode : @core.CursorGrabMode,
 ) -> Unit raise @core.RequestError {
   if mode is @core.CursorGrabMode::Confined {
-    raise @core.RequestError::NotSupported
+    raise @core.RequestError::not_supported(
+      "Confined cursor grab is not supported on macOS",
+    )
   }
   if set_cursor_grab(self.raw_window_handle, cursor_grab_mode_to_native(mode)) ==
     false {
-    raise @core.RequestError::NotSupported
+    raise @core.RequestError::not_supported(
+      "Setting cursor grab mode is not supported for this window",
+    )
   }
 }
 
@@ -201,7 +209,9 @@ pub fn Window::drag_window(self : Window) -> Unit raise @core.RequestError {
     raise @core.RequestError::Ignored
   }
   if status == 0 {
-    raise @core.RequestError::NotSupported
+    raise @core.RequestError::not_supported(
+      "Window dragging is not supported in the current state",
+    )
   }
 }
 
@@ -215,7 +225,9 @@ pub fn Window::drag_resize_window(
       resize_direction_to_native(direction),
     ) ==
     false {
-    raise @core.RequestError::NotSupported
+    raise @core.RequestError::not_supported(
+      "Window edge dragging is not supported in the current state",
+    )
   }
 }
 

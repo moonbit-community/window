@@ -244,6 +244,16 @@ pub impl Show for ImeRequestError with output(self, logger) {
 }
 
 ///|
+pub impl Show for NotSupportedError with output(self, logger) {
+  debug_output(self, logger)
+}
+
+///|
+pub impl Show for OsError with output(self, logger) {
+  debug_output(self, logger)
+}
+
+///|
 pub impl Show for RequestError with output(self, logger) {
   debug_output(self, logger)
 }

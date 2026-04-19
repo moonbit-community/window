@@ -200,11 +200,67 @@ pub(all) suberror ImeRequestError {
 } derive(Debug)
 
 ///|
+pub struct NotSupportedError {
+  priv reason : String
+} derive(Eq, Debug)
+
+///|
+pub fn NotSupportedError::new(reason : String) -> NotSupportedError {
+  { reason, }
+}
+
+///|
+pub fn NotSupportedError::reason(self : NotSupportedError) -> String {
+  self.reason
+}
+
+///|
+pub struct OsError {
+  priv message : String
+  priv code : Int?
+  priv domain : String?
+} derive(Eq, Debug)
+
+///|
+pub fn OsError::new(message : String, code : Int?, domain : String?) -> OsError {
+  { message, code, domain }
+}
+
+///|
+pub fn OsError::message(self : OsError) -> String {
+  self.message
+}
+
+///|
+pub fn OsError::code(self : OsError) -> Int? {
+  self.code
+}
+
+///|
+pub fn OsError::domain(self : OsError) -> String? {
+  self.domain
+}
+
+///|
 pub(all) suberror RequestError {
-  NotSupported
+  NotSupported(NotSupportedError)
   Ignored
-  Os
+  Os(OsError)
 } derive(Debug)
+
+///|
+pub fn RequestError::not_supported(reason : String) -> RequestError {
+  RequestError::NotSupported(NotSupportedError::new(reason))
+}
+
+///|
+pub fn RequestError::os(
+  message : String,
+  code? : Int,
+  domain? : String,
+) -> RequestError {
+  RequestError::Os(OsError::new(message, code, domain))
+}
 
 ///|
 pub struct ActivationToken {

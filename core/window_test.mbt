@@ -106,3 +106,34 @@ test "window_attributes_name_skip_taskbar_clip_children" {
   assert_true(attrs.skip_taskbar())
   assert_false(attrs.clip_children())
 }
+
+///|
+test "request_error_structured_payload" {
+  let unsupported = RequestError::not_supported(
+    "Confined cursor grab is unavailable",
+  )
+  guard unsupported is RequestError::NotSupported(not_supported) else {
+    fail("expected RequestError::NotSupported payload")
+  }
+  assert_eq(not_supported.reason(), "Confined cursor grab is unavailable")
+
+  let os_error = RequestError::os(
+    "NSWindow cursor update failed",
+    code=1001,
+    domain="NSCocoaErrorDomain",
+  )
+  guard os_error is RequestError::Os(os) else {
+    fail("expected RequestError::Os payload")
+  }
+  assert_eq(os.message(), "NSWindow cursor update failed")
+  assert_eq(os.code(), Some(1001))
+  assert_eq(os.domain(), Some("NSCocoaErrorDomain"))
+
+  let os_error_without_code = RequestError::os("Unknown AppKit failure")
+  guard os_error_without_code is RequestError::Os(os_no_code) else {
+    fail("expected RequestError::Os payload")
+  }
+  assert_eq(os_no_code.message(), "Unknown AppKit failure")
+  assert_eq(os_no_code.code(), None)
+  assert_eq(os_no_code.domain(), None)
+}

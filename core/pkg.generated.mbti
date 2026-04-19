@@ -53,10 +53,12 @@ pub(all) suberror ImeSurroundingTextError {
 pub impl Show for ImeSurroundingTextError
 
 pub(all) suberror RequestError {
-  NotSupported
+  NotSupported(NotSupportedError)
   Ignored
-  Os
+  Os(OsError)
 } derive(@debug.Debug)
+pub fn RequestError::not_supported(String) -> Self
+pub fn RequestError::os(String, code? : Int, domain? : String) -> Self
 pub impl Show for RequestError
 
 // Types and methods
@@ -1087,6 +1089,13 @@ pub(all) enum NativeKeyCode {
 } derive(Eq, @debug.Debug)
 pub impl Show for NativeKeyCode
 
+pub struct NotSupportedError {
+  // private fields
+} derive(Eq, @debug.Debug)
+pub fn NotSupportedError::new(String) -> Self
+pub fn NotSupportedError::reason(Self) -> String
+pub impl Show for NotSupportedError
+
 pub(all) enum OptionAsAlt {
   OnlyLeft
   OnlyRight
@@ -1095,6 +1104,15 @@ pub(all) enum OptionAsAlt {
 } derive(Eq, @debug.Debug)
 pub fn OptionAsAlt::default() -> Self
 pub impl Show for OptionAsAlt
+
+pub struct OsError {
+  // private fields
+} derive(Eq, @debug.Debug)
+pub fn OsError::code(Self) -> Int?
+pub fn OsError::domain(Self) -> String?
+pub fn OsError::message(Self) -> String
+pub fn OsError::new(String, Int?, String?) -> Self
+pub impl Show for OsError
 
 pub struct ParentWindow {
   // private fields
