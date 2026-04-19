@@ -33,9 +33,11 @@ pub impl Show for BadIcon
 pub(all) suberror EventLoopError {
   RecreationAttempt
   ExitFailure(Int)
-  NotSupported
-  Os
+  NotSupported(NotSupportedError)
+  Os(OsError)
 } derive(Eq, @debug.Debug)
+pub fn EventLoopError::not_supported(String) -> Self
+pub fn EventLoopError::os(String, code? : Int, domain? : String) -> Self
 pub impl Show for EventLoopError
 
 pub(all) suberror ImeRequestError {

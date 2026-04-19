@@ -32,9 +32,23 @@ pub(all) enum PumpStatus {
 pub(all) suberror EventLoopError {
   RecreationAttempt
   ExitFailure(Int)
-  NotSupported
-  Os
+  NotSupported(NotSupportedError)
+  Os(OsError)
 } derive(Eq, Debug)
+
+///|
+pub fn EventLoopError::not_supported(reason : String) -> EventLoopError {
+  EventLoopError::NotSupported(NotSupportedError::new(reason))
+}
+
+///|
+pub fn EventLoopError::os(
+  message : String,
+  code? : Int,
+  domain? : String,
+) -> EventLoopError {
+  EventLoopError::Os(OsError::new(message, code, domain))
+}
 
 ///|
 pub(all) enum ActivationPolicy {
