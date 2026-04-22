@@ -1,6 +1,10 @@
 // Generated using `moon info`, DON'T EDIT IT
 package "Milky2018/window/dpi"
 
+import {
+  "moonbitlang/core/debug",
+}
+
 // Values
 pub fn validate_scale_factor(Double) -> Bool
 
@@ -10,80 +14,88 @@ pub fn validate_scale_factor(Double) -> Bool
 pub struct LogicalPosition {
   x : Double
   y : Double
-} derive(Eq, Show)
+} derive(Eq, @debug.Debug)
 pub fn LogicalPosition::into_position(Self) -> Position
 pub fn LogicalPosition::new(Double, Double) -> Self
 pub fn LogicalPosition::to_physical(Self, Double) -> PhysicalPosition
 pub fn LogicalPosition::x(Self) -> Double
 pub fn LogicalPosition::y(Self) -> Double
+pub impl Show for LogicalPosition
 
 pub struct LogicalSize {
   width : Double
   height : Double
-} derive(Eq, Show)
+} derive(Eq, @debug.Debug)
 pub fn LogicalSize::height(Self) -> Double
 pub fn LogicalSize::into_size(Self) -> Size
 pub fn LogicalSize::new(Double, Double) -> Self
 pub fn LogicalSize::to_physical(Self, Double) -> PhysicalSize
 pub fn LogicalSize::width(Self) -> Double
+pub impl Show for LogicalSize
 
 pub struct PhysicalInsets {
   top : Int
   left : Int
   bottom : Int
   right : Int
-} derive(Eq, Show)
+} derive(Eq, @debug.Debug)
 pub fn PhysicalInsets::bottom(Self) -> Int
 pub fn PhysicalInsets::left(Self) -> Int
 pub fn PhysicalInsets::new(Int, Int, Int, Int) -> Self
 pub fn PhysicalInsets::right(Self) -> Int
 pub fn PhysicalInsets::top(Self) -> Int
+pub impl Show for PhysicalInsets
 
 pub struct PhysicalPosition {
   x : Int
   y : Int
-} derive(Eq, Show)
+} derive(Eq, @debug.Debug)
 pub fn PhysicalPosition::into_position(Self) -> Position
 pub fn PhysicalPosition::new(Int, Int) -> Self
 pub fn PhysicalPosition::to_logical(Self, Double) -> LogicalPosition
 pub fn PhysicalPosition::x(Self) -> Int
 pub fn PhysicalPosition::y(Self) -> Int
+pub impl Show for PhysicalPosition
 
 pub struct PhysicalPositionF64 {
   x : Double
   y : Double
-} derive(Eq, Show)
+} derive(Eq, @debug.Debug)
 pub fn PhysicalPositionF64::new(Double, Double) -> Self
 pub fn PhysicalPositionF64::x(Self) -> Double
 pub fn PhysicalPositionF64::y(Self) -> Double
+pub impl Show for PhysicalPositionF64
 
 pub struct PhysicalSize {
   width : Int
   height : Int
-} derive(Eq, Show)
+} derive(Eq, @debug.Debug)
 pub fn PhysicalSize::height(Self) -> Int
 pub fn PhysicalSize::into_size(Self) -> Size
 pub fn PhysicalSize::new(Int, Int) -> Self
 pub fn PhysicalSize::to_logical(Self, Double) -> LogicalSize
 pub fn PhysicalSize::width(Self) -> Int
+pub impl Show for PhysicalSize
 
 pub(all) enum Position {
   Logical(LogicalPosition)
   Physical(PhysicalPosition)
-} derive(Eq, Show)
+} derive(Eq, @debug.Debug)
 pub fn Position::from_logical(LogicalPosition) -> Self
 pub fn Position::from_physical(PhysicalPosition) -> Self
 pub fn Position::to_logical(Self, Double) -> LogicalPosition
 pub fn Position::to_physical(Self, Double) -> PhysicalPosition
+pub impl Show for Position
 
 pub(all) enum Size {
   Logical(LogicalSize)
   Physical(PhysicalSize)
-} derive(Eq, Show)
+} derive(Eq, @debug.Debug)
 pub fn Size::from_logical(LogicalSize) -> Self
 pub fn Size::from_physical(PhysicalSize) -> Self
 pub fn Size::to_logical(Self, Double) -> LogicalSize
 pub fn Size::to_physical(Self, Double) -> PhysicalSize
+pub impl Show for Size
 
 // Type aliases
 

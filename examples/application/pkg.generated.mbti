@@ -4,6 +4,7 @@ package "Milky2018/window/examples/application"
 import {
   "Milky2018/window/core",
   "Milky2018/window/macos",
+  "moonbitlang/core/debug",
 }
 
 // Values
@@ -11,7 +12,7 @@ import {
 // Errors
 
 // Types and methods
-type Action derive(Eq, Show)
+type Action derive(Eq, @debug.Debug)
 
 type Application
 pub impl @macos.ApplicationHandler for Application
