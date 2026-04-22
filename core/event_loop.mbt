@@ -3,7 +3,7 @@ pub(all) enum ControlFlow {
   Poll
   Wait
   WaitUntil(Int64)
-} derive(Eq, Show)
+} derive(Eq, Debug)
 
 ///|
 pub fn ControlFlow::default() -> ControlFlow {
@@ -15,7 +15,7 @@ pub(all) enum DeviceEvents {
   Always
   WhenFocused
   Never
-} derive(Eq, Show)
+} derive(Eq, Debug)
 
 ///|
 pub fn DeviceEvents::default() -> DeviceEvents {
@@ -26,7 +26,7 @@ pub fn DeviceEvents::default() -> DeviceEvents {
 pub(all) enum PumpStatus {
   Continue
   Exit(Int)
-} derive(Eq, Show)
+} derive(Eq, Debug)
 
 ///|
 pub(all) suberror EventLoopError {
@@ -34,14 +34,14 @@ pub(all) suberror EventLoopError {
   ExitFailure(Int)
   NotSupported
   Os
-} derive(Eq, Show)
+} derive(Eq, Debug)
 
 ///|
 pub(all) enum ActivationPolicy {
   Regular
   Accessory
   Prohibited
-} derive(Eq, Show)
+} derive(Eq, Debug)
 
 ///|
 pub fn ActivationPolicy::default() -> ActivationPolicy {
@@ -54,7 +54,7 @@ pub struct PlatformEventLoopAttributes {
   priv mut default_menu : Bool
   priv mut activate_ignoring_other_apps : Bool
   priv mut any_thread : Bool
-} derive(Eq, Show)
+} derive(Eq, Debug)
 
 ///|
 pub fn PlatformEventLoopAttributes::default() -> PlatformEventLoopAttributes {
@@ -133,7 +133,7 @@ pub fn PlatformEventLoopAttributes::any_thread(
 ///|
 pub struct AsyncRequestSerial {
   raw : Int
-} derive(Eq, Show)
+} derive(Eq, Debug)
 
 ///|
 let async_request_serial_counter : Ref[Int] = Ref::new(0)

@@ -28,7 +28,7 @@ pub struct Window {
   priv mut exclusive_fullscreen_saved_style_mask_state : UInt64?
   priv mut exclusive_fullscreen_saved_outer_position_state : @dpi.PhysicalPosition?
   priv mut exclusive_fullscreen_saved_outer_size_state : @dpi.PhysicalSize?
-} derive(Eq, Show)
+} derive(Eq, Debug)
 
 ///|
 pub type WindowAttributesMacOS = @core.PlatformWindowAttributes

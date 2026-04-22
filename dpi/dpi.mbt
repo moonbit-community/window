@@ -13,7 +13,7 @@ pub fn validate_scale_factor(scale_factor : Double) -> Bool {
 pub struct LogicalSize {
   width : Double
   height : Double
-} derive(Eq, Show)
+} derive(Eq, Debug)
 
 ///|
 pub fn LogicalSize::new(width : Double, height : Double) -> LogicalSize {
@@ -48,7 +48,7 @@ pub fn LogicalSize::to_physical(
 pub struct PhysicalSize {
   width : Int
   height : Int
-} derive(Eq, Show)
+} derive(Eq, Debug)
 
 ///|
 pub fn PhysicalSize::new(width : Int, height : Int) -> PhysicalSize {
@@ -83,7 +83,7 @@ pub fn PhysicalSize::to_logical(
 pub struct LogicalPosition {
   x : Double
   y : Double
-} derive(Eq, Show)
+} derive(Eq, Debug)
 
 ///|
 pub fn LogicalPosition::new(x : Double, y : Double) -> LogicalPosition {
@@ -123,7 +123,7 @@ pub fn LogicalPosition::into_position(self : LogicalPosition) -> Position {
 pub struct PhysicalPosition {
   x : Int
   y : Int
-} derive(Eq, Show)
+} derive(Eq, Debug)
 
 ///|
 pub fn PhysicalPosition::new(x : Int, y : Int) -> PhysicalPosition {
@@ -163,7 +163,7 @@ pub fn PhysicalPosition::into_position(self : PhysicalPosition) -> Position {
 pub struct PhysicalPositionF64 {
   x : Double
   y : Double
-} derive(Eq, Show)
+} derive(Eq, Debug)
 
 ///|
 pub fn PhysicalPositionF64::new(x : Double, y : Double) -> PhysicalPositionF64 {
@@ -184,7 +184,7 @@ pub fn PhysicalPositionF64::y(self : PhysicalPositionF64) -> Double {
 pub(all) enum Position {
   Logical(LogicalPosition)
   Physical(PhysicalPosition)
-} derive(Eq, Show)
+} derive(Eq, Debug)
 
 ///|
 pub fn Position::from_logical(position : LogicalPosition) -> Position {
@@ -224,7 +224,7 @@ pub struct PhysicalInsets {
   left : Int
   bottom : Int
   right : Int
-} derive(Eq, Show)
+} derive(Eq, Debug)
 
 ///|
 pub fn PhysicalInsets::new(
@@ -260,7 +260,7 @@ pub fn PhysicalInsets::right(self : PhysicalInsets) -> Int {
 pub(all) enum Size {
   Logical(LogicalSize)
   Physical(PhysicalSize)
-} derive(Eq, Show)
+} derive(Eq, Debug)
 
 ///|
 pub fn LogicalSize::into_size(self : LogicalSize) -> Size {

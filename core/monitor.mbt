@@ -3,7 +3,7 @@ pub struct VideoMode {
   priv bit_depth_ : Int?
   priv refresh_rate_millihertz_ : Int?
   priv surface_size_ : @dpi.PhysicalSize
-} derive(Eq, Show)
+} derive(Eq, Debug)
 
 ///|
 pub fn VideoMode::new(
@@ -42,7 +42,7 @@ pub struct MonitorHandle {
   priv surface_size_ : @dpi.PhysicalSize
   priv scale_factor_ : Double
   priv video_modes_ : Array[VideoMode]
-} derive(Eq, Show)
+} derive(Eq, Debug)
 
 ///|
 pub fn MonitorHandle::new(

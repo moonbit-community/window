@@ -4,7 +4,7 @@ enum Mode {
   Wait
   WaitUntil
   Poll
-} derive(Eq, Show)
+} derive(Eq, Debug)
 
 ///|
 struct ControlFlowDemo {

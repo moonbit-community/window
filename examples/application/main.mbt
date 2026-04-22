@@ -28,7 +28,7 @@ enum Action {
   ToggleAnimatedFillColor
   ToggleContinuousRedraw
   EmitSurfaceSize
-} derive(Eq, Show)
+} derive(Eq, Debug)
 
 ///|
 fn Action::help(self : Action) -> String {
