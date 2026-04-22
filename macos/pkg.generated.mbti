@@ -4,6 +4,7 @@ package "Milky2018/window/macos"
 import {
   "Milky2018/window/core",
   "Milky2018/window/dpi",
+  "moonbitlang/core/debug",
 }
 
 // Values
@@ -14,7 +15,7 @@ pub fn monitor_ns_screen(@core.MonitorHandle) -> UInt64?
 // Types and methods
 pub struct ActiveEventLoop {
   // private fields
-} derive(Show)
+} derive(@debug.Debug)
 pub fn ActiveEventLoop::allows_automatic_window_tabbing(Self) -> Bool
 pub fn ActiveEventLoop::available_monitors(Self) -> Array[@core.MonitorHandle]
 pub fn ActiveEventLoop::control_flow(Self) -> @core.ControlFlow
@@ -34,10 +35,11 @@ pub fn ActiveEventLoop::set_allows_automatic_window_tabbing(Self, Bool) -> Unit
 pub fn ActiveEventLoop::set_control_flow(Self, @core.ControlFlow) -> Unit
 pub fn ActiveEventLoop::system_theme(Self) -> @core.Theme?
 pub fn ActiveEventLoop::try_create_window(Self, @core.WindowAttributes) -> Window raise @core.RequestError
+pub impl Show for ActiveEventLoop
 
 pub struct EventLoop {
   // private fields
-} derive(Show)
+} derive(@debug.Debug)
 pub fn EventLoop::allows_automatic_window_tabbing(Self) -> Bool
 pub fn EventLoop::available_monitors(Self) -> Array[@core.MonitorHandle]
 pub fn EventLoop::builder() -> EventLoopBuilder
@@ -70,10 +72,11 @@ pub fn[A : ApplicationHandler] EventLoop::try_pump_app_events(Self, Int?, A) -> 
 pub fn[A : ApplicationHandler] EventLoop::try_run_app(Self, A) -> Unit raise @core.EventLoopError
 pub fn[A : ApplicationHandler] EventLoop::try_run_app_on_demand(Self, A) -> Unit raise @core.EventLoopError
 pub fn EventLoop::window_target(Self) -> ActiveEventLoop
+pub impl Show for EventLoop
 
 pub struct EventLoopBuilder {
   // private fields
-} derive(Eq, Show)
+} derive(Eq, @debug.Debug)
 pub fn EventLoopBuilder::build(Self) -> EventLoop
 pub fn EventLoopBuilder::default() -> Self
 pub fn EventLoopBuilder::new() -> Self
@@ -84,16 +87,19 @@ pub fn EventLoopBuilder::with_activation_policy(Self, @core.ActivationPolicy) ->
 pub fn EventLoopBuilder::with_any_thread(Self, Bool) -> Self
 pub fn EventLoopBuilder::with_default_menu(Self, Bool) -> Self
 pub fn EventLoopBuilder::with_platform_attributes(Self, @core.PlatformEventLoopAttributes) -> Self
+pub impl Show for EventLoopBuilder
 
 pub struct EventLoopProxy {
   // private fields
-} derive(Eq, Show)
+} derive(Eq, @debug.Debug)
 pub fn EventLoopProxy::wake_up(Self) -> Unit
+pub impl Show for EventLoopProxy
 
 pub(all) struct KeyEquivalent {
   key : String
   masks : Int?
-} derive(Eq, Show)
+} derive(Eq, @debug.Debug)
+pub impl Show for KeyEquivalent
 
 pub(all) enum MenuAction {
   About
@@ -103,17 +109,19 @@ pub(all) enum MenuAction {
   ShowAll
   Quit
   Separator
-} derive(Eq, Show)
+} derive(Eq, @debug.Debug)
+pub impl Show for MenuAction
 
 pub(all) struct MenuItemDescriptor {
   title : String
   action : MenuAction
   key_equivalent : KeyEquivalent?
-} derive(Eq, Show)
+} derive(Eq, @debug.Debug)
+pub impl Show for MenuItemDescriptor
 
 pub struct Window {
   // private fields
-} derive(Eq, Show)
+} derive(Eq, @debug.Debug)
 pub fn Window::available_monitors(Self) -> Array[@core.MonitorHandle]
 pub fn Window::current_monitor(Self) -> @core.MonitorHandle?
 pub fn Window::cursor(Self) -> @core.Cursor
@@ -228,6 +236,7 @@ pub fn Window::title(Self) -> String
 pub fn Window::unified_titlebar(Self) -> Bool
 pub fn Window::window_handle(Self) -> UInt64
 pub fn Window::window_level(Self) -> @core.WindowLevel
+pub impl Show for Window
 
 // Type aliases
 pub using @core {type PlatformWindowAttributes as WindowAttributesMacOS}

@@ -3,6 +3,7 @@ package "Milky2018/window/core"
 
 import {
   "Milky2018/window/dpi",
+  "moonbitlang/core/debug",
   "moonbitlang/core/ref",
 }
 
@@ -12,106 +13,122 @@ import {
 pub(all) suberror BadCustomCursorAnimation {
   Empty
   NonPositiveFrameDuration(Int)
-} derive(Show)
+} derive(@debug.Debug)
+pub impl Show for BadCustomCursorAnimation
 
 pub(all) suberror BadCustomCursorSource {
   TooLarge(Int, Int)
   ByteCountNotDivisibleBy4(Int)
   DimensionsVsPixelCount(Int, Int, Int, Int)
   HotspotOutOfBounds(Int, Int, Int, Int)
-} derive(Show)
+} derive(@debug.Debug)
+pub impl Show for BadCustomCursorSource
 
 pub(all) suberror BadIcon {
   ByteCountNotDivisibleBy4(Int)
   DimensionsVsPixelCount(Int, Int, Int, Int)
-} derive(Show)
+} derive(@debug.Debug)
+pub impl Show for BadIcon
 
 pub(all) suberror EventLoopError {
   RecreationAttempt
   ExitFailure(Int)
   NotSupported
   Os
-} derive(Eq, Show)
+} derive(Eq, @debug.Debug)
+pub impl Show for EventLoopError
 
 pub(all) suberror ImeRequestError {
   NotEnabled
   AlreadyEnabled
   NotSupported
-} derive(Show)
+} derive(@debug.Debug)
+pub impl Show for ImeRequestError
 
 pub(all) suberror ImeSurroundingTextError {
   TextTooLong
   CursorBadPosition
   AnchorBadPosition
-} derive(Show)
+} derive(@debug.Debug)
+pub impl Show for ImeSurroundingTextError
 
 pub(all) suberror RequestError {
   NotSupported
   Ignored
   Os
-} derive(Show)
+} derive(@debug.Debug)
+pub impl Show for RequestError
 
 // Types and methods
 pub(all) enum ActivationPolicy {
   Regular
   Accessory
   Prohibited
-} derive(Eq, Show)
+} derive(Eq, @debug.Debug)
 pub fn ActivationPolicy::default() -> Self
+pub impl Show for ActivationPolicy
 
 pub struct ActivationToken {
   // private fields
-} derive(Eq, Show)
+} derive(Eq, @debug.Debug)
 pub fn ActivationToken::as_raw(Self) -> String
 pub fn ActivationToken::from_raw(String) -> Self
 pub fn ActivationToken::into_raw(Self) -> String
+pub impl Show for ActivationToken
 
 pub struct AsyncRequestSerial {
   raw : Int
-} derive(Eq, Show)
+} derive(Eq, @debug.Debug)
 pub fn AsyncRequestSerial::from_raw(Int) -> Self
 pub fn AsyncRequestSerial::get() -> Self
 pub fn AsyncRequestSerial::into_raw(Self) -> Int
+pub impl Show for AsyncRequestSerial
 
 pub struct AxisId {
   raw : Int
-} derive(Eq, Show)
+} derive(Eq, @debug.Debug)
 pub fn AxisId::from_raw(Int) -> Self
 pub fn AxisId::into_raw(Self) -> Int
+pub impl Show for AxisId
 
 pub struct ButtonId {
   raw : Int
-} derive(Eq, Show)
+} derive(Eq, @debug.Debug)
 pub fn ButtonId::from_raw(Int) -> Self
 pub fn ButtonId::into_raw(Self) -> Int
+pub impl Show for ButtonId
 
 pub(all) enum ButtonSource {
   Mouse(MouseButton)
   Touch(FingerId, Force?)
   TabletTool(TabletToolKind, TabletToolButton, TabletToolData)
   Unknown(Int)
-} derive(Eq, Show)
+} derive(Eq, @debug.Debug)
 pub fn ButtonSource::mouse_button(Self) -> MouseButton?
+pub impl Show for ButtonSource
 
 pub(all) enum ControlFlow {
   Poll
   Wait
   WaitUntil(Int64)
-} derive(Eq, Show)
+} derive(Eq, @debug.Debug)
 pub fn ControlFlow::default() -> Self
 pub fn ControlFlow::wait_duration(Int64, Int) -> Self
 pub fn ControlFlow::wait_until(Int64) -> Self
+pub impl Show for ControlFlow
 
 pub(all) enum Cursor {
   Icon(CursorIcon)
   Custom(CustomCursor)
-} derive(Eq, Show)
+} derive(Eq, @debug.Debug)
+pub impl Show for Cursor
 
 pub(all) enum CursorGrabMode {
   None
   Locked
   Confined
-} derive(Eq, Show)
+} derive(Eq, @debug.Debug)
+pub impl Show for CursorGrabMode
 
 pub(all) enum CursorIcon {
   Default
@@ -148,73 +165,84 @@ pub(all) enum CursorIcon {
   Crosshair
   Move
   NotAllowed
-} derive(Eq, Show)
+} derive(Eq, @debug.Debug)
+pub impl Show for CursorIcon
 
 pub struct CustomCursor {
   // private fields
-} derive(Eq, Show)
+} derive(Eq, @debug.Debug)
 pub fn CustomCursor::from_raw(UInt64) -> Self
 pub fn CustomCursor::into_raw(Self) -> UInt64
+pub impl Show for CustomCursor
 
 pub(all) enum CustomCursorSource {
   Rgba(Bytes, Int, Int, Int, Int)
   Url(String, Int, Int)
   Animation(Int, Array[CustomCursor])
-} derive(Eq, Show)
+} derive(Eq, @debug.Debug)
 pub fn CustomCursorSource::from_animation(Int, Array[CustomCursor]) -> Self raise BadCustomCursorAnimation
 pub fn CustomCursorSource::from_rgba(Bytes, Int, Int, Int, Int) -> Self raise BadCustomCursorSource
+pub impl Show for CustomCursorSource
 
 pub(all) enum DeviceEvent {
   PointerMotion(Double, Double)
   MouseWheel(MouseScrollDelta)
   Button(ButtonId, ElementState)
   Key(RawKeyEvent)
-} derive(Eq, Show)
+} derive(Eq, @debug.Debug)
 pub fn DeviceEvent::into_winit_event(Self) -> WinitDeviceEvent
+pub impl Show for DeviceEvent
 
 pub(all) enum DeviceEvents {
   Always
   WhenFocused
   Never
-} derive(Eq, Show)
+} derive(Eq, @debug.Debug)
 pub fn DeviceEvents::default() -> Self
+pub impl Show for DeviceEvents
 
 pub struct DeviceId {
   raw : Int64
-} derive(Eq, Show)
+} derive(Eq, @debug.Debug)
 pub fn DeviceId::from_raw(Int64) -> Self
 pub fn DeviceId::into_raw(Self) -> Int64
+pub impl Show for DeviceId
 
 pub(all) enum ElementState {
   Pressed
   Released
-} derive(Eq, Show)
+} derive(Eq, @debug.Debug)
 pub fn ElementState::is_pressed(Self) -> Bool
+pub impl Show for ElementState
 
 pub struct FingerId {
   raw : Int
-} derive(Eq, Show)
+} derive(Eq, @debug.Debug)
 pub fn FingerId::from_raw(Int) -> Self
 pub fn FingerId::into_raw(Self) -> Int
+pub impl Show for FingerId
 
 pub(all) enum Force {
   Calibrated(Double, Double)
   Normalized(Double)
-} derive(Eq, Show)
+} derive(Eq, @debug.Debug)
 pub fn Force::normalized(Self, TabletToolAngle?) -> Double
+pub impl Show for Force
 
 pub(all) enum Fullscreen {
   Borderless(MonitorHandle?)
   Exclusive(MonitorHandle, VideoMode)
-} derive(Eq, Show)
+} derive(Eq, @debug.Debug)
+pub impl Show for Fullscreen
 
 pub struct Icon {
   // private fields
-} derive(Eq, Show)
+} derive(Eq, @debug.Debug)
 pub fn Icon::height(Self) -> Int
 pub fn Icon::new(Bytes, Int, Int) -> Self raise BadIcon
 pub fn Icon::rgba(Self) -> Bytes
 pub fn Icon::width(Self) -> Int
+pub impl Show for Icon
 
 pub(all) enum Ime {
   Enabled
@@ -222,11 +250,12 @@ pub(all) enum Ime {
   Commit(String)
   DeleteSurrounding(Int, Int)
   Disabled
-} derive(Eq, Show)
+} derive(Eq, @debug.Debug)
+pub impl Show for Ime
 
 pub struct ImeCapabilities {
   // private fields
-} derive(Eq, Show)
+} derive(Eq, @debug.Debug)
 pub fn ImeCapabilities::all() -> Self
 pub fn ImeCapabilities::cursor_area(Self) -> Bool
 pub fn ImeCapabilities::default() -> Self
@@ -239,27 +268,30 @@ pub fn ImeCapabilities::with_surrounding_text(Self) -> Self
 pub fn ImeCapabilities::without_cursor_area(Self) -> Self
 pub fn ImeCapabilities::without_hint_and_purpose(Self) -> Self
 pub fn ImeCapabilities::without_surrounding_text(Self) -> Self
+pub impl Show for ImeCapabilities
 
 pub struct ImeCursorRange {
   end : Int
   start : Int
-} derive(Eq, Show)
+} derive(Eq, @debug.Debug)
 pub fn ImeCursorRange::end(Self) -> Int
 pub fn ImeCursorRange::new(Int, Int) -> Self
 pub fn ImeCursorRange::start(Self) -> Int
+pub impl Show for ImeCursorRange
 
 pub struct ImeEnableRequest {
   // private fields
-} derive(Eq, Show)
+} derive(Eq, @debug.Debug)
 pub fn ImeEnableRequest::capabilities(Self) -> ImeCapabilities
 pub fn ImeEnableRequest::into_raw(Self) -> (ImeCapabilities, ImeRequestData)
 pub fn ImeEnableRequest::into_request(Self) -> ImeRequest
 pub fn ImeEnableRequest::new(ImeCapabilities, ImeRequestData) -> Self?
 pub fn ImeEnableRequest::request_data(Self) -> ImeRequestData
+pub impl Show for ImeEnableRequest
 
 pub struct ImeHint {
   // private fields
-} derive(Eq, Show)
+} derive(Eq, @debug.Debug)
 pub fn ImeHint::auto_capitalization() -> Self
 pub fn ImeHint::bits(Self) -> Int
 pub fn ImeHint::completion() -> Self
@@ -275,6 +307,7 @@ pub fn ImeHint::spellcheck() -> Self
 pub fn ImeHint::titlecase() -> Self
 pub fn ImeHint::union(Self, Self) -> Self
 pub fn ImeHint::uppercase() -> Self
+pub impl Show for ImeHint
 
 pub(all) enum ImePurpose {
   Normal
@@ -288,17 +321,19 @@ pub(all) enum ImePurpose {
   Date
   Time
   DateTime
-} derive(Eq, Show)
+} derive(Eq, @debug.Debug)
+pub impl Show for ImePurpose
 
 pub(all) enum ImeRequest {
   Enable(ImeEnableRequest)
   Update(ImeRequestData)
   Disable
-} derive(Eq, Show)
+} derive(Eq, @debug.Debug)
+pub impl Show for ImeRequest
 
 pub struct ImeRequestData {
   // private fields
-} derive(Eq, Show)
+} derive(Eq, @debug.Debug)
 pub fn ImeRequestData::cursor_area(Self) -> (@dpi.Position, @dpi.Size)?
 pub fn ImeRequestData::cursor_area_position(Self) -> @dpi.Position?
 pub fn ImeRequestData::cursor_area_size(Self) -> @dpi.Size?
@@ -318,27 +353,30 @@ pub fn ImeRequestData::with_surrounding_text(Self, ImeSurroundingText) -> Self
 pub fn ImeRequestData::without_cursor_area(Self) -> Self
 pub fn ImeRequestData::without_hint_and_purpose(Self) -> Self
 pub fn ImeRequestData::without_surrounding_text(Self) -> Self
+pub impl Show for ImeRequestData
 
 pub struct ImeSurroundingText {
   // private fields
-} derive(Eq, Show)
+} derive(Eq, @debug.Debug)
 pub fn ImeSurroundingText::anchor(Self) -> Int
 pub fn ImeSurroundingText::cursor(Self) -> Int
 pub fn ImeSurroundingText::into_text(Self) -> String
 pub fn ImeSurroundingText::max_text_bytes() -> Int
 pub fn ImeSurroundingText::new(String, Int, Int) -> Self raise ImeSurroundingTextError
 pub fn ImeSurroundingText::text(Self) -> String
+pub impl Show for ImeSurroundingText
 
 pub(all) enum Key {
   Named(NamedKey)
   Character(String)
   Dead(String?)
   Unidentified(NativeKey)
-} derive(Eq, Show)
+} derive(Eq, @debug.Debug)
 pub fn Key::character(Self) -> String?
 pub fn Key::from_named(NamedKey) -> Self
 pub fn Key::from_native(NativeKey) -> Self
 pub fn Key::to_text(Self) -> String?
+pub impl Show for Key
 
 pub(all) enum KeyCode {
   Unidentified
@@ -558,8 +596,9 @@ pub(all) enum KeyCode {
   Super
   Turbo
   Power
-} derive(Eq, Show)
+} derive(Eq, @debug.Debug)
 pub fn KeyCode::default() -> Self
+pub impl Show for KeyCode
 
 pub struct KeyEvent {
   key_without_modifiers : Key
@@ -570,7 +609,7 @@ pub struct KeyEvent {
   state : ElementState
   text : String?
   text_with_all_modifiers : String?
-} derive(Eq, Show)
+} derive(Eq, @debug.Debug)
 pub fn KeyEvent::key_without_modifiers(Self) -> Key
 pub fn KeyEvent::location(Self) -> KeyLocation
 pub fn KeyEvent::logical_key(Self) -> Key
@@ -580,17 +619,19 @@ pub fn KeyEvent::repeat(Self) -> Bool
 pub fn KeyEvent::state(Self) -> ElementState
 pub fn KeyEvent::text(Self) -> String?
 pub fn KeyEvent::text_with_all_modifiers(Self) -> String?
+pub impl Show for KeyEvent
 
 pub(all) enum KeyLocation {
   Standard
   Left
   Right
   Numpad
-} derive(Eq, Show)
+} derive(Eq, @debug.Debug)
+pub impl Show for KeyLocation
 
 pub struct Modifiers {
   // private fields
-} derive(Eq, Show)
+} derive(Eq, @debug.Debug)
 pub fn Modifiers::alt_key(Self) -> Bool
 pub fn Modifiers::control_key(Self) -> Bool
 pub fn Modifiers::default() -> Self
@@ -609,15 +650,17 @@ pub fn Modifiers::rshift_state(Self) -> ModifiersKeyState
 pub fn Modifiers::rsuper_state(Self) -> ModifiersKeyState
 pub fn Modifiers::shift_key(Self) -> Bool
 pub fn Modifiers::state(Self) -> ModifiersState
+pub impl Show for Modifiers
 
 pub(all) enum ModifiersKeyState {
   Pressed
   Unknown
-} derive(Eq, Show)
+} derive(Eq, @debug.Debug)
+pub impl Show for ModifiersKeyState
 
 pub struct ModifiersKeys {
   // private fields
-} derive(Eq, Show)
+} derive(Eq, @debug.Debug)
 pub fn ModifiersKeys::bits(Self) -> Int
 pub fn ModifiersKeys::contains(Self, Self) -> Bool
 pub fn ModifiersKeys::from_bits(Int) -> Self
@@ -633,10 +676,11 @@ pub fn ModifiersKeys::rmeta() -> Self
 pub fn ModifiersKeys::rshift() -> Self
 pub fn ModifiersKeys::union(Self, Self) -> Self
 pub fn ModifiersKeys::without(Self, Self) -> Self
+pub impl Show for ModifiersKeys
 
 pub struct ModifiersState {
   // private fields
-} derive(Eq, Show)
+} derive(Eq, @debug.Debug)
 pub fn ModifiersState::alt() -> Self
 pub fn ModifiersState::alt_key(Self) -> Bool
 pub fn ModifiersState::bits(Self) -> Int
@@ -651,10 +695,11 @@ pub fn ModifiersState::none() -> Self
 pub fn ModifiersState::shift() -> Self
 pub fn ModifiersState::shift_key(Self) -> Bool
 pub fn ModifiersState::union(Self, Self) -> Self
+pub impl Show for ModifiersState
 
 pub struct MonitorHandle {
   // private fields
-} derive(Eq, Show)
+} derive(Eq, @debug.Debug)
 pub fn MonitorHandle::current_video_mode(Self) -> VideoMode?
 pub fn MonitorHandle::name(Self) -> String?
 pub fn MonitorHandle::native_id(Self) -> UInt64
@@ -663,6 +708,7 @@ pub fn MonitorHandle::position(Self) -> @dpi.PhysicalPosition
 pub fn MonitorHandle::scale_factor(Self) -> Double
 pub fn MonitorHandle::surface_size(Self) -> @dpi.PhysicalSize
 pub fn MonitorHandle::video_modes(Self) -> Array[VideoMode]
+pub impl Show for MonitorHandle
 
 pub(all) enum MouseButton {
   Left
@@ -697,13 +743,15 @@ pub(all) enum MouseButton {
   Button30
   Button31
   Button32
-} derive(Eq, Show)
+} derive(Eq, @debug.Debug)
 pub fn MouseButton::try_from_u8(Int) -> Self?
+pub impl Show for MouseButton
 
 pub(all) enum MouseScrollDelta {
   LineDelta(Double, Double)
   PixelDelta(@dpi.PhysicalPositionF64)
-} derive(Eq, Show)
+} derive(Eq, @debug.Debug)
+pub impl Show for MouseScrollDelta
 
 pub(all) enum NamedKey {
   Unidentified
@@ -1013,8 +1061,9 @@ pub(all) enum NamedKey {
   Teletext
   VideoModeNext
   Wink
-} derive(Eq, Show)
+} derive(Eq, @debug.Debug)
 pub fn NamedKey::default() -> Self
+pub impl Show for NamedKey
 
 pub(all) enum NativeKey {
   Unidentified
@@ -1024,8 +1073,9 @@ pub(all) enum NativeKey {
   Xkb(Int)
   Web(String)
   Ohos(Int)
-} derive(Eq, Show)
+} derive(Eq, @debug.Debug)
 pub fn NativeKey::from_key_code(NativeKeyCode) -> Self
+pub impl Show for NativeKey
 
 pub(all) enum NativeKeyCode {
   Unidentified
@@ -1034,33 +1084,37 @@ pub(all) enum NativeKeyCode {
   Windows(Int)
   Xkb(Int)
   Ohos(Int)
-} derive(Eq, Show)
+} derive(Eq, @debug.Debug)
+pub impl Show for NativeKeyCode
 
 pub(all) enum OptionAsAlt {
   OnlyLeft
   OnlyRight
   Both
   None
-} derive(Eq, Show)
+} derive(Eq, @debug.Debug)
 pub fn OptionAsAlt::default() -> Self
+pub impl Show for OptionAsAlt
 
 pub struct ParentWindow {
   // private fields
-} derive(Eq, Show)
+} derive(Eq, @debug.Debug)
 pub fn ParentWindow::from_raw(UInt64) -> Self
 pub fn ParentWindow::into_raw(Self) -> UInt64
+pub impl Show for ParentWindow
 
 pub(all) enum PhysicalKey {
   Code(KeyCode)
   Unidentified(NativeKeyCode)
-} derive(Eq, Show)
+} derive(Eq, @debug.Debug)
 pub fn PhysicalKey::from_key_code(KeyCode) -> Self
 pub fn PhysicalKey::from_native_key_code(NativeKeyCode) -> Self
 pub fn PhysicalKey::into_key_code(Self) -> KeyCode
+pub impl Show for PhysicalKey
 
 pub struct PlatformEventLoopAttributes {
   // private fields
-} derive(Eq, Show)
+} derive(Eq, @debug.Debug)
 pub fn PlatformEventLoopAttributes::activate_ignoring_other_apps(Self) -> Bool
 pub fn PlatformEventLoopAttributes::activation_policy(Self) -> ActivationPolicy?
 pub fn PlatformEventLoopAttributes::any_thread(Self) -> Bool
@@ -1070,10 +1124,11 @@ pub fn PlatformEventLoopAttributes::with_activate_ignoring_other_apps(Self, Bool
 pub fn PlatformEventLoopAttributes::with_activation_policy(Self, ActivationPolicy) -> Self
 pub fn PlatformEventLoopAttributes::with_any_thread(Self, Bool) -> Self
 pub fn PlatformEventLoopAttributes::with_default_menu(Self, Bool) -> Self
+pub impl Show for PlatformEventLoopAttributes
 
 pub struct PlatformWindowAttributes {
   // private fields
-} derive(Eq, Show)
+} derive(Eq, @debug.Debug)
 pub fn PlatformWindowAttributes::accepts_first_mouse(Self) -> Bool
 pub fn PlatformWindowAttributes::borderless_game(Self) -> Bool
 pub fn PlatformWindowAttributes::default() -> Self
@@ -1103,33 +1158,38 @@ pub fn PlatformWindowAttributes::with_titlebar_buttons_hidden(Self, Bool) -> Sel
 pub fn PlatformWindowAttributes::with_titlebar_hidden(Self, Bool) -> Self
 pub fn PlatformWindowAttributes::with_titlebar_transparent(Self, Bool) -> Self
 pub fn PlatformWindowAttributes::with_unified_titlebar(Self, Bool) -> Self
+pub impl Show for PlatformWindowAttributes
 
 pub(all) enum PointerKind {
   Mouse
   Touch(FingerId)
   TabletTool(TabletToolKind)
   Unknown
-} derive(Eq, Show)
+} derive(Eq, @debug.Debug)
+pub impl Show for PointerKind
 
 pub(all) enum PointerSource {
   Mouse
   Touch(FingerId, Force?)
   TabletTool(TabletToolKind, TabletToolData)
   Unknown
-} derive(Eq, Show)
+} derive(Eq, @debug.Debug)
+pub impl Show for PointerSource
 
 pub(all) enum PumpStatus {
   Continue
   Exit(Int)
-} derive(Eq, Show)
+} derive(Eq, @debug.Debug)
+pub impl Show for PumpStatus
 
 pub struct RawKeyEvent {
   physical_key : PhysicalKey
   state : ElementState
-} derive(Eq, Show)
+} derive(Eq, @debug.Debug)
 pub fn RawKeyEvent::new(PhysicalKey, ElementState) -> Self
 pub fn RawKeyEvent::physical_key(Self) -> PhysicalKey
 pub fn RawKeyEvent::state(Self) -> ElementState
+pub impl Show for RawKeyEvent
 
 pub(all) enum ResizeDirection {
   East
@@ -1140,11 +1200,12 @@ pub(all) enum ResizeDirection {
   SouthEast
   SouthWest
   West
-} derive(Eq, Show)
+} derive(Eq, @debug.Debug)
+pub impl Show for ResizeDirection
 
 pub struct ScreenEdge {
   // private fields
-} derive(Eq, Show)
+} derive(Eq, @debug.Debug)
 pub fn ScreenEdge::all() -> Self
 pub fn ScreenEdge::bits(Self) -> Int
 pub fn ScreenEdge::bottom() -> Self
@@ -1155,37 +1216,42 @@ pub fn ScreenEdge::none() -> Self
 pub fn ScreenEdge::right() -> Self
 pub fn ScreenEdge::top() -> Self
 pub fn ScreenEdge::union(Self, Self) -> Self
+pub impl Show for ScreenEdge
 
 pub(all) enum StartCause {
   Init
   Poll
   WaitCancelled(Int64, Int64?)
   ResumeTimeReached(Int64, Int64)
-} derive(Eq, Show)
+} derive(Eq, @debug.Debug)
+pub impl Show for StartCause
 
 pub struct SurfaceSizeWriter {
   size : @ref.Ref[@dpi.PhysicalSize]
-} derive(Show)
+} derive(@debug.Debug)
 pub fn SurfaceSizeWriter::new(@dpi.PhysicalSize) -> Self
 pub fn SurfaceSizeWriter::request_surface_size(Self, @dpi.PhysicalSize) -> Unit
 pub fn SurfaceSizeWriter::surface_size(Self) -> @dpi.PhysicalSize
+pub impl Show for SurfaceSizeWriter
 
 pub struct TabletToolAngle {
   altitude : Double
   azimuth : Double
-} derive(Eq, Show)
+} derive(Eq, @debug.Debug)
 pub fn TabletToolAngle::altitude(Self) -> Double
 pub fn TabletToolAngle::azimuth(Self) -> Double
 pub fn TabletToolAngle::default() -> Self
 pub fn TabletToolAngle::new(Double, Double) -> Self
 pub fn TabletToolAngle::tilt(Self) -> TabletToolTilt
+pub impl Show for TabletToolAngle
 
 pub(all) enum TabletToolButton {
   Contact
   Barrel
   Other(Int)
-} derive(Eq, Show)
+} derive(Eq, @debug.Debug)
 pub fn TabletToolButton::mouse_button(Self) -> MouseButton?
+pub impl Show for TabletToolButton
 
 pub struct TabletToolData {
   force : Force?
@@ -1193,13 +1259,14 @@ pub struct TabletToolData {
   twist : Int?
   tilt : TabletToolTilt?
   angle : TabletToolAngle?
-} derive(Eq, Show)
+} derive(Eq, @debug.Debug)
 pub fn TabletToolData::angle(Self) -> TabletToolAngle?
 pub fn TabletToolData::force(Self) -> Force?
 pub fn TabletToolData::new(Force?, Double?, Int?, TabletToolTilt?, TabletToolAngle?) -> Self
 pub fn TabletToolData::tangential_force(Self) -> Double?
 pub fn TabletToolData::tilt(Self) -> TabletToolTilt?
 pub fn TabletToolData::twist(Self) -> Int?
+pub impl Show for TabletToolData
 
 pub(all) enum TabletToolKind {
   Pen
@@ -1210,46 +1277,52 @@ pub(all) enum TabletToolKind {
   Finger
   Mouse
   Lens
-} derive(Eq, Show)
+} derive(Eq, @debug.Debug)
 pub fn TabletToolKind::default() -> Self
+pub impl Show for TabletToolKind
 
 pub struct TabletToolTilt {
   x : Int
   y : Int
-} derive(Eq, Show)
+} derive(Eq, @debug.Debug)
 pub fn TabletToolTilt::angle(Self) -> TabletToolAngle
 pub fn TabletToolTilt::new(Int, Int) -> Self
 pub fn TabletToolTilt::x(Self) -> Int
 pub fn TabletToolTilt::y(Self) -> Int
+pub impl Show for TabletToolTilt
 
 pub(all) enum Theme {
   Light
   Dark
-} derive(Eq, Show)
+} derive(Eq, @debug.Debug)
+pub impl Show for Theme
 
 pub(all) enum TouchPhase {
   Started
   Moved
   Ended
   Cancelled
-} derive(Eq, Show)
+} derive(Eq, @debug.Debug)
+pub impl Show for TouchPhase
 
 pub(all) enum UserAttentionType {
   Critical
   Informational
-} derive(Eq, Show)
+} derive(Eq, @debug.Debug)
+pub impl Show for UserAttentionType
 
 pub struct VideoMode {
   // private fields
-} derive(Eq, Show)
+} derive(Eq, @debug.Debug)
 pub fn VideoMode::bit_depth(Self) -> Int?
 pub fn VideoMode::new(@dpi.PhysicalSize, Int?, Int?) -> Self
 pub fn VideoMode::refresh_rate_millihertz(Self) -> Int?
 pub fn VideoMode::surface_size(Self) -> @dpi.PhysicalSize
+pub impl Show for VideoMode
 
 pub struct WindowAttributes {
   // private fields
-} derive(Eq, Show)
+} derive(Eq, @debug.Debug)
 pub fn WindowAttributes::active(Self) -> Bool
 pub fn WindowAttributes::blur(Self) -> Bool
 pub fn WindowAttributes::clip_children(Self) -> Bool
@@ -1318,10 +1391,11 @@ pub fn WindowAttributes::with_transparent(Self, Bool) -> Self
 pub fn WindowAttributes::with_visible(Self, Bool) -> Self
 pub fn WindowAttributes::with_window_icon(Self, Icon?) -> Self
 pub fn WindowAttributes::with_window_level(Self, WindowLevel) -> Self
+pub impl Show for WindowAttributes
 
 pub struct WindowButtons {
   // private fields
-} derive(Eq, Show)
+} derive(Eq, @debug.Debug)
 pub fn WindowButtons::all() -> Self
 pub fn WindowButtons::close(Self) -> Bool
 pub fn WindowButtons::maximize(Self) -> Bool
@@ -1330,6 +1404,7 @@ pub fn WindowButtons::none() -> Self
 pub fn WindowButtons::with_close(Self, Bool) -> Self
 pub fn WindowButtons::with_maximize(Self, Bool) -> Self
 pub fn WindowButtons::with_minimize(Self, Bool) -> Self
+pub impl Show for WindowButtons
 
 pub(all) enum WindowEvent {
   ActivationTokenDone(AsyncRequestSerial, ActivationToken)
@@ -1359,27 +1434,31 @@ pub(all) enum WindowEvent {
   ThemeChanged(Theme)
   Occluded(Bool)
   RedrawRequested
-} derive(Show)
+} derive(@debug.Debug)
 pub fn WindowEvent::into_winit_events(Self) -> Array[WinitWindowEvent]
+pub impl Show for WindowEvent
 
 pub struct WindowId {
   // private fields
-} derive(Eq, Show)
+} derive(Eq, @debug.Debug)
 pub fn WindowId::from_raw(Int) -> Self
 pub fn WindowId::into_raw(Self) -> Int
+pub impl Show for WindowId
 
 pub(all) enum WindowLevel {
   Normal
   AlwaysOnTop
   AlwaysOnBottom
-} derive(Eq, Show)
+} derive(Eq, @debug.Debug)
+pub impl Show for WindowLevel
 
 pub(all) enum WinitDeviceEvent {
   MouseMotion(Double, Double)
   MouseWheel(MouseScrollDelta)
   Button(ButtonId, ElementState)
   Key(RawKeyEvent)
-} derive(Eq, Show)
+} derive(Eq, @debug.Debug)
+pub impl Show for WinitDeviceEvent
 
 pub(all) enum WinitWindowEvent {
   ActivationTokenDone(AsyncRequestSerial, ActivationToken)
@@ -1408,7 +1487,8 @@ pub(all) enum WinitWindowEvent {
   ThemeChanged(Theme)
   Occluded(Bool)
   RedrawRequested
-} derive(Show)
+} derive(@debug.Debug)
+pub impl Show for WinitWindowEvent
 
 // Type aliases
 
