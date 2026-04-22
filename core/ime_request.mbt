@@ -73,7 +73,7 @@ pub struct ImeRequestData {
   priv mut hint : ImeHint?
   priv mut purpose : ImePurpose?
   priv mut surrounding_text : ImeSurroundingText?
-} derive(Eq, Show)
+} derive(Eq, Debug)
 
 ///|
 pub fn ImeRequestData::default() -> ImeRequestData {
@@ -223,7 +223,7 @@ pub fn ImeRequestData::into_request(self : ImeRequestData) -> ImeRequest {
 pub struct ImeEnableRequest {
   priv capabilities : ImeCapabilities
   priv request_data : ImeRequestData
-} derive(Eq, Show)
+} derive(Eq, Debug)
 
 ///|
 pub fn ImeEnableRequest::new(

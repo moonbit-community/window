@@ -1,7 +1,7 @@
 ///|
 // Port target: winit-reference/winit/tests/serde_objects.rs
 // MoonBit adaptation: this package does not expose Rust serde traits, so we
-// assert representability via value construction + Show/Eq stability.
+// assert representability via value construction + Debug/Eq stability.
 
 ///|
 test "window_serde" {

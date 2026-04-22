@@ -10,20 +10,20 @@ pub(all) enum MenuAction {
   ShowAll
   Quit
   Separator
-} derive(Eq, Show)
+} derive(Eq, Debug)
 
 ///|
 pub(all) struct KeyEquivalent {
   key : String
   masks : Int?
-} derive(Eq, Show)
+} derive(Eq, Debug)
 
 ///|
 pub(all) struct MenuItemDescriptor {
   title : String
   action : MenuAction
   key_equivalent : KeyEquivalent?
-} derive(Eq, Show)
+} derive(Eq, Debug)
 
 ///|
 fn menu_item_descriptor(

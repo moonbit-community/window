@@ -22,7 +22,7 @@ let modifiers_keys_mask : Int = 0xFF
 ///|
 pub struct ModifiersState {
   priv bits : Int
-} derive(Eq, Show)
+} derive(Eq, Debug)
 
 ///|
 pub fn ModifiersState::none() -> ModifiersState {
@@ -104,12 +104,12 @@ pub fn ModifiersState::is_empty(self : ModifiersState) -> Bool {
 pub(all) enum ModifiersKeyState {
   Pressed
   Unknown
-} derive(Eq, Show)
+} derive(Eq, Debug)
 
 ///|
 pub struct ModifiersKeys {
   priv bits : Int
-} derive(Eq, Show)
+} derive(Eq, Debug)
 
 ///|
 pub fn ModifiersKeys::none() -> ModifiersKeys {
@@ -199,7 +199,7 @@ pub fn ModifiersKeys::is_empty(self : ModifiersKeys) -> Bool {
 pub struct Modifiers {
   priv pressed_mods : ModifiersKeys
   priv state : ModifiersState
-} derive(Eq, Show)
+} derive(Eq, Debug)
 
 ///|
 pub fn Modifiers::new(

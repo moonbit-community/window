@@ -6,7 +6,7 @@ pub(all) enum NativeKeyCode {
   Windows(Int)
   Xkb(Int)
   Ohos(Int)
-} derive(Eq, Show)
+} derive(Eq, Debug)
 
 ///|
 pub(all) enum NativeKey {
@@ -17,7 +17,7 @@ pub(all) enum NativeKey {
   Xkb(Int)
   Web(String)
   Ohos(Int)
-} derive(Eq, Show)
+} derive(Eq, Debug)
 
 ///|
 pub fn NativeKey::from_key_code(code : NativeKeyCode) -> NativeKey {
@@ -250,7 +250,7 @@ pub(all) enum KeyCode {
   Super
   Turbo
   Power
-} derive(Eq, Show)
+} derive(Eq, Debug)
 
 ///|
 pub fn KeyCode::default() -> KeyCode {
@@ -261,7 +261,7 @@ pub fn KeyCode::default() -> KeyCode {
 pub(all) enum PhysicalKey {
   Code(KeyCode)
   Unidentified(NativeKeyCode)
-} derive(Eq, Show)
+} derive(Eq, Debug)
 
 ///|
 pub fn PhysicalKey::from_key_code(code : KeyCode) -> PhysicalKey {
@@ -287,7 +287,7 @@ pub(all) enum KeyLocation {
   Left
   Right
   Numpad
-} derive(Eq, Show)
+} derive(Eq, Debug)
 
 ///|
 pub(all) enum NamedKey {
@@ -598,7 +598,7 @@ pub(all) enum NamedKey {
   Teletext
   VideoModeNext
   Wink
-} derive(Eq, Show)
+} derive(Eq, Debug)
 
 ///|
 pub fn NamedKey::default() -> NamedKey {
@@ -611,7 +611,7 @@ pub(all) enum Key {
   Character(String)
   Dead(String?)
   Unidentified(NativeKey)
-} derive(Eq, Show)
+} derive(Eq, Debug)
 
 ///|
 pub fn Key::from_named(named : NamedKey) -> Key {
@@ -653,7 +653,7 @@ pub struct KeyEvent {
   state : ElementState
   text : String?
   text_with_all_modifiers : String?
-} derive(Eq, Show)
+} derive(Eq, Debug)
 
 ///|
 pub fn KeyEvent::new(

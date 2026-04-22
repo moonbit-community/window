@@ -4,7 +4,7 @@
 ///|
 pub struct EventLoopProxy {
   priv _unit : Unit
-} derive(Eq, Show)
+} derive(Eq, Debug)
 
 ///|
 pub fn EventLoopProxy::wake_up(_self : EventLoopProxy) -> Unit {
@@ -261,17 +261,17 @@ pub struct EventLoop {
   priv will_terminate_observer_ : UInt64
   priv before_waiting_observer_ : UInt64
   priv after_waiting_observer_ : UInt64
-} derive(Show)
+} derive(Debug)
 
 ///|
 pub struct EventLoopBuilder {
   priv mut platform_attributes_ : @core.PlatformEventLoopAttributes
-} derive(Eq, Show)
+} derive(Eq, Debug)
 
 ///|
 pub struct ActiveEventLoop {
   priv inner : EventLoop
-} derive(Show)
+} derive(Debug)
 
 ///|
 let event_loop_global_created : Ref[Bool] = Ref::new(false)
