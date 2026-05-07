@@ -54,7 +54,7 @@ priv struct AppStateRuntime {
 }
 
 ///|
-fn AppStateRuntime::new() -> AppStateRuntime {
+fn AppStateRuntime::AppStateRuntime() -> AppStateRuntime {
   {
     activation_policy: -1,
     default_menu: true,
@@ -69,8 +69,8 @@ fn AppStateRuntime::new() -> AppStateRuntime {
     will_terminate_handled: false,
     exit_requested: false,
     event_handler_in_use: false,
-    control_flow: @core.ControlFlow::Wait,
-    waker: EventLoopWaker::new(),
+    control_flow: Wait,
+    waker: EventLoopWaker(),
     start_time_ms: None,
     wait_timeout_ms: None,
     pending_redraw_window_ids: [],
@@ -82,16 +82,16 @@ fn AppStateRuntime::new() -> AppStateRuntime {
 }
 
 ///|
-let app_state_runtime : Ref[AppStateRuntime] = Ref::new(AppStateRuntime::new())
+let app_state_runtime : Ref[AppStateRuntime] = Ref(AppStateRuntime())
 
 ///|
-let app_state_window_position_raw_ids : Ref[Array[Int]] = Ref::new([])
+let app_state_window_position_raw_ids : Ref[Array[Int]] = Ref([])
 
 ///|
-let app_state_window_position_xs : Ref[Array[Int]] = Ref::new([])
+let app_state_window_position_xs : Ref[Array[Int]] = Ref([])
 
 ///|
-let app_state_window_position_ys : Ref[Array[Int]] = Ref::new([])
+let app_state_window_position_ys : Ref[Array[Int]] = Ref([])
 
 ///|
 fn app_state_window_position_index(raw_id : Int) -> Int? {
@@ -142,7 +142,7 @@ fn app_state_queue_window_moved_if_changed(
   if should_queue {
     app_state_queue_window_callback(
       window_id,
-      @core.WindowEvent::Moved(
+      Moved(
         app_state_logical_position_to_physical(raw_id, logical_x, logical_y),
       ),
     )
@@ -171,29 +171,19 @@ fn app_state_device_event_from_native(
       if delta_x == 0.0 && delta_y == 0.0 {
         None
       } else {
-        Some(@core.DeviceEvent::PointerMotion(delta_x, delta_y))
+        Some(PointerMotion(delta_x, delta_y))
       }
     2 =>
       if button < 0 {
         None
       } else {
-        Some(
-          @core.DeviceEvent::Button(
-            @core.ButtonId::from_raw(button),
-            @core.ElementState::Pressed,
-          ),
-        )
+        Some(Button(@core.ButtonId::from_raw(button), Pressed))
       }
     3 =>
       if button < 0 {
         None
       } else {
-        Some(
-          @core.DeviceEvent::Button(
-            @core.ButtonId::from_raw(button),
-            @core.ElementState::Released,
-          ),
-        )
+        Some(Button(@core.ButtonId::from_raw(button), Released))
       }
     _ => None
   }
@@ -202,8 +192,7 @@ fn app_state_device_event_from_native(
 ///|
 fn app_state_callback_requires_running(callback : DeferredCallback) -> Bool {
   match callback {
-    DeferredCallback::DidFinishLaunching | DeferredCallback::WillTerminate =>
-      false
+    DidFinishLaunching | WillTerminate => false
     _ => true
   }
 }
@@ -264,7 +253,7 @@ fn app_state_dispatch_registered_deferred_callbacks() -> Unit {
 
 ///|
 fn app_state_maybe_dispatch_callback(callback : DeferredCallback) -> Unit {
-  if callback is DeferredCallback::WillTerminate {
+  if callback is WillTerminate {
     app_state_will_terminate()
     return ()
   }
@@ -276,8 +265,8 @@ fn app_state_maybe_dispatch_callback(callback : DeferredCallback) -> Unit {
     match callback {
       // Port target: app_state.rs::did_finish_launching / will_terminate
       // Even without an active handler, lifecycle state still advances.
-      DeferredCallback::DidFinishLaunching => app_state_did_finish_launching()
-      DeferredCallback::WillTerminate => app_state_will_terminate()
+      DidFinishLaunching => app_state_did_finish_launching()
+      WillTerminate => app_state_will_terminate()
       _ => ()
     }
     return ()
@@ -286,8 +275,7 @@ fn app_state_maybe_dispatch_callback(callback : DeferredCallback) -> Unit {
     match callback {
       // Port target: app_state.rs::handle_redraw
       // Drop re-entrant redraw callbacks instead of queueing them.
-      DeferredCallback::WindowEvent(_, @core.WindowEvent::RedrawRequested) =>
-        return ()
+      WindowEvent(_, RedrawRequested) => return ()
       _ => ()
     }
     app_state_defer_callback(callback)
@@ -304,11 +292,11 @@ fn app_state_queue_did_finish_launching_notification() -> Unit {
     return ()
   }
   for callback in app_state_runtime.val.deferred_callbacks {
-    if callback is DeferredCallback::DidFinishLaunching {
+    if callback is DidFinishLaunching {
       return ()
     }
   }
-  app_state_maybe_dispatch_callback(DeferredCallback::DidFinishLaunching)
+  app_state_maybe_dispatch_callback(DidFinishLaunching)
 }
 
 ///|
@@ -317,16 +305,16 @@ fn app_state_queue_will_terminate_notification() -> Unit {
     return ()
   }
   for callback in app_state_runtime.val.deferred_callbacks {
-    if callback is DeferredCallback::WillTerminate {
+    if callback is WillTerminate {
       return ()
     }
   }
-  app_state_maybe_dispatch_callback(DeferredCallback::WillTerminate)
+  app_state_maybe_dispatch_callback(WillTerminate)
 }
 
 ///|
 fn app_state_queue_proxy_wake_up() -> Unit {
-  app_state_maybe_dispatch_callback(DeferredCallback::ProxyWakeUp)
+  app_state_maybe_dispatch_callback(ProxyWakeUp)
 }
 
 ///|
@@ -340,8 +328,7 @@ fn app_state_queue_device_event(
     app_state_device_event_from_native(
       native_event_kind, button, delta_x, delta_y,
     ) {
-    Some(event) =>
-      app_state_maybe_dispatch_callback(DeferredCallback::DeviceEvent(event))
+    Some(event) => app_state_maybe_dispatch_callback(DeviceEvent(event))
     None => ()
   }
 }
@@ -360,7 +347,7 @@ fn app_state_logical_size_to_physical(
   width : Int,
   height : Int,
 ) -> @dpi.PhysicalSize {
-  @dpi.LogicalSize::new(width.to_double(), height.to_double()).to_physical(
+  @dpi.LogicalSize::LogicalSize(width.to_double(), height.to_double()).to_physical(
     app_state_window_scale_factor(raw_id),
   )
 }
@@ -371,7 +358,7 @@ fn app_state_logical_position_to_physical(
   x : Int,
   y : Int,
 ) -> @dpi.PhysicalPosition {
-  @dpi.LogicalPosition::new(x.to_double(), y.to_double()).to_physical(
+  @dpi.LogicalPosition::LogicalPosition(x.to_double(), y.to_double()).to_physical(
     app_state_window_scale_factor(raw_id),
   )
 }
@@ -417,11 +404,7 @@ fn app_state_queue_native_window_event(
     None => if argd > 0.0 { argd } else { 1.0 }
   }
   match kind {
-    1 =>
-      app_state_queue_window_callback(
-        window_id,
-        @core.WindowEvent::CloseRequested,
-      )
+    1 => app_state_queue_window_callback(window_id, CloseRequested)
     2 => {
       match window_handle {
         Some(window_handle) => {
@@ -436,18 +419,15 @@ fn app_state_queue_native_window_event(
       app_state_clear_fullscreen_request(raw_id)
       app_state_clear_window_position_state(raw_id)
       app_state_unregister_window_handle(raw_id)
-      app_state_queue_window_callback(window_id, @core.WindowEvent::Destroyed)
+      app_state_queue_window_callback(window_id, Destroyed)
     }
     3 => {
-      app_state_queue_window_callback(
-        window_id,
-        @core.WindowEvent::Focused(focused),
-      )
+      app_state_queue_window_callback(window_id, Focused(focused))
       if focused == false {
         view_clear_pressed_modifiers(raw_id)
         app_state_queue_window_callback(
           window_id,
-          @core.WindowEvent::ModifiersChanged(@core.Modifiers::default()),
+          ModifiersChanged(@core.Modifiers::default()),
         )
       }
     }
@@ -457,28 +437,21 @@ fn app_state_queue_native_window_event(
       )
     5 =>
       app_state_maybe_dispatch_callback(
-        DeferredCallback::ScaleFactorChanged(
+        ScaleFactorChanged(
           raw_id, window_id, scale_factor, logical_width, logical_height,
         ),
       )
     6 =>
       match theme_from_native(arg0) {
         Some(theme) =>
-          app_state_queue_window_callback(
-            window_id,
-            @core.WindowEvent::ThemeChanged(theme),
-          )
+          app_state_queue_window_callback(window_id, ThemeChanged(theme))
         None => ()
       }
-    7 =>
-      app_state_queue_window_callback(
-        window_id,
-        @core.WindowEvent::Occluded(occluded),
-      )
+    7 => app_state_queue_window_callback(window_id, Occluded(occluded))
     8 =>
       app_state_queue_window_callback(
         window_id,
-        @core.WindowEvent::SurfaceResized(
+        SurfaceResized(
           app_state_logical_size_to_physical(
             raw_id, logical_width, logical_height,
           ),
@@ -505,7 +478,7 @@ fn app_state_queue_native_window_event(
       app_state_process_queued_fullscreen_request(raw_id)
       app_state_queue_window_callback(
         window_id,
-        @core.WindowEvent::SurfaceResized(
+        SurfaceResized(
           app_state_logical_size_to_physical(
             raw_id, logical_width, logical_height,
           ),
@@ -521,7 +494,7 @@ fn app_state_queue_native_window_event(
       app_state_process_queued_fullscreen_request(raw_id)
       app_state_queue_window_callback(
         window_id,
-        @core.WindowEvent::SurfaceResized(
+        SurfaceResized(
           app_state_logical_size_to_physical(
             raw_id, logical_width, logical_height,
           ),
@@ -697,13 +670,10 @@ fn app_state_on_before_waiting() -> Unit {
   }
   for raw_id in app_state_take_all_redraws() {
     app_state_maybe_dispatch_callback(
-      DeferredCallback::WindowEvent(
-        @core.WindowId::from_raw(raw_id),
-        @core.WindowEvent::RedrawRequested,
-      ),
+      WindowEvent(@core.WindowId::from_raw(raw_id), RedrawRequested),
     )
   }
-  app_state_maybe_dispatch_callback(DeferredCallback::AboutToWait)
+  app_state_maybe_dispatch_callback(AboutToWait)
   if app_state_exiting() {
     stop_app_immediately()
     notify_windows_of_exit()
@@ -728,9 +698,7 @@ fn app_state_on_after_waiting() -> Unit {
   if app_state_stop_after_wait() {
     stop_app_immediately()
   }
-  app_state_maybe_dispatch_callback(
-    DeferredCallback::NewEvents(app_state_wait_cause()),
-  )
+  app_state_maybe_dispatch_callback(NewEvents(app_state_wait_cause()))
 }
 
 ///|
@@ -894,9 +862,7 @@ fn app_state_queue_window_callback(
   window_id : @core.WindowId,
   event : @core.WindowEvent,
 ) -> Unit {
-  app_state_maybe_dispatch_callback(
-    DeferredCallback::WindowEvent(window_id, event),
-  )
+  app_state_maybe_dispatch_callback(WindowEvent(window_id, event))
 }
 
 ///|
@@ -904,9 +870,7 @@ fn app_state_queue_standard_key_binding_callback(
   window_id : @core.WindowId,
   action : String,
 ) -> Unit {
-  app_state_maybe_dispatch_callback(
-    DeferredCallback::StandardKeyBinding(window_id, action),
-  )
+  app_state_maybe_dispatch_callback(StandardKeyBinding(window_id, action))
 }
 
 ///|
@@ -1040,10 +1004,9 @@ fn min_timeout_ms(a : Int64?, b : Int64?) -> Int64? {
 ///|
 fn app_state_control_flow_timeout_ms() -> Int64? {
   match app_state_runtime.val.control_flow {
-    @core.ControlFlow::Wait => None
-    @core.ControlFlow::Poll => Some(runtime_now_ms())
-    @core.ControlFlow::WaitUntil(requested_resume_ms) =>
-      Some(requested_resume_ms)
+    Wait => None
+    Poll => Some(runtime_now_ms())
+    WaitUntil(requested_resume_ms) => Some(requested_resume_ms)
   }
 }
 
@@ -1067,17 +1030,13 @@ fn app_state_wait_cause() -> @core.StartCause {
     None => runtime_now_ms()
   }
   match app_state_runtime.val.control_flow {
-    @core.ControlFlow::Poll => @core.StartCause::Poll
-    @core.ControlFlow::Wait =>
-      @core.StartCause::WaitCancelled(start_time_ms, None)
-    @core.ControlFlow::WaitUntil(requested_resume_ms) =>
+    Poll => Poll
+    Wait => WaitCancelled(start_time_ms, None)
+    WaitUntil(requested_resume_ms) =>
       if runtime_now_ms() >= requested_resume_ms {
-        @core.StartCause::ResumeTimeReached(start_time_ms, requested_resume_ms)
+        ResumeTimeReached(start_time_ms, requested_resume_ms)
       } else {
-        @core.StartCause::WaitCancelled(
-          start_time_ms,
-          Some(requested_resume_ms),
-        )
+        WaitCancelled(start_time_ms, Some(requested_resume_ms))
       }
   }
 }
@@ -1196,39 +1155,33 @@ fn[A : ApplicationHandler] app_state_dispatch_callback(
   callback : DeferredCallback,
 ) -> Unit {
   match callback {
-    DeferredCallback::DidFinishLaunching =>
+    DidFinishLaunching =>
       if app_state_is_launched() == false {
         app_state_did_finish_launching_and_dispatch(app, event_loop)
       }
-    DeferredCallback::WillTerminate => app_state_will_terminate()
-    DeferredCallback::NewEvents(cause) => app.new_events(event_loop, cause)
-    DeferredCallback::CanCreateSurfaces => app.can_create_surfaces(event_loop)
-    DeferredCallback::AboutToWait => app.about_to_wait(event_loop)
-    DeferredCallback::ProxyWakeUp => app.proxy_wake_up(event_loop)
-    DeferredCallback::WindowEvent(window_id, event) => {
+    WillTerminate => app_state_will_terminate()
+    NewEvents(cause) => app.new_events(event_loop, cause)
+    CanCreateSurfaces => app.can_create_surfaces(event_loop)
+    AboutToWait => app.about_to_wait(event_loop)
+    ProxyWakeUp => app.proxy_wake_up(event_loop)
+    WindowEvent(window_id, event) => {
       let stop_on_redraw = app_state_stop_on_redraw() &&
-        event is @core.WindowEvent::RedrawRequested
+        event is RedrawRequested
       app.window_event(event_loop, window_id, event)
       if stop_on_redraw {
         stop_app_immediately()
       }
     }
-    DeferredCallback::ScaleFactorChanged(
-      raw_id,
-      window_id,
-      scale_factor,
-      width,
-      height
-    ) => {
-      let physical_size = @dpi.LogicalSize::new(
+    ScaleFactorChanged(raw_id, window_id, scale_factor, width, height) => {
+      let physical_size = @dpi.LogicalSize::LogicalSize(
         width.to_double(),
         height.to_double(),
       ).to_physical(scale_factor)
-      let writer = @core.SurfaceSizeWriter::new(physical_size)
+      let writer = @core.SurfaceSizeWriter::SurfaceSizeWriter(physical_size)
       app.window_event(
         event_loop,
         window_id,
-        @core.WindowEvent::ScaleFactorChanged(scale_factor, writer),
+        ScaleFactorChanged(scale_factor, writer),
       )
       let requested_size = writer.surface_size()
       match app_state_window_handle(raw_id) {
@@ -1245,9 +1198,8 @@ fn[A : ApplicationHandler] app_state_dispatch_callback(
         None => ()
       }
     }
-    DeferredCallback::DeviceEvent(event) =>
-      app.device_event(event_loop, None, event)
-    DeferredCallback::StandardKeyBinding(window_id, action) =>
+    DeviceEvent(event) => app.device_event(event_loop, None, event)
+    StandardKeyBinding(window_id, action) =>
       app.standard_key_binding(event_loop, window_id, action)
   }
 }
@@ -1296,12 +1248,8 @@ fn[A : ApplicationHandler] app_state_dispatch_init_events(
   app : A,
   event_loop : ActiveEventLoop,
 ) -> Unit {
-  app_state_with_handler(
-    app,
-    event_loop,
-    DeferredCallback::NewEvents(@core.StartCause::Init),
-  )
-  app_state_with_handler(app, event_loop, DeferredCallback::CanCreateSurfaces)
+  app_state_with_handler(app, event_loop, NewEvents(Init))
+  app_state_with_handler(app, event_loop, CanCreateSurfaces)
 }
 
 ///|

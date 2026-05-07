@@ -65,12 +65,12 @@ test "monitorhandle_from_zero" {
 
 ///|
 test "from_invalid_id" {
-  assert_eq(monitor_from_native_id((10000 : Int).to_uint64()), None)
+  assert_true(monitor_from_native_id((10000 : Int).to_uint64()) == None)
 }
 
 ///|
 test "invalid_monitor_handle" {
-  assert_eq(monitor_from_native_id((10000 : Int).to_uint64()), None)
+  assert_true(monitor_from_native_id((10000 : Int).to_uint64()) == None)
 }
 
 ///|

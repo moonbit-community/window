@@ -4,8 +4,10 @@ pub struct SurfaceSizeWriter {
 } derive(Debug)
 
 ///|
-pub fn SurfaceSizeWriter::new(size : @dpi.PhysicalSize) -> SurfaceSizeWriter {
-  { size: Ref::new(size) }
+pub fn SurfaceSizeWriter::SurfaceSizeWriter(
+  size : @dpi.PhysicalSize,
+) -> SurfaceSizeWriter {
+  { size: Ref(size) }
 }
 
 ///|
@@ -39,7 +41,7 @@ pub(all) enum ElementState {
 
 ///|
 pub fn ElementState::is_pressed(self : ElementState) -> Bool {
-  self is ElementState::Pressed
+  self is Pressed
 }
 
 ///|
@@ -81,38 +83,38 @@ pub(all) enum MouseButton {
 ///|
 pub fn MouseButton::try_from_u8(button : Int) -> MouseButton? {
   match button {
-    0 => Some(MouseButton::Left)
-    1 => Some(MouseButton::Right)
-    2 => Some(MouseButton::Middle)
-    3 => Some(MouseButton::Back)
-    4 => Some(MouseButton::Forward)
-    5 => Some(MouseButton::Button6)
-    6 => Some(MouseButton::Button7)
-    7 => Some(MouseButton::Button8)
-    8 => Some(MouseButton::Button9)
-    9 => Some(MouseButton::Button10)
-    10 => Some(MouseButton::Button11)
-    11 => Some(MouseButton::Button12)
-    12 => Some(MouseButton::Button13)
-    13 => Some(MouseButton::Button14)
-    14 => Some(MouseButton::Button15)
-    15 => Some(MouseButton::Button16)
-    16 => Some(MouseButton::Button17)
-    17 => Some(MouseButton::Button18)
-    18 => Some(MouseButton::Button19)
-    19 => Some(MouseButton::Button20)
-    20 => Some(MouseButton::Button21)
-    21 => Some(MouseButton::Button22)
-    22 => Some(MouseButton::Button23)
-    23 => Some(MouseButton::Button24)
-    24 => Some(MouseButton::Button25)
-    25 => Some(MouseButton::Button26)
-    26 => Some(MouseButton::Button27)
-    27 => Some(MouseButton::Button28)
-    28 => Some(MouseButton::Button29)
-    29 => Some(MouseButton::Button30)
-    30 => Some(MouseButton::Button31)
-    31 => Some(MouseButton::Button32)
+    0 => Some(Left)
+    1 => Some(Right)
+    2 => Some(Middle)
+    3 => Some(Back)
+    4 => Some(Forward)
+    5 => Some(Button6)
+    6 => Some(Button7)
+    7 => Some(Button8)
+    8 => Some(Button9)
+    9 => Some(Button10)
+    10 => Some(Button11)
+    11 => Some(Button12)
+    12 => Some(Button13)
+    13 => Some(Button14)
+    14 => Some(Button15)
+    15 => Some(Button16)
+    16 => Some(Button17)
+    17 => Some(Button18)
+    18 => Some(Button19)
+    19 => Some(Button20)
+    20 => Some(Button21)
+    21 => Some(Button22)
+    22 => Some(Button23)
+    23 => Some(Button24)
+    24 => Some(Button25)
+    25 => Some(Button26)
+    26 => Some(Button27)
+    27 => Some(Button28)
+    28 => Some(Button29)
+    29 => Some(Button30)
+    30 => Some(Button31)
+    31 => Some(Button32)
     _ => None
   }
 }
@@ -210,7 +212,7 @@ pub(all) enum TabletToolKind {
 
 ///|
 pub fn TabletToolKind::default() -> TabletToolKind {
-  TabletToolKind::Pen
+  Pen
 }
 
 ///|
@@ -223,7 +225,7 @@ pub struct TabletToolData {
 } derive(Eq, Debug)
 
 ///|
-pub fn TabletToolData::new(
+pub fn TabletToolData::TabletToolData(
   force : Force?,
   tangential_force : Double?,
   twist : Int?,
@@ -279,7 +281,7 @@ pub struct TabletToolTilt {
 } derive(Eq, Debug)
 
 ///|
-pub fn TabletToolTilt::new(x : Int, y : Int) -> TabletToolTilt {
+pub fn TabletToolTilt::TabletToolTilt(x : Int, y : Int) -> TabletToolTilt {
   { x, y }
 }
 
@@ -331,7 +333,7 @@ pub fn TabletToolTilt::angle(self : TabletToolTilt) -> TabletToolAngle {
     let denom = Double::sqrt(tx * tx + ty * ty)
     @math.atan(1.0 / denom)
   }
-  TabletToolAngle::new(altitude, azimuth)
+  TabletToolAngle(altitude, azimuth)
 }
 
 ///|
@@ -341,7 +343,7 @@ pub struct TabletToolAngle {
 } derive(Eq, Debug)
 
 ///|
-pub fn TabletToolAngle::new(
+pub fn TabletToolAngle::TabletToolAngle(
   altitude : Double,
   azimuth : Double,
 ) -> TabletToolAngle {
@@ -398,7 +400,7 @@ pub fn TabletToolAngle::tilt(self : TabletToolAngle) -> TabletToolTilt {
     x = @math.atan(@math.cos(self.azimuth) / altitude)
     y = @math.atan(@math.sin(self.azimuth) / altitude)
   }
-  TabletToolTilt::new(
+  TabletToolTilt(
     @math.round(radians_to_degrees(x)).to_int(),
     @math.round(radians_to_degrees(y)).to_int(),
   )
@@ -414,11 +416,11 @@ pub(all) enum TabletToolButton {
 ///|
 pub fn TabletToolButton::mouse_button(self : TabletToolButton) -> MouseButton? {
   match self {
-    Contact => Some(MouseButton::Left)
-    Barrel => Some(MouseButton::Right)
-    Other(1) => Some(MouseButton::Middle)
-    Other(3) => Some(MouseButton::Back)
-    Other(4) => Some(MouseButton::Forward)
+    Contact => Some(Left)
+    Barrel => Some(Right)
+    Other(1) => Some(Middle)
+    Other(3) => Some(Back)
+    Other(4) => Some(Forward)
     Other(_) => None
   }
 }
@@ -451,7 +453,7 @@ pub(all) enum ButtonSource {
 pub fn ButtonSource::mouse_button(self : ButtonSource) -> MouseButton? {
   match self {
     Mouse(mouse) => Some(mouse)
-    Touch(_, _) => Some(MouseButton::Left)
+    Touch(_, _) => Some(Left)
     TabletTool(_, button, _) => button.mouse_button()
     Unknown(_) => None
   }
@@ -492,7 +494,7 @@ pub struct ImeCursorRange {
 } derive(Eq, Debug)
 
 ///|
-pub fn ImeCursorRange::new(start : Int, end : Int) -> ImeCursorRange {
+pub fn ImeCursorRange::ImeCursorRange(start : Int, end : Int) -> ImeCursorRange {
   { start, end }
 }
 
@@ -537,7 +539,7 @@ pub struct RawKeyEvent {
 } derive(Eq, Debug)
 
 ///|
-pub fn RawKeyEvent::new(
+pub fn RawKeyEvent::RawKeyEvent(
   physical_key : PhysicalKey,
   state : ElementState,
 ) -> RawKeyEvent {
@@ -573,12 +575,10 @@ pub(all) enum WinitDeviceEvent {
 ///|
 pub fn DeviceEvent::into_winit_event(self : DeviceEvent) -> WinitDeviceEvent {
   match self {
-    DeviceEvent::PointerMotion(delta_x, delta_y) =>
-      WinitDeviceEvent::MouseMotion(delta_x, delta_y)
-    DeviceEvent::MouseWheel(delta) => WinitDeviceEvent::MouseWheel(delta)
-    DeviceEvent::Button(button, state) =>
-      WinitDeviceEvent::Button(button, state)
-    DeviceEvent::Key(event) => WinitDeviceEvent::Key(event)
+    PointerMotion(delta_x, delta_y) => MouseMotion(delta_x, delta_y)
+    MouseWheel(delta) => MouseWheel(delta)
+    Button(button, state) => Button(button, state)
+    Key(event) => Key(event)
   }
 }
 
@@ -654,62 +654,56 @@ pub fn WindowEvent::into_winit_events(
   self : WindowEvent,
 ) -> Array[WinitWindowEvent] {
   match self {
-    WindowEvent::ActivationTokenDone(serial, token) =>
-      [WinitWindowEvent::ActivationTokenDone(serial, token)]
-    WindowEvent::SurfaceResized(size) => [WinitWindowEvent::Resized(size)]
-    WindowEvent::Moved(position) => [WinitWindowEvent::Moved(position)]
-    WindowEvent::CloseRequested => [WinitWindowEvent::CloseRequested]
-    WindowEvent::Destroyed => [WinitWindowEvent::Destroyed]
-    WindowEvent::DragEntered(paths, _position) => {
+    ActivationTokenDone(serial, token) => [ActivationTokenDone(serial, token)]
+    SurfaceResized(size) => [Resized(size)]
+    Moved(position) => [Moved(position)]
+    CloseRequested => [CloseRequested]
+    Destroyed => [Destroyed]
+    DragEntered(paths, _position) => {
       let events : Array[WinitWindowEvent] = []
       for path in paths {
-        events.push(WinitWindowEvent::HoveredFile(path))
+        events.push(HoveredFile(path))
       }
       events
     }
-    WindowEvent::DragMoved(_position) => []
-    WindowEvent::DragDropped(paths, _position) => {
+    DragMoved(_position) => []
+    DragDropped(paths, _position) => {
       let events : Array[WinitWindowEvent] = []
       for path in paths {
-        events.push(WinitWindowEvent::DroppedFile(path))
+        events.push(DroppedFile(path))
       }
       events
     }
-    WindowEvent::DragLeft(_position) => [WinitWindowEvent::HoveredFileCancelled]
-    WindowEvent::Focused(focused) => [WinitWindowEvent::Focused(focused)]
-    WindowEvent::Ime(ime) => [WinitWindowEvent::Ime(ime)]
-    WindowEvent::KeyboardInput(device_id, event, is_synthetic) =>
-      [WinitWindowEvent::KeyboardInput(device_id, event, is_synthetic)]
-    WindowEvent::ModifiersChanged(modifiers) =>
-      [WinitWindowEvent::ModifiersChanged(modifiers)]
-    WindowEvent::PointerMoved(device_id, position, _is_primary, _source) =>
-      [WinitWindowEvent::CursorMoved(device_id, position)]
-    WindowEvent::PointerEntered(device_id, _position, _is_primary, _kind) =>
-      [WinitWindowEvent::CursorEntered(device_id)]
-    WindowEvent::PointerLeft(device_id, _position, _is_primary, _kind) =>
-      [WinitWindowEvent::CursorLeft(device_id)]
-    WindowEvent::PointerButton(device_id, state, _position, _is_primary, source) =>
+    DragLeft(_position) => [HoveredFileCancelled]
+    Focused(focused) => [Focused(focused)]
+    Ime(ime) => [Ime(ime)]
+    KeyboardInput(device_id, event, is_synthetic) =>
+      [KeyboardInput(device_id, event, is_synthetic)]
+    ModifiersChanged(modifiers) => [ModifiersChanged(modifiers)]
+    PointerMoved(device_id, position, _is_primary, _source) =>
+      [CursorMoved(device_id, position)]
+    PointerEntered(device_id, _position, _is_primary, _kind) =>
+      [CursorEntered(device_id)]
+    PointerLeft(device_id, _position, _is_primary, _kind) =>
+      [CursorLeft(device_id)]
+    PointerButton(device_id, state, _position, _is_primary, source) =>
       match source {
-        ButtonSource::Mouse(button) =>
-          [WinitWindowEvent::MouseInput(device_id, state, button)]
+        Mouse(button) => [MouseInput(device_id, state, button)]
         _ => []
       }
-    WindowEvent::PinchGesture(device_id, delta, phase) =>
-      [WinitWindowEvent::PinchGesture(device_id, delta, phase)]
-    WindowEvent::PanGesture(device_id, delta, phase) =>
-      [WinitWindowEvent::PanGesture(device_id, delta, phase)]
-    WindowEvent::DoubleTapGesture(device_id) =>
-      [WinitWindowEvent::DoubleTapGesture(device_id)]
-    WindowEvent::RotationGesture(device_id, delta, phase) =>
-      [WinitWindowEvent::RotationGesture(device_id, delta, phase)]
-    WindowEvent::TouchpadPressure(device_id, pressure, stage) =>
-      [WinitWindowEvent::TouchpadPressure(device_id, pressure, stage)]
-    WindowEvent::MouseWheel(device_id, delta, phase) =>
-      [WinitWindowEvent::MouseWheel(device_id, delta, phase)]
-    WindowEvent::ScaleFactorChanged(scale_factor, writer) =>
-      [WinitWindowEvent::ScaleFactorChanged(scale_factor, writer)]
-    WindowEvent::ThemeChanged(theme) => [WinitWindowEvent::ThemeChanged(theme)]
-    WindowEvent::Occluded(occluded) => [WinitWindowEvent::Occluded(occluded)]
-    WindowEvent::RedrawRequested => [WinitWindowEvent::RedrawRequested]
+    PinchGesture(device_id, delta, phase) =>
+      [PinchGesture(device_id, delta, phase)]
+    PanGesture(device_id, delta, phase) => [PanGesture(device_id, delta, phase)]
+    DoubleTapGesture(device_id) => [DoubleTapGesture(device_id)]
+    RotationGesture(device_id, delta, phase) =>
+      [RotationGesture(device_id, delta, phase)]
+    TouchpadPressure(device_id, pressure, stage) =>
+      [TouchpadPressure(device_id, pressure, stage)]
+    MouseWheel(device_id, delta, phase) => [MouseWheel(device_id, delta, phase)]
+    ScaleFactorChanged(scale_factor, writer) =>
+      [ScaleFactorChanged(scale_factor, writer)]
+    ThemeChanged(theme) => [ThemeChanged(theme)]
+    Occluded(occluded) => [Occluded(occluded)]
+    RedrawRequested => [RedrawRequested]
   }
 }

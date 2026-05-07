@@ -6,7 +6,7 @@ pub struct VideoMode {
 } derive(Eq, Debug)
 
 ///|
-pub fn VideoMode::new(
+pub fn VideoMode::VideoMode(
   surface_size : @dpi.PhysicalSize,
   bit_depth : Int?,
   refresh_rate_millihertz : Int?,
@@ -45,7 +45,7 @@ pub struct MonitorHandle {
 } derive(Eq, Debug)
 
 ///|
-pub fn MonitorHandle::new(
+pub fn MonitorHandle::MonitorHandle(
   native_id : UInt64,
   name : String?,
   position : @dpi.PhysicalPosition,

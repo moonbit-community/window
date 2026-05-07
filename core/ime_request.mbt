@@ -10,12 +10,12 @@ pub fn ImeSurroundingText::into_text(self : ImeSurroundingText) -> String {
 
 ///|
 pub fn ImeCapabilities::default() -> ImeCapabilities {
-  ImeCapabilities::new(false, false, false)
+  ImeCapabilities(false, false, false)
 }
 
 ///|
 pub fn ImeCapabilities::all() -> ImeCapabilities {
-  ImeCapabilities::new(true, true, true)
+  ImeCapabilities(true, true, true)
 }
 
 ///|
@@ -216,7 +216,7 @@ pub fn ImeRequestData::is_empty(self : ImeRequestData) -> Bool {
 
 ///|
 pub fn ImeRequestData::into_request(self : ImeRequestData) -> ImeRequest {
-  ImeRequest::Update(self)
+  Update(self)
 }
 
 ///|
@@ -226,7 +226,7 @@ pub struct ImeEnableRequest {
 } derive(Eq, Debug)
 
 ///|
-pub fn ImeEnableRequest::new(
+pub fn ImeEnableRequest::from_capabilities(
   capabilities : ImeCapabilities,
   request_data : ImeRequestData,
 ) -> ImeEnableRequest? {
@@ -265,5 +265,5 @@ pub fn ImeEnableRequest::into_raw(
 
 ///|
 pub fn ImeEnableRequest::into_request(self : ImeEnableRequest) -> ImeRequest {
-  ImeRequest::Enable(self)
+  Enable(self)
 }

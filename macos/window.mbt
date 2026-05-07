@@ -34,8 +34,8 @@ pub struct Window {
 pub type WindowAttributesMacOS = @core.PlatformWindowAttributes
 
 ///|
-// Port target: window.rs::Window::new
-pub fn Window::new(
+// Port target: window.rs::Window::Window
+pub fn Window::Window(
   event_loop : EventLoop,
   attributes : @core.WindowAttributes,
 ) -> Window raise @core.RequestError {
@@ -101,13 +101,13 @@ pub fn Window::drop(self : Window) -> Unit {
 pub fn Window::set_cursor(self : Window, cursor : @core.Cursor) -> Unit {
   let cursor_visible = self.is_cursor_visible()
   match cursor {
-    @core.Cursor::Icon(icon) => {
+    Icon(icon) => {
       self.cursor_state = cursor
       if cursor_visible {
         set_window_cursor(self.raw_window_handle, cursor_icon_to_native(icon))
       }
     }
-    @core.Cursor::Custom(custom_cursor) =>
+    Custom(custom_cursor) =>
       if cursor_visible {
         if set_window_custom_cursor(
             self.raw_window_handle,
@@ -115,10 +115,10 @@ pub fn Window::set_cursor(self : Window, cursor : @core.Cursor) -> Unit {
           ) {
           self.cursor_state = cursor
         } else {
-          self.cursor_state = @core.Cursor::Icon(@core.CursorIcon::Default)
+          self.cursor_state = Icon(Default)
           set_window_cursor(
             self.raw_window_handle,
-            cursor_icon_to_native(@core.CursorIcon::Default),
+            cursor_icon_to_native(Default),
           )
         }
       } else {
@@ -132,7 +132,7 @@ pub fn Window::set_cursor_icon(
   self : Window,
   cursor : @core.CursorIcon,
 ) -> Unit {
-  self.set_cursor(@core.Cursor::Icon(cursor))
+  self.set_cursor(Icon(cursor))
 }
 
 ///|
@@ -148,11 +148,27 @@ pub fn Window::set_cursor_hittest(
   self : Window,
   hittest : Bool,
 ) -> Unit raise @core.RequestError {
-  if set_window_cursor_hittest(self.raw_window_handle, hittest) == false {
+  window_set_cursor_hittest(self, hittest)
+}
+
+///|
+fn window_set_cursor_hittest(
+  window : Window,
+  hittest : Bool,
+) -> Unit raise @core.RequestError {
+  if set_window_cursor_hittest(window.raw_window_handle, hittest) == false {
     raise @core.RequestError::not_supported(
       "Setting cursor hittest is not supported for this window",
     )
   }
+}
+
+///|
+pub impl @core.WindowCursorHittest for Window with set_cursor_hittest(
+  self,
+  hittest,
+) {
+  window_set_cursor_hittest(self, hittest)
 }
 
 ///|
@@ -189,7 +205,7 @@ pub fn Window::set_cursor_grab(
   self : Window,
   mode : @core.CursorGrabMode,
 ) -> Unit raise @core.RequestError {
-  if mode is @core.CursorGrabMode::Confined {
+  if mode is Confined {
     raise @core.RequestError::not_supported(
       "Confined cursor grab is not supported on macOS",
     )
@@ -206,7 +222,7 @@ pub fn Window::set_cursor_grab(
 pub fn Window::drag_window(self : Window) -> Unit raise @core.RequestError {
   let status = drag_window(self.raw_window_handle)
   if status == -1 {
-    raise @core.RequestError::Ignored
+    raise Ignored
   }
   if status == 0 {
     raise @core.RequestError::not_supported(
@@ -291,17 +307,18 @@ pub fn Window::set_ime_allowed(self : Window, allowed : Bool) -> Unit {
       .with_hint_and_purpose()
       .with_cursor_area()
     let request_data = @core.ImeRequestData::default()
-      .with_hint_and_purpose(@core.ImeHint::none(), @core.ImePurpose::Normal)
+      .with_hint_and_purpose(@core.ImeHint::none(), Normal)
       .with_cursor_area(
-        @dpi.LogicalPosition::new(0.0, 0.0).into_position(),
-        @dpi.LogicalSize::new(0.0, 0.0).into_size(),
+        @dpi.LogicalPosition::LogicalPosition(0.0, 0.0).into_position(),
+        @dpi.LogicalSize::LogicalSize(0.0, 0.0).into_size(),
       )
-    match @core.ImeEnableRequest::new(capabilities, request_data) {
-      Some(enable_request) => Some(@core.ImeRequest::Enable(enable_request))
+    match
+      @core.ImeEnableRequest::from_capabilities(capabilities, request_data) {
+      Some(enable_request) => Some(Enable(enable_request))
       None => None
     }
   } else {
-    Some(@core.ImeRequest::Disable)
+    Some(Disable)
   }
   match request {
     Some(request) => {
@@ -389,7 +406,7 @@ pub fn Window::set_ime_surrounding_text(
 
 ///|
 pub fn Window::ime_cursor_area_position(self : Window) -> @dpi.PhysicalPosition {
-  @dpi.LogicalPosition::new(
+  @dpi.LogicalPosition::LogicalPosition(
     window_ime_cursor_x(self.raw_window_handle).to_double(),
     window_ime_cursor_y(self.raw_window_handle).to_double(),
   ).to_physical(self.scale_factor())
@@ -397,7 +414,7 @@ pub fn Window::ime_cursor_area_position(self : Window) -> @dpi.PhysicalPosition 
 
 ///|
 pub fn Window::ime_cursor_area_size(self : Window) -> @dpi.PhysicalSize {
-  @dpi.LogicalSize::new(
+  @dpi.LogicalSize::LogicalSize(
     window_ime_cursor_width(self.raw_window_handle).to_double(),
     window_ime_cursor_height(self.raw_window_handle).to_double(),
   ).to_physical(self.scale_factor())
@@ -426,7 +443,7 @@ fn Window::apply_ime_request_data(
   request_data : @core.ImeRequestData,
 ) -> Unit raise @core.ImeRequestError {
   if self.ime_capabilities_state is None {
-    raise @core.ImeRequestError::NotEnabled
+    raise NotEnabled
   }
   if request_data.has_cursor_area() {
     if self.ime_supports_cursor_area() {
@@ -445,21 +462,21 @@ pub fn Window::request_ime_update(
 ) -> Unit raise @core.ImeRequestError {
   let current_caps = self.ime_capabilities_state
   let request_data = match request {
-    @core.ImeRequest::Enable(enable_request) =>
+    Enable(enable_request) =>
       match current_caps {
-        Some(_) => raise @core.ImeRequestError::AlreadyEnabled
+        Some(_) => raise AlreadyEnabled
         None => {
           self.set_ime_allowed_raw(true)
           self.ime_capabilities_state = Some(enable_request.capabilities())
           enable_request.request_data()
         }
       }
-    @core.ImeRequest::Update(request_data) =>
+    Update(request_data) =>
       match current_caps {
         Some(_) => request_data
-        None => raise @core.ImeRequestError::NotEnabled
+        None => raise NotEnabled
       }
-    @core.ImeRequest::Disable => {
+    Disable => {
       self.set_ime_allowed_raw(false)
       return ()
     }

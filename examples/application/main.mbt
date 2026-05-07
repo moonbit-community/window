@@ -33,36 +33,35 @@ enum Action {
 ///|
 fn Action::help(self : Action) -> String {
   match self {
-    Action::CloseWindow => "Close window"
-    Action::PrintHelp => "Print help"
-    Action::CreateNewWindow => "Create new window"
-    Action::ToggleResizeIncrements =>
-      "Use resize increments when resizing window"
-    Action::ToggleCursorVisibility => "Hide cursor"
-    Action::ToggleResizable => "Toggle window resizable state"
-    Action::ToggleDecorations => "Toggle decorations"
-    Action::ToggleFullscreen => "Toggle fullscreen"
-    Action::ToggleSimpleFullscreen => "Toggle simple fullscreen"
-    Action::ToggleBorderlessGame => "Toggle borderless game mode"
-    Action::ToggleMaximize => "Maximize"
-    Action::Minimize => "Minimize"
-    Action::NextCursor => "Advance the cursor to the next value"
-    Action::NextCustomCursor => "Advance custom cursor to the next value"
-    Action::CycleCursorGrab => "Cycle through cursor grab mode"
-    Action::DragWindow => "Start window drag"
-    Action::DragResizeWindow => "Start window drag-resize"
-    Action::ShowWindowMenu => "Show window menu"
-    Action::RequestResize => "Request a resize"
-    Action::SetTheme(None) => "Change to the system theme"
-    Action::SetTheme(Some(@core.Theme::Light)) => "Change to a light theme"
-    Action::SetTheme(Some(@core.Theme::Dark)) => "Change to a dark theme"
-    Action::CreateNewTab => "Create new tab"
-    Action::CycleOptionAsAlt => "Cycle option as alt mode"
-    Action::DumpMonitors => "Dump monitor information"
-    Action::Message => "Prints a message through a user wake up"
-    Action::ToggleAnimatedFillColor => "Toggle animated fill color"
-    Action::ToggleContinuousRedraw => "Toggle continuous redraw"
-    Action::EmitSurfaceSize => "Periodically print the surface size"
+    CloseWindow => "Close window"
+    PrintHelp => "Print help"
+    CreateNewWindow => "Create new window"
+    ToggleResizeIncrements => "Use resize increments when resizing window"
+    ToggleCursorVisibility => "Hide cursor"
+    ToggleResizable => "Toggle window resizable state"
+    ToggleDecorations => "Toggle decorations"
+    ToggleFullscreen => "Toggle fullscreen"
+    ToggleSimpleFullscreen => "Toggle simple fullscreen"
+    ToggleBorderlessGame => "Toggle borderless game mode"
+    ToggleMaximize => "Maximize"
+    Minimize => "Minimize"
+    NextCursor => "Advance the cursor to the next value"
+    NextCustomCursor => "Advance custom cursor to the next value"
+    CycleCursorGrab => "Cycle through cursor grab mode"
+    DragWindow => "Start window drag"
+    DragResizeWindow => "Start window drag-resize"
+    ShowWindowMenu => "Show window menu"
+    RequestResize => "Request a resize"
+    SetTheme(None) => "Change to the system theme"
+    SetTheme(Some(Light)) => "Change to a light theme"
+    SetTheme(Some(Dark)) => "Change to a dark theme"
+    CreateNewTab => "Create new tab"
+    CycleOptionAsAlt => "Cycle option as alt mode"
+    DumpMonitors => "Dump monitor information"
+    Message => "Prints a message through a user wake up"
+    ToggleAnimatedFillColor => "Toggle animated fill color"
+    ToggleContinuousRedraw => "Toggle continuous redraw"
+    EmitSurfaceSize => "Periodically print the surface size"
   }
 }
 
@@ -95,7 +94,7 @@ fn key_bindings() -> Array[KeyBinding] {
       alt: false,
       shift: false,
       meta: false,
-      action: Action::CloseWindow,
+      action: CloseWindow,
     },
     {
       key: "H",
@@ -103,7 +102,7 @@ fn key_bindings() -> Array[KeyBinding] {
       alt: false,
       shift: false,
       meta: false,
-      action: Action::PrintHelp,
+      action: PrintHelp,
     },
     {
       key: "F",
@@ -111,7 +110,7 @@ fn key_bindings() -> Array[KeyBinding] {
       alt: false,
       shift: true,
       meta: false,
-      action: Action::ToggleAnimatedFillColor,
+      action: ToggleAnimatedFillColor,
     },
     {
       key: "F",
@@ -119,7 +118,7 @@ fn key_bindings() -> Array[KeyBinding] {
       alt: false,
       shift: false,
       meta: false,
-      action: Action::ToggleFullscreen,
+      action: ToggleFullscreen,
     },
     {
       key: "F",
@@ -127,7 +126,7 @@ fn key_bindings() -> Array[KeyBinding] {
       alt: true,
       shift: false,
       meta: false,
-      action: Action::ToggleSimpleFullscreen,
+      action: ToggleSimpleFullscreen,
     },
     {
       key: "D",
@@ -135,7 +134,7 @@ fn key_bindings() -> Array[KeyBinding] {
       alt: false,
       shift: false,
       meta: false,
-      action: Action::ToggleDecorations,
+      action: ToggleDecorations,
     },
     {
       key: "L",
@@ -143,7 +142,7 @@ fn key_bindings() -> Array[KeyBinding] {
       alt: false,
       shift: false,
       meta: false,
-      action: Action::CycleCursorGrab,
+      action: CycleCursorGrab,
     },
     {
       key: "P",
@@ -151,7 +150,7 @@ fn key_bindings() -> Array[KeyBinding] {
       alt: false,
       shift: false,
       meta: false,
-      action: Action::ToggleResizeIncrements,
+      action: ToggleResizeIncrements,
     },
     {
       key: "R",
@@ -159,7 +158,7 @@ fn key_bindings() -> Array[KeyBinding] {
       alt: false,
       shift: false,
       meta: false,
-      action: Action::ToggleResizable,
+      action: ToggleResizable,
     },
     {
       key: "R",
@@ -167,7 +166,7 @@ fn key_bindings() -> Array[KeyBinding] {
       alt: true,
       shift: false,
       meta: false,
-      action: Action::RequestResize,
+      action: RequestResize,
     },
     {
       key: "R",
@@ -175,7 +174,7 @@ fn key_bindings() -> Array[KeyBinding] {
       alt: false,
       shift: true,
       meta: false,
-      action: Action::ToggleContinuousRedraw,
+      action: ToggleContinuousRedraw,
     },
     {
       key: "M",
@@ -183,7 +182,7 @@ fn key_bindings() -> Array[KeyBinding] {
       alt: true,
       shift: false,
       meta: false,
-      action: Action::DumpMonitors,
+      action: DumpMonitors,
     },
     {
       key: "M",
@@ -191,7 +190,7 @@ fn key_bindings() -> Array[KeyBinding] {
       alt: false,
       shift: false,
       meta: false,
-      action: Action::ToggleMaximize,
+      action: ToggleMaximize,
     },
     {
       key: "M",
@@ -199,7 +198,7 @@ fn key_bindings() -> Array[KeyBinding] {
       alt: true,
       shift: false,
       meta: false,
-      action: Action::Minimize,
+      action: Minimize,
     },
     {
       key: "N",
@@ -207,7 +206,7 @@ fn key_bindings() -> Array[KeyBinding] {
       alt: false,
       shift: false,
       meta: false,
-      action: Action::CreateNewWindow,
+      action: CreateNewWindow,
     },
     {
       key: "C",
@@ -215,7 +214,7 @@ fn key_bindings() -> Array[KeyBinding] {
       alt: false,
       shift: false,
       meta: false,
-      action: Action::NextCursor,
+      action: NextCursor,
     },
     {
       key: "C",
@@ -223,7 +222,7 @@ fn key_bindings() -> Array[KeyBinding] {
       alt: true,
       shift: false,
       meta: false,
-      action: Action::NextCustomCursor,
+      action: NextCustomCursor,
     },
     {
       key: "Z",
@@ -231,7 +230,7 @@ fn key_bindings() -> Array[KeyBinding] {
       alt: false,
       shift: false,
       meta: false,
-      action: Action::ToggleCursorVisibility,
+      action: ToggleCursorVisibility,
     },
     {
       key: "K",
@@ -239,7 +238,7 @@ fn key_bindings() -> Array[KeyBinding] {
       alt: false,
       shift: false,
       meta: false,
-      action: Action::SetTheme(None),
+      action: SetTheme(None),
     },
     {
       key: "K",
@@ -247,7 +246,7 @@ fn key_bindings() -> Array[KeyBinding] {
       alt: false,
       shift: false,
       meta: true,
-      action: Action::SetTheme(Some(@core.Theme::Light)),
+      action: SetTheme(Some(Light)),
     },
     {
       key: "K",
@@ -255,7 +254,7 @@ fn key_bindings() -> Array[KeyBinding] {
       alt: false,
       shift: false,
       meta: false,
-      action: Action::SetTheme(Some(@core.Theme::Dark)),
+      action: SetTheme(Some(Dark)),
     },
     {
       key: "T",
@@ -263,7 +262,7 @@ fn key_bindings() -> Array[KeyBinding] {
       alt: false,
       shift: false,
       meta: true,
-      action: Action::CreateNewTab,
+      action: CreateNewTab,
     },
     {
       key: "O",
@@ -271,7 +270,7 @@ fn key_bindings() -> Array[KeyBinding] {
       alt: false,
       shift: false,
       meta: false,
-      action: Action::CycleOptionAsAlt,
+      action: CycleOptionAsAlt,
     },
     {
       key: "B",
@@ -279,7 +278,7 @@ fn key_bindings() -> Array[KeyBinding] {
       alt: false,
       shift: false,
       meta: false,
-      action: Action::ToggleBorderlessGame,
+      action: ToggleBorderlessGame,
     },
     {
       key: "S",
@@ -287,7 +286,7 @@ fn key_bindings() -> Array[KeyBinding] {
       alt: true,
       shift: false,
       meta: false,
-      action: Action::EmitSurfaceSize,
+      action: EmitSurfaceSize,
     },
     {
       key: "S",
@@ -295,7 +294,7 @@ fn key_bindings() -> Array[KeyBinding] {
       alt: false,
       shift: false,
       meta: false,
-      action: Action::Message,
+      action: Message,
     },
   ]
 }
@@ -304,28 +303,28 @@ fn key_bindings() -> Array[KeyBinding] {
 fn mouse_bindings() -> Array[MouseBinding] {
   [
     {
-      button: @core.MouseButton::Left,
+      button: Left,
       control: false,
       alt: true,
       shift: false,
       meta: false,
-      action: Action::DragResizeWindow,
+      action: DragResizeWindow,
     },
     {
-      button: @core.MouseButton::Left,
+      button: Left,
       control: true,
       alt: false,
       shift: false,
       meta: false,
-      action: Action::DragWindow,
+      action: DragWindow,
     },
     {
-      button: @core.MouseButton::Right,
+      button: Right,
       control: true,
       alt: false,
       shift: false,
       meta: false,
-      action: Action::ShowWindowMenu,
+      action: ShowWindowMenu,
     },
   ]
 }
@@ -362,40 +361,40 @@ struct WindowInputState {
 ///|
 fn system_cursors() -> Array[@core.CursorIcon] {
   [
-    @core.CursorIcon::Default,
-    @core.CursorIcon::Crosshair,
-    @core.CursorIcon::Pointer,
-    @core.CursorIcon::Move,
-    @core.CursorIcon::Text,
-    @core.CursorIcon::Wait,
-    @core.CursorIcon::Help,
-    @core.CursorIcon::Progress,
-    @core.CursorIcon::NotAllowed,
-    @core.CursorIcon::ContextMenu,
-    @core.CursorIcon::Cell,
-    @core.CursorIcon::VerticalText,
-    @core.CursorIcon::Alias,
-    @core.CursorIcon::Copy,
-    @core.CursorIcon::NoDrop,
-    @core.CursorIcon::Grab,
-    @core.CursorIcon::Grabbing,
-    @core.CursorIcon::AllScroll,
-    @core.CursorIcon::ZoomIn,
-    @core.CursorIcon::ZoomOut,
-    @core.CursorIcon::EResize,
-    @core.CursorIcon::NResize,
-    @core.CursorIcon::NeResize,
-    @core.CursorIcon::NwResize,
-    @core.CursorIcon::SResize,
-    @core.CursorIcon::SeResize,
-    @core.CursorIcon::SwResize,
-    @core.CursorIcon::WResize,
-    @core.CursorIcon::EwResize,
-    @core.CursorIcon::NsResize,
-    @core.CursorIcon::NeswResize,
-    @core.CursorIcon::NwseResize,
-    @core.CursorIcon::ColResize,
-    @core.CursorIcon::RowResize,
+    Default,
+    Crosshair,
+    Pointer,
+    Move,
+    Text,
+    Wait,
+    Help,
+    Progress,
+    NotAllowed,
+    ContextMenu,
+    Cell,
+    VerticalText,
+    Alias,
+    Copy,
+    NoDrop,
+    Grab,
+    Grabbing,
+    AllScroll,
+    ZoomIn,
+    ZoomOut,
+    EResize,
+    NResize,
+    NeResize,
+    NwResize,
+    SResize,
+    SeResize,
+    SwResize,
+    WResize,
+    EwResize,
+    NsResize,
+    NeswResize,
+    NwseResize,
+    ColResize,
+    RowResize,
   ]
 }
 
@@ -442,38 +441,38 @@ fn modifiers_prefix(
 ///|
 fn mouse_button_name(button : @core.MouseButton) -> String {
   match button {
-    @core.MouseButton::Left => "Left"
-    @core.MouseButton::Right => "Right"
-    @core.MouseButton::Middle => "Middle"
-    @core.MouseButton::Back => "Back"
-    @core.MouseButton::Forward => "Forward"
-    @core.MouseButton::Button6 => "Button6"
-    @core.MouseButton::Button7 => "Button7"
-    @core.MouseButton::Button8 => "Button8"
-    @core.MouseButton::Button9 => "Button9"
-    @core.MouseButton::Button10 => "Button10"
-    @core.MouseButton::Button11 => "Button11"
-    @core.MouseButton::Button12 => "Button12"
-    @core.MouseButton::Button13 => "Button13"
-    @core.MouseButton::Button14 => "Button14"
-    @core.MouseButton::Button15 => "Button15"
-    @core.MouseButton::Button16 => "Button16"
-    @core.MouseButton::Button17 => "Button17"
-    @core.MouseButton::Button18 => "Button18"
-    @core.MouseButton::Button19 => "Button19"
-    @core.MouseButton::Button20 => "Button20"
-    @core.MouseButton::Button21 => "Button21"
-    @core.MouseButton::Button22 => "Button22"
-    @core.MouseButton::Button23 => "Button23"
-    @core.MouseButton::Button24 => "Button24"
-    @core.MouseButton::Button25 => "Button25"
-    @core.MouseButton::Button26 => "Button26"
-    @core.MouseButton::Button27 => "Button27"
-    @core.MouseButton::Button28 => "Button28"
-    @core.MouseButton::Button29 => "Button29"
-    @core.MouseButton::Button30 => "Button30"
-    @core.MouseButton::Button31 => "Button31"
-    @core.MouseButton::Button32 => "Button32"
+    Left => "Left"
+    Right => "Right"
+    Middle => "Middle"
+    Back => "Back"
+    Forward => "Forward"
+    Button6 => "Button6"
+    Button7 => "Button7"
+    Button8 => "Button8"
+    Button9 => "Button9"
+    Button10 => "Button10"
+    Button11 => "Button11"
+    Button12 => "Button12"
+    Button13 => "Button13"
+    Button14 => "Button14"
+    Button15 => "Button15"
+    Button16 => "Button16"
+    Button17 => "Button17"
+    Button18 => "Button18"
+    Button19 => "Button19"
+    Button20 => "Button20"
+    Button21 => "Button21"
+    Button22 => "Button22"
+    Button23 => "Button23"
+    Button24 => "Button24"
+    Button25 => "Button25"
+    Button26 => "Button26"
+    Button27 => "Button27"
+    Button28 => "Button28"
+    Button29 => "Button29"
+    Button30 => "Button30"
+    Button31 => "Button31"
+    Button32 => "Button32"
   }
 }
 
@@ -488,16 +487,16 @@ fn make_custom_cursor_source(value : Int) -> @core.CustomCursorSource? {
 ///|
 fn safe_area_inner_color_for_theme(theme : @core.Theme) -> Int {
   match theme {
-    @core.Theme::Light => 0xffe8e8e8
-    @core.Theme::Dark => 0xff525252
+    Light => 0xffe8e8e8
+    Dark => 0xff525252
   }
 }
 
 ///|
 fn safe_area_outer_color_for_theme(theme : @core.Theme) -> Int {
   match theme {
-    @core.Theme::Light => 0xffffffff
-    @core.Theme::Dark => 0xff181818
+    Light => 0xffffffff
+    Dark => 0xff181818
   }
 }
 
@@ -528,7 +527,7 @@ fn print_video_mode(prefix : String, mode : @core.VideoMode) -> Unit {
 }
 
 ///|
-fn Application::new() -> Application {
+fn Application::Application() -> Application {
   let start_time_ms = @util.now_millis()
   {
     windows: [],
@@ -610,7 +609,7 @@ fn Application::create_window(
   let window_id = window.id()
   let initial_theme = match window.theme() {
     Some(theme) => theme
-    None => @core.Theme::Dark
+    None => Dark
   }
   println("Theme: \{initial_theme}")
   self.windows.push(window)
@@ -623,7 +622,7 @@ fn Application::create_window(
     window_id,
     modifiers: @core.ModifiersState::none(),
     theme: initial_theme,
-    cursor_grab_mode: @core.CursorGrabMode::None,
+    cursor_grab_mode: None,
     cursor_index: 0,
     custom_cursor_index: initial_custom_cursor_index,
     animated_fill_color: false,
@@ -701,15 +700,15 @@ fn Application::ensure_window_input_state(
         Some(window) =>
           match window.theme() {
             Some(theme) => theme
-            None => @core.Theme::Dark
+            None => Dark
           }
-        None => @core.Theme::Dark
+        None => Dark
       }
       self.window_input_states.push({
         window_id,
         modifiers: @core.ModifiersState::none(),
         theme: initial_theme,
-        cursor_grab_mode: @core.CursorGrabMode::None,
+        cursor_grab_mode: None,
         cursor_index: 0,
         custom_cursor_index: initial_custom_cursor_index,
         animated_fill_color: false,
@@ -757,120 +756,120 @@ fn Application::action_from_key(
   let modifiers = self.modifiers_for_window(window_id)
   let key = key_event.key_without_modifiers()
   match key {
-    @core.Key::Named(@core.NamedKey::Escape) => Some(Action::CloseWindow)
-    @core.Key::Character("q") | @core.Key::Character("Q") =>
+    Named(Escape) => Some(CloseWindow)
+    Character("q") | Character("Q") =>
       if modifiers_match(modifiers, true, false, false, false) {
-        Some(Action::CloseWindow)
+        Some(CloseWindow)
       } else {
         None
       }
-    @core.Key::Character("h") | @core.Key::Character("H") =>
+    Character("h") | Character("H") =>
       if modifiers_match(modifiers, true, false, false, false) {
-        Some(Action::PrintHelp)
+        Some(PrintHelp)
       } else {
         None
       }
-    @core.Key::Character("n") | @core.Key::Character("N") =>
+    Character("n") | Character("N") =>
       if modifiers_match(modifiers, true, false, false, false) {
-        Some(Action::CreateNewWindow)
+        Some(CreateNewWindow)
       } else {
         None
       }
-    @core.Key::Character("f") | @core.Key::Character("F") =>
+    Character("f") | Character("F") =>
       if modifiers_match(modifiers, false, false, true, false) {
-        Some(Action::ToggleAnimatedFillColor)
+        Some(ToggleAnimatedFillColor)
       } else if modifiers_match(modifiers, true, false, false, false) {
-        Some(Action::ToggleFullscreen)
+        Some(ToggleFullscreen)
       } else if modifiers_match(modifiers, false, true, false, false) {
-        Some(Action::ToggleSimpleFullscreen)
+        Some(ToggleSimpleFullscreen)
       } else {
         None
       }
-    @core.Key::Character("d") | @core.Key::Character("D") =>
+    Character("d") | Character("D") =>
       if modifiers_match(modifiers, true, false, false, false) {
-        Some(Action::ToggleDecorations)
+        Some(ToggleDecorations)
       } else {
         None
       }
-    @core.Key::Character("l") | @core.Key::Character("L") =>
+    Character("l") | Character("L") =>
       if modifiers_match(modifiers, true, false, false, false) {
-        Some(Action::CycleCursorGrab)
+        Some(CycleCursorGrab)
       } else {
         None
       }
-    @core.Key::Character("p") | @core.Key::Character("P") =>
+    Character("p") | Character("P") =>
       if modifiers_match(modifiers, true, false, false, false) {
-        Some(Action::ToggleResizeIncrements)
+        Some(ToggleResizeIncrements)
       } else {
         None
       }
-    @core.Key::Character("r") | @core.Key::Character("R") =>
+    Character("r") | Character("R") =>
       if modifiers_match(modifiers, true, false, false, false) {
-        Some(Action::ToggleResizable)
+        Some(ToggleResizable)
       } else if modifiers_match(modifiers, false, true, false, false) {
-        Some(Action::RequestResize)
+        Some(RequestResize)
       } else if modifiers_match(modifiers, false, false, true, false) {
-        Some(Action::ToggleContinuousRedraw)
+        Some(ToggleContinuousRedraw)
       } else {
         None
       }
-    @core.Key::Character("m") | @core.Key::Character("M") =>
+    Character("m") | Character("M") =>
       if modifiers_match(modifiers, true, true, false, false) {
-        Some(Action::DumpMonitors)
+        Some(DumpMonitors)
       } else if modifiers_match(modifiers, true, false, false, false) {
-        Some(Action::ToggleMaximize)
+        Some(ToggleMaximize)
       } else if modifiers_match(modifiers, false, true, false, false) {
-        Some(Action::Minimize)
+        Some(Minimize)
       } else {
         None
       }
-    @core.Key::Character("c") | @core.Key::Character("C") =>
+    Character("c") | Character("C") =>
       if modifiers_match(modifiers, true, false, false, false) {
-        Some(Action::NextCursor)
+        Some(NextCursor)
       } else if modifiers_match(modifiers, false, true, false, false) {
-        Some(Action::NextCustomCursor)
+        Some(NextCustomCursor)
       } else {
         None
       }
-    @core.Key::Character("z") | @core.Key::Character("Z") =>
+    Character("z") | Character("Z") =>
       if modifiers_match(modifiers, true, false, false, false) {
-        Some(Action::ToggleCursorVisibility)
+        Some(ToggleCursorVisibility)
       } else {
         None
       }
-    @core.Key::Character("k") | @core.Key::Character("K") =>
+    Character("k") | Character("K") =>
       if modifiers_match(modifiers, false, false, false, false) {
-        Some(Action::SetTheme(None))
+        Some(SetTheme(None))
       } else if modifiers_match(modifiers, false, false, false, true) {
-        Some(Action::SetTheme(Some(@core.Theme::Light)))
+        Some(SetTheme(Some(Light)))
       } else if modifiers_match(modifiers, true, false, false, false) {
-        Some(Action::SetTheme(Some(@core.Theme::Dark)))
+        Some(SetTheme(Some(Dark)))
       } else {
         None
       }
-    @core.Key::Character("t") | @core.Key::Character("T") =>
+    Character("t") | Character("T") =>
       if modifiers_match(modifiers, false, false, false, true) {
-        Some(Action::CreateNewTab)
+        Some(CreateNewTab)
       } else {
         None
       }
-    @core.Key::Character("o") | @core.Key::Character("O") =>
+    Character("o") | Character("O") =>
       if modifiers_match(modifiers, true, false, false, false) {
-        Some(Action::CycleOptionAsAlt)
+        Some(CycleOptionAsAlt)
       } else {
         None
       }
-    @core.Key::Character("b") | @core.Key::Character("B") =>
+    Character("b") | Character("B") =>
       if modifiers_match(modifiers, true, false, false, false) {
-        Some(Action::ToggleBorderlessGame)
+        Some(ToggleBorderlessGame)
       } else {
         None
       }
-    @core.Key::Character("s") | @core.Key::Character("S") =>
+    Character("s") | Character("S") =>
       if modifiers_match(modifiers, false, true, false, false) {
-        Some(Action::EmitSurfaceSize)
+        Some(EmitSurfaceSize)
       } else if modifiers_match(modifiers, true, false, false, false) {
-        Some(Action::Message)
+        Some(Message)
       } else {
         None
       }
@@ -926,37 +925,37 @@ fn Application::perform_window_action(
   window : @macos.Window,
 ) -> Unit {
   match action {
-    Action::CloseWindow => self.remove_window(window_id)
-    Action::ToggleCursorVisibility =>
+    CloseWindow => self.remove_window(window_id)
+    ToggleCursorVisibility =>
       window.set_cursor_visible(!window.is_cursor_visible())
-    Action::ToggleResizeIncrements =>
+    ToggleResizeIncrements =>
       if window.resize_increments() is None {
         println("Had increments: false")
         window.set_resize_increments(
-          Some(@dpi.LogicalSize::new(25.0, 25.0).into_size()),
+          Some(@dpi.LogicalSize::LogicalSize(25.0, 25.0).into_size()),
         )
       } else {
         println("Had increments: true")
         window.set_resize_increments(None)
       }
-    Action::ToggleResizable => window.set_resizable(!window.is_resizable())
-    Action::ToggleDecorations => window.set_decorations(!window.is_decorated())
-    Action::ToggleFullscreen =>
+    ToggleResizable => window.set_resizable(!window.is_resizable())
+    ToggleDecorations => window.set_decorations(!window.is_decorated())
+    ToggleFullscreen =>
       match window.fullscreen() {
         Some(_) => window.set_fullscreen(None)
-        None => window.set_fullscreen(Some(@core.Fullscreen::Borderless(None)))
+        None => window.set_fullscreen(Some(Borderless(None)))
       }
-    Action::ToggleSimpleFullscreen => {
+    ToggleSimpleFullscreen => {
       let _ = window.set_simple_fullscreen(!window.simple_fullscreen())
     }
-    Action::ToggleBorderlessGame => {
+    ToggleBorderlessGame => {
       let next = !window.is_borderless_game()
       window.set_borderless_game(next)
       println("Borderless game: \{next}")
     }
-    Action::ToggleMaximize => window.set_maximized(!window.is_maximized())
-    Action::Minimize => window.set_minimized(true)
-    Action::NextCursor => {
+    ToggleMaximize => window.set_maximized(!window.is_maximized())
+    Minimize => window.set_minimized(true)
+    NextCursor => {
       let cursors = system_cursors()
       let state_index = self.ensure_window_input_state(window_id)
       let next_cursor_index = (
@@ -967,7 +966,7 @@ fn Application::perform_window_action(
       println("Setting cursor to \{cursors[next_cursor_index]}")
       window.set_cursor_icon(cursors[next_cursor_index])
     }
-    Action::NextCustomCursor =>
+    NextCustomCursor =>
       if self.custom_cursors.is_empty() {
         println("No custom cursor available on this platform/runtime")
       } else {
@@ -977,17 +976,15 @@ fn Application::perform_window_action(
           ) %
           self.custom_cursors.length()
         self.window_input_states[state_index].custom_cursor_index = next_custom_cursor_index
-        window.set_cursor(
-          @core.Cursor::Custom(self.custom_cursors[next_custom_cursor_index]),
-        )
+        window.set_cursor(Custom(self.custom_cursors[next_custom_cursor_index]))
       }
-    Action::CycleCursorGrab => {
+    CycleCursorGrab => {
       let state_index = self.ensure_window_input_state(window_id)
       let next_mode = match
         self.window_input_states[state_index].cursor_grab_mode {
-        @core.CursorGrabMode::None => @core.CursorGrabMode::Confined
-        @core.CursorGrabMode::Confined => @core.CursorGrabMode::Locked
-        @core.CursorGrabMode::Locked => @core.CursorGrabMode::None
+        None => @core.CursorGrabMode::Confined
+        Confined => Locked
+        Locked => None
       }
       println("Changing cursor grab mode to \{next_mode}")
       try {
@@ -997,9 +994,9 @@ fn Application::perform_window_action(
         err => println("Cursor grab update failed: \{err}")
       }
     }
-    Action::RequestResize => {
+    RequestResize => {
       let old_surface_size = window.surface_size()
-      let requested_surface_size = @dpi.PhysicalSize::new(
+      let requested_surface_size = @dpi.PhysicalSize::PhysicalSize(
         old_surface_size.height(),
         old_surface_size.width(),
       )
@@ -1016,7 +1013,7 @@ fn Application::perform_window_action(
         None => println("Requesting surface size is asynchronous")
       }
     }
-    Action::SetTheme(theme) => {
+    SetTheme(theme) => {
       window.set_theme(theme)
       let state_index = self.ensure_window_input_state(window_id)
       let actual_theme = match theme {
@@ -1024,12 +1021,12 @@ fn Application::perform_window_action(
         None =>
           match window.theme() {
             Some(theme) => theme
-            None => @core.Theme::Dark
+            None => Dark
           }
       }
       self.window_input_states[state_index].theme = actual_theme
     }
-    Action::CreateNewTab => {
+    CreateNewTab => {
       let current_id = window.tabbing_identifier()
       let tab_id = if current_id.is_empty() {
         "moonbit-window-example-tabs"
@@ -1038,23 +1035,23 @@ fn Application::perform_window_action(
       }
       self.create_window(event_loop, "Winit tab", Some(tab_id)) |> ignore
     }
-    Action::CycleOptionAsAlt => {
+    CycleOptionAsAlt => {
       let next = match window.option_as_alt() {
-        @core.OptionAsAlt::OnlyLeft => @core.OptionAsAlt::OnlyRight
-        @core.OptionAsAlt::OnlyRight => @core.OptionAsAlt::Both
-        @core.OptionAsAlt::Both => @core.OptionAsAlt::None
-        @core.OptionAsAlt::None => @core.OptionAsAlt::OnlyLeft
+        OnlyLeft => @core.OptionAsAlt::OnlyRight
+        OnlyRight => Both
+        Both => None
+        None => OnlyLeft
       }
       window.set_option_as_alt(next)
       println("Setting option as alt \{next}")
     }
-    Action::ToggleAnimatedFillColor => {
+    ToggleAnimatedFillColor => {
       let state_index = self.ensure_window_input_state(window_id)
       self.window_input_states[state_index].animated_fill_color = !self.window_input_states[state_index].animated_fill_color
       let enabled = self.window_input_states[state_index].animated_fill_color
       println("Animated fill on \{window_id}: \{enabled}")
     }
-    Action::ToggleContinuousRedraw => {
+    ToggleContinuousRedraw => {
       let state_index = self.ensure_window_input_state(window_id)
       self.window_input_states[state_index].continuous_redraw = !self.window_input_states[state_index].continuous_redraw
       let enabled = self.window_input_states[state_index].continuous_redraw
@@ -1063,19 +1060,19 @@ fn Application::perform_window_action(
         window.request_redraw()
       }
     }
-    Action::EmitSurfaceSize => {
+    EmitSurfaceSize => {
       let state_index = self.ensure_window_input_state(window_id)
       self.window_input_states[state_index].emit_surface_size = !self.window_input_states[state_index].emit_surface_size
       let enabled = self.window_input_states[state_index].emit_surface_size
       println("Emit surface size on \{window_id}: \{enabled}")
     }
-    Action::CreateNewWindow
-    | Action::PrintHelp
-    | Action::DumpMonitors
-    | Action::Message
-    | Action::DragWindow
-    | Action::DragResizeWindow
-    | Action::ShowWindowMenu => ()
+    CreateNewWindow
+    | PrintHelp
+    | DumpMonitors
+    | Message
+    | DragWindow
+    | DragResizeWindow
+    | ShowWindowMenu => ()
   }
 }
 
@@ -1088,14 +1085,14 @@ fn Application::execute_action(
 ) -> Unit {
   println("Executing action: \{action}")
   match action {
-    Action::CreateNewWindow =>
+    CreateNewWindow =>
       self.create_window(event_loop, "Winit window", None) |> ignore
-    Action::PrintHelp => self.print_help()
-    Action::DumpMonitors => self.dump_monitors(event_loop)
-    Action::Message =>
+    PrintHelp => self.print_help()
+    DumpMonitors => self.dump_monitors(event_loop)
+    Message =>
       match self.proxy {
         Some(proxy) => {
-          self.proxy_actions.push(Action::Message)
+          self.proxy_actions.push(Message)
           proxy.wake_up()
         }
         None => ()
@@ -1116,7 +1113,7 @@ fn Application::handle_proxy_action(
   action : Action,
 ) -> Unit {
   match action {
-    Action::Message => {
+    Message => {
       println("User wake up")
       for state in self.window_input_states {
         if state.emit_surface_size {
@@ -1133,7 +1130,7 @@ fn Application::handle_proxy_action(
         }
       }
     }
-    Action::DumpMonitors => self.dump_monitors(event_loop)
+    DumpMonitors => self.dump_monitors(event_loop)
     _ => ()
   }
 }
@@ -1149,33 +1146,29 @@ fn drag_resize_direction(
   let x_direction = if position.x() < border_size {
     @core.ResizeDirection::West
   } else if position.x() > size.width().to_double() - border_size {
-    @core.ResizeDirection::East
+    East
   } else {
-    @core.ResizeDirection::SouthEast
+    SouthEast
   }
 
   let y_direction = if position.y() < border_size {
     @core.ResizeDirection::North
   } else if position.y() > size.height().to_double() - border_size {
-    @core.ResizeDirection::South
+    South
   } else {
-    @core.ResizeDirection::SouthEast
+    SouthEast
   }
 
   match (x_direction, y_direction) {
-    (@core.ResizeDirection::West, @core.ResizeDirection::North) =>
-      @core.ResizeDirection::NorthWest
-    (@core.ResizeDirection::West, @core.ResizeDirection::South) =>
-      @core.ResizeDirection::SouthWest
-    (@core.ResizeDirection::West, _) => @core.ResizeDirection::West
-    (@core.ResizeDirection::East, @core.ResizeDirection::North) =>
-      @core.ResizeDirection::NorthEast
-    (@core.ResizeDirection::East, @core.ResizeDirection::South) =>
-      @core.ResizeDirection::SouthEast
-    (@core.ResizeDirection::East, _) => @core.ResizeDirection::East
-    (_, @core.ResizeDirection::South) => @core.ResizeDirection::South
-    (_, @core.ResizeDirection::North) => @core.ResizeDirection::North
-    _ => @core.ResizeDirection::SouthEast
+    (West, North) => NorthWest
+    (West, South) => SouthWest
+    (West, _) => West
+    (East, North) => NorthEast
+    (East, South) => SouthEast
+    (East, _) => East
+    (_, South) => South
+    (_, North) => North
+    _ => SouthEast
   }
 }
 
@@ -1187,16 +1180,16 @@ fn Application::handle_pointer_binding(
   position : @dpi.PhysicalPositionF64,
   source : @core.ButtonSource,
 ) -> Unit {
-  if state != @core.ElementState::Pressed {
+  if state != Pressed {
     return
   }
   let modifiers = self.modifiers_for_window(window_id)
   let button = match source {
-    @core.ButtonSource::Mouse(mouse_button) => Some(mouse_button)
+    Mouse(mouse_button) => Some(mouse_button)
     _ => None
   }
   match (button, self.window_by_id(window_id)) {
-    (Some(@core.MouseButton::Left), Some(window)) =>
+    (Some(Left), Some(window)) =>
       if modifiers_match(modifiers, true, false, false, false) {
         let started = try {
           window.drag_window()
@@ -1225,9 +1218,9 @@ fn Application::handle_pointer_binding(
           println("Drag-resizing window Window=\{window.id()}")
         }
       }
-    (Some(@core.MouseButton::Right), Some(window)) =>
+    (Some(Right), Some(window)) =>
       if modifiers_match(modifiers, true, false, false, false) {
-        let menu_position = @dpi.PhysicalPosition::new(
+        let menu_position = @dpi.PhysicalPosition::PhysicalPosition(
           position.x().to_int(),
           position.y().to_int(),
         )
@@ -1285,7 +1278,7 @@ pub impl @macos.ApplicationHandler for Application with about_to_wait(
   if now >= self.next_proxy_wake_ms {
     match self.proxy {
       Some(proxy) => {
-        self.proxy_actions.push(Action::Message)
+        self.proxy_actions.push(Message)
         proxy.wake_up()
       }
       None => ()
@@ -1304,7 +1297,9 @@ pub impl @macos.ApplicationHandler for Application with device_event(
   device_id,
   event,
 ) {
-  println("Device \{device_id} event: \{event}")
+  let device_id_debug = to_repr(device_id).to_string()
+  let event_debug = to_repr(event).to_string()
+  println("Device \{device_id_debug} event: \{event_debug}")
 }
 
 ///|
@@ -1315,25 +1310,25 @@ pub impl @macos.ApplicationHandler for Application with window_event(
   event,
 ) {
   match event {
-    @core.WindowEvent::CloseRequested => {
+    CloseRequested => {
       println("Closing Window=\{window_id}")
-      self.execute_action(event_loop, window_id, Action::CloseWindow)
+      self.execute_action(event_loop, window_id, CloseWindow)
     }
-    @core.WindowEvent::Destroyed => {
+    Destroyed => {
       self.remove_window(window_id)
       if self.windows.is_empty() {
         event_loop.exit()
       }
     }
-    @core.WindowEvent::Focused(focused) =>
+    Focused(focused) =>
       if focused {
         println("Window=\{window_id} focused")
       } else {
         println("Window=\{window_id} unfocused")
       }
-    @core.WindowEvent::ScaleFactorChanged(scale_factor, _writer) =>
+    ScaleFactorChanged(scale_factor, _writer) =>
       println("Window=\{window_id} changed scale to \{scale_factor}")
-    @core.WindowEvent::Occluded(occluded) => {
+    Occluded(occluded) => {
       let state_index = self.ensure_window_input_state(window_id)
       self.window_input_states[state_index].occluded = occluded
       if !occluded {
@@ -1343,41 +1338,33 @@ pub impl @macos.ApplicationHandler for Application with window_event(
         }
       }
     }
-    @core.WindowEvent::ThemeChanged(theme) => {
+    ThemeChanged(theme) => {
       let state_index = self.ensure_window_input_state(window_id)
       self.window_input_states[state_index].theme = theme
       println("Theme changed to \{theme}")
     }
-    @core.WindowEvent::ModifiersChanged(modifiers) => {
+    ModifiersChanged(modifiers) => {
       self.set_window_modifiers(window_id, modifiers.state())
       println("Modifiers changed to \{modifiers.state()}")
     }
-    @core.WindowEvent::MouseWheel(_device_id, delta, _phase) =>
+    MouseWheel(_device_id, delta, _phase) =>
       match delta {
-        @core.MouseScrollDelta::LineDelta(x, y) =>
-          println("Mouse wheel Line Delta: (\{x},\{y})")
-        @core.MouseScrollDelta::PixelDelta(px) =>
+        LineDelta(x, y) => println("Mouse wheel Line Delta: (\{x},\{y})")
+        PixelDelta(px) =>
           println("Mouse wheel Pixel Delta: (\{px.x()},\{px.y()})")
       }
-    @core.WindowEvent::PointerMoved(_device_id, position, _is_primary, _kind) =>
+    PointerMoved(_device_id, position, _is_primary, _kind) =>
       println("Moved pointer to \{position}")
-    @core.WindowEvent::PointerLeft(_device_id, _position, _is_primary, _kind) =>
+    PointerLeft(_device_id, _position, _is_primary, _kind) =>
       println("Pointer left Window=\{window_id}")
-    @core.WindowEvent::PointerButton(
-      _device_id,
-      state,
-      position,
-      _is_primary,
-      source
-    ) => {
+    PointerButton(_device_id, state, position, _is_primary, source) => {
       match source {
-        @core.ButtonSource::Mouse(button) =>
-          println("Pointer button \{button} \{state}")
+        Mouse(button) => println("Pointer button \{button} \{state}")
         _ => println("Pointer button \{source} \{state}")
       }
       self.handle_pointer_binding(window_id, state, position, source)
     }
-    @core.WindowEvent::PinchGesture(_device_id, delta, _phase) => {
+    PinchGesture(_device_id, delta, _phase) => {
       let state_index = self.ensure_window_input_state(window_id)
       self.window_input_states[state_index].zoom += delta
       let zoom = self.window_input_states[state_index].zoom
@@ -1387,7 +1374,7 @@ pub impl @macos.ApplicationHandler for Application with window_event(
         println("Zoomed out \{delta} (now: \{zoom})")
       }
     }
-    @core.WindowEvent::RotationGesture(_device_id, delta, _phase) => {
+    RotationGesture(_device_id, delta, _phase) => {
       let state_index = self.ensure_window_input_state(window_id)
       self.window_input_states[state_index].rotated += delta
       let rotated = self.window_input_states[state_index].rotated
@@ -1397,7 +1384,7 @@ pub impl @macos.ApplicationHandler for Application with window_event(
         println("Rotated clockwise \{delta} (now: \{rotated})")
       }
     }
-    @core.WindowEvent::PanGesture(_device_id, delta, phase) => {
+    PanGesture(_device_id, delta, phase) => {
       let state_index = self.ensure_window_input_state(window_id)
       self.window_input_states[state_index].panned_x += delta.x()
       self.window_input_states[state_index].panned_y += delta.y()
@@ -1405,15 +1392,15 @@ pub impl @macos.ApplicationHandler for Application with window_event(
       let panned_y = self.window_input_states[state_index].panned_y
       println("Panned (\{delta}) (now: (\{panned_x},\{panned_y})), \{phase}")
     }
-    @core.WindowEvent::DoubleTapGesture(_device_id) => println("Smart zoom")
-    @core.WindowEvent::KeyboardInput(_device_id, key_event, is_synthetic) =>
-      if !is_synthetic && key_event.state() is @core.ElementState::Pressed {
+    DoubleTapGesture(_device_id) => println("Smart zoom")
+    KeyboardInput(_device_id, key_event, is_synthetic) =>
+      if !is_synthetic && key_event.state() is Pressed {
         match self.action_from_key(window_id, key_event) {
           Some(action) => self.execute_action(event_loop, window_id, action)
           None => ()
         }
       }
-    @core.WindowEvent::SurfaceResized(size) =>
+    SurfaceResized(size) =>
       match self.window_by_id(window_id) {
         Some(window) => {
           println("Surface resized to \{size}")
@@ -1421,7 +1408,7 @@ pub impl @macos.ApplicationHandler for Application with window_event(
         }
         None => ()
       }
-    @core.WindowEvent::RedrawRequested =>
+    RedrawRequested =>
       match self.window_state(window_id) {
         Some(state) =>
           if state.occluded {
@@ -1468,8 +1455,8 @@ pub impl @macos.ApplicationHandler for Application with standard_key_binding(
 ///|
 fn main {
   @util.tracing_init()
-  let event_loop = @macos.EventLoop::new()
-  let app = Application::new()
+  let event_loop = @macos.EventLoop::EventLoop()
+  let app = Application::Application()
   let window_target = event_loop.window_target()
   app.proxy = Some(window_target.create_proxy())
   println("Starting to send user event every second")

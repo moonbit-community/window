@@ -5,7 +5,7 @@ struct PumpDemo {
 }
 
 ///|
-fn PumpDemo::new() -> PumpDemo {
+fn PumpDemo::PumpDemo() -> PumpDemo {
   { window: None }
 }
 
@@ -29,8 +29,8 @@ pub impl @macos.ApplicationHandler for PumpDemo with window_event(
   event,
 ) {
   match event {
-    @core.WindowEvent::CloseRequested => event_loop.exit()
-    @core.WindowEvent::RedrawRequested =>
+    CloseRequested => event_loop.exit()
+    RedrawRequested =>
       match self.window {
         Some(window) => {
           @util.fill_window(window)
@@ -48,8 +48,8 @@ fn pump_loop(event_loop : @macos.EventLoop, app : PumpDemo) -> Unit {
   while done == false {
     let timeout_ms = Some(0)
     match event_loop.pump_app_events(timeout_ms, app) {
-      @core.PumpStatus::Continue => @util.sleep_millis(16)
-      @core.PumpStatus::Exit(_exit_code) => done = true
+      Continue => @util.sleep_millis(16)
+      Exit(_exit_code) => done = true
     }
   }
 }
@@ -57,7 +57,7 @@ fn pump_loop(event_loop : @macos.EventLoop, app : PumpDemo) -> Unit {
 ///|
 fn main {
   @util.tracing_init()
-  let event_loop = @macos.EventLoop::new()
-  let app = PumpDemo::new()
+  let event_loop = @macos.EventLoop::EventLoop()
+  let app = PumpDemo::PumpDemo()
   pump_loop(event_loop, app)
 }

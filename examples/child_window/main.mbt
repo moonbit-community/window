@@ -12,7 +12,7 @@ struct WindowData {
 }
 
 ///|
-fn App::new() -> App {
+fn App::App() -> App {
   { parent_window_id: None, windows: [] }
 }
 
@@ -64,8 +64,12 @@ fn App::spawn_child_window(
       )
       let child_attrs = @core.WindowAttributes::default()
         .with_title("child window")
-        .with_surface_size(@dpi.LogicalSize::new(128.0, 96.0).into_size())
-        .with_position(@dpi.LogicalPosition::new(x, y).into_position())
+        .with_surface_size(
+          @dpi.LogicalSize::LogicalSize(128.0, 96.0).into_size(),
+        )
+        .with_position(
+          @dpi.LogicalPosition::LogicalPosition(x, y).into_position(),
+        )
         .with_visible(true)
         .with_parent_window(Some(parent_raw))
       let child_window = event_loop.create_window(child_attrs)
@@ -87,8 +91,10 @@ pub impl @macos.ApplicationHandler for App with can_create_surfaces(
 ) {
   let parent_attrs = @core.WindowAttributes::default()
     .with_title("parent window")
-    .with_position(@dpi.LogicalPosition::new(0.0, 0.0).into_position())
-    .with_surface_size(@dpi.LogicalSize::new(640.0, 480.0).into_size())
+    .with_position(
+      @dpi.LogicalPosition::LogicalPosition(0.0, 0.0).into_position(),
+    )
+    .with_surface_size(@dpi.LogicalSize::LogicalSize(640.0, 480.0).into_size())
   let parent_window = event_loop.create_window(parent_attrs)
   let parent_window_id = parent_window.id()
   self.parent_window_id = Some(parent_window_id)
@@ -104,17 +110,17 @@ pub impl @macos.ApplicationHandler for App with window_event(
   event,
 ) {
   match event {
-    @core.WindowEvent::CloseRequested => {
+    CloseRequested => {
       self.windows.clear()
       event_loop.exit()
     }
-    @core.WindowEvent::PointerEntered(_device_id, _position, _primary, _kind) =>
+    PointerEntered(_device_id, _position, _primary, _kind) =>
       println("cursor entered in the window \{window_id}")
-    @core.WindowEvent::KeyboardInput(_device_id, key_event, _is_synthetic) =>
-      if key_event.state() is @core.ElementState::Pressed {
+    KeyboardInput(_device_id, key_event, _is_synthetic) =>
+      if key_event.state() is Pressed {
         self.spawn_child_window(event_loop)
       }
-    @core.WindowEvent::RedrawRequested =>
+    RedrawRequested =>
       match self.window_data_index(window_id) {
         Some(index) =>
           match self.parent_window_id {
@@ -150,6 +156,6 @@ pub impl @macos.ApplicationHandler for App with about_to_wait(
 ///|
 fn main {
   @util.tracing_init()
-  let event_loop = @macos.EventLoop::new()
-  event_loop.run_app(App::new())
+  let event_loop = @macos.EventLoop::EventLoop()
+  event_loop.run_app(App::App())
 }

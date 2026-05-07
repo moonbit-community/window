@@ -250,8 +250,8 @@ fn normalize_ime_hints_bits(hints : Int) -> Int {
 ///|
 fn theme_from_native(theme : Int) -> @core.Theme? {
   match theme {
-    1 => Some(@core.Theme::Light)
-    2 => Some(@core.Theme::Dark)
+    1 => Some(Light)
+    2 => Some(Dark)
     _ => None
   }
 }
@@ -259,8 +259,8 @@ fn theme_from_native(theme : Int) -> @core.Theme? {
 ///|
 fn theme_to_native(theme : @core.Theme?) -> Int {
   match theme {
-    Some(@core.Theme::Light) => 1
-    Some(@core.Theme::Dark) => 2
+    Some(Light) => 1
+    Some(Dark) => 2
     None => 0
   }
 }
@@ -284,7 +284,7 @@ fn drag_paths_from_native(bytes : Bytes) -> Array[String] {
   let text = text_from_native(bytes)
   let paths : Array[String] = []
   for path in text.split("\n"[:]) {
-    let value = path.to_string()
+    let value = path.to_owned()
     if value != "" {
       paths.push(value)
     }
@@ -295,66 +295,66 @@ fn drag_paths_from_native(bytes : Bytes) -> Array[String] {
 ///|
 fn ime_purpose_to_native(purpose : @core.ImePurpose) -> Int {
   match purpose {
-    @core.ImePurpose::Normal => 0
-    @core.ImePurpose::Password => 1
-    @core.ImePurpose::Terminal => 2
-    @core.ImePurpose::Number => 3
-    @core.ImePurpose::Phone => 4
-    @core.ImePurpose::Url => 5
-    @core.ImePurpose::Email => 6
-    @core.ImePurpose::Pin => 7
-    @core.ImePurpose::Date => 8
-    @core.ImePurpose::Time => 9
-    @core.ImePurpose::DateTime => 10
+    Normal => 0
+    Password => 1
+    Terminal => 2
+    Number => 3
+    Phone => 4
+    Url => 5
+    Email => 6
+    Pin => 7
+    Date => 8
+    Time => 9
+    DateTime => 10
   }
 }
 
 ///|
 fn ime_purpose_from_native(purpose : Int) -> @core.ImePurpose {
   match normalize_ime_purpose_native(purpose) {
-    1 => @core.ImePurpose::Password
-    2 => @core.ImePurpose::Terminal
-    3 => @core.ImePurpose::Number
-    4 => @core.ImePurpose::Phone
-    5 => @core.ImePurpose::Url
-    6 => @core.ImePurpose::Email
-    7 => @core.ImePurpose::Pin
-    8 => @core.ImePurpose::Date
-    9 => @core.ImePurpose::Time
-    10 => @core.ImePurpose::DateTime
-    _ => @core.ImePurpose::Normal
+    1 => Password
+    2 => Terminal
+    3 => Number
+    4 => Phone
+    5 => Url
+    6 => Email
+    7 => Pin
+    8 => Date
+    9 => Time
+    10 => DateTime
+    _ => Normal
   }
 }
 
 ///|
 fn window_level_to_native(level : @core.WindowLevel) -> Int {
   match level {
-    @core.WindowLevel::Normal => 0
-    @core.WindowLevel::AlwaysOnTop => 1
-    @core.WindowLevel::AlwaysOnBottom => 2
+    Normal => 0
+    AlwaysOnTop => 1
+    AlwaysOnBottom => 2
   }
 }
 
 ///|
 fn window_level_from_native(level : Int) -> @core.WindowLevel {
   match normalize_window_level_native(level) {
-    1 => @core.WindowLevel::AlwaysOnTop
-    2 => @core.WindowLevel::AlwaysOnBottom
-    _ => @core.WindowLevel::Normal
+    1 => AlwaysOnTop
+    2 => AlwaysOnBottom
+    _ => Normal
   }
 }
 
 ///|
 fn resize_direction_to_native(direction : @core.ResizeDirection) -> Int {
   match direction {
-    @core.ResizeDirection::East => 0
-    @core.ResizeDirection::North => 1
-    @core.ResizeDirection::NorthEast => 2
-    @core.ResizeDirection::NorthWest => 3
-    @core.ResizeDirection::South => 4
-    @core.ResizeDirection::SouthEast => 5
-    @core.ResizeDirection::SouthWest => 6
-    @core.ResizeDirection::West => 7
+    East => 0
+    North => 1
+    NorthEast => 2
+    NorthWest => 3
+    South => 4
+    SouthEast => 5
+    SouthWest => 6
+    West => 7
   }
 }
 
@@ -364,27 +364,27 @@ fn user_attention_type_to_native(
 ) -> Int {
   match request_type {
     None => 0
-    Some(@core.UserAttentionType::Critical) => 1
-    Some(@core.UserAttentionType::Informational) => 2
+    Some(Critical) => 1
+    Some(Informational) => 2
   }
 }
 
 ///|
 fn option_as_alt_to_native(option_as_alt : @core.OptionAsAlt) -> Int {
   match option_as_alt {
-    @core.OptionAsAlt::OnlyLeft => 1
-    @core.OptionAsAlt::OnlyRight => 2
-    @core.OptionAsAlt::Both => 3
-    @core.OptionAsAlt::None => 0
+    OnlyLeft => 1
+    OnlyRight => 2
+    Both => 3
+    None => 0
   }
 }
 
 ///|
 fn option_as_alt_from_native(option_as_alt : Int) -> @core.OptionAsAlt {
   match normalize_option_as_alt_native(option_as_alt) {
-    1 => @core.OptionAsAlt::OnlyLeft
-    2 => @core.OptionAsAlt::OnlyRight
-    3 => @core.OptionAsAlt::Both
-    _ => @core.OptionAsAlt::None
+    1 => OnlyLeft
+    2 => OnlyRight
+    3 => Both
+    _ => None
   }
 }

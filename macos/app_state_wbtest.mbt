@@ -1,6 +1,6 @@
 ///|
 fn reset_app_state_runtime_for_test() -> Unit {
-  app_state_runtime.val = AppStateRuntime::new()
+  app_state_runtime.val = AppStateRuntime()
   app_state_window_position_raw_ids.val = []
   app_state_window_position_xs.val = []
   app_state_window_position_ys.val = []
@@ -9,17 +9,16 @@ fn reset_app_state_runtime_for_test() -> Unit {
 ///|
 fn callback_name_for_test(callback : DeferredCallback) -> String {
   match callback {
-    DeferredCallback::DidFinishLaunching => "did_finish_launching"
-    DeferredCallback::WillTerminate => "will_terminate"
-    DeferredCallback::NewEvents(_) => "new_events"
-    DeferredCallback::CanCreateSurfaces => "can_create_surfaces"
-    DeferredCallback::AboutToWait => "about_to_wait"
-    DeferredCallback::ProxyWakeUp => "proxy_wake_up"
-    DeferredCallback::WindowEvent(_, _) => "window_event"
-    DeferredCallback::ScaleFactorChanged(_, _, _, _, _) =>
-      "scale_factor_changed"
-    DeferredCallback::DeviceEvent(_) => "device_event"
-    DeferredCallback::StandardKeyBinding(_, _) => "standard_key_binding"
+    DidFinishLaunching => "did_finish_launching"
+    WillTerminate => "will_terminate"
+    NewEvents(_) => "new_events"
+    CanCreateSurfaces => "can_create_surfaces"
+    AboutToWait => "about_to_wait"
+    ProxyWakeUp => "proxy_wake_up"
+    WindowEvent(_, _) => "window_event"
+    ScaleFactorChanged(_, _, _, _, _) => "scale_factor_changed"
+    DeviceEvent(_) => "device_event"
+    StandardKeyBinding(_, _) => "standard_key_binding"
   }
 }
 
@@ -47,10 +46,10 @@ fn active_event_loop_for_test() -> ActiveEventLoop {
 }
 
 ///|
-let launch_init_callback_order_for_test : Ref[Array[String]] = Ref::new([])
+let launch_init_callback_order_for_test : Ref[Array[String]] = Ref([])
 
 ///|
-let launch_init_stop_flag_seen_for_test : Ref[Array[Bool]] = Ref::new([])
+let launch_init_stop_flag_seen_for_test : Ref[Array[Bool]] = Ref([])
 
 ///|
 struct LaunchInitCallbacksApp {}
@@ -80,21 +79,21 @@ pub impl ApplicationHandler for LaunchInitCallbacksApp with can_create_surfaces(
 
 ///|
 test "min_timeout_handles_none_and_picks_smaller_timeout" {
-  assert_eq(min_timeout_ms(None, None), None)
-  assert_eq(
-    min_timeout_ms(Some((10 : Int).to_int64()), None),
+  assert_true(min_timeout_ms(None, None) == None)
+  assert_true(
+    min_timeout_ms(Some((10 : Int).to_int64()), None) ==
     Some((10 : Int).to_int64()),
   )
-  assert_eq(
-    min_timeout_ms(None, Some((20 : Int).to_int64())),
+  assert_true(
+    min_timeout_ms(None, Some((20 : Int).to_int64())) ==
     Some((20 : Int).to_int64()),
   )
-  assert_eq(
-    min_timeout_ms(Some((30 : Int).to_int64()), Some((20 : Int).to_int64())),
+  assert_true(
+    min_timeout_ms(Some((30 : Int).to_int64()), Some((20 : Int).to_int64())) ==
     Some((20 : Int).to_int64()),
   )
-  assert_eq(
-    min_timeout_ms(Some((5 : Int).to_int64()), Some((20 : Int).to_int64())),
+  assert_true(
+    min_timeout_ms(Some((5 : Int).to_int64()), Some((20 : Int).to_int64())) ==
     Some((5 : Int).to_int64()),
   )
 }
@@ -118,36 +117,25 @@ test "wait_cause_matches_control_flow" {
   let start = runtime_now_ms() - (100 : Int).to_int64()
   app_state_runtime.val.start_time_ms = Some(start)
 
-  app_state_set_control_flow(@core.ControlFlow::Poll)
-  assert_eq(app_state_wait_cause(), @core.StartCause::Poll)
+  app_state_set_control_flow(Poll)
+  assert_eq(app_state_wait_cause(), Poll)
 
-  app_state_set_control_flow(@core.ControlFlow::Wait)
-  assert_eq(
-    app_state_wait_cause(),
-    @core.StartCause::WaitCancelled(start, None),
-  )
+  app_state_set_control_flow(Wait)
+  assert_eq(app_state_wait_cause(), WaitCancelled(start, None))
 
   let future = runtime_now_ms() + (2000 : Int).to_int64()
-  app_state_set_control_flow(@core.ControlFlow::WaitUntil(future))
-  assert_eq(
-    app_state_wait_cause(),
-    @core.StartCause::WaitCancelled(start, Some(future)),
-  )
+  app_state_set_control_flow(WaitUntil(future))
+  assert_eq(app_state_wait_cause(), WaitCancelled(start, Some(future)))
 
   let past = runtime_now_ms() - (2000 : Int).to_int64()
-  app_state_set_control_flow(@core.ControlFlow::WaitUntil(past))
-  assert_eq(
-    app_state_wait_cause(),
-    @core.StartCause::ResumeTimeReached(start, past),
-  )
+  app_state_set_control_flow(WaitUntil(past))
+  assert_eq(app_state_wait_cause(), ResumeTimeReached(start, past))
 }
 
 ///|
 test "did_finish_launching_notification_is_deduplicated_in_queue" {
   reset_app_state_runtime_for_test()
-  app_state_runtime.val.deferred_callbacks.push(
-    DeferredCallback::DidFinishLaunching,
-  )
+  app_state_runtime.val.deferred_callbacks.push(DidFinishLaunching)
 
   app_state_queue_did_finish_launching_notification()
   assert_eq(callback_names_for_test(app_state_runtime.val.deferred_callbacks), [
@@ -158,7 +146,7 @@ test "did_finish_launching_notification_is_deduplicated_in_queue" {
 ///|
 test "will_terminate_notification_is_deduplicated_in_queue" {
   reset_app_state_runtime_for_test()
-  app_state_runtime.val.deferred_callbacks.push(DeferredCallback::WillTerminate)
+  app_state_runtime.val.deferred_callbacks.push(WillTerminate)
 
   app_state_queue_will_terminate_notification()
   assert_eq(callback_names_for_test(app_state_runtime.val.deferred_callbacks), [
@@ -179,12 +167,12 @@ test "will_terminate_notification_noops_after_handled" {
 test "will_terminate_callback_bypasses_registered_dispatch_handler" {
   reset_app_state_runtime_for_test()
   app_state_runtime.val.will_terminate_handled = true
-  let seen : Ref[Array[String]] = Ref::new([])
+  let seen : Ref[Array[String]] = Ref([])
   app_state_runtime.val.dispatch_callback = Some(fn(callback) {
     seen.val.push(callback_name_for_test(callback))
   })
 
-  app_state_maybe_dispatch_callback(DeferredCallback::WillTerminate)
+  app_state_maybe_dispatch_callback(WillTerminate)
 
   assert_eq(seen.val.length(), 0)
 }
@@ -231,14 +219,14 @@ test "internal_exit_preserves_stop_on_launch_flag" {
 ///|
 test "dispatch_registered_deferred_callbacks_keeps_order_when_running" {
   reset_app_state_runtime_for_test()
-  let seen : Ref[Array[String]] = Ref::new([])
+  let seen : Ref[Array[String]] = Ref([])
   app_state_runtime.val.dispatch_callback = Some(fn(callback) {
     seen.val.push(callback_name_for_test(callback))
   })
   app_state_set_running(true)
 
-  app_state_runtime.val.deferred_callbacks.push(DeferredCallback::ProxyWakeUp)
-  app_state_runtime.val.deferred_callbacks.push(DeferredCallback::AboutToWait)
+  app_state_runtime.val.deferred_callbacks.push(ProxyWakeUp)
+  app_state_runtime.val.deferred_callbacks.push(AboutToWait)
   app_state_dispatch_registered_deferred_callbacks()
 
   assert_eq(seen.val, ["proxy_wake_up", "about_to_wait"])
@@ -248,17 +236,15 @@ test "dispatch_registered_deferred_callbacks_keeps_order_when_running" {
 ///|
 test "dispatch_registered_deferred_callbacks_dispatches_lifecycle_while_not_running" {
   reset_app_state_runtime_for_test()
-  let seen : Ref[Array[String]] = Ref::new([])
+  let seen : Ref[Array[String]] = Ref([])
   app_state_runtime.val.dispatch_callback = Some(fn(callback) {
     seen.val.push(callback_name_for_test(callback))
   })
   app_state_set_running(false)
 
-  app_state_runtime.val.deferred_callbacks.push(DeferredCallback::ProxyWakeUp)
-  app_state_runtime.val.deferred_callbacks.push(DeferredCallback::WillTerminate)
-  app_state_runtime.val.deferred_callbacks.push(
-    DeferredCallback::DidFinishLaunching,
-  )
+  app_state_runtime.val.deferred_callbacks.push(ProxyWakeUp)
+  app_state_runtime.val.deferred_callbacks.push(WillTerminate)
+  app_state_runtime.val.deferred_callbacks.push(DidFinishLaunching)
   app_state_dispatch_registered_deferred_callbacks()
 
   assert_eq(seen.val, ["will_terminate", "did_finish_launching"])
@@ -302,15 +288,12 @@ test "reentrant_redraw_requested_is_dropped" {
   reset_app_state_runtime_for_test()
   app_state_set_running(true)
   app_state_set_handler_in_use(true)
-  let seen : Ref[Array[String]] = Ref::new([])
+  let seen : Ref[Array[String]] = Ref([])
   app_state_runtime.val.dispatch_callback = Some(fn(callback) {
     seen.val.push(callback_name_for_test(callback))
   })
 
-  app_state_queue_window_callback(
-    @core.WindowId::from_raw(1),
-    @core.WindowEvent::RedrawRequested,
-  )
+  app_state_queue_window_callback(@core.WindowId::from_raw(1), RedrawRequested)
 
   assert_eq(seen.val.length(), 0)
   assert_eq(app_state_runtime.val.deferred_callbacks.length(), 0)
@@ -321,15 +304,12 @@ test "reentrant_non_redraw_window_event_is_queued" {
   reset_app_state_runtime_for_test()
   app_state_set_running(true)
   app_state_set_handler_in_use(true)
-  let seen : Ref[Array[String]] = Ref::new([])
+  let seen : Ref[Array[String]] = Ref([])
   app_state_runtime.val.dispatch_callback = Some(fn(callback) {
     seen.val.push(callback_name_for_test(callback))
   })
 
-  app_state_queue_window_callback(
-    @core.WindowId::from_raw(1),
-    @core.WindowEvent::Focused(true),
-  )
+  app_state_queue_window_callback(@core.WindowId::from_raw(1), Focused(true))
 
   assert_eq(seen.val.length(), 0)
   assert_eq(callback_names_for_test(app_state_runtime.val.deferred_callbacks), [
@@ -341,7 +321,7 @@ test "reentrant_non_redraw_window_event_is_queued" {
 test "before_waiting_dispatches_redraws_then_about_to_wait" {
   reset_app_state_runtime_for_test()
   app_state_set_running(true)
-  let seen : Ref[Array[String]] = Ref::new([])
+  let seen : Ref[Array[String]] = Ref([])
   app_state_runtime.val.dispatch_callback = Some(fn(callback) {
     seen.val.push(callback_name_for_test(callback))
   })
@@ -360,23 +340,21 @@ test "before_waiting_dispatches_redraws_then_about_to_wait" {
 test "after_waiting_dispatches_new_events_with_wait_cause" {
   reset_app_state_runtime_for_test()
   app_state_set_running(true)
-  let captured_causes : Ref[Array[@core.StartCause]] = Ref::new([])
+  let captured_causes : Ref[Array[@core.StartCause]] = Ref([])
   app_state_runtime.val.dispatch_callback = Some(fn(callback) {
     match callback {
-      DeferredCallback::NewEvents(cause) => captured_causes.val.push(cause)
+      NewEvents(cause) => captured_causes.val.push(cause)
       _ => ()
     }
   })
   let start = runtime_now_ms() - (20 : Int).to_int64()
   let requested_resume = runtime_now_ms() + (2000 : Int).to_int64()
   app_state_runtime.val.start_time_ms = Some(start)
-  app_state_set_control_flow(@core.ControlFlow::WaitUntil(requested_resume))
+  app_state_set_control_flow(WaitUntil(requested_resume))
 
   app_state_on_after_waiting()
 
-  assert_eq(captured_causes.val, [
-    @core.StartCause::WaitCancelled(start, Some(requested_resume)),
-  ])
+  assert_eq(captured_causes.val, [WaitCancelled(start, Some(requested_resume))])
 }
 
 ///|
@@ -415,7 +393,7 @@ test "before_waiting_noops_without_dispatch_handler" {
   reset_app_state_runtime_for_test()
   app_state_set_running(true)
   app_state_set_handler_in_use(false)
-  app_state_set_control_flow(@core.ControlFlow::Wait)
+  app_state_set_control_flow(Wait)
   app_state_queue_redraw(1)
 
   app_state_on_before_waiting()
@@ -430,7 +408,7 @@ test "after_waiting_noops_without_dispatch_handler" {
   app_state_set_running(true)
   app_state_set_handler_in_use(false)
   app_state_runtime.val.start_time_ms = Some((42 : Int).to_int64())
-  app_state_set_control_flow(@core.ControlFlow::Poll)
+  app_state_set_control_flow(Poll)
 
   app_state_on_after_waiting()
 
@@ -444,10 +422,7 @@ test "running_callbacks_are_dropped_when_dispatch_handler_absent" {
   app_state_set_handler_in_use(false)
 
   app_state_queue_proxy_wake_up()
-  app_state_queue_window_callback(
-    @core.WindowId::from_raw(1),
-    @core.WindowEvent::Focused(true),
-  )
+  app_state_queue_window_callback(@core.WindowId::from_raw(1), Focused(true))
 
   assert_eq(app_state_runtime.val.deferred_callbacks.length(), 0)
 }
@@ -469,16 +444,16 @@ test "did_finish_launching_updates_state_without_dispatch_handler" {
 test "nested_proxy_wake_is_deferred_until_explicit_drain" {
   reset_app_state_runtime_for_test()
   app_state_set_running(true)
-  let seen : Ref[Array[String]] = Ref::new([])
+  let seen : Ref[Array[String]] = Ref([])
   app_state_runtime.val.dispatch_callback = Some(fn(callback) {
     seen.val.push(callback_name_for_test(callback))
     match callback {
-      DeferredCallback::AboutToWait => app_state_queue_proxy_wake_up()
+      AboutToWait => app_state_queue_proxy_wake_up()
       _ => ()
     }
   })
 
-  app_state_maybe_dispatch_callback(DeferredCallback::AboutToWait)
+  app_state_maybe_dispatch_callback(AboutToWait)
 
   assert_eq(seen.val, ["about_to_wait"])
   assert_eq(callback_names_for_test(app_state_runtime.val.deferred_callbacks), [
@@ -495,20 +470,20 @@ test "nested_proxy_wake_is_deferred_until_explicit_drain" {
 test "nested_redraw_is_dropped_while_handler_is_in_use" {
   reset_app_state_runtime_for_test()
   app_state_set_running(true)
-  let seen : Ref[Array[String]] = Ref::new([])
+  let seen : Ref[Array[String]] = Ref([])
   app_state_runtime.val.dispatch_callback = Some(fn(callback) {
     seen.val.push(callback_name_for_test(callback))
     match callback {
-      DeferredCallback::AboutToWait =>
+      AboutToWait =>
         app_state_queue_window_callback(
           @core.WindowId::from_raw(1),
-          @core.WindowEvent::RedrawRequested,
+          RedrawRequested,
         )
       _ => ()
     }
   })
 
-  app_state_maybe_dispatch_callback(DeferredCallback::AboutToWait)
+  app_state_maybe_dispatch_callback(AboutToWait)
 
   assert_eq(seen.val, ["about_to_wait"])
   assert_eq(app_state_runtime.val.deferred_callbacks.length(), 0)
@@ -518,11 +493,11 @@ test "nested_redraw_is_dropped_while_handler_is_in_use" {
 test "before_waiting_drains_deferred_callbacks_before_about_to_wait" {
   reset_app_state_runtime_for_test()
   app_state_set_running(true)
-  let seen : Ref[Array[String]] = Ref::new([])
+  let seen : Ref[Array[String]] = Ref([])
   app_state_runtime.val.dispatch_callback = Some(fn(callback) {
     seen.val.push(callback_name_for_test(callback))
   })
-  app_state_runtime.val.deferred_callbacks.push(DeferredCallback::ProxyWakeUp)
+  app_state_runtime.val.deferred_callbacks.push(ProxyWakeUp)
 
   app_state_on_before_waiting()
 

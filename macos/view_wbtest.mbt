@@ -10,7 +10,7 @@ fn reset_view_state_for_test() -> Unit {
   view_ime_selected_range_locations.val = []
   view_ime_selected_range_lengths.val = []
 
-  app_state_runtime.val = AppStateRuntime::new()
+  app_state_runtime.val = AppStateRuntime()
   app_state_window_position_raw_ids.val = []
   app_state_window_position_xs.val = []
   app_state_window_position_ys.val = []

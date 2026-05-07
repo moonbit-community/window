@@ -4,12 +4,12 @@
 ///|
 fn extra_function_key_from_text(text : String?) -> @core.PhysicalKey? {
   match text {
-    Some("\u{f718}") => Some(@core.PhysicalKey::Code(@core.KeyCode::F21))
-    Some("\u{f719}") => Some(@core.PhysicalKey::Code(@core.KeyCode::F22))
-    Some("\u{f71a}") => Some(@core.PhysicalKey::Code(@core.KeyCode::F23))
-    Some("\u{f71b}") => Some(@core.PhysicalKey::Code(@core.KeyCode::F24))
-    Some("\u{f727}") => Some(@core.PhysicalKey::Code(@core.KeyCode::Insert))
-    Some("\u{f746}") => Some(@core.PhysicalKey::Code(@core.KeyCode::Help))
+    Some("\u{f718}") => Some(Code(F21))
+    Some("\u{f719}") => Some(Code(F22))
+    Some("\u{f71a}") => Some(Code(F23))
+    Some("\u{f71b}") => Some(Code(F24))
+    Some("\u{f727}") => Some(Code(Insert))
+    Some("\u{f746}") => Some(Code(Help))
     _ => None
   }
 }
@@ -27,135 +27,134 @@ fn physical_key_from_scancode(
 ) -> @core.PhysicalKey {
   let code = match scancode {
     0x00 => Some(@core.KeyCode::KeyA)
-    0x01 => Some(@core.KeyCode::KeyS)
-    0x02 => Some(@core.KeyCode::KeyD)
-    0x03 => Some(@core.KeyCode::KeyF)
-    0x04 => Some(@core.KeyCode::KeyH)
-    0x05 => Some(@core.KeyCode::KeyG)
-    0x06 => Some(@core.KeyCode::KeyZ)
-    0x07 => Some(@core.KeyCode::KeyX)
-    0x08 => Some(@core.KeyCode::KeyC)
-    0x09 => Some(@core.KeyCode::KeyV)
-    0x0A => Some(@core.KeyCode::IntlBackslash)
-    0x0B => Some(@core.KeyCode::KeyB)
-    0x0C => Some(@core.KeyCode::KeyQ)
-    0x0D => Some(@core.KeyCode::KeyW)
-    0x0E => Some(@core.KeyCode::KeyE)
-    0x0F => Some(@core.KeyCode::KeyR)
-    0x10 => Some(@core.KeyCode::KeyY)
-    0x11 => Some(@core.KeyCode::KeyT)
-    0x12 => Some(@core.KeyCode::Digit1)
-    0x13 => Some(@core.KeyCode::Digit2)
-    0x14 => Some(@core.KeyCode::Digit3)
-    0x15 => Some(@core.KeyCode::Digit4)
-    0x16 => Some(@core.KeyCode::Digit6)
-    0x17 => Some(@core.KeyCode::Digit5)
-    0x18 => Some(@core.KeyCode::Equal)
-    0x19 => Some(@core.KeyCode::Digit9)
-    0x1A => Some(@core.KeyCode::Digit7)
-    0x1B => Some(@core.KeyCode::Minus)
-    0x1C => Some(@core.KeyCode::Digit8)
-    0x1D => Some(@core.KeyCode::Digit0)
-    0x1E => Some(@core.KeyCode::BracketRight)
-    0x1F => Some(@core.KeyCode::KeyO)
-    0x20 => Some(@core.KeyCode::KeyU)
-    0x21 => Some(@core.KeyCode::BracketLeft)
-    0x22 => Some(@core.KeyCode::KeyI)
-    0x23 => Some(@core.KeyCode::KeyP)
-    0x24 => Some(@core.KeyCode::Enter)
-    0x25 => Some(@core.KeyCode::KeyL)
-    0x26 => Some(@core.KeyCode::KeyJ)
-    0x27 => Some(@core.KeyCode::Quote)
-    0x28 => Some(@core.KeyCode::KeyK)
-    0x29 => Some(@core.KeyCode::Semicolon)
-    0x2A => Some(@core.KeyCode::Backslash)
-    0x2B => Some(@core.KeyCode::Comma)
-    0x2C => Some(@core.KeyCode::Slash)
-    0x2D => Some(@core.KeyCode::KeyN)
-    0x2E => Some(@core.KeyCode::KeyM)
-    0x2F => Some(@core.KeyCode::Period)
-    0x30 => Some(@core.KeyCode::Tab)
-    0x31 => Some(@core.KeyCode::Space)
-    0x32 => Some(@core.KeyCode::Backquote)
-    0x33 => Some(@core.KeyCode::Backspace)
-    0x35 => Some(@core.KeyCode::Escape)
-    0x36 => Some(@core.KeyCode::MetaRight)
-    0x37 => Some(@core.KeyCode::MetaLeft)
-    0x38 => Some(@core.KeyCode::ShiftLeft)
-    0x39 => Some(@core.KeyCode::CapsLock)
-    0x3A => Some(@core.KeyCode::AltLeft)
-    0x3B => Some(@core.KeyCode::ControlLeft)
-    0x3C => Some(@core.KeyCode::ShiftRight)
-    0x3D => Some(@core.KeyCode::AltRight)
-    0x3E => Some(@core.KeyCode::ControlRight)
-    0x3F => Some(@core.KeyCode::Fn)
-    0x40 => Some(@core.KeyCode::F17)
-    0x41 => Some(@core.KeyCode::NumpadDecimal)
-    0x43 => Some(@core.KeyCode::NumpadMultiply)
-    0x45 => Some(@core.KeyCode::NumpadAdd)
-    0x47 => Some(@core.KeyCode::NumLock)
-    0x48 => Some(@core.KeyCode::AudioVolumeUp)
-    0x49 => Some(@core.KeyCode::AudioVolumeDown)
-    0x4A => Some(@core.KeyCode::AudioVolumeMute)
-    0x4B => Some(@core.KeyCode::NumpadDivide)
-    0x4C => Some(@core.KeyCode::NumpadEnter)
-    0x4E => Some(@core.KeyCode::NumpadSubtract)
-    0x4F => Some(@core.KeyCode::F18)
-    0x50 => Some(@core.KeyCode::F19)
-    0x51 => Some(@core.KeyCode::NumpadEqual)
-    0x52 => Some(@core.KeyCode::Numpad0)
-    0x53 => Some(@core.KeyCode::Numpad1)
-    0x54 => Some(@core.KeyCode::Numpad2)
-    0x55 => Some(@core.KeyCode::Numpad3)
-    0x56 => Some(@core.KeyCode::Numpad4)
-    0x57 => Some(@core.KeyCode::Numpad5)
-    0x58 => Some(@core.KeyCode::Numpad6)
-    0x59 => Some(@core.KeyCode::Numpad7)
-    0x5A => Some(@core.KeyCode::F20)
-    0x5B => Some(@core.KeyCode::Numpad8)
-    0x5C => Some(@core.KeyCode::Numpad9)
-    0x5D => Some(@core.KeyCode::IntlYen)
-    0x5E => Some(@core.KeyCode::IntlRo)
-    0x5F => Some(@core.KeyCode::NumpadComma)
-    0x60 => Some(@core.KeyCode::F5)
-    0x61 => Some(@core.KeyCode::F6)
-    0x62 => Some(@core.KeyCode::F7)
-    0x63 => Some(@core.KeyCode::F3)
-    0x64 => Some(@core.KeyCode::F8)
-    0x65 => Some(@core.KeyCode::F9)
-    0x66 => Some(@core.KeyCode::Lang2)
-    0x67 => Some(@core.KeyCode::F11)
-    0x68 => Some(@core.KeyCode::Lang1)
-    0x69 => Some(@core.KeyCode::F13)
-    0x6A => Some(@core.KeyCode::F16)
-    0x6B => Some(@core.KeyCode::F14)
-    0x6D => Some(@core.KeyCode::F10)
-    0x6E => Some(@core.KeyCode::ContextMenu)
-    0x6F => Some(@core.KeyCode::F12)
-    0x71 => Some(@core.KeyCode::F15)
-    0x72 => Some(@core.KeyCode::Insert)
-    0x73 => Some(@core.KeyCode::Home)
-    0x74 => Some(@core.KeyCode::PageUp)
-    0x75 => Some(@core.KeyCode::Delete)
-    0x76 => Some(@core.KeyCode::F4)
-    0x77 => Some(@core.KeyCode::End)
-    0x78 => Some(@core.KeyCode::F2)
-    0x79 => Some(@core.KeyCode::PageDown)
-    0x7A => Some(@core.KeyCode::F1)
-    0x7B => Some(@core.KeyCode::ArrowLeft)
-    0x7C => Some(@core.KeyCode::ArrowRight)
-    0x7D => Some(@core.KeyCode::ArrowDown)
-    0x7E => Some(@core.KeyCode::ArrowUp)
-    0x7F => Some(@core.KeyCode::Power)
+    0x01 => Some(KeyS)
+    0x02 => Some(KeyD)
+    0x03 => Some(KeyF)
+    0x04 => Some(KeyH)
+    0x05 => Some(KeyG)
+    0x06 => Some(KeyZ)
+    0x07 => Some(KeyX)
+    0x08 => Some(KeyC)
+    0x09 => Some(KeyV)
+    0x0A => Some(IntlBackslash)
+    0x0B => Some(KeyB)
+    0x0C => Some(KeyQ)
+    0x0D => Some(KeyW)
+    0x0E => Some(KeyE)
+    0x0F => Some(KeyR)
+    0x10 => Some(KeyY)
+    0x11 => Some(KeyT)
+    0x12 => Some(Digit1)
+    0x13 => Some(Digit2)
+    0x14 => Some(Digit3)
+    0x15 => Some(Digit4)
+    0x16 => Some(Digit6)
+    0x17 => Some(Digit5)
+    0x18 => Some(Equal)
+    0x19 => Some(Digit9)
+    0x1A => Some(Digit7)
+    0x1B => Some(Minus)
+    0x1C => Some(Digit8)
+    0x1D => Some(Digit0)
+    0x1E => Some(BracketRight)
+    0x1F => Some(KeyO)
+    0x20 => Some(KeyU)
+    0x21 => Some(BracketLeft)
+    0x22 => Some(KeyI)
+    0x23 => Some(KeyP)
+    0x24 => Some(Enter)
+    0x25 => Some(KeyL)
+    0x26 => Some(KeyJ)
+    0x27 => Some(Quote)
+    0x28 => Some(KeyK)
+    0x29 => Some(Semicolon)
+    0x2A => Some(Backslash)
+    0x2B => Some(Comma)
+    0x2C => Some(Slash)
+    0x2D => Some(KeyN)
+    0x2E => Some(KeyM)
+    0x2F => Some(Period)
+    0x30 => Some(Tab)
+    0x31 => Some(Space)
+    0x32 => Some(Backquote)
+    0x33 => Some(Backspace)
+    0x35 => Some(Escape)
+    0x36 => Some(MetaRight)
+    0x37 => Some(MetaLeft)
+    0x38 => Some(ShiftLeft)
+    0x39 => Some(CapsLock)
+    0x3A => Some(AltLeft)
+    0x3B => Some(ControlLeft)
+    0x3C => Some(ShiftRight)
+    0x3D => Some(AltRight)
+    0x3E => Some(ControlRight)
+    0x3F => Some(Fn)
+    0x40 => Some(F17)
+    0x41 => Some(NumpadDecimal)
+    0x43 => Some(NumpadMultiply)
+    0x45 => Some(NumpadAdd)
+    0x47 => Some(NumLock)
+    0x48 => Some(AudioVolumeUp)
+    0x49 => Some(AudioVolumeDown)
+    0x4A => Some(AudioVolumeMute)
+    0x4B => Some(NumpadDivide)
+    0x4C => Some(NumpadEnter)
+    0x4E => Some(NumpadSubtract)
+    0x4F => Some(F18)
+    0x50 => Some(F19)
+    0x51 => Some(NumpadEqual)
+    0x52 => Some(Numpad0)
+    0x53 => Some(Numpad1)
+    0x54 => Some(Numpad2)
+    0x55 => Some(Numpad3)
+    0x56 => Some(Numpad4)
+    0x57 => Some(Numpad5)
+    0x58 => Some(Numpad6)
+    0x59 => Some(Numpad7)
+    0x5A => Some(F20)
+    0x5B => Some(Numpad8)
+    0x5C => Some(Numpad9)
+    0x5D => Some(IntlYen)
+    0x5E => Some(IntlRo)
+    0x5F => Some(NumpadComma)
+    0x60 => Some(F5)
+    0x61 => Some(F6)
+    0x62 => Some(F7)
+    0x63 => Some(F3)
+    0x64 => Some(F8)
+    0x65 => Some(F9)
+    0x66 => Some(Lang2)
+    0x67 => Some(F11)
+    0x68 => Some(Lang1)
+    0x69 => Some(F13)
+    0x6A => Some(F16)
+    0x6B => Some(F14)
+    0x6D => Some(F10)
+    0x6E => Some(ContextMenu)
+    0x6F => Some(F12)
+    0x71 => Some(F15)
+    0x72 => Some(Insert)
+    0x73 => Some(Home)
+    0x74 => Some(PageUp)
+    0x75 => Some(Delete)
+    0x76 => Some(F4)
+    0x77 => Some(End)
+    0x78 => Some(F2)
+    0x79 => Some(PageDown)
+    0x7A => Some(F1)
+    0x7B => Some(ArrowLeft)
+    0x7C => Some(ArrowRight)
+    0x7D => Some(ArrowDown)
+    0x7E => Some(ArrowUp)
+    0x7F => Some(Power)
     _ => None
   }
   match extra_function_key_to_code(text_with_all_modifiers) {
     Some(key) => key
     None =>
       match code {
-        Some(code) => @core.PhysicalKey::Code(code)
-        None =>
-          @core.PhysicalKey::Unidentified(@core.NativeKeyCode::MacOS(scancode))
+        Some(code) => Code(code)
+        None => Unidentified(MacOS(scancode))
       }
   }
 }
@@ -163,44 +162,33 @@ fn physical_key_from_scancode(
 ///|
 fn key_location_from_physical_key(key : @core.PhysicalKey) -> @core.KeyLocation {
   match key {
-    @core.PhysicalKey::Code(@core.KeyCode::MetaLeft) => @core.KeyLocation::Left
-    @core.PhysicalKey::Code(@core.KeyCode::ShiftLeft) => @core.KeyLocation::Left
-    @core.PhysicalKey::Code(@core.KeyCode::AltLeft) => @core.KeyLocation::Left
-    @core.PhysicalKey::Code(@core.KeyCode::ControlLeft) =>
-      @core.KeyLocation::Left
-    @core.PhysicalKey::Code(@core.KeyCode::MetaRight) =>
-      @core.KeyLocation::Right
-    @core.PhysicalKey::Code(@core.KeyCode::ShiftRight) =>
-      @core.KeyLocation::Right
-    @core.PhysicalKey::Code(@core.KeyCode::AltRight) => @core.KeyLocation::Right
-    @core.PhysicalKey::Code(@core.KeyCode::ControlRight) =>
-      @core.KeyLocation::Right
-    @core.PhysicalKey::Code(@core.KeyCode::NumLock) => @core.KeyLocation::Numpad
-    @core.PhysicalKey::Code(@core.KeyCode::NumpadDecimal) =>
-      @core.KeyLocation::Numpad
-    @core.PhysicalKey::Code(@core.KeyCode::NumpadMultiply) =>
-      @core.KeyLocation::Numpad
-    @core.PhysicalKey::Code(@core.KeyCode::NumpadAdd) =>
-      @core.KeyLocation::Numpad
-    @core.PhysicalKey::Code(@core.KeyCode::NumpadDivide) =>
-      @core.KeyLocation::Numpad
-    @core.PhysicalKey::Code(@core.KeyCode::NumpadEnter) =>
-      @core.KeyLocation::Numpad
-    @core.PhysicalKey::Code(@core.KeyCode::NumpadSubtract) =>
-      @core.KeyLocation::Numpad
-    @core.PhysicalKey::Code(@core.KeyCode::NumpadEqual) =>
-      @core.KeyLocation::Numpad
-    @core.PhysicalKey::Code(@core.KeyCode::Numpad0) => @core.KeyLocation::Numpad
-    @core.PhysicalKey::Code(@core.KeyCode::Numpad1) => @core.KeyLocation::Numpad
-    @core.PhysicalKey::Code(@core.KeyCode::Numpad2) => @core.KeyLocation::Numpad
-    @core.PhysicalKey::Code(@core.KeyCode::Numpad3) => @core.KeyLocation::Numpad
-    @core.PhysicalKey::Code(@core.KeyCode::Numpad4) => @core.KeyLocation::Numpad
-    @core.PhysicalKey::Code(@core.KeyCode::Numpad5) => @core.KeyLocation::Numpad
-    @core.PhysicalKey::Code(@core.KeyCode::Numpad6) => @core.KeyLocation::Numpad
-    @core.PhysicalKey::Code(@core.KeyCode::Numpad7) => @core.KeyLocation::Numpad
-    @core.PhysicalKey::Code(@core.KeyCode::Numpad8) => @core.KeyLocation::Numpad
-    @core.PhysicalKey::Code(@core.KeyCode::Numpad9) => @core.KeyLocation::Numpad
-    _ => @core.KeyLocation::Standard
+    Code(MetaLeft) => Left
+    Code(ShiftLeft) => Left
+    Code(AltLeft) => Left
+    Code(ControlLeft) => Left
+    Code(MetaRight) => Right
+    Code(ShiftRight) => Right
+    Code(AltRight) => Right
+    Code(ControlRight) => Right
+    Code(NumLock) => Numpad
+    Code(NumpadDecimal) => Numpad
+    Code(NumpadMultiply) => Numpad
+    Code(NumpadAdd) => Numpad
+    Code(NumpadDivide) => Numpad
+    Code(NumpadEnter) => Numpad
+    Code(NumpadSubtract) => Numpad
+    Code(NumpadEqual) => Numpad
+    Code(Numpad0) => Numpad
+    Code(Numpad1) => Numpad
+    Code(Numpad2) => Numpad
+    Code(Numpad3) => Numpad
+    Code(Numpad4) => Numpad
+    Code(Numpad5) => Numpad
+    Code(Numpad6) => Numpad
+    Code(Numpad7) => Numpad
+    Code(Numpad8) => Numpad
+    Code(Numpad9) => Numpad
+    _ => Standard
   }
 }
 
@@ -213,63 +201,63 @@ fn code_to_location(key : @core.PhysicalKey) -> @core.KeyLocation {
 ///|
 fn named_key_from_code(code : @core.KeyCode) -> @core.NamedKey? {
   match code {
-    @core.KeyCode::Enter => Some(@core.NamedKey::Enter)
-    @core.KeyCode::Tab => Some(@core.NamedKey::Tab)
-    @core.KeyCode::Backspace => Some(@core.NamedKey::Backspace)
-    @core.KeyCode::Escape => Some(@core.NamedKey::Escape)
-    @core.KeyCode::MetaRight => Some(@core.NamedKey::Meta)
-    @core.KeyCode::MetaLeft => Some(@core.NamedKey::Meta)
-    @core.KeyCode::ShiftLeft => Some(@core.NamedKey::Shift)
-    @core.KeyCode::AltLeft => Some(@core.NamedKey::Alt)
-    @core.KeyCode::ControlLeft => Some(@core.NamedKey::Control)
-    @core.KeyCode::ShiftRight => Some(@core.NamedKey::Shift)
-    @core.KeyCode::AltRight => Some(@core.NamedKey::Alt)
-    @core.KeyCode::ControlRight => Some(@core.NamedKey::Control)
-    @core.KeyCode::CapsLock => Some(@core.NamedKey::CapsLock)
-    @core.KeyCode::NumLock => Some(@core.NamedKey::NumLock)
-    @core.KeyCode::AudioVolumeUp => Some(@core.NamedKey::AudioVolumeUp)
-    @core.KeyCode::AudioVolumeDown => Some(@core.NamedKey::AudioVolumeDown)
-    @core.KeyCode::AudioVolumeMute => Some(@core.NamedKey::AudioVolumeMute)
-    @core.KeyCode::NumpadEnter => Some(@core.NamedKey::Enter)
-    @core.KeyCode::Fn => Some(@core.NamedKey::Fn)
-    @core.KeyCode::F1 => Some(@core.NamedKey::F1)
-    @core.KeyCode::F2 => Some(@core.NamedKey::F2)
-    @core.KeyCode::F3 => Some(@core.NamedKey::F3)
-    @core.KeyCode::F4 => Some(@core.NamedKey::F4)
-    @core.KeyCode::F5 => Some(@core.NamedKey::F5)
-    @core.KeyCode::F6 => Some(@core.NamedKey::F6)
-    @core.KeyCode::F7 => Some(@core.NamedKey::F7)
-    @core.KeyCode::F8 => Some(@core.NamedKey::F8)
-    @core.KeyCode::F9 => Some(@core.NamedKey::F9)
-    @core.KeyCode::F10 => Some(@core.NamedKey::F10)
-    @core.KeyCode::F11 => Some(@core.NamedKey::F11)
-    @core.KeyCode::F12 => Some(@core.NamedKey::F12)
-    @core.KeyCode::F13 => Some(@core.NamedKey::F13)
-    @core.KeyCode::F14 => Some(@core.NamedKey::F14)
-    @core.KeyCode::F15 => Some(@core.NamedKey::F15)
-    @core.KeyCode::F16 => Some(@core.NamedKey::F16)
-    @core.KeyCode::F17 => Some(@core.NamedKey::F17)
-    @core.KeyCode::F18 => Some(@core.NamedKey::F18)
-    @core.KeyCode::F19 => Some(@core.NamedKey::F19)
-    @core.KeyCode::F20 => Some(@core.NamedKey::F20)
-    @core.KeyCode::F21 => Some(@core.NamedKey::F21)
-    @core.KeyCode::F22 => Some(@core.NamedKey::F22)
-    @core.KeyCode::F23 => Some(@core.NamedKey::F23)
-    @core.KeyCode::F24 => Some(@core.NamedKey::F24)
-    @core.KeyCode::Insert => Some(@core.NamedKey::Insert)
-    @core.KeyCode::Home => Some(@core.NamedKey::Home)
-    @core.KeyCode::PageUp => Some(@core.NamedKey::PageUp)
-    @core.KeyCode::Delete => Some(@core.NamedKey::Delete)
-    @core.KeyCode::Help => Some(@core.NamedKey::Help)
-    @core.KeyCode::End => Some(@core.NamedKey::End)
-    @core.KeyCode::PageDown => Some(@core.NamedKey::PageDown)
-    @core.KeyCode::ArrowLeft => Some(@core.NamedKey::ArrowLeft)
-    @core.KeyCode::ArrowRight => Some(@core.NamedKey::ArrowRight)
-    @core.KeyCode::ArrowDown => Some(@core.NamedKey::ArrowDown)
-    @core.KeyCode::ArrowUp => Some(@core.NamedKey::ArrowUp)
-    @core.KeyCode::ContextMenu => Some(@core.NamedKey::ContextMenu)
-    @core.KeyCode::Lang2 => Some(@core.NamedKey::Eisu)
-    @core.KeyCode::Lang1 => Some(@core.NamedKey::KanjiMode)
+    Enter => Some(Enter)
+    Tab => Some(Tab)
+    Backspace => Some(Backspace)
+    Escape => Some(Escape)
+    MetaRight => Some(Meta)
+    MetaLeft => Some(Meta)
+    ShiftLeft => Some(Shift)
+    AltLeft => Some(Alt)
+    ControlLeft => Some(Control)
+    ShiftRight => Some(Shift)
+    AltRight => Some(Alt)
+    ControlRight => Some(Control)
+    CapsLock => Some(CapsLock)
+    NumLock => Some(NumLock)
+    AudioVolumeUp => Some(AudioVolumeUp)
+    AudioVolumeDown => Some(AudioVolumeDown)
+    AudioVolumeMute => Some(AudioVolumeMute)
+    NumpadEnter => Some(Enter)
+    Fn => Some(Fn)
+    F1 => Some(F1)
+    F2 => Some(F2)
+    F3 => Some(F3)
+    F4 => Some(F4)
+    F5 => Some(F5)
+    F6 => Some(F6)
+    F7 => Some(F7)
+    F8 => Some(F8)
+    F9 => Some(F9)
+    F10 => Some(F10)
+    F11 => Some(F11)
+    F12 => Some(F12)
+    F13 => Some(F13)
+    F14 => Some(F14)
+    F15 => Some(F15)
+    F16 => Some(F16)
+    F17 => Some(F17)
+    F18 => Some(F18)
+    F19 => Some(F19)
+    F20 => Some(F20)
+    F21 => Some(F21)
+    F22 => Some(F22)
+    F23 => Some(F23)
+    F24 => Some(F24)
+    Insert => Some(Insert)
+    Home => Some(Home)
+    PageUp => Some(PageUp)
+    Delete => Some(Delete)
+    Help => Some(Help)
+    End => Some(End)
+    PageDown => Some(PageDown)
+    ArrowLeft => Some(ArrowLeft)
+    ArrowRight => Some(ArrowRight)
+    ArrowDown => Some(ArrowDown)
+    ArrowUp => Some(ArrowUp)
+    ContextMenu => Some(ContextMenu)
+    Lang2 => Some(Eisu)
+    Lang1 => Some(KanjiMode)
     _ => None
   }
 }
@@ -291,7 +279,7 @@ fn normalized_native_text(text : String?) -> String? {
 ///|
 fn key_from_native_text(text : String?) -> @core.Key? {
   match normalized_native_text(text) {
-    Some(text) => Some(@core.Key::Character(text))
+    Some(text) => Some(Character(text))
     None => None
   }
 }
@@ -299,70 +287,70 @@ fn key_from_native_text(text : String?) -> @core.Key? {
 ///|
 fn fallback_character_from_key_code(code : @core.KeyCode) -> String? {
   match code {
-    @core.KeyCode::KeyA => Some("a")
-    @core.KeyCode::KeyB => Some("b")
-    @core.KeyCode::KeyC => Some("c")
-    @core.KeyCode::KeyD => Some("d")
-    @core.KeyCode::KeyE => Some("e")
-    @core.KeyCode::KeyF => Some("f")
-    @core.KeyCode::KeyG => Some("g")
-    @core.KeyCode::KeyH => Some("h")
-    @core.KeyCode::KeyI => Some("i")
-    @core.KeyCode::KeyJ => Some("j")
-    @core.KeyCode::KeyK => Some("k")
-    @core.KeyCode::KeyL => Some("l")
-    @core.KeyCode::KeyM => Some("m")
-    @core.KeyCode::KeyN => Some("n")
-    @core.KeyCode::KeyO => Some("o")
-    @core.KeyCode::KeyP => Some("p")
-    @core.KeyCode::KeyQ => Some("q")
-    @core.KeyCode::KeyR => Some("r")
-    @core.KeyCode::KeyS => Some("s")
-    @core.KeyCode::KeyT => Some("t")
-    @core.KeyCode::KeyU => Some("u")
-    @core.KeyCode::KeyV => Some("v")
-    @core.KeyCode::KeyW => Some("w")
-    @core.KeyCode::KeyX => Some("x")
-    @core.KeyCode::KeyY => Some("y")
-    @core.KeyCode::KeyZ => Some("z")
-    @core.KeyCode::Digit0 => Some("0")
-    @core.KeyCode::Digit1 => Some("1")
-    @core.KeyCode::Digit2 => Some("2")
-    @core.KeyCode::Digit3 => Some("3")
-    @core.KeyCode::Digit4 => Some("4")
-    @core.KeyCode::Digit5 => Some("5")
-    @core.KeyCode::Digit6 => Some("6")
-    @core.KeyCode::Digit7 => Some("7")
-    @core.KeyCode::Digit8 => Some("8")
-    @core.KeyCode::Digit9 => Some("9")
-    @core.KeyCode::Space => Some(" ")
-    @core.KeyCode::Minus => Some("-")
-    @core.KeyCode::Equal => Some("=")
-    @core.KeyCode::BracketLeft => Some("[")
-    @core.KeyCode::BracketRight => Some("]")
-    @core.KeyCode::Backslash => Some("\\")
-    @core.KeyCode::Semicolon => Some(";")
-    @core.KeyCode::Quote => Some("'")
-    @core.KeyCode::Backquote => Some("`")
-    @core.KeyCode::Comma => Some(",")
-    @core.KeyCode::Period => Some(".")
-    @core.KeyCode::Slash => Some("/")
-    @core.KeyCode::NumpadDecimal => Some(".")
-    @core.KeyCode::NumpadAdd => Some("+")
-    @core.KeyCode::NumpadSubtract => Some("-")
-    @core.KeyCode::NumpadMultiply => Some("*")
-    @core.KeyCode::NumpadDivide => Some("/")
-    @core.KeyCode::Numpad0 => Some("0")
-    @core.KeyCode::Numpad1 => Some("1")
-    @core.KeyCode::Numpad2 => Some("2")
-    @core.KeyCode::Numpad3 => Some("3")
-    @core.KeyCode::Numpad4 => Some("4")
-    @core.KeyCode::Numpad5 => Some("5")
-    @core.KeyCode::Numpad6 => Some("6")
-    @core.KeyCode::Numpad7 => Some("7")
-    @core.KeyCode::Numpad8 => Some("8")
-    @core.KeyCode::Numpad9 => Some("9")
-    @core.KeyCode::NumpadComma => Some(",")
+    KeyA => Some("a")
+    KeyB => Some("b")
+    KeyC => Some("c")
+    KeyD => Some("d")
+    KeyE => Some("e")
+    KeyF => Some("f")
+    KeyG => Some("g")
+    KeyH => Some("h")
+    KeyI => Some("i")
+    KeyJ => Some("j")
+    KeyK => Some("k")
+    KeyL => Some("l")
+    KeyM => Some("m")
+    KeyN => Some("n")
+    KeyO => Some("o")
+    KeyP => Some("p")
+    KeyQ => Some("q")
+    KeyR => Some("r")
+    KeyS => Some("s")
+    KeyT => Some("t")
+    KeyU => Some("u")
+    KeyV => Some("v")
+    KeyW => Some("w")
+    KeyX => Some("x")
+    KeyY => Some("y")
+    KeyZ => Some("z")
+    Digit0 => Some("0")
+    Digit1 => Some("1")
+    Digit2 => Some("2")
+    Digit3 => Some("3")
+    Digit4 => Some("4")
+    Digit5 => Some("5")
+    Digit6 => Some("6")
+    Digit7 => Some("7")
+    Digit8 => Some("8")
+    Digit9 => Some("9")
+    Space => Some(" ")
+    Minus => Some("-")
+    Equal => Some("=")
+    BracketLeft => Some("[")
+    BracketRight => Some("]")
+    Backslash => Some("\\")
+    Semicolon => Some(";")
+    Quote => Some("'")
+    Backquote => Some("`")
+    Comma => Some(",")
+    Period => Some(".")
+    Slash => Some("/")
+    NumpadDecimal => Some(".")
+    NumpadAdd => Some("+")
+    NumpadSubtract => Some("-")
+    NumpadMultiply => Some("*")
+    NumpadDivide => Some("/")
+    Numpad0 => Some("0")
+    Numpad1 => Some("1")
+    Numpad2 => Some("2")
+    Numpad3 => Some("3")
+    Numpad4 => Some("4")
+    Numpad5 => Some("5")
+    Numpad6 => Some("6")
+    Numpad7 => Some("7")
+    Numpad8 => Some("8")
+    Numpad9 => Some("9")
+    NumpadComma => Some(",")
     _ => None
   }
 }
@@ -375,8 +363,8 @@ fn dead_or_character_from_native_text(
   match normalized_native_text(text) {
     Some(text) =>
       match state {
-        @core.ElementState::Pressed => Some(@core.Key::Dead(Some(text)))
-        @core.ElementState::Released => Some(@core.Key::Character(text))
+        Pressed => Some(Dead(Some(text)))
+        Released => Some(Character(text))
       }
     None => None
   }
@@ -389,30 +377,29 @@ fn key_without_modifiers_from_scancode(
   text_without_modifiers : String?,
 ) -> @core.Key {
   match physical_key {
-    @core.PhysicalKey::Code(@core.KeyCode::Space) => @core.Key::Character(" ")
-    @core.PhysicalKey::Code(code) =>
+    Code(Space) => Character(" ")
+    Code(code) =>
       match code_to_key(code) {
-        Some(named) => @core.Key::Named(named)
+        Some(named) => Named(named)
         None =>
           match key_from_native_text(text_without_modifiers) {
             Some(key) => key
             None =>
               match fallback_character_from_key_code(code) {
-                Some(text) => @core.Key::Character(text)
-                None =>
-                  @core.Key::Unidentified(@core.NativeKey::MacOS(scancode))
+                Some(text) => Character(text)
+                None => Unidentified(MacOS(scancode))
               }
           }
       }
-    @core.PhysicalKey::Unidentified(@core.NativeKeyCode::MacOS(code)) =>
+    Unidentified(MacOS(code)) =>
       match key_from_native_text(text_without_modifiers) {
         Some(key) => key
-        None => @core.Key::Unidentified(@core.NativeKey::MacOS(code))
+        None => Unidentified(MacOS(code))
       }
-    @core.PhysicalKey::Unidentified(_) =>
+    Unidentified(_) =>
       match key_from_native_text(text_without_modifiers) {
         Some(key) => key
-        None => @core.Key::Unidentified(@core.NativeKey::Unidentified)
+        None => Unidentified(Unidentified)
       }
   }
 }
@@ -428,10 +415,10 @@ fn logical_key_from_scancode(
   text_without_modifiers : String?,
 ) -> @core.Key {
   match physical_key {
-    @core.PhysicalKey::Code(@core.KeyCode::Space) => @core.Key::Character(" ")
-    @core.PhysicalKey::Code(code) =>
+    Code(Space) => Character(" ")
+    Code(code) =>
       match code_to_key(code) {
-        Some(named) => @core.Key::Named(named)
+        Some(named) => Named(named)
         None =>
           if modifiers.control_key() || modifiers.meta_key() {
             match key_from_native_text(text_ignoring_modifiers) {
@@ -452,11 +439,11 @@ fn logical_key_from_scancode(
             }
           }
       }
-    @core.PhysicalKey::Unidentified(@core.NativeKeyCode::MacOS(code)) =>
+    Unidentified(MacOS(code)) =>
       if modifiers.control_key() || modifiers.meta_key() {
         match key_from_native_text(text_ignoring_modifiers) {
           Some(key) => key
-          None => @core.Key::Unidentified(@core.NativeKey::MacOS(code))
+          None => Unidentified(MacOS(code))
         }
       } else {
         match key_from_native_text(text_with_all_modifiers) {
@@ -465,11 +452,11 @@ fn logical_key_from_scancode(
             match
               dead_or_character_from_native_text(text_without_modifiers, state) {
               Some(key) => key
-              None => @core.Key::Unidentified(@core.NativeKey::MacOS(code))
+              None => Unidentified(MacOS(code))
             }
         }
       }
-    @core.PhysicalKey::Unidentified(_) =>
+    Unidentified(_) =>
       if modifiers.control_key() || modifiers.meta_key() {
         match key_from_native_text(text_ignoring_modifiers) {
           Some(key) => key
@@ -519,18 +506,18 @@ fn create_key_event(
     normalized_text_ignoring_modifiers, normalized_text_without_modifiers,
   )
   let text = match state {
-    @core.ElementState::Pressed => logical_key.to_text()
-    @core.ElementState::Released => None
+    Pressed => logical_key.to_text()
+    Released => None
   }
   let text_with_all_modifiers = match state {
-    @core.ElementState::Pressed =>
+    Pressed =>
       match normalized_text_with_all_modifiers {
         Some(text) => Some(text)
         None => text
       }
-    @core.ElementState::Released => None
+    Released => None
   }
-  @core.KeyEvent::new(
+  KeyEvent(
     physical_key,
     logical_key,
     key_without_modifiers,
@@ -545,8 +532,8 @@ fn create_key_event(
 ///|
 fn element_state_from_native(state : Int) -> @core.ElementState? {
   match state {
-    1 => Some(@core.ElementState::Pressed)
-    2 => Some(@core.ElementState::Released)
+    1 => Some(Pressed)
+    2 => Some(Released)
     _ => None
   }
 }
@@ -559,24 +546,24 @@ fn mouse_button_from_native(button : Int) -> @core.MouseButton? {
 ///|
 fn button_source_from_native(button : Int) -> @core.ButtonSource {
   match mouse_button_from_native(button) {
-    Some(mouse) => @core.ButtonSource::Mouse(mouse)
-    None => @core.ButtonSource::Unknown(button)
+    Some(mouse) => Mouse(mouse)
+    None => Unknown(button)
   }
 }
 
 ///|
 fn pointer_source_from_native(source : Int) -> @core.PointerSource {
   match source {
-    1 => @core.PointerSource::Mouse
-    _ => @core.PointerSource::Unknown
+    1 => Mouse
+    _ => Unknown
   }
 }
 
 ///|
 fn pointer_kind_from_native(kind : Int) -> @core.PointerKind {
   match kind {
-    1 => @core.PointerKind::Mouse
-    _ => @core.PointerKind::Unknown
+    1 => Mouse
+    _ => Unknown
   }
 }
 
@@ -587,11 +574,8 @@ fn scroll_delta_from_native(
   y : Double,
 ) -> @core.MouseScrollDelta? {
   match kind {
-    1 => Some(@core.MouseScrollDelta::LineDelta(x, y))
-    2 =>
-      Some(
-        @core.MouseScrollDelta::PixelDelta(@dpi.PhysicalPositionF64::new(x, y)),
-      )
+    1 => Some(LineDelta(x, y))
+    2 => Some(PixelDelta(PhysicalPositionF64(x, y)))
     _ => None
   }
 }
@@ -599,10 +583,10 @@ fn scroll_delta_from_native(
 ///|
 fn touch_phase_from_native(phase : Int) -> @core.TouchPhase? {
   match phase {
-    1 => Some(@core.TouchPhase::Started)
-    2 => Some(@core.TouchPhase::Moved)
-    3 => Some(@core.TouchPhase::Ended)
-    4 => Some(@core.TouchPhase::Cancelled)
+    1 => Some(Started)
+    2 => Some(Moved)
+    3 => Some(Ended)
+    4 => Some(Cancelled)
     _ => None
   }
 }

@@ -5,7 +5,7 @@ struct Application {
 }
 
 ///|
-fn Application::new() -> Application {
+fn Application::Application() -> Application {
   { window: None }
 }
 
@@ -29,11 +29,9 @@ pub impl @macos.ApplicationHandler for Application with window_event(
   event,
 ) {
   match event {
-    @core.WindowEvent::DragEntered(_, _)
-    | @core.WindowEvent::DragMoved(_)
-    | @core.WindowEvent::DragDropped(_, _)
-    | @core.WindowEvent::DragLeft(_) => println("\{event}")
-    @core.WindowEvent::RedrawRequested =>
+    DragEntered(_, _) | DragMoved(_) | DragDropped(_, _) | DragLeft(_) =>
+      println("\{event}")
+    RedrawRequested =>
       match self.window {
         Some(window) => {
           window.pre_present_notify()
@@ -41,7 +39,7 @@ pub impl @macos.ApplicationHandler for Application with window_event(
         }
         None => ()
       }
-    @core.WindowEvent::CloseRequested => event_loop.exit()
+    CloseRequested => event_loop.exit()
     _ => ()
   }
 }
@@ -49,6 +47,6 @@ pub impl @macos.ApplicationHandler for Application with window_event(
 ///|
 fn main {
   @util.tracing_init()
-  let event_loop = @macos.EventLoop::new()
-  event_loop.run_app(Application::new())
+  let event_loop = @macos.EventLoop::EventLoop()
+  event_loop.run_app(Application::Application())
 }

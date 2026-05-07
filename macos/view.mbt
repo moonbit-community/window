@@ -9,23 +9,23 @@ fn ime_from_native_payload(
   ime_cursor_end : Int,
 ) -> @core.Ime? {
   match ime_kind {
-    1 => Some(@core.Ime::Enabled)
+    1 => Some(Enabled)
     2 => {
       let cursor_start = ime_cursor_start
       let cursor_end = ime_cursor_end
       let cursor = if cursor_start >= 0 && cursor_end >= cursor_start {
-        Some(@core.ImeCursorRange::new(cursor_start, cursor_end))
+        Some(@core.ImeCursorRange::ImeCursorRange(cursor_start, cursor_end))
       } else {
         None
       }
-      Some(@core.Ime::Preedit(text_from_native(ime_text), cursor))
+      Some(Preedit(text_from_native(ime_text), cursor))
     }
-    3 => Some(@core.Ime::Commit(text_from_native(ime_text)))
-    4 => Some(@core.Ime::Disabled)
+    3 => Some(Commit(text_from_native(ime_text)))
+    4 => Some(Disabled)
     5 => {
       let before = clamp_non_negative(ime_cursor_start)
       let after = clamp_non_negative(ime_cursor_end)
-      Some(@core.Ime::DeleteSurrounding(before, after))
+      Some(DeleteSurrounding(before, after))
     }
     _ => None
   }
@@ -44,7 +44,7 @@ fn clamp_non_negative(value : Int) -> Int {
 fn scroll_phase_from_native(phase : Int) -> @core.TouchPhase {
   match touch_phase_from_native(phase) {
     Some(phase) => phase
-    None => @core.TouchPhase::Moved
+    None => Moved
   }
 }
 
@@ -61,10 +61,10 @@ fn queue_view_standard_key_binding(
 }
 
 ///|
-let view_modifier_window_ids : Ref[Array[Int]] = Ref::new([])
+let view_modifier_window_ids : Ref[Array[Int]] = Ref([])
 
 ///|
-let view_modifier_window_values : Ref[Array[@core.ModifiersKeys]] = Ref::new([])
+let view_modifier_window_values : Ref[Array[@core.ModifiersKeys]] = Ref([])
 
 ///|
 fn view_pressed_modifiers(window_id : Int) -> @core.ModifiersKeys {
@@ -142,31 +142,31 @@ let native_view_state_query_accepts_first_mouse = 9
 let native_sync_query_drag_accept = 100
 
 ///|
-let view_ime_window_ids : Ref[Array[Int]] = Ref::new([])
+let view_ime_window_ids : Ref[Array[Int]] = Ref([])
 
 ///|
-let view_ime_states : Ref[Array[Int]] = Ref::new([])
+let view_ime_states : Ref[Array[Int]] = Ref([])
 
 ///|
-let view_ime_old_states : Ref[Array[Int]] = Ref::new([])
+let view_ime_old_states : Ref[Array[Int]] = Ref([])
 
 ///|
-let view_ime_forward_key_to_apps : Ref[Array[Bool]] = Ref::new([])
+let view_ime_forward_key_to_apps : Ref[Array[Bool]] = Ref([])
 
 ///|
-let view_ime_input_sources : Ref[Array[String]] = Ref::new([])
+let view_ime_input_sources : Ref[Array[String]] = Ref([])
 
 ///|
-let view_ime_has_marked_texts : Ref[Array[Bool]] = Ref::new([])
+let view_ime_has_marked_texts : Ref[Array[Bool]] = Ref([])
 
 ///|
-let view_ime_marked_text_lengths : Ref[Array[Int]] = Ref::new([])
+let view_ime_marked_text_lengths : Ref[Array[Int]] = Ref([])
 
 ///|
-let view_ime_selected_range_locations : Ref[Array[Int]] = Ref::new([])
+let view_ime_selected_range_locations : Ref[Array[Int]] = Ref([])
 
 ///|
-let view_ime_selected_range_lengths : Ref[Array[Int]] = Ref::new([])
+let view_ime_selected_range_lengths : Ref[Array[Int]] = Ref([])
 
 ///|
 fn view_ime_index(raw_id : Int) -> Int? {
@@ -326,7 +326,7 @@ fn view_event_pointer_position(
   event_handle : UInt64,
 ) -> @dpi.PhysicalPositionF64 {
   if event_handle == (0 : Int).to_uint64() {
-    return @dpi.PhysicalPositionF64::new(0.0, 0.0)
+    return PhysicalPositionF64(0.0, 0.0)
   }
   let window_x = appkit_objc_msg_send_point_x(
     event_handle,
@@ -360,10 +360,7 @@ fn view_event_pointer_position(
     )
   }
   let scale_factor = view_window_scale_factor(raw_id)
-  @dpi.PhysicalPositionF64::new(
-    logical_x * scale_factor,
-    logical_y * scale_factor,
-  )
+  PhysicalPositionF64(logical_x * scale_factor, logical_y * scale_factor)
 }
 
 ///|
@@ -561,10 +558,7 @@ fn view_string_is_control(text_handle : UInt64) -> Bool {
 
 ///|
 fn view_queue_ime_event(raw_id : Int, ime : @core.Ime) -> Unit {
-  app_state_queue_window_callback(
-    @core.WindowId::from_raw(raw_id),
-    @core.WindowEvent::Ime(ime),
-  )
+  app_state_queue_window_callback(@core.WindowId::from_raw(raw_id), Ime(ime))
 }
 
 ///|
@@ -581,7 +575,7 @@ fn view_disable_ime(raw_id : Int) -> Unit {
   view_clear_marked_text(raw_id)
   if view_ime_state(raw_id) != view_ime_state_disabled {
     view_set_ime_state(raw_id, view_ime_state_disabled)
-    view_queue_ime_event(raw_id, @core.Ime::Disabled)
+    view_queue_ime_event(raw_id, Disabled)
   }
 }
 
@@ -647,12 +641,12 @@ fn queue_input_event(
   let window_id = @core.WindowId::from_raw(raw_id)
   let pointer_device_id = Some(@core.DeviceId::from_raw(1L))
   let keyboard_device_id = Some(@core.DeviceId::from_raw(2L))
-  let position = @dpi.PhysicalPositionF64::new(x, y)
+  let position = @dpi.PhysicalPositionF64::PhysicalPositionF64(x, y)
   match kind {
     1 =>
       app_state_queue_window_callback(
         window_id,
-        @core.WindowEvent::PointerMoved(
+        PointerMoved(
           pointer_device_id,
           position,
           true,
@@ -662,7 +656,7 @@ fn queue_input_event(
     2 =>
       app_state_queue_window_callback(
         window_id,
-        @core.WindowEvent::PointerEntered(
+        PointerEntered(
           pointer_device_id,
           position,
           true,
@@ -672,7 +666,7 @@ fn queue_input_event(
     3 =>
       app_state_queue_window_callback(
         window_id,
-        @core.WindowEvent::PointerLeft(
+        PointerLeft(
           pointer_device_id,
           Some(position),
           true,
@@ -684,7 +678,7 @@ fn queue_input_event(
         Some(state) =>
           app_state_queue_window_callback(
             window_id,
-            @core.WindowEvent::PointerButton(
+            PointerButton(
               pointer_device_id,
               state,
               position,
@@ -700,7 +694,7 @@ fn queue_input_event(
           let phase = scroll_phase_from_native(phase)
           app_state_queue_window_callback(
             window_id,
-            @core.WindowEvent::MouseWheel(pointer_device_id, delta, phase),
+            MouseWheel(pointer_device_id, delta, phase),
           )
         }
         None => ()
@@ -714,9 +708,7 @@ fn queue_input_event(
       view_set_pressed_modifiers(raw_id, pressed_modifiers)
       app_state_queue_window_callback(
         window_id,
-        @core.WindowEvent::ModifiersChanged(
-          @core.Modifiers::from_state(state, pressed_modifiers),
-        ),
+        ModifiersChanged(@core.Modifiers::from_state(state, pressed_modifiers)),
       )
     }
     7 =>
@@ -744,9 +736,7 @@ fn queue_input_event(
           )
           app_state_queue_window_callback(
             window_id,
-            @core.WindowEvent::KeyboardInput(
-              keyboard_device_id, key_event, false,
-            ),
+            KeyboardInput(keyboard_device_id, key_event, false),
           )
         }
         None => ()
@@ -756,11 +746,7 @@ fn queue_input_event(
         ime_from_native_payload(
           ime_kind, ime_text, ime_cursor_start, ime_cursor_end,
         ) {
-        Some(ime) =>
-          app_state_queue_window_callback(
-            window_id,
-            @core.WindowEvent::Ime(ime),
-          )
+        Some(ime) => app_state_queue_window_callback(window_id, Ime(ime))
         None => ()
       }
     9 | 10 | 11 | 12 =>
@@ -770,7 +756,7 @@ fn queue_input_event(
         Some(phase) =>
           app_state_queue_window_callback(
             window_id,
-            @core.WindowEvent::PinchGesture(pointer_device_id, delta_x, phase),
+            PinchGesture(pointer_device_id, delta_x, phase),
           )
         None => ()
       }
@@ -779,9 +765,9 @@ fn queue_input_event(
         Some(phase) =>
           app_state_queue_window_callback(
             window_id,
-            @core.WindowEvent::PanGesture(
+            PanGesture(
               pointer_device_id,
-              @dpi.PhysicalPositionF64::new(delta_x, delta_y),
+              PhysicalPositionF64(delta_x, delta_y),
               phase,
             ),
           )
@@ -790,30 +776,24 @@ fn queue_input_event(
     15 =>
       app_state_queue_window_callback(
         window_id,
-        @core.WindowEvent::DoubleTapGesture(pointer_device_id),
+        DoubleTapGesture(pointer_device_id),
       )
     16 =>
       match touch_phase_from_native(phase) {
         Some(phase) =>
           app_state_queue_window_callback(
             window_id,
-            @core.WindowEvent::RotationGesture(
-              pointer_device_id, delta_x, phase,
-            ),
+            RotationGesture(pointer_device_id, delta_x, phase),
           )
         None => ()
       }
     17 =>
       app_state_queue_window_callback(
         window_id,
-        @core.WindowEvent::TouchpadPressure(pointer_device_id, delta_x, state),
+        TouchpadPressure(pointer_device_id, delta_x, state),
       )
     18 => queue_view_standard_key_binding(window_id, text_from_native(ime_text))
-    19 =>
-      app_state_queue_window_callback(
-        window_id,
-        @core.WindowEvent::RedrawRequested,
-      )
+    19 => app_state_queue_window_callback(window_id, RedrawRequested)
     100 => app_state_queue_device_event(1, button, delta_x, delta_y)
     101 => app_state_queue_device_event(2, button, 0.0, 0.0)
     102 => app_state_queue_device_event(3, button, 0.0, 0.0)
@@ -1033,7 +1013,7 @@ fn queue_native_input_event(
         view_set_pressed_modifiers(raw_id, pressed_modifiers)
         app_state_queue_window_callback(
           window_id,
-          @core.WindowEvent::ModifiersChanged(
+          ModifiersChanged(
             @core.Modifiers::from_state(state, pressed_modifiers),
           ),
         )
@@ -1250,7 +1230,7 @@ fn queue_native_text_input_event(
       if view_ime_state(raw_id) == view_ime_state_disabled {
         view_set_ime_input_source(raw_id, view_current_input_source(raw_id))
         view_set_ime_state(raw_id, view_ime_state_ground)
-        view_queue_ime_event(raw_id, @core.Ime::Enabled)
+        view_queue_ime_event(raw_id, Enabled)
       }
       let cursor = if state >= 0 {
         let start = view_utf8_offset_for_utf16_index(text_string_handle, state)
@@ -1259,7 +1239,7 @@ fn queue_native_text_input_event(
           text_string_handle, utf16_end,
         )
         if start >= 0 && end >= start {
-          Some(@core.ImeCursorRange::new(start, end))
+          Some(@core.ImeCursorRange::ImeCursorRange(start, end))
         } else {
           None
         }
@@ -1278,7 +1258,7 @@ fn queue_native_text_input_event(
         view_set_ime_state(raw_id, view_ime_state_ground)
         view_clear_marked_text(raw_id)
       }
-      view_queue_ime_event(raw_id, @core.Ime::Preedit(text, cursor))
+      view_queue_ime_event(raw_id, Preedit(text, cursor))
     }
     // unmarkText
     23 => {
@@ -1287,7 +1267,7 @@ fn queue_native_text_input_event(
       }
       view_set_ime_state(raw_id, view_ime_state_ground)
       view_clear_marked_text(raw_id)
-      view_queue_ime_event(raw_id, @core.Ime::Preedit("", None))
+      view_queue_ime_event(raw_id, Preedit("", None))
     }
     // insertText:replacementRange:
     24 => {
@@ -1297,8 +1277,8 @@ fn queue_native_text_input_event(
       if view_has_marked_text(raw_id) &&
         view_ime_state(raw_id) != view_ime_state_disabled &&
         !view_string_is_control(text_handle) {
-        view_queue_ime_event(raw_id, @core.Ime::Preedit("", None))
-        view_queue_ime_event(raw_id, @core.Ime::Commit(text))
+        view_queue_ime_event(raw_id, Preedit("", None))
+        view_queue_ime_event(raw_id, Commit(text))
         view_set_ime_state(raw_id, view_ime_state_committed)
       }
     }
@@ -1363,22 +1343,14 @@ fn modifier_keys_from_physical_key(
   physical_key : @core.PhysicalKey,
 ) -> @core.ModifiersKeys? {
   match physical_key {
-    @core.PhysicalKey::Code(@core.KeyCode::ShiftLeft) =>
-      Some(@core.ModifiersKeys::lshift())
-    @core.PhysicalKey::Code(@core.KeyCode::ShiftRight) =>
-      Some(@core.ModifiersKeys::rshift())
-    @core.PhysicalKey::Code(@core.KeyCode::ControlLeft) =>
-      Some(@core.ModifiersKeys::lcontrol())
-    @core.PhysicalKey::Code(@core.KeyCode::ControlRight) =>
-      Some(@core.ModifiersKeys::rcontrol())
-    @core.PhysicalKey::Code(@core.KeyCode::AltLeft) =>
-      Some(@core.ModifiersKeys::lalt())
-    @core.PhysicalKey::Code(@core.KeyCode::AltRight) =>
-      Some(@core.ModifiersKeys::ralt())
-    @core.PhysicalKey::Code(@core.KeyCode::MetaLeft) =>
-      Some(@core.ModifiersKeys::lmeta())
-    @core.PhysicalKey::Code(@core.KeyCode::MetaRight) =>
-      Some(@core.ModifiersKeys::rmeta())
+    Code(ShiftLeft) => Some(@core.ModifiersKeys::lshift())
+    Code(ShiftRight) => Some(@core.ModifiersKeys::rshift())
+    Code(ControlLeft) => Some(@core.ModifiersKeys::lcontrol())
+    Code(ControlRight) => Some(@core.ModifiersKeys::rcontrol())
+    Code(AltLeft) => Some(@core.ModifiersKeys::lalt())
+    Code(AltRight) => Some(@core.ModifiersKeys::ralt())
+    Code(MetaLeft) => Some(@core.ModifiersKeys::lmeta())
+    Code(MetaRight) => Some(@core.ModifiersKeys::rmeta())
     _ => None
   }
 }
@@ -1393,8 +1365,8 @@ fn update_pressed_modifier_keys(
   let updated = match modifier_keys_from_physical_key(physical_key) {
     Some(modifier_key) =>
       match element_state {
-        @core.ElementState::Pressed => pressed_mods.union(modifier_key)
-        @core.ElementState::Released => pressed_mods.without(modifier_key)
+        Pressed => pressed_mods.union(modifier_key)
+        Released => pressed_mods.without(modifier_key)
       }
     None => pressed_mods
   }

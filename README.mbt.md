@@ -67,7 +67,7 @@ pub impl @macos.ApplicationHandler for App with window_event(
 }
 
 fn main {
-  let event_loop = @macos.EventLoop::new()
+  let event_loop = @macos.EventLoop::EventLoop()
   event_loop.run_app({ window: None })
 }
 ```

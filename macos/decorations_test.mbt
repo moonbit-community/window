@@ -1,6 +1,6 @@
 ///|
 test "set_decorations_true_preserves_traffic_lights" {
-  let event_loop = EventLoop::new()
+  let event_loop = EventLoop::EventLoop()
   let window = event_loop.create_window(
     @core.WindowAttributes::default().with_visible(false),
   )

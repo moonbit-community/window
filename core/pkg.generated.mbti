@@ -242,8 +242,8 @@ pub impl Show for Fullscreen
 pub struct Icon {
   // private fields
 } derive(Eq, @debug.Debug)
+pub fn Icon::Icon(Bytes, Int, Int) -> Self raise BadIcon
 pub fn Icon::height(Self) -> Int
-pub fn Icon::new(Bytes, Int, Int) -> Self raise BadIcon
 pub fn Icon::rgba(Self) -> Bytes
 pub fn Icon::width(Self) -> Int
 pub impl Show for Icon
@@ -260,11 +260,11 @@ pub impl Show for Ime
 pub struct ImeCapabilities {
   // private fields
 } derive(Eq, @debug.Debug)
+pub fn ImeCapabilities::ImeCapabilities(Bool, Bool, Bool) -> Self
 pub fn ImeCapabilities::all() -> Self
 pub fn ImeCapabilities::cursor_area(Self) -> Bool
 pub fn ImeCapabilities::default() -> Self
 pub fn ImeCapabilities::hint_and_purpose(Self) -> Bool
-pub fn ImeCapabilities::new(Bool, Bool, Bool) -> Self
 pub fn ImeCapabilities::surrounding_text(Self) -> Bool
 pub fn ImeCapabilities::with_cursor_area(Self) -> Self
 pub fn ImeCapabilities::with_hint_and_purpose(Self) -> Self
@@ -278,8 +278,8 @@ pub struct ImeCursorRange {
   end : Int
   start : Int
 } derive(Eq, @debug.Debug)
+pub fn ImeCursorRange::ImeCursorRange(Int, Int) -> Self
 pub fn ImeCursorRange::end(Self) -> Int
-pub fn ImeCursorRange::new(Int, Int) -> Self
 pub fn ImeCursorRange::start(Self) -> Int
 pub impl Show for ImeCursorRange
 
@@ -287,9 +287,9 @@ pub struct ImeEnableRequest {
   // private fields
 } derive(Eq, @debug.Debug)
 pub fn ImeEnableRequest::capabilities(Self) -> ImeCapabilities
+pub fn ImeEnableRequest::from_capabilities(ImeCapabilities, ImeRequestData) -> Self?
 pub fn ImeEnableRequest::into_raw(Self) -> (ImeCapabilities, ImeRequestData)
 pub fn ImeEnableRequest::into_request(Self) -> ImeRequest
-pub fn ImeEnableRequest::new(ImeCapabilities, ImeRequestData) -> Self?
 pub fn ImeEnableRequest::request_data(Self) -> ImeRequestData
 pub impl Show for ImeEnableRequest
 
@@ -362,11 +362,11 @@ pub impl Show for ImeRequestData
 pub struct ImeSurroundingText {
   // private fields
 } derive(Eq, @debug.Debug)
+pub fn ImeSurroundingText::ImeSurroundingText(String, Int, Int) -> Self raise ImeSurroundingTextError
 pub fn ImeSurroundingText::anchor(Self) -> Int
 pub fn ImeSurroundingText::cursor(Self) -> Int
 pub fn ImeSurroundingText::into_text(Self) -> String
 pub fn ImeSurroundingText::max_text_bytes() -> Int
-pub fn ImeSurroundingText::new(String, Int, Int) -> Self raise ImeSurroundingTextError
 pub fn ImeSurroundingText::text(Self) -> String
 pub impl Show for ImeSurroundingText
 
@@ -614,10 +614,10 @@ pub struct KeyEvent {
   text : String?
   text_with_all_modifiers : String?
 } derive(Eq, @debug.Debug)
+pub fn KeyEvent::KeyEvent(PhysicalKey, Key, Key, KeyLocation, ElementState, Bool, String?, String?) -> Self
 pub fn KeyEvent::key_without_modifiers(Self) -> Key
 pub fn KeyEvent::location(Self) -> KeyLocation
 pub fn KeyEvent::logical_key(Self) -> Key
-pub fn KeyEvent::new(PhysicalKey, Key, Key, KeyLocation, ElementState, Bool, String?, String?) -> Self
 pub fn KeyEvent::physical_key(Self) -> PhysicalKey
 pub fn KeyEvent::repeat(Self) -> Bool
 pub fn KeyEvent::state(Self) -> ElementState
@@ -636,6 +636,7 @@ pub impl Show for KeyLocation
 pub struct Modifiers {
   // private fields
 } derive(Eq, @debug.Debug)
+pub fn Modifiers::Modifiers(Bool, Bool, Bool, Bool) -> Self
 pub fn Modifiers::alt_key(Self) -> Bool
 pub fn Modifiers::control_key(Self) -> Bool
 pub fn Modifiers::default() -> Self
@@ -646,7 +647,6 @@ pub fn Modifiers::lcontrol_state(Self) -> ModifiersKeyState
 pub fn Modifiers::lshift_state(Self) -> ModifiersKeyState
 pub fn Modifiers::lsuper_state(Self) -> ModifiersKeyState
 pub fn Modifiers::meta_key(Self) -> Bool
-pub fn Modifiers::new(Bool, Bool, Bool, Bool) -> Self
 pub fn Modifiers::pressed_mods(Self) -> ModifiersKeys
 pub fn Modifiers::ralt_state(Self) -> ModifiersKeyState
 pub fn Modifiers::rcontrol_state(Self) -> ModifiersKeyState
@@ -704,10 +704,10 @@ pub impl Show for ModifiersState
 pub struct MonitorHandle {
   // private fields
 } derive(Eq, @debug.Debug)
+pub fn MonitorHandle::MonitorHandle(UInt64, String?, @dpi.PhysicalPosition, @dpi.PhysicalSize, Double, VideoMode?, Array[VideoMode]) -> Self
 pub fn MonitorHandle::current_video_mode(Self) -> VideoMode?
 pub fn MonitorHandle::name(Self) -> String?
 pub fn MonitorHandle::native_id(Self) -> UInt64
-pub fn MonitorHandle::new(UInt64, String?, @dpi.PhysicalPosition, @dpi.PhysicalSize, Double, VideoMode?, Array[VideoMode]) -> Self
 pub fn MonitorHandle::position(Self) -> @dpi.PhysicalPosition
 pub fn MonitorHandle::scale_factor(Self) -> Double
 pub fn MonitorHandle::surface_size(Self) -> @dpi.PhysicalSize
@@ -1094,7 +1094,7 @@ pub impl Show for NativeKeyCode
 pub struct NotSupportedError {
   // private fields
 } derive(Eq, @debug.Debug)
-pub fn NotSupportedError::new(String) -> Self
+pub fn NotSupportedError::NotSupportedError(String) -> Self
 pub fn NotSupportedError::reason(Self) -> String
 pub impl Show for NotSupportedError
 
@@ -1110,10 +1110,10 @@ pub impl Show for OptionAsAlt
 pub struct OsError {
   // private fields
 } derive(Eq, @debug.Debug)
+pub fn OsError::OsError(String, Int?, String?) -> Self
 pub fn OsError::code(Self) -> Int?
 pub fn OsError::domain(Self) -> String?
 pub fn OsError::message(Self) -> String
-pub fn OsError::new(String, Int?, String?) -> Self
 pub impl Show for OsError
 
 pub struct ParentWindow {
@@ -1206,7 +1206,7 @@ pub struct RawKeyEvent {
   physical_key : PhysicalKey
   state : ElementState
 } derive(Eq, @debug.Debug)
-pub fn RawKeyEvent::new(PhysicalKey, ElementState) -> Self
+pub fn RawKeyEvent::RawKeyEvent(PhysicalKey, ElementState) -> Self
 pub fn RawKeyEvent::physical_key(Self) -> PhysicalKey
 pub fn RawKeyEvent::state(Self) -> ElementState
 pub impl Show for RawKeyEvent
@@ -1249,7 +1249,7 @@ pub impl Show for StartCause
 pub struct SurfaceSizeWriter {
   size : @ref.Ref[@dpi.PhysicalSize]
 } derive(@debug.Debug)
-pub fn SurfaceSizeWriter::new(@dpi.PhysicalSize) -> Self
+pub fn SurfaceSizeWriter::SurfaceSizeWriter(@dpi.PhysicalSize) -> Self
 pub fn SurfaceSizeWriter::request_surface_size(Self, @dpi.PhysicalSize) -> Unit
 pub fn SurfaceSizeWriter::surface_size(Self) -> @dpi.PhysicalSize
 pub impl Show for SurfaceSizeWriter
@@ -1258,10 +1258,10 @@ pub struct TabletToolAngle {
   altitude : Double
   azimuth : Double
 } derive(Eq, @debug.Debug)
+pub fn TabletToolAngle::TabletToolAngle(Double, Double) -> Self
 pub fn TabletToolAngle::altitude(Self) -> Double
 pub fn TabletToolAngle::azimuth(Self) -> Double
 pub fn TabletToolAngle::default() -> Self
-pub fn TabletToolAngle::new(Double, Double) -> Self
 pub fn TabletToolAngle::tilt(Self) -> TabletToolTilt
 pub impl Show for TabletToolAngle
 
@@ -1280,9 +1280,9 @@ pub struct TabletToolData {
   tilt : TabletToolTilt?
   angle : TabletToolAngle?
 } derive(Eq, @debug.Debug)
+pub fn TabletToolData::TabletToolData(Force?, Double?, Int?, TabletToolTilt?, TabletToolAngle?) -> Self
 pub fn TabletToolData::angle(Self) -> TabletToolAngle?
 pub fn TabletToolData::force(Self) -> Force?
-pub fn TabletToolData::new(Force?, Double?, Int?, TabletToolTilt?, TabletToolAngle?) -> Self
 pub fn TabletToolData::tangential_force(Self) -> Double?
 pub fn TabletToolData::tilt(Self) -> TabletToolTilt?
 pub fn TabletToolData::twist(Self) -> Int?
@@ -1305,8 +1305,8 @@ pub struct TabletToolTilt {
   x : Int
   y : Int
 } derive(Eq, @debug.Debug)
+pub fn TabletToolTilt::TabletToolTilt(Int, Int) -> Self
 pub fn TabletToolTilt::angle(Self) -> TabletToolAngle
-pub fn TabletToolTilt::new(Int, Int) -> Self
 pub fn TabletToolTilt::x(Self) -> Int
 pub fn TabletToolTilt::y(Self) -> Int
 pub impl Show for TabletToolTilt
@@ -1334,8 +1334,8 @@ pub impl Show for UserAttentionType
 pub struct VideoMode {
   // private fields
 } derive(Eq, @debug.Debug)
+pub fn VideoMode::VideoMode(@dpi.PhysicalSize, Int?, Int?) -> Self
 pub fn VideoMode::bit_depth(Self) -> Int?
-pub fn VideoMode::new(@dpi.PhysicalSize, Int?, Int?) -> Self
 pub fn VideoMode::refresh_rate_millihertz(Self) -> Int?
 pub fn VideoMode::surface_size(Self) -> @dpi.PhysicalSize
 pub impl Show for VideoMode
@@ -1513,4 +1513,7 @@ pub impl Show for WinitWindowEvent
 // Type aliases
 
 // Traits
+pub(open) trait WindowCursorHittest {
+  set_cursor_hittest(Self, Bool) -> Unit raise RequestError
+}
 

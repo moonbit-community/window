@@ -20,8 +20,8 @@ struct AngleTiltCase {
 test "test_event_clone" {
   let device_events = [
     DeviceEvent::PointerMotion(0.0, 0.0),
-    DeviceEvent::MouseWheel(MouseScrollDelta::LineDelta(0.0, 0.0)),
-    DeviceEvent::Button(ButtonId::from_raw(0), ElementState::Pressed),
+    MouseWheel(LineDelta(0.0, 0.0)),
+    Button(ButtonId::from_raw(0), Pressed),
   ]
   for event in device_events {
     let event2 = event
@@ -37,48 +37,48 @@ test "test_tilt_angle_conversions" {
   let pi_1_5 = 3.0 * pi / 2.0
   let tilt_to_angle = [
     {
-      tilt: TabletToolTilt::new(0, 0),
-      expected_angle: TabletToolAngle::new(pi_0_5, 0.0),
+      tilt: TabletToolTilt(0, 0),
+      expected_angle: TabletToolAngle(pi_0_5, 0.0),
       label: "0/0",
     },
     {
-      tilt: TabletToolTilt::new(0, 90),
-      expected_angle: TabletToolAngle::new(0.0, pi_0_5),
+      tilt: TabletToolTilt(0, 90),
+      expected_angle: TabletToolAngle(0.0, pi_0_5),
       label: "0/90",
     },
     {
-      tilt: TabletToolTilt::new(0, -90),
-      expected_angle: TabletToolAngle::new(0.0, pi_1_5),
+      tilt: TabletToolTilt(0, -90),
+      expected_angle: TabletToolAngle(0.0, pi_1_5),
       label: "0/-90",
     },
     {
-      tilt: TabletToolTilt::new(90, 0),
-      expected_angle: TabletToolAngle::new(0.0, 0.0),
+      tilt: TabletToolTilt(90, 0),
+      expected_angle: TabletToolAngle(0.0, 0.0),
       label: "90/0",
     },
     {
-      tilt: TabletToolTilt::new(-90, 0),
-      expected_angle: TabletToolAngle::new(0.0, pi),
+      tilt: TabletToolTilt(-90, 0),
+      expected_angle: TabletToolAngle(0.0, pi),
       label: "-90/0",
     },
     {
-      tilt: TabletToolTilt::new(0, 45),
-      expected_angle: TabletToolAngle::new(pi_0_25, pi_0_5),
+      tilt: TabletToolTilt(0, 45),
+      expected_angle: TabletToolAngle(pi_0_25, pi_0_5),
       label: "0/45",
     },
     {
-      tilt: TabletToolTilt::new(0, -45),
-      expected_angle: TabletToolAngle::new(pi_0_25, pi_1_5),
+      tilt: TabletToolTilt(0, -45),
+      expected_angle: TabletToolAngle(pi_0_25, pi_1_5),
       label: "0/-45",
     },
     {
-      tilt: TabletToolTilt::new(45, 0),
-      expected_angle: TabletToolAngle::new(pi_0_25, 0.0),
+      tilt: TabletToolTilt(45, 0),
+      expected_angle: TabletToolAngle(pi_0_25, 0.0),
       label: "45/0",
     },
     {
-      tilt: TabletToolTilt::new(-45, 0),
-      expected_angle: TabletToolAngle::new(pi_0_25, pi),
+      tilt: TabletToolTilt(-45, 0),
+      expected_angle: TabletToolAngle(pi_0_25, pi),
       label: "-45/0",
     },
   ]
@@ -91,41 +91,32 @@ test "test_tilt_angle_conversions" {
   }
 
   let angle_to_tilt = [
+    { angle: TabletToolAngle(0.0, 0.0), expected_tilt: TabletToolTilt(90, 0) },
     {
-      angle: TabletToolAngle::new(0.0, 0.0),
-      expected_tilt: TabletToolTilt::new(90, 0),
+      angle: TabletToolAngle(pi_0_25, 0.0),
+      expected_tilt: TabletToolTilt(45, 0),
+    },
+    { angle: TabletToolAngle(pi_0_5, 0.0), expected_tilt: TabletToolTilt(0, 0) },
+    {
+      angle: TabletToolAngle(0.0, pi_0_5),
+      expected_tilt: TabletToolTilt(0, 90),
     },
     {
-      angle: TabletToolAngle::new(pi_0_25, 0.0),
-      expected_tilt: TabletToolTilt::new(45, 0),
+      angle: TabletToolAngle(pi_0_25, pi_0_5),
+      expected_tilt: TabletToolTilt(0, 45),
+    },
+    { angle: TabletToolAngle(0.0, pi), expected_tilt: TabletToolTilt(-90, 0) },
+    {
+      angle: TabletToolAngle(pi_0_25, pi),
+      expected_tilt: TabletToolTilt(-45, 0),
     },
     {
-      angle: TabletToolAngle::new(pi_0_5, 0.0),
-      expected_tilt: TabletToolTilt::new(0, 0),
+      angle: TabletToolAngle(0.0, pi_1_5),
+      expected_tilt: TabletToolTilt(0, -90),
     },
     {
-      angle: TabletToolAngle::new(0.0, pi_0_5),
-      expected_tilt: TabletToolTilt::new(0, 90),
-    },
-    {
-      angle: TabletToolAngle::new(pi_0_25, pi_0_5),
-      expected_tilt: TabletToolTilt::new(0, 45),
-    },
-    {
-      angle: TabletToolAngle::new(0.0, pi),
-      expected_tilt: TabletToolTilt::new(-90, 0),
-    },
-    {
-      angle: TabletToolAngle::new(pi_0_25, pi),
-      expected_tilt: TabletToolTilt::new(-45, 0),
-    },
-    {
-      angle: TabletToolAngle::new(0.0, pi_1_5),
-      expected_tilt: TabletToolTilt::new(0, -90),
-    },
-    {
-      angle: TabletToolAngle::new(pi_0_25, pi_1_5),
-      expected_tilt: TabletToolTilt::new(0, -45),
+      angle: TabletToolAngle(pi_0_25, pi_1_5),
+      expected_tilt: TabletToolTilt(0, -45),
     },
   ]
   for case in angle_to_tilt {
@@ -144,7 +135,7 @@ test "test_force_normalize" {
   let force3 = Force::Calibrated(5.0, 2.5)
   assert_true(
     approx_eq(
-      force3.normalized(Some(TabletToolAngle::new(@math.PI / 2.0, 0.0))),
+      force3.normalized(Some(TabletToolAngle(@math.PI / 2.0, 0.0))),
       2.0,
     ),
   )
@@ -154,58 +145,35 @@ test "test_force_normalize" {
 test "ensure_attrs_do_not_panic" {
   let window_events = [
     WindowEvent::CloseRequested,
-    WindowEvent::Destroyed,
-    WindowEvent::Focused(true),
-    WindowEvent::Moved(@dpi.PhysicalPosition::new(0, 0)),
-    WindowEvent::SurfaceResized(@dpi.PhysicalSize::new(0, 0)),
-    WindowEvent::DragEntered(["x.txt"], @dpi.PhysicalPositionF64::new(0.0, 0.0)),
-    WindowEvent::DragMoved(@dpi.PhysicalPositionF64::new(0.0, 0.0)),
-    WindowEvent::DragDropped(["x.txt"], @dpi.PhysicalPositionF64::new(0.0, 0.0)),
-    WindowEvent::DragLeft(Some(@dpi.PhysicalPositionF64::new(0.0, 0.0))),
-    WindowEvent::Ime(Ime::Enabled),
-    WindowEvent::PointerMoved(
+    Destroyed,
+    Focused(true),
+    Moved(PhysicalPosition(0, 0)),
+    SurfaceResized(PhysicalSize(0, 0)),
+    DragEntered(["x.txt"], PhysicalPositionF64(0.0, 0.0)),
+    DragMoved(PhysicalPositionF64(0.0, 0.0)),
+    DragDropped(["x.txt"], PhysicalPositionF64(0.0, 0.0)),
+    DragLeft(Some(PhysicalPositionF64(0.0, 0.0))),
+    Ime(Enabled),
+    PointerMoved(None, PhysicalPositionF64(0.0, 0.0), true, Mouse),
+    ModifiersChanged(Modifiers::default()),
+    PointerEntered(None, PhysicalPositionF64(0.0, 0.0), true, Mouse),
+    PointerLeft(None, Some(PhysicalPositionF64(0.0, 0.0)), true, Mouse),
+    MouseWheel(None, LineDelta(0.0, 0.0), Started),
+    PointerButton(
       None,
-      @dpi.PhysicalPositionF64::new(0.0, 0.0),
+      Pressed,
+      PhysicalPositionF64(0.0, 0.0),
       true,
-      PointerSource::Mouse,
+      Unknown(0),
     ),
-    WindowEvent::ModifiersChanged(Modifiers::default()),
-    WindowEvent::PointerEntered(
-      None,
-      @dpi.PhysicalPositionF64::new(0.0, 0.0),
-      true,
-      PointerKind::Mouse,
-    ),
-    WindowEvent::PointerLeft(
-      None,
-      Some(@dpi.PhysicalPositionF64::new(0.0, 0.0)),
-      true,
-      PointerKind::Mouse,
-    ),
-    WindowEvent::MouseWheel(
-      None,
-      MouseScrollDelta::LineDelta(0.0, 0.0),
-      TouchPhase::Started,
-    ),
-    WindowEvent::PointerButton(
-      None,
-      ElementState::Pressed,
-      @dpi.PhysicalPositionF64::new(0.0, 0.0),
-      true,
-      ButtonSource::Unknown(0),
-    ),
-    WindowEvent::PinchGesture(None, 0.0, TouchPhase::Started),
-    WindowEvent::DoubleTapGesture(None),
-    WindowEvent::RotationGesture(None, 0.0, TouchPhase::Started),
-    WindowEvent::PanGesture(
-      None,
-      @dpi.PhysicalPositionF64::new(0.0, 0.0),
-      TouchPhase::Started,
-    ),
-    WindowEvent::TouchpadPressure(None, 0.0, 0),
-    WindowEvent::ThemeChanged(Theme::Light),
-    WindowEvent::Occluded(true),
-    WindowEvent::RedrawRequested,
+    PinchGesture(None, 0.0, Started),
+    DoubleTapGesture(None),
+    RotationGesture(None, 0.0, Started),
+    PanGesture(None, PhysicalPositionF64(0.0, 0.0), Started),
+    TouchpadPressure(None, 0.0, 0),
+    ThemeChanged(Light),
+    Occluded(true),
+    RedrawRequested,
   ]
 
   for event in window_events {
@@ -214,8 +182,8 @@ test "ensure_attrs_do_not_panic" {
 
   let device_events = [
     DeviceEvent::PointerMotion(0.0, 0.0),
-    DeviceEvent::MouseWheel(MouseScrollDelta::LineDelta(0.0, 0.0)),
-    DeviceEvent::Button(ButtonId::from_raw(0), ElementState::Pressed),
+    MouseWheel(LineDelta(0.0, 0.0)),
+    Button(ButtonId::from_raw(0), Pressed),
   ]
   for event in device_events {
     let _ = "\{event}"

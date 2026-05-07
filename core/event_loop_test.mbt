@@ -15,7 +15,7 @@ test "event_loop_error_structured_payload" {
   let not_supported = EventLoopError::not_supported(
     "Multiple event loops are not supported",
   )
-  guard not_supported is EventLoopError::NotSupported(err) else {
+  guard not_supported is NotSupported(err) else {
     fail("expected EventLoopError::NotSupported payload")
   }
   assert_eq(err.reason(), "Multiple event loops are not supported")
@@ -25,10 +25,8 @@ test "event_loop_error_structured_payload" {
     code=4096,
     domain="NSCocoaErrorDomain",
   )
-  guard os_error is EventLoopError::Os(err) else {
-    fail("expected EventLoopError::Os payload")
-  }
+  guard os_error is Os(err) else { fail("expected EventLoopError::Os payload") }
   assert_eq(err.message(), "Failed to initialize NSApplication")
-  assert_eq(err.code(), Some(4096))
-  assert_eq(err.domain(), Some("NSCocoaErrorDomain"))
+  assert_true(err.code() == Some(4096))
+  assert_true(err.domain() == Some("NSCocoaErrorDomain"))
 }

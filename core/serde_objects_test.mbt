@@ -33,17 +33,19 @@ test "events_serde" {
   let _ = "\{location}"
   let _ = "\{modifiers}"
 
-  assert_eq(key, Key::Character("a"))
-  assert_eq(physical, PhysicalKey::Code(KeyCode::KeyA))
+  assert_eq(key, Character("a"))
+  assert_eq(physical, Code(KeyA))
 }
 
 ///|
 test "dpi_serde" {
-  let logical_position = @dpi.LogicalPosition::new(12.5, 9.5)
-  let physical_position = @dpi.PhysicalPosition::new(125, 95)
-  let physical_position_f64 = @dpi.PhysicalPositionF64::new(125.0, 95.0)
-  let logical_size = @dpi.LogicalSize::new(640.0, 480.0)
-  let physical_size = @dpi.PhysicalSize::new(640, 480)
+  let logical_position = @dpi.LogicalPosition::LogicalPosition(12.5, 9.5)
+  let physical_position = @dpi.PhysicalPosition::PhysicalPosition(125, 95)
+  let physical_position_f64 = @dpi.PhysicalPositionF64::PhysicalPositionF64(
+    125.0, 95.0,
+  )
+  let logical_size = @dpi.LogicalSize::LogicalSize(640.0, 480.0)
+  let physical_size = @dpi.PhysicalSize::PhysicalSize(640, 480)
 
   let _ = "\{logical_position}"
   let _ = "\{physical_position}"
@@ -51,9 +53,6 @@ test "dpi_serde" {
   let _ = "\{logical_size}"
   let _ = "\{physical_size}"
 
-  assert_eq(
-    logical_position.to_physical(2.0),
-    @dpi.PhysicalPosition::new(25, 19),
-  )
-  assert_eq(logical_size.to_physical(2.0), @dpi.PhysicalSize::new(1280, 960))
+  assert_eq(logical_position.to_physical(2.0), PhysicalPosition(25, 19))
+  assert_eq(logical_size.to_physical(2.0), PhysicalSize(1280, 960))
 }

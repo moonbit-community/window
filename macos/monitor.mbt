@@ -225,8 +225,8 @@ fn native_monitor_ns_screen(monitor_id : UInt64) -> UInt64 {
 fn fallback_display_video_mode(display_id : UInt64) -> @core.VideoMode {
   let width = cg_display_pixels_wide(display_id)
   let height = cg_display_pixels_high(display_id)
-  @core.VideoMode::new(
-    @dpi.PhysicalSize::new(
+  VideoMode(
+    PhysicalSize(
       if width > 0 {
         width
       } else {
@@ -268,8 +268,8 @@ fn display_video_mode_from_handle(
     }
   }
   Some(
-    @core.VideoMode::new(
-      @dpi.PhysicalSize::new(width, height),
+    VideoMode(
+      PhysicalSize(width, height),
       if bit_depth > 0 {
         Some(bit_depth)
       } else {
@@ -342,7 +342,7 @@ fn display_position(
 ) -> @dpi.PhysicalPosition {
   let x = (cg_display_bounds_x(display_id).to_double() * scale_factor).to_int()
   let y = (cg_display_bounds_y(display_id).to_double() * scale_factor).to_int()
-  @dpi.PhysicalPosition::new(x, y)
+  PhysicalPosition(x, y)
 }
 
 ///|
@@ -362,11 +362,11 @@ fn monitor_from_display_id(display_id : UInt64) -> @core.MonitorHandle? {
   let height = current_mode.surface_size().height
   let model_number = cg_display_model_number(display_id)
   Some(
-    @core.MonitorHandle::new(
+    MonitorHandle(
       display_id,
       Some("Monitor #" + model_number.to_string()),
       display_position(display_id, scale_factor),
-      @dpi.PhysicalSize::new(width, height),
+      PhysicalSize(width, height),
       scale_factor,
       Some(current_mode),
       video_modes,

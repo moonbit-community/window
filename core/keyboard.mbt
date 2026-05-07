@@ -22,12 +22,12 @@ pub(all) enum NativeKey {
 ///|
 pub fn NativeKey::from_key_code(code : NativeKeyCode) -> NativeKey {
   match code {
-    Unidentified => NativeKey::Unidentified
-    Android(code) => NativeKey::Android(code)
-    MacOS(code) => NativeKey::MacOS(code)
-    Windows(code) => NativeKey::Windows(code)
-    Xkb(code) => NativeKey::Xkb(code)
-    Ohos(code) => NativeKey::Ohos(code)
+    Unidentified => Unidentified
+    Android(code) => Android(code)
+    MacOS(code) => MacOS(code)
+    Windows(code) => Windows(code)
+    Xkb(code) => Xkb(code)
+    Ohos(code) => Ohos(code)
   }
 }
 
@@ -254,7 +254,7 @@ pub(all) enum KeyCode {
 
 ///|
 pub fn KeyCode::default() -> KeyCode {
-  KeyCode::Unidentified
+  Unidentified
 }
 
 ///|
@@ -265,19 +265,19 @@ pub(all) enum PhysicalKey {
 
 ///|
 pub fn PhysicalKey::from_key_code(code : KeyCode) -> PhysicalKey {
-  PhysicalKey::Code(code)
+  Code(code)
 }
 
 ///|
 pub fn PhysicalKey::from_native_key_code(code : NativeKeyCode) -> PhysicalKey {
-  PhysicalKey::Unidentified(code)
+  Unidentified(code)
 }
 
 ///|
 pub fn PhysicalKey::into_key_code(self : PhysicalKey) -> KeyCode {
   match self {
     Code(code) => code
-    Unidentified(_) => KeyCode::Unidentified
+    Unidentified(_) => Unidentified
   }
 }
 
@@ -602,7 +602,7 @@ pub(all) enum NamedKey {
 
 ///|
 pub fn NamedKey::default() -> NamedKey {
-  NamedKey::Unidentified
+  Unidentified
 }
 
 ///|
@@ -615,12 +615,12 @@ pub(all) enum Key {
 
 ///|
 pub fn Key::from_named(named : NamedKey) -> Key {
-  Key::Named(named)
+  Named(named)
 }
 
 ///|
 pub fn Key::from_native(native : NativeKey) -> Key {
-  Key::Unidentified(native)
+  Unidentified(native)
 }
 
 ///|
@@ -634,10 +634,10 @@ pub fn Key::character(self : Key) -> String? {
 ///|
 pub fn Key::to_text(self : Key) -> String? {
   match self {
-    Named(NamedKey::Enter) => Some("\r")
-    Named(NamedKey::Backspace) => Some("\b")
-    Named(NamedKey::Tab) => Some("\t")
-    Named(NamedKey::Escape) => Some("\u{1b}")
+    Named(Enter) => Some("\r")
+    Named(Backspace) => Some("\b")
+    Named(Tab) => Some("\t")
+    Named(Escape) => Some("\u{1b}")
     Character(character) => Some(character)
     _ => None
   }
@@ -656,7 +656,7 @@ pub struct KeyEvent {
 } derive(Eq, Debug)
 
 ///|
-pub fn KeyEvent::new(
+pub fn KeyEvent::KeyEvent(
   physical_key : PhysicalKey,
   logical_key : Key,
   key_without_modifiers : Key,

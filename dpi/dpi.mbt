@@ -16,7 +16,7 @@ pub struct LogicalSize {
 } derive(Eq, Debug)
 
 ///|
-pub fn LogicalSize::new(width : Double, height : Double) -> LogicalSize {
+pub fn LogicalSize::LogicalSize(width : Double, height : Double) -> LogicalSize {
   { width, height }
 }
 
@@ -38,7 +38,7 @@ pub fn LogicalSize::to_physical(
   guard validate_scale_factor(scale_factor) else {
     abort("scale_factor must be positive")
   }
-  PhysicalSize::new(
+  PhysicalSize(
     (self.width * scale_factor).to_int(),
     (self.height * scale_factor).to_int(),
   )
@@ -51,7 +51,7 @@ pub struct PhysicalSize {
 } derive(Eq, Debug)
 
 ///|
-pub fn PhysicalSize::new(width : Int, height : Int) -> PhysicalSize {
+pub fn PhysicalSize::PhysicalSize(width : Int, height : Int) -> PhysicalSize {
   { width, height }
 }
 
@@ -73,7 +73,7 @@ pub fn PhysicalSize::to_logical(
   guard validate_scale_factor(scale_factor) else {
     abort("scale_factor must be positive")
   }
-  LogicalSize::new(
+  LogicalSize(
     self.width.to_double() / scale_factor,
     self.height.to_double() / scale_factor,
   )
@@ -86,7 +86,10 @@ pub struct LogicalPosition {
 } derive(Eq, Debug)
 
 ///|
-pub fn LogicalPosition::new(x : Double, y : Double) -> LogicalPosition {
+pub fn LogicalPosition::LogicalPosition(
+  x : Double,
+  y : Double,
+) -> LogicalPosition {
   { x, y }
 }
 
@@ -108,7 +111,7 @@ pub fn LogicalPosition::to_physical(
   guard validate_scale_factor(scale_factor) else {
     abort("scale_factor must be positive")
   }
-  PhysicalPosition::new(
+  PhysicalPosition(
     (self.x * scale_factor).to_int(),
     (self.y * scale_factor).to_int(),
   )
@@ -116,7 +119,7 @@ pub fn LogicalPosition::to_physical(
 
 ///|
 pub fn LogicalPosition::into_position(self : LogicalPosition) -> Position {
-  Position::Logical(self)
+  Logical(self)
 }
 
 ///|
@@ -126,7 +129,7 @@ pub struct PhysicalPosition {
 } derive(Eq, Debug)
 
 ///|
-pub fn PhysicalPosition::new(x : Int, y : Int) -> PhysicalPosition {
+pub fn PhysicalPosition::PhysicalPosition(x : Int, y : Int) -> PhysicalPosition {
   { x, y }
 }
 
@@ -148,7 +151,7 @@ pub fn PhysicalPosition::to_logical(
   guard validate_scale_factor(scale_factor) else {
     abort("scale_factor must be positive")
   }
-  LogicalPosition::new(
+  LogicalPosition(
     self.x.to_double() / scale_factor,
     self.y.to_double() / scale_factor,
   )
@@ -156,7 +159,7 @@ pub fn PhysicalPosition::to_logical(
 
 ///|
 pub fn PhysicalPosition::into_position(self : PhysicalPosition) -> Position {
-  Position::Physical(self)
+  Physical(self)
 }
 
 ///|
@@ -166,7 +169,10 @@ pub struct PhysicalPositionF64 {
 } derive(Eq, Debug)
 
 ///|
-pub fn PhysicalPositionF64::new(x : Double, y : Double) -> PhysicalPositionF64 {
+pub fn PhysicalPositionF64::PhysicalPositionF64(
+  x : Double,
+  y : Double,
+) -> PhysicalPositionF64 {
   { x, y }
 }
 
@@ -188,12 +194,12 @@ pub(all) enum Position {
 
 ///|
 pub fn Position::from_logical(position : LogicalPosition) -> Position {
-  Position::Logical(position)
+  Logical(position)
 }
 
 ///|
 pub fn Position::from_physical(position : PhysicalPosition) -> Position {
-  Position::Physical(position)
+  Physical(position)
 }
 
 ///|
@@ -227,7 +233,7 @@ pub struct PhysicalInsets {
 } derive(Eq, Debug)
 
 ///|
-pub fn PhysicalInsets::new(
+pub fn PhysicalInsets::PhysicalInsets(
   top : Int,
   left : Int,
   bottom : Int,
@@ -264,22 +270,22 @@ pub(all) enum Size {
 
 ///|
 pub fn LogicalSize::into_size(self : LogicalSize) -> Size {
-  Size::Logical(self)
+  Logical(self)
 }
 
 ///|
 pub fn PhysicalSize::into_size(self : PhysicalSize) -> Size {
-  Size::Physical(self)
+  Physical(self)
 }
 
 ///|
 pub fn Size::from_logical(size : LogicalSize) -> Size {
-  Size::Logical(size)
+  Logical(size)
 }
 
 ///|
 pub fn Size::from_physical(size : PhysicalSize) -> Size {
-  Size::Physical(size)
+  Physical(size)
 }
 
 ///|

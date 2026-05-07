@@ -187,7 +187,7 @@ fn native_application_stop_immediately() -> Unit {
 pub fn EventLoop::system_theme(_self : EventLoop) -> @core.Theme? {
   match theme_from_native(native_application_theme()) {
     Some(theme) => Some(theme)
-    None => Some(@core.Theme::Light)
+    None => Some(Light)
   }
 }
 
@@ -248,9 +248,9 @@ fn activation_policy_to_native(
   activation_policy : @core.ActivationPolicy?,
 ) -> Int {
   match activation_policy {
-    Some(@core.ActivationPolicy::Regular) => 0
-    Some(@core.ActivationPolicy::Accessory) => 1
-    Some(@core.ActivationPolicy::Prohibited) => 2
+    Some(Regular) => 0
+    Some(Accessory) => 1
+    Some(Prohibited) => 2
     None => -1
   }
 }
@@ -274,7 +274,7 @@ pub struct ActiveEventLoop {
 } derive(Debug)
 
 ///|
-let event_loop_global_created : Ref[Bool] = Ref::new(false)
+let event_loop_global_created : Ref[Bool] = Ref(false)
 
 ///|
 pub fn EventLoop::drop(self : EventLoop) -> Unit {
@@ -419,13 +419,13 @@ pub fn ActiveEventLoop::display_handle(self : ActiveEventLoop) -> UInt64 {
 }
 
 ///|
-pub fn EventLoopBuilder::new() -> EventLoopBuilder {
+pub fn EventLoopBuilder::EventLoopBuilder() -> EventLoopBuilder {
   { platform_attributes_: @core.PlatformEventLoopAttributes::default() }
 }
 
 ///|
 pub fn EventLoopBuilder::default() -> EventLoopBuilder {
-  EventLoopBuilder::new()
+  EventLoopBuilder()
 }
 
 ///|
@@ -502,11 +502,11 @@ pub fn EventLoopBuilder::try_build(
 
 ///|
 pub fn EventLoop::builder() -> EventLoopBuilder {
-  EventLoopBuilder::new()
+  EventLoopBuilder()
 }
 
 ///|
-pub fn EventLoop::new() -> EventLoop {
+pub fn EventLoop::EventLoop() -> EventLoop {
   try! EventLoop::try_new()
 }
 
@@ -532,7 +532,7 @@ pub fn EventLoop::try_new_with_platform_attributes(
     )
   }
   if event_loop_global_created.val {
-    raise @core.EventLoopError::RecreationAttempt
+    raise RecreationAttempt
   }
   app_state_setup_global(
     activation_policy_to_native(attributes.activation_policy()),
@@ -570,7 +570,7 @@ pub fn EventLoop::try_create_window(
   self : EventLoop,
   attributes : @core.WindowAttributes,
 ) -> Window raise @core.RequestError {
-  Window::new(self, attributes)
+  Window(self, attributes)
 }
 
 ///|
@@ -618,7 +618,7 @@ fn EventLoop::try_start_running(
   self : EventLoop,
 ) -> Unit raise @core.EventLoopError {
   if app_state_is_running() {
-    raise @core.EventLoopError::RecreationAttempt
+    raise RecreationAttempt
   }
   self.start_running()
 }
@@ -701,7 +701,7 @@ pub fn[A : ApplicationHandler] EventLoop::try_run_app_on_demand(
   app : A,
 ) -> Unit raise @core.EventLoopError {
   if app_state_is_running() {
-    raise @core.EventLoopError::RecreationAttempt
+    raise RecreationAttempt
   }
   app_state_set_dispatch_handler(app, self.as_active())
   app_state_clear_exit()
@@ -774,9 +774,9 @@ pub fn[A : ApplicationHandler] EventLoop::try_pump_app_events(
     self.dispatch_window_events(app)
     if self.exiting() {
       app_state_internal_exit()
-      @core.PumpStatus::Exit(0)
+      Exit(0)
     } else {
-      @core.PumpStatus::Continue
+      Continue
     }
   })()
   app_state_clear_dispatch_handler()

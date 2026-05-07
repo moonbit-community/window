@@ -7,15 +7,15 @@ pub fn EventLoop::create_custom_cursor(
   source : @core.CustomCursorSource,
 ) -> @core.CustomCursor raise @core.RequestError {
   match source {
-    @core.CustomCursorSource::Rgba(rgba, width, height, hotspot_x, hotspot_y) =>
+    Rgba(rgba, width, height, hotspot_x, hotspot_y) =>
       self.create_custom_cursor_from_rgba_source(
         rgba, width, height, hotspot_x, hotspot_y,
       )
-    @core.CustomCursorSource::Url(_, _, _) =>
+    Url(_, _, _) =>
       raise @core.RequestError::not_supported(
         "URL custom cursors are not supported on macOS",
       )
-    @core.CustomCursorSource::Animation(_, _) =>
+    Animation(_, _) =>
       raise @core.RequestError::not_supported(
         "Animated custom cursors are not supported on macOS",
       )
@@ -68,7 +68,7 @@ fn validate_rgba_cursor_source(
   hotspot_y : Int,
 ) -> Unit raise @core.RequestError {
   if width <= 0 || height <= 0 {
-    raise @core.RequestError::Ignored
+    raise Ignored
   }
   // Keep runtime-side checks even though `from_rgba` already validates.
   if width > 2048 || height > 2048 {
@@ -77,14 +77,14 @@ fn validate_rgba_cursor_source(
     )
   }
   if rgba.length() % 4 != 0 {
-    raise @core.RequestError::Ignored
+    raise Ignored
   }
   let pixel_count = rgba.length() / 4
   if pixel_count != width * height {
-    raise @core.RequestError::Ignored
+    raise Ignored
   }
   if hotspot_x < 0 || hotspot_x >= width || hotspot_y < 0 || hotspot_y >= height {
-    raise @core.RequestError::Ignored
+    raise Ignored
   }
 }
 
@@ -273,40 +273,40 @@ fn invisible_cursor() -> Int {
 ///|
 fn cursor_from_icon(cursor : @core.CursorIcon) -> Int {
   match cursor {
-    @core.CursorIcon::Default => default_cursor()
-    @core.CursorIcon::ContextMenu => 1
-    @core.CursorIcon::Help => _helpCursor()
-    @core.CursorIcon::Progress => busyButClickableCursor()
-    @core.CursorIcon::Wait => busyButClickableCursor()
-    @core.CursorIcon::Cell => webkit_cell()
-    @core.CursorIcon::VerticalText => 6
-    @core.CursorIcon::Alias => 7
-    @core.CursorIcon::Copy => 8
-    @core.CursorIcon::NoDrop => 9
-    @core.CursorIcon::Grab => 10
-    @core.CursorIcon::Grabbing => 11
-    @core.CursorIcon::EResize => 12
-    @core.CursorIcon::NResize => 13
-    @core.CursorIcon::NeResize => _windowResizeNorthEastCursor()
-    @core.CursorIcon::NwResize => _windowResizeNorthWestCursor()
-    @core.CursorIcon::SResize => 16
-    @core.CursorIcon::SeResize => _windowResizeSouthEastCursor()
-    @core.CursorIcon::SwResize => _windowResizeSouthWestCursor()
-    @core.CursorIcon::WResize => 19
-    @core.CursorIcon::EwResize => 20
-    @core.CursorIcon::NsResize => 21
-    @core.CursorIcon::NeswResize => _windowResizeNorthEastSouthWestCursor()
-    @core.CursorIcon::NwseResize => _windowResizeNorthWestSouthEastCursor()
-    @core.CursorIcon::ColResize => 24
-    @core.CursorIcon::RowResize => 25
-    @core.CursorIcon::AllScroll => _moveCursor()
-    @core.CursorIcon::ZoomIn => _zoomInCursor()
-    @core.CursorIcon::ZoomOut => _zoomOutCursor()
-    @core.CursorIcon::Pointer => 29
-    @core.CursorIcon::Text => 30
-    @core.CursorIcon::Crosshair => 31
-    @core.CursorIcon::Move => webkit_move()
-    @core.CursorIcon::NotAllowed => 33
+    Default => default_cursor()
+    ContextMenu => 1
+    Help => _helpCursor()
+    Progress => busyButClickableCursor()
+    Wait => busyButClickableCursor()
+    Cell => webkit_cell()
+    VerticalText => 6
+    Alias => 7
+    Copy => 8
+    NoDrop => 9
+    Grab => 10
+    Grabbing => 11
+    EResize => 12
+    NResize => 13
+    NeResize => _windowResizeNorthEastCursor()
+    NwResize => _windowResizeNorthWestCursor()
+    SResize => 16
+    SeResize => _windowResizeSouthEastCursor()
+    SwResize => _windowResizeSouthWestCursor()
+    WResize => 19
+    EwResize => 20
+    NsResize => 21
+    NeswResize => _windowResizeNorthEastSouthWestCursor()
+    NwseResize => _windowResizeNorthWestSouthEastCursor()
+    ColResize => 24
+    RowResize => 25
+    AllScroll => _moveCursor()
+    ZoomIn => _zoomInCursor()
+    ZoomOut => _zoomOutCursor()
+    Pointer => 29
+    Text => 30
+    Crosshair => 31
+    Move => webkit_move()
+    NotAllowed => 33
   }
 }
 
@@ -318,8 +318,8 @@ fn cursor_icon_to_native(cursor : @core.CursorIcon) -> Int {
 ///|
 fn cursor_grab_mode_to_native(mode : @core.CursorGrabMode) -> Int {
   match mode {
-    @core.CursorGrabMode::None => 0
-    @core.CursorGrabMode::Locked => 1
-    @core.CursorGrabMode::Confined => 2
+    None => 0
+    Locked => 1
+    Confined => 2
   }
 }

@@ -14,7 +14,7 @@ pub impl @macos.ApplicationHandler for App with can_create_surfaces(
   let title = "Fantastic window number one!"
   let attrs = @core.WindowAttributes::default()
     .with_title(title)
-    .with_surface_size(@dpi.LogicalSize::new(128.0, 128.0).into_size())
+    .with_surface_size(@dpi.LogicalSize::LogicalSize(128.0, 128.0).into_size())
   let window = event_loop.create_window(attrs)
   self.window_id = Some(window.id())
   self.window = Some(window)
@@ -36,7 +36,7 @@ pub impl @macos.ApplicationHandler for App with window_event(
   event,
 ) {
   match event {
-    @core.WindowEvent::Destroyed =>
+    Destroyed =>
       match self.window_id {
         Some(current_window_id) =>
           if current_window_id == window_id {
@@ -49,7 +49,7 @@ pub impl @macos.ApplicationHandler for App with window_event(
           }
         None => ()
       }
-    @core.WindowEvent::CloseRequested =>
+    CloseRequested =>
       match self.window {
         Some(window) => {
           println(
@@ -60,7 +60,7 @@ pub impl @macos.ApplicationHandler for App with window_event(
         }
         None => ()
       }
-    @core.WindowEvent::RedrawRequested =>
+    RedrawRequested =>
       match self.window {
         Some(window) => @util.fill_window(window)
         None => ()
@@ -72,7 +72,7 @@ pub impl @macos.ApplicationHandler for App with window_event(
 ///|
 fn main {
   @util.tracing_init()
-  let event_loop = @macos.EventLoop::new()
+  let event_loop = @macos.EventLoop::EventLoop()
   let app : App = { run_index: 1, window_id: None, window: None }
 
   event_loop.run_app_on_demand(app)

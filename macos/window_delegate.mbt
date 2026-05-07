@@ -19,61 +19,61 @@ fn clamp_size(size : Int) -> Int {
 }
 
 ///|
-let invisible_cursor_obj_handle : Ref[UInt64] = Ref::new((0 : Int).to_uint64())
+let invisible_cursor_obj_handle : Ref[UInt64] = Ref((0 : Int).to_uint64())
 
 ///|
-let maximized_standard_frame_window_handles : Ref[Array[UInt64]] = Ref::new([])
+let maximized_standard_frame_window_handles : Ref[Array[UInt64]] = Ref([])
 
 ///|
-let maximized_standard_frame_xs : Ref[Array[Double]] = Ref::new([])
+let maximized_standard_frame_xs : Ref[Array[Double]] = Ref([])
 
 ///|
-let maximized_standard_frame_ys : Ref[Array[Double]] = Ref::new([])
+let maximized_standard_frame_ys : Ref[Array[Double]] = Ref([])
 
 ///|
-let maximized_standard_frame_widths : Ref[Array[Double]] = Ref::new([])
+let maximized_standard_frame_widths : Ref[Array[Double]] = Ref([])
 
 ///|
-let maximized_standard_frame_heights : Ref[Array[Double]] = Ref::new([])
+let maximized_standard_frame_heights : Ref[Array[Double]] = Ref([])
 
 ///|
-let fullscreen_transition_window_handles : Ref[Array[UInt64]] = Ref::new([])
+let fullscreen_transition_window_handles : Ref[Array[UInt64]] = Ref([])
 
 ///|
-let fullscreen_transition_values : Ref[Array[Bool]] = Ref::new([])
+let fullscreen_transition_values : Ref[Array[Bool]] = Ref([])
 
 ///|
-let window_platform_state_handles : Ref[Array[UInt64]] = Ref::new([])
+let window_platform_state_handles : Ref[Array[UInt64]] = Ref([])
 
 ///|
-let window_ime_allowed_values : Ref[Array[Bool]] = Ref::new([])
+let window_ime_allowed_values : Ref[Array[Bool]] = Ref([])
 
 ///|
-let window_cursor_visible_values : Ref[Array[Bool]] = Ref::new([])
+let window_cursor_visible_values : Ref[Array[Bool]] = Ref([])
 
 ///|
-let window_accepts_first_mouse_values : Ref[Array[Bool]] = Ref::new([])
+let window_accepts_first_mouse_values : Ref[Array[Bool]] = Ref([])
 
 ///|
-let window_option_as_alt_values : Ref[Array[Int]] = Ref::new([])
+let window_option_as_alt_values : Ref[Array[Int]] = Ref([])
 
 ///|
-let window_ime_purpose_values : Ref[Array[Int]] = Ref::new([])
+let window_ime_purpose_values : Ref[Array[Int]] = Ref([])
 
 ///|
-let window_ime_hints_values : Ref[Array[Int]] = Ref::new([])
+let window_ime_hints_values : Ref[Array[Int]] = Ref([])
 
 ///|
-let window_ime_cursor_x_values : Ref[Array[Int]] = Ref::new([])
+let window_ime_cursor_x_values : Ref[Array[Int]] = Ref([])
 
 ///|
-let window_ime_cursor_y_values : Ref[Array[Int]] = Ref::new([])
+let window_ime_cursor_y_values : Ref[Array[Int]] = Ref([])
 
 ///|
-let window_ime_cursor_width_values : Ref[Array[Int]] = Ref::new([])
+let window_ime_cursor_width_values : Ref[Array[Int]] = Ref([])
 
 ///|
-let window_ime_cursor_height_values : Ref[Array[Int]] = Ref::new([])
+let window_ime_cursor_height_values : Ref[Array[Int]] = Ref([])
 
 ///|
 fn window_fullscreen_transition_index(window_handle : UInt64) -> Int? {
@@ -366,7 +366,7 @@ fn logical_position_f64_to_physical(
   scale_factor : Double,
 ) -> @dpi.PhysicalPositionF64 {
   let normalized_scale = if scale_factor > 0.0 { scale_factor } else { 1.0 }
-  @dpi.PhysicalPositionF64::new(x * normalized_scale, y * normalized_scale)
+  PhysicalPositionF64(x * normalized_scale, y * normalized_scale)
 }
 
 ///|
@@ -426,36 +426,20 @@ fn queue_drag_event_from_payload(
     9 => {
       let paths = drag_paths_from_native(path)
       if paths.length() > 0 {
-        app_state_queue_window_callback(
-          window_id,
-          @core.WindowEvent::DragEntered(paths, position),
-        )
+        app_state_queue_window_callback(window_id, DragEntered(paths, position))
       }
     }
-    10 =>
-      app_state_queue_window_callback(
-        window_id,
-        @core.WindowEvent::DragMoved(position),
-      )
+    10 => app_state_queue_window_callback(window_id, DragMoved(position))
     11 => {
       let paths = drag_paths_from_native(path)
       if paths.length() > 0 {
-        app_state_queue_window_callback(
-          window_id,
-          @core.WindowEvent::DragDropped(paths, position),
-        )
+        app_state_queue_window_callback(window_id, DragDropped(paths, position))
       }
     }
     12 =>
       app_state_queue_window_callback(
         window_id,
-        @core.WindowEvent::DragLeft(
-          if has_position {
-            Some(position)
-          } else {
-            None
-          },
-        ),
+        DragLeft(if has_position { Some(position) } else { None }),
       )
     _ => ()
   }
@@ -477,7 +461,7 @@ fn queue_native_drag_event(
           Some(position) =>
             app_state_queue_window_callback(
               window_id,
-              @core.WindowEvent::DragEntered(paths, position),
+              DragEntered(paths, position),
             )
           None => ()
         }
@@ -486,10 +470,7 @@ fn queue_native_drag_event(
     10 =>
       match position {
         Some(position) =>
-          app_state_queue_window_callback(
-            window_id,
-            @core.WindowEvent::DragMoved(position),
-          )
+          app_state_queue_window_callback(window_id, DragMoved(position))
         None => ()
       }
     11 => {
@@ -499,17 +480,13 @@ fn queue_native_drag_event(
           Some(position) =>
             app_state_queue_window_callback(
               window_id,
-              @core.WindowEvent::DragDropped(paths, position),
+              DragDropped(paths, position),
             )
           None => ()
         }
       }
     }
-    12 =>
-      app_state_queue_window_callback(
-        window_id,
-        @core.WindowEvent::DragLeft(position),
-      )
+    12 => app_state_queue_window_callback(window_id, DragLeft(position))
     _ => ()
   }
 }
@@ -2774,7 +2751,7 @@ fn set_window_outer_size(
   width : Int,
   height : Int,
 ) -> Unit {
-  let logical_size = @dpi.PhysicalSize::new(width, height).to_logical(
+  let logical_size = @dpi.PhysicalSize::PhysicalSize(width, height).to_logical(
     window_native_scale_factor(window_handle),
   )
   set_surface_size(
@@ -3618,7 +3595,7 @@ fn window_document_edited(window_handle : UInt64) -> Bool {
 fn window_level_value(window_handle : UInt64) -> @core.WindowLevel {
   let native_handle = registered_native_handle(window_handle)
   if native_handle == (0 : Int).to_uint64() {
-    @core.WindowLevel::Normal
+    Normal
   } else {
     window_level_from_native(native_window_level(native_handle))
   }
@@ -3848,7 +3825,7 @@ fn initial_window_surface_size(
 ) -> @dpi.LogicalSize {
   match surface_size {
     Some(size) => size.to_logical(scale_factor)
-    None => @dpi.LogicalSize::new(800.0, 600.0)
+    None => LogicalSize(800.0, 600.0)
   }
 }
 
@@ -3858,11 +3835,11 @@ fn fullscreen_target_surface_size(
   primary_monitor : @core.MonitorHandle?,
 ) -> @dpi.LogicalSize? {
   match fullscreen {
-    Some(@core.Fullscreen::Borderless(Some(monitor))) =>
+    Some(Borderless(Some(monitor))) =>
       Some(monitor.surface_size().to_logical(monitor.scale_factor()))
-    Some(@core.Fullscreen::Exclusive(monitor, _video_mode)) =>
+    Some(Exclusive(monitor, _video_mode)) =>
       Some(monitor.surface_size().to_logical(monitor.scale_factor()))
-    Some(@core.Fullscreen::Borderless(None)) =>
+    Some(Borderless(None)) =>
       match primary_monitor {
         Some(monitor) =>
           Some(monitor.surface_size().to_logical(monitor.scale_factor()))
@@ -3937,7 +3914,7 @@ fn new_window(
     clamp_size(size.width().to_int()),
     clamp_size(size.height().to_int()),
   )
-  guard raw_window_handle != 0 else { raise @core.RequestError::Ignored }
+  guard raw_window_handle != 0 else { raise Ignored }
   match attributes.parent_window() {
     Some(parent_window) => {
       guard set_parent_window(raw_window_handle, parent_window.into_raw()) else {
@@ -4022,16 +3999,13 @@ fn new_window(
   set_window_blur(raw_window_handle, attributes.blur())
   let mut cursor_state = attributes.cursor()
   match attributes.cursor() {
-    @core.Cursor::Icon(icon) =>
+    Icon(icon) =>
       set_window_cursor(raw_window_handle, cursor_icon_to_native(icon))
-    @core.Cursor::Custom(custom_cursor) =>
+    Custom(custom_cursor) =>
       if set_window_custom_cursor(raw_window_handle, custom_cursor.into_raw()) ==
         false {
-        set_window_cursor(
-          raw_window_handle,
-          cursor_icon_to_native(@core.CursorIcon::Default),
-        )
-        cursor_state = @core.Cursor::Icon(@core.CursorIcon::Default)
+        set_window_cursor(raw_window_handle, cursor_icon_to_native(Default))
+        cursor_state = Icon(Default)
       }
   }
   set_window_cursor_visible(raw_window_handle, attributes.cursor_visible())
@@ -4074,7 +4048,7 @@ fn new_window(
   )
   set_window_transparent(raw_window_handle, attributes.transparent())
   match fullscreen {
-    Some(@core.Fullscreen::Borderless(target_monitor)) => {
+    Some(Borderless(target_monitor)) => {
       match target_monitor {
         Some(monitor) => {
           let logical_position = monitor_position_to_logical(monitor)
@@ -4088,7 +4062,7 @@ fn new_window(
       }
       set_window_fullscreen(raw_window_handle, true)
     }
-    Some(@core.Fullscreen::Exclusive(_, _)) => ()
+    Some(Exclusive(_, _)) => ()
     None => ()
   }
   match attributes.min_surface_size() {
@@ -4168,7 +4142,7 @@ fn new_window(
     exclusive_fullscreen_saved_outer_size_state: None,
   }
   match attributes.fullscreen() {
-    Some(@core.Fullscreen::Exclusive(target_monitor, video_mode)) =>
+    Some(Exclusive(target_monitor, video_mode)) =>
       ignore(window.enter_exclusive_fullscreen(target_monitor, video_mode))
     _ => ()
   }
@@ -4177,7 +4151,7 @@ fn new_window(
 
 ///|
 pub fn Window::surface_size(self : Window) -> @dpi.PhysicalSize {
-  @dpi.LogicalSize::new(
+  @dpi.LogicalSize::LogicalSize(
     native_window_width(self.raw_window_handle).to_double(),
     native_window_height(self.raw_window_handle).to_double(),
   ).to_physical(self.scale_factor())
@@ -4190,7 +4164,7 @@ pub fn Window::inner_size(self : Window) -> @dpi.PhysicalSize {
 
 ///|
 pub fn Window::outer_size(self : Window) -> @dpi.PhysicalSize {
-  @dpi.LogicalSize::new(
+  @dpi.LogicalSize::LogicalSize(
     window_outer_width(self.raw_window_handle).to_double(),
     window_outer_height(self.raw_window_handle).to_double(),
   ).to_physical(self.scale_factor())
@@ -4198,7 +4172,7 @@ pub fn Window::outer_size(self : Window) -> @dpi.PhysicalSize {
 
 ///|
 pub fn Window::surface_position(self : Window) -> @dpi.PhysicalPosition {
-  @dpi.LogicalPosition::new(
+  @dpi.LogicalPosition::LogicalPosition(
     window_surface_x(self.raw_window_handle).to_double(),
     window_surface_y(self.raw_window_handle).to_double(),
   ).to_physical(self.scale_factor())
@@ -4212,7 +4186,7 @@ pub fn Window::inner_position(self : Window) -> @dpi.PhysicalPosition {
 ///|
 pub fn Window::safe_area(self : Window) -> @dpi.PhysicalInsets {
   let scale_factor = self.scale_factor()
-  @dpi.PhysicalInsets::new(
+  PhysicalInsets(
     (window_safe_area_top(self.raw_window_handle).to_double() * scale_factor).to_int(),
     (window_safe_area_left(self.raw_window_handle).to_double() * scale_factor).to_int(),
     (window_safe_area_bottom(self.raw_window_handle).to_double() * scale_factor).to_int(),
@@ -4271,7 +4245,7 @@ pub fn Window::surface_resize_increments(self : Window) -> @dpi.PhysicalSize? {
   let height = window_resize_increment_height(self.raw_window_handle)
   if width > 0 && height > 0 {
     Some(
-      @dpi.LogicalSize::new(width.to_double(), height.to_double()).to_physical(
+      @dpi.LogicalSize::LogicalSize(width.to_double(), height.to_double()).to_physical(
         self.scale_factor(),
       ),
     )
@@ -4331,7 +4305,7 @@ pub fn Window::min_surface_size(self : Window) -> @dpi.PhysicalSize? {
   let height = window_min_surface_height(self.raw_window_handle)
   if width > 0 && height > 0 {
     Some(
-      @dpi.LogicalSize::new(width.to_double(), height.to_double()).to_physical(
+      @dpi.LogicalSize::LogicalSize(width.to_double(), height.to_double()).to_physical(
         self.scale_factor(),
       ),
     )
@@ -4351,7 +4325,7 @@ pub fn Window::max_surface_size(self : Window) -> @dpi.PhysicalSize? {
   let height = window_max_surface_height(self.raw_window_handle)
   if width > 0 && height > 0 {
     Some(
-      @dpi.LogicalSize::new(width.to_double(), height.to_double()).to_physical(
+      @dpi.LogicalSize::LogicalSize(width.to_double(), height.to_double()).to_physical(
         self.scale_factor(),
       ),
     )
@@ -4371,9 +4345,9 @@ pub fn Window::outer_position(
 ) -> @dpi.PhysicalPosition raise @core.RequestError {
   let raw_id = self.raw_window_handle
   if raw_id == (0 : Int).to_uint64() {
-    raise @core.RequestError::Ignored
+    raise Ignored
   }
-  @dpi.LogicalPosition::new(
+  @dpi.LogicalPosition::LogicalPosition(
     window_x(raw_id).to_double(),
     window_y(raw_id).to_double(),
   ).to_physical(self.scale_factor())
@@ -4649,7 +4623,7 @@ pub fn Window::set_fullscreen(
         } else {
           set_window_fullscreen(raw_id, false)
         }
-      Some(@core.Fullscreen::Borderless(target_monitor)) => {
+      Some(Borderless(target_monitor)) => {
         if self.exclusive_fullscreen_state {
           ignore(self.exit_exclusive_fullscreen())
         }
@@ -4666,7 +4640,7 @@ pub fn Window::set_fullscreen(
         }
         set_window_fullscreen(raw_id, true)
       }
-      Some(@core.Fullscreen::Exclusive(target_monitor, video_mode)) => {
+      Some(Exclusive(target_monitor, video_mode)) => {
         if self.exclusive_fullscreen_state {
           ignore(self.exit_exclusive_fullscreen())
         }
@@ -4690,7 +4664,7 @@ pub fn Window::fullscreen(self : Window) -> @core.Fullscreen? {
   } else if window_fullscreen(raw_id) {
     match self.fullscreen_state {
       Some(fullscreen) => Some(fullscreen)
-      None => Some(@core.Fullscreen::Borderless(self.current_monitor()))
+      None => Some(Borderless(self.current_monitor()))
     }
   } else {
     self.fullscreen_state = None

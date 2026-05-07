@@ -7,7 +7,7 @@ pub(all) enum ControlFlow {
 
 ///|
 pub fn ControlFlow::default() -> ControlFlow {
-  ControlFlow::Wait
+  Wait
 }
 
 ///|
@@ -19,7 +19,7 @@ pub(all) enum DeviceEvents {
 
 ///|
 pub fn DeviceEvents::default() -> DeviceEvents {
-  DeviceEvents::WhenFocused
+  WhenFocused
 }
 
 ///|
@@ -38,7 +38,7 @@ pub(all) suberror EventLoopError {
 
 ///|
 pub fn EventLoopError::not_supported(reason : String) -> EventLoopError {
-  EventLoopError::NotSupported(NotSupportedError::new(reason))
+  NotSupported(NotSupportedError(reason))
 }
 
 ///|
@@ -47,7 +47,7 @@ pub fn EventLoopError::os(
   code? : Int,
   domain? : String,
 ) -> EventLoopError {
-  EventLoopError::Os(OsError::new(message, code, domain))
+  Os(OsError(message, code, domain))
 }
 
 ///|
@@ -59,7 +59,7 @@ pub(all) enum ActivationPolicy {
 
 ///|
 pub fn ActivationPolicy::default() -> ActivationPolicy {
-  ActivationPolicy::Regular
+  Regular
 }
 
 ///|
@@ -150,7 +150,7 @@ pub struct AsyncRequestSerial {
 } derive(Eq, Debug)
 
 ///|
-let async_request_serial_counter : Ref[Int] = Ref::new(0)
+let async_request_serial_counter : Ref[Int] = Ref(0)
 
 ///|
 pub fn AsyncRequestSerial::get() -> AsyncRequestSerial {
@@ -171,7 +171,7 @@ pub fn AsyncRequestSerial::into_raw(self : AsyncRequestSerial) -> Int {
 
 ///|
 pub fn ControlFlow::wait_until(resume_time_ms : Int64) -> ControlFlow {
-  ControlFlow::WaitUntil(resume_time_ms)
+  WaitUntil(resume_time_ms)
 }
 
 ///|
@@ -180,8 +180,8 @@ pub fn ControlFlow::wait_duration(
   timeout_ms : Int,
 ) -> ControlFlow {
   if timeout_ms <= 0 {
-    ControlFlow::WaitUntil(start_time_ms)
+    WaitUntil(start_time_ms)
   } else {
-    ControlFlow::WaitUntil(start_time_ms + timeout_ms.to_int64())
+    WaitUntil(start_time_ms + timeout_ms.to_int64())
   }
 }

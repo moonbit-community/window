@@ -40,6 +40,7 @@ pub impl Show for ActiveEventLoop
 pub struct EventLoop {
   // private fields
 } derive(@debug.Debug)
+pub fn EventLoop::EventLoop() -> Self
 pub fn EventLoop::allows_automatic_window_tabbing(Self) -> Bool
 pub fn EventLoop::available_monitors(Self) -> Array[@core.MonitorHandle]
 pub fn EventLoop::builder() -> EventLoopBuilder
@@ -54,7 +55,6 @@ pub fn EventLoop::exiting(Self) -> Bool
 pub fn EventLoop::hide_application(Self) -> Unit
 pub fn EventLoop::hide_other_applications(Self) -> Unit
 pub fn EventLoop::listen_device_events(Self, @core.DeviceEvents) -> Unit
-pub fn EventLoop::new() -> Self
 pub fn EventLoop::new_with_platform_attributes(@core.PlatformEventLoopAttributes) -> Self
 pub fn EventLoop::owned_display_handle(Self) -> UInt64
 pub fn EventLoop::primary_monitor(Self) -> @core.MonitorHandle?
@@ -77,9 +77,9 @@ pub impl Show for EventLoop
 pub struct EventLoopBuilder {
   // private fields
 } derive(Eq, @debug.Debug)
+pub fn EventLoopBuilder::EventLoopBuilder() -> Self
 pub fn EventLoopBuilder::build(Self) -> EventLoop
 pub fn EventLoopBuilder::default() -> Self
-pub fn EventLoopBuilder::new() -> Self
 pub fn EventLoopBuilder::platform_attributes(Self) -> @core.PlatformEventLoopAttributes
 pub fn EventLoopBuilder::try_build(Self) -> EventLoop raise @core.EventLoopError
 pub fn EventLoopBuilder::with_activate_ignoring_other_apps(Self, Bool) -> Self
@@ -122,6 +122,7 @@ pub impl Show for MenuItemDescriptor
 pub struct Window {
   // private fields
 } derive(Eq, @debug.Debug)
+pub fn Window::Window(EventLoop, @core.WindowAttributes) -> Self raise @core.RequestError
 pub fn Window::available_monitors(Self) -> Array[@core.MonitorHandle]
 pub fn Window::current_monitor(Self) -> @core.MonitorHandle?
 pub fn Window::cursor(Self) -> @core.Cursor
@@ -162,7 +163,6 @@ pub fn Window::max_inner_size(Self) -> @dpi.PhysicalSize?
 pub fn Window::max_surface_size(Self) -> @dpi.PhysicalSize?
 pub fn Window::min_inner_size(Self) -> @dpi.PhysicalSize?
 pub fn Window::min_surface_size(Self) -> @dpi.PhysicalSize?
-pub fn Window::new(EventLoop, @core.WindowAttributes) -> Self raise @core.RequestError
 pub fn Window::num_tabs(Self) -> Int
 pub fn Window::option_as_alt(Self) -> @core.OptionAsAlt
 pub fn Window::outer_position(Self) -> @dpi.PhysicalPosition raise @core.RequestError
@@ -236,6 +236,7 @@ pub fn Window::title(Self) -> String
 pub fn Window::unified_titlebar(Self) -> Bool
 pub fn Window::window_handle(Self) -> UInt64
 pub fn Window::window_level(Self) -> @core.WindowLevel
+pub impl @core.WindowCursorHittest for Window
 pub impl Show for Window
 
 // Type aliases

@@ -52,26 +52,14 @@ fn default_menu_process_name() -> String {
 ///|
 fn default_menu_descriptors(process_name : String) -> Array[MenuItemDescriptor] {
   [
-    menu_item("About " + process_name, MenuAction::About, None),
-    menu_item("", MenuAction::Separator, None),
-    menu_item("Services", MenuAction::Services, None),
-    menu_item(
-      "Hide " + process_name,
-      MenuAction::Hide,
-      Some({ key: "h", masks: None }),
-    ),
-    menu_item(
-      "Hide Others",
-      MenuAction::HideOthers,
-      Some({ key: "h", masks: Some(3) }),
-    ),
-    menu_item("Show All", MenuAction::ShowAll, None),
-    menu_item("", MenuAction::Separator, None),
-    menu_item(
-      "Quit " + process_name,
-      MenuAction::Quit,
-      Some({ key: "q", masks: None }),
-    ),
+    menu_item("About " + process_name, About, None),
+    menu_item("", Separator, None),
+    menu_item("Services", Services, None),
+    menu_item("Hide " + process_name, Hide, Some({ key: "h", masks: None })),
+    menu_item("Hide Others", HideOthers, Some({ key: "h", masks: Some(3) })),
+    menu_item("Show All", ShowAll, None),
+    menu_item("", Separator, None),
+    menu_item("Quit " + process_name, Quit, Some({ key: "q", masks: None })),
   ]
 }
 
@@ -82,7 +70,7 @@ fn initialize(default_menu : Bool) -> Unit {
 }
 
 ///|
-let default_menu_initialized : Ref[Bool] = Ref::new(false)
+let default_menu_initialized : Ref[Bool] = Ref(false)
 
 ///|
 fn native_appkit_new_menu(title : String) -> UInt64 {
