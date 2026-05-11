@@ -34,6 +34,45 @@ pub struct Window {
 pub type WindowAttributesMacOS = @core.PlatformWindowAttributes
 
 ///|
+let invalid_native_window_handle_status = -1
+
+///|
+let core_graphics_error_domain = "CoreGraphics.CGError"
+
+///|
+let appkit_window_error_domain = "AppKit.NSWindow"
+
+///|
+fn request_error_from_native_status(
+  status : Int,
+  operation : String,
+) -> @core.RequestError {
+  if status == invalid_native_window_handle_status {
+    @core.RequestError::os(
+      "\{operation}: invalid native window handle",
+      code=status,
+      domain=appkit_window_error_domain,
+    )
+  } else {
+    @core.RequestError::os(
+      operation,
+      code=status,
+      domain=core_graphics_error_domain,
+    )
+  }
+}
+
+///|
+fn raise_request_error_from_native_status(
+  status : Int,
+  operation : String,
+) -> Unit raise @core.RequestError {
+  if status != 0 {
+    raise request_error_from_native_status(status, operation)
+  }
+}
+
+///|
 // Port target: window.rs::Window::Window
 pub fn Window::Window(
   event_loop : EventLoop,
@@ -156,11 +195,10 @@ fn window_set_cursor_hittest(
   window : Window,
   hittest : Bool,
 ) -> Unit raise @core.RequestError {
-  if set_window_cursor_hittest(window.raw_window_handle, hittest) == false {
-    raise @core.RequestError::not_supported(
-      "Setting cursor hittest is not supported for this window",
-    )
-  }
+  raise_request_error_from_native_status(
+    set_window_cursor_hittest(window.raw_window_handle, hittest),
+    "Failed to set cursor hittest",
+  )
 }
 
 ///|
@@ -188,16 +226,14 @@ pub fn Window::set_cursor_position(
     position,
     self.scale_factor(),
   )
-  if set_cursor_position(
+  raise_request_error_from_native_status(
+    set_cursor_position(
       self.raw_window_handle,
       logical_position.x().to_int(),
       logical_position.y().to_int(),
-    ) ==
-    false {
-    raise @core.RequestError::not_supported(
-      "Setting cursor position is not supported for this window",
-    )
-  }
+    ),
+    "Failed to set cursor position",
+  )
 }
 
 ///|
@@ -210,12 +246,10 @@ pub fn Window::set_cursor_grab(
       "Confined cursor grab is not supported on macOS",
     )
   }
-  if set_cursor_grab(self.raw_window_handle, cursor_grab_mode_to_native(mode)) ==
-    false {
-    raise @core.RequestError::not_supported(
-      "Setting cursor grab mode is not supported for this window",
-    )
-  }
+  raise_request_error_from_native_status(
+    set_cursor_grab(self.raw_window_handle, cursor_grab_mode_to_native(mode)),
+    "Failed to set cursor grab mode",
+  )
 }
 
 ///|

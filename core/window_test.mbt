@@ -143,6 +143,10 @@ test "request_error_structured_payload" {
     fail("expected RequestError::NotSupported payload")
   }
   assert_eq(not_supported.reason(), "Confined cursor grab is unavailable")
+  assert_eq(
+    "\{unsupported}",
+    "Operation is not supported: Confined cursor grab is unavailable",
+  )
 
   let os_error = RequestError::os(
     "NSWindow cursor update failed",
@@ -153,6 +157,10 @@ test "request_error_structured_payload" {
   assert_eq(os.message(), "NSWindow cursor update failed")
   assert_true(os.code() == Some(1001))
   assert_true(os.domain() == Some("NSCocoaErrorDomain"))
+  assert_eq(
+    "\{os_error}",
+    "os error: NSWindow cursor update failed (domain=NSCocoaErrorDomain, code=1001)",
+  )
 
   let os_error_without_code = RequestError::os("Unknown AppKit failure")
   guard os_error_without_code is Os(os_no_code) else {
@@ -161,4 +169,5 @@ test "request_error_structured_payload" {
   assert_eq(os_no_code.message(), "Unknown AppKit failure")
   assert_true(os_no_code.code() == None)
   assert_true(os_no_code.domain() == None)
+  assert_eq("\{os_error_without_code}", "os error: Unknown AppKit failure")
 }

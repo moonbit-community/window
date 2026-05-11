@@ -23,7 +23,7 @@ extern "C" fn native_cg_associate_mouse_and_mouse_cursor_position(
 extern "C" fn native_cg_warp_mouse_cursor_position(
   x : Double,
   y : Double,
-) -> Bool = "mbw_cg_warp_mouse_cursor_position"
+) -> Int = "mbw_cg_warp_mouse_cursor_position"
 
 ///|
 extern "C" fn native_cgs_set_window_background_blur_radius(

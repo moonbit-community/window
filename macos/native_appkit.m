@@ -1070,7 +1070,7 @@ MOONBIT_FFI_EXPORT
 int32_t mbw_cg_warp_mouse_cursor_position(double x, double y) {
   CGPoint point = CGPointMake((CGFloat)x, (CGFloat)y);
   CGError warp_err = CGWarpMouseCursorPosition(point);
-  return warp_err == kCGErrorSuccess ? 1 : 0;
+  return (int32_t)warp_err;
 }
 
 MOONBIT_FFI_EXPORT

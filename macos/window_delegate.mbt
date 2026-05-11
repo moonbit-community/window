@@ -630,22 +630,22 @@ fn native_window_cursor_visible(handle : UInt64) -> Bool {
 }
 
 ///|
-fn native_window_set_cursor_grab(handle : UInt64, mode : Int) -> Bool {
+fn native_window_set_cursor_grab(handle : UInt64, mode : Int) -> Int {
   ignore(handle)
   if mode == 0 {
-    native_cg_associate_mouse_and_mouse_cursor_position(true) == 0
+    native_cg_associate_mouse_and_mouse_cursor_position(true)
   } else if mode == 1 {
-    native_cg_associate_mouse_and_mouse_cursor_position(false) == 0
+    native_cg_associate_mouse_and_mouse_cursor_position(false)
   } else {
-    false
+    -1
   }
 }
 
 ///|
-fn native_window_set_cursor_position(handle : UInt64, x : Int, y : Int) -> Bool {
+fn native_window_set_cursor_position(handle : UInt64, x : Int, y : Int) -> Int {
   let window = native_window_objc_handle(handle)
   if window == (0 : Int).to_uint64() {
-    return false
+    return -1
   }
   let frame_selector = objc_runtime_selector_handle("frame")
   let frame_x = appkit_objc_msg_send_rect_x(window, frame_selector)
@@ -665,11 +665,14 @@ fn native_window_set_cursor_position(handle : UInt64, x : Int, y : Int) -> Bool 
     window, content_rect_selector, frame_x, frame_y, frame_width, frame_height,
   )
   let screen_y = cursor_screen_y_from_content_rect(content_y, content_height, y)
-  if native_cg_warp_mouse_cursor_position(content_x + x.to_double(), screen_y) ==
-    false {
-    return false
+  let warp_status = native_cg_warp_mouse_cursor_position(
+    content_x + x.to_double(),
+    screen_y,
+  )
+  if warp_status != 0 {
+    return warp_status
   }
-  native_cg_associate_mouse_and_mouse_cursor_position(true) == 0
+  native_cg_associate_mouse_and_mouse_cursor_position(true)
 }
 
 ///|
@@ -3156,21 +3159,21 @@ fn window_cursor_visible(window_handle : UInt64) -> Bool {
 }
 
 ///|
-fn set_window_cursor_hittest(window_handle : UInt64, hittest : Bool) -> Bool {
+fn set_window_cursor_hittest(window_handle : UInt64, hittest : Bool) -> Int {
   let native_handle = registered_native_handle(window_handle)
   if native_handle == (0 : Int).to_uint64() {
-    return false
+    return -1
   }
   let window = native_window_objc_handle(native_handle)
   if window == (0 : Int).to_uint64() {
-    return false
+    return -1
   }
   appkit_objc_msg_send_void_bool(
     window,
     objc_runtime_selector_handle("setIgnoresMouseEvents:"),
     hittest == false,
   )
-  true
+  0
 }
 
 ///|
@@ -3193,12 +3196,12 @@ fn window_cursor_hittest(window_handle : UInt64) -> Bool {
 }
 
 ///|
-fn set_cursor_position(window_handle : UInt64, x : Int, y : Int) -> Bool {
+fn set_cursor_position(window_handle : UInt64, x : Int, y : Int) -> Int {
   native_window_set_cursor_position(window_handle, x, y)
 }
 
 ///|
-fn set_cursor_grab(window_handle : UInt64, mode : Int) -> Bool {
+fn set_cursor_grab(window_handle : UInt64, mode : Int) -> Int {
   native_window_set_cursor_grab(window_handle, mode)
 }
 

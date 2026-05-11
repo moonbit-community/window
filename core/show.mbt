@@ -245,17 +245,46 @@ pub impl Show for ImeRequestError with output(self, logger) {
 
 ///|
 pub impl Show for NotSupportedError with output(self, logger) {
-  debug_output(self, logger)
+  logger.write_string("Operation is not supported: ")
+  logger.write_string(self.reason())
 }
 
 ///|
 pub impl Show for OsError with output(self, logger) {
-  debug_output(self, logger)
+  logger.write_string("os error: ")
+  logger.write_string(self.message())
+  match self.domain() {
+    Some(domain) => {
+      logger.write_string(" (domain=")
+      logger.write_string(domain)
+      match self.code() {
+        Some(code) => {
+          logger.write_string(", code=")
+          logger.write_string(code.to_string())
+        }
+        None => ()
+      }
+      logger.write_string(")")
+    }
+    None =>
+      match self.code() {
+        Some(code) => {
+          logger.write_string(" (code=")
+          logger.write_string(code.to_string())
+          logger.write_string(")")
+        }
+        None => ()
+      }
+  }
 }
 
 ///|
 pub impl Show for RequestError with output(self, logger) {
-  debug_output(self, logger)
+  match self {
+    NotSupported(err) => logger.write_string("\{err}")
+    Ignored => logger.write_string("The request was ignored")
+    Os(err) => logger.write_string("\{err}")
+  }
 }
 
 ///|
