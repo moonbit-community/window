@@ -8,8 +8,26 @@ const windowsPackageName = `${moduleConfig.name}/windows`;
 const examplesUtilPackageName = `${moduleConfig.name}/examples/util`;
 const macosFrameworkFlags =
   "-framework AppKit -framework Foundation -framework CoreGraphics -framework CoreVideo -framework ApplicationServices -lobjc";
-const windowsLibFlags =
-  "-luser32 -lgdi32 -lkernel32 -lole32 -loleaut32 -lshell32 -ldwmapi -limm32 -lshcore";
+const windowsLibs = [
+  "user32",
+  "gdi32",
+  "kernel32",
+  "ole32",
+  "oleaut32",
+  "shell32",
+  "dwmapi",
+  "imm32",
+  "advapi32",
+];
+
+const windowsUsesMsvc =
+  Boolean(process.env.VSCMD_VER || process.env.VCINSTALLDIR) ||
+  (process.env.CC || "").toLowerCase().endsWith("cl.exe") ||
+  (process.env.CC || "").toLowerCase() === "cl";
+
+const windowsLibFlags = windowsUsesMsvc
+  ? windowsLibs.map((lib) => `${lib}.lib`).join(" ")
+  : windowsLibs.map((lib) => `-l${lib}`).join(" ");
 
 const isWindows = process.platform === "win32";
 

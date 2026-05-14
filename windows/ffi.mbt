@@ -195,7 +195,7 @@ extern "C" fn native_get_cursor_pos(x : UInt64, y : UInt64) -> Int = "mbw_get_cu
 extern "C" fn native_set_cursor_pos(x : Int, y : Int) -> Int = "mbw_set_cursor_pos"
 
 ///|
-extern "C" fn native_set_process_dpi_awareness_context(value : UInt64) -> Int = "mbw_set_process_dpi_awareness_context"
+extern "C" fn native_enable_modern_dpi_awareness() -> Int = "mbw_enable_modern_dpi_awareness"
 
 ///|
 extern "C" fn native_get_dpi_for_window(hwnd : UInt64) -> UInt = "mbw_get_dpi_for_window"

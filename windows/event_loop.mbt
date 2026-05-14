@@ -123,7 +123,7 @@ pub fn EventLoop::try_new_with_platform_attributes(
   if event_loop_global_created.val {
     raise @core.EventLoopError::RecreationAttempt
   }
-  ignore(native_set_process_dpi_awareness_context((-4 : Int).to_uint64()))
+  ignore(native_enable_modern_dpi_awareness())
   if native_register_window_class() == 0 {
     raise @core.EventLoopError::Os
   }

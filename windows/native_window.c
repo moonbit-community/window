@@ -6,12 +6,38 @@
 #define WIN32_LEAN_AND_MEAN
 #endif
 
+#ifndef WINVER
+#define WINVER 0x0A00
+#elif WINVER < 0x0A00
+#undef WINVER
+#define WINVER 0x0A00
+#endif
+
+#ifndef _WIN32_WINNT
+#define _WIN32_WINNT 0x0A00
+#elif _WIN32_WINNT < 0x0A00
+#undef _WIN32_WINNT
+#define _WIN32_WINNT 0x0A00
+#endif
+
 #include <moonbit.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 #include <windows.h>
-#include <shellscalingapi.h>
+
+#ifndef WM_DPICHANGED
+#define WM_DPICHANGED 0x02E0
+#endif
+
+#ifndef DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2
+typedef HANDLE DPI_AWARENESS_CONTEXT;
+#define DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2                         \
+  ((DPI_AWARENESS_CONTEXT)-4)
+#endif
+
+WINUSERAPI BOOL WINAPI
+SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT dpi_context);
 
 typedef void (*mbw_window_event_trampoline_t)(void *closure, int32_t kind,
                                               int32_t raw_id, int32_t arg0,
@@ -618,19 +644,9 @@ int32_t mbw_set_cursor_pos(int32_t x, int32_t y) {
 }
 
 MOONBIT_FFI_EXPORT
-int32_t mbw_set_process_dpi_awareness_context(uint64_t value) {
-  typedef BOOL(WINAPI * SetProcessDpiAwarenessContext_t)(HANDLE);
-  HMODULE user32 = GetModuleHandleW(L"user32.dll");
-  if (!user32) {
-    return 0;
-  }
-  SetProcessDpiAwarenessContext_t fn =
-      (SetProcessDpiAwarenessContext_t)GetProcAddress(
-          user32, "SetProcessDpiAwarenessContext");
-  if (!fn) {
-    return 0;
-  }
-  return (int32_t)fn((HANDLE)value);
+int32_t mbw_enable_modern_dpi_awareness(void) {
+  return (int32_t)SetProcessDpiAwarenessContext(
+      DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
 }
 
 MOONBIT_FFI_EXPORT

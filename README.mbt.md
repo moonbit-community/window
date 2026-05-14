@@ -8,6 +8,19 @@ It currently targets **native macOS (AppKit)**.
 - Supported: `native` target on macOS
 - Not supported yet: Linux, Windows, Web backends
 
+### Windows Support(Preview)
+
+```powershell
+cmd /k "C:\Program Files (x86)\Microsoft Visual Studio\18\BuildTools\VC\Auxiliary\Build\vcvarsall.bat" x64
+```
+
+```powershell
+where.exe cl
+moon build .\examples\window_windows\ --target native   
+```
+
+
+
 ## Install
 
 ```bash
