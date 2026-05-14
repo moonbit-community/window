@@ -10,12 +10,20 @@ It currently targets **native macOS (AppKit)**.
 
 ### Windows Support(Preview)
 
+#### MSVC
+
 ```powershell
 cmd /k "C:\Program Files (x86)\Microsoft Visual Studio\18\BuildTools\VC\Auxiliary\Build\vcvarsall.bat" x64
 ```
 
 ```powershell
 where.exe cl
+moon build .\examples\window_windows\ --target native   
+```
+#### Mingw
+
+```powershell
+where.exe gcc
 moon build .\examples\window_windows\ --target native   
 ```
 
