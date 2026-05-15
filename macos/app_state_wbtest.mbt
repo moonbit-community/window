@@ -104,11 +104,11 @@ test "queue_unique_window_id_is_deduplicated" {
   app_state_queue_unique_window_id(ids, 7)
   app_state_queue_unique_window_id(ids, 7)
   app_state_queue_unique_window_id(ids, 8)
-  assert_eq(ids, [7, 8])
+  assert_true(ids == [7, 8])
 
   assert_true(app_state_take_window_id(ids, 7))
   assert_false(app_state_take_window_id(ids, 7))
-  assert_eq(ids, [8])
+  assert_true(ids == [8])
 }
 
 ///|
@@ -138,9 +138,10 @@ test "did_finish_launching_notification_is_deduplicated_in_queue" {
   app_state_runtime.val.deferred_callbacks.push(DidFinishLaunching)
 
   app_state_queue_did_finish_launching_notification()
-  assert_eq(callback_names_for_test(app_state_runtime.val.deferred_callbacks), [
-    "did_finish_launching",
-  ])
+  assert_true(
+    callback_names_for_test(app_state_runtime.val.deferred_callbacks) ==
+    ["did_finish_launching"],
+  )
 }
 
 ///|
@@ -149,9 +150,10 @@ test "will_terminate_notification_is_deduplicated_in_queue" {
   app_state_runtime.val.deferred_callbacks.push(WillTerminate)
 
   app_state_queue_will_terminate_notification()
-  assert_eq(callback_names_for_test(app_state_runtime.val.deferred_callbacks), [
-    "will_terminate",
-  ])
+  assert_true(
+    callback_names_for_test(app_state_runtime.val.deferred_callbacks) ==
+    ["will_terminate"],
+  )
 }
 
 ///|
@@ -229,7 +231,7 @@ test "dispatch_registered_deferred_callbacks_keeps_order_when_running" {
   app_state_runtime.val.deferred_callbacks.push(AboutToWait)
   app_state_dispatch_registered_deferred_callbacks()
 
-  assert_eq(seen.val, ["proxy_wake_up", "about_to_wait"])
+  assert_true(seen.val == ["proxy_wake_up", "about_to_wait"])
   assert_eq(app_state_runtime.val.deferred_callbacks.length(), 0)
 }
 
@@ -247,10 +249,11 @@ test "dispatch_registered_deferred_callbacks_dispatches_lifecycle_while_not_runn
   app_state_runtime.val.deferred_callbacks.push(DidFinishLaunching)
   app_state_dispatch_registered_deferred_callbacks()
 
-  assert_eq(seen.val, ["will_terminate", "did_finish_launching"])
-  assert_eq(callback_names_for_test(app_state_runtime.val.deferred_callbacks), [
-    "proxy_wake_up",
-  ])
+  assert_true(seen.val == ["will_terminate", "did_finish_launching"])
+  assert_true(
+    callback_names_for_test(app_state_runtime.val.deferred_callbacks) ==
+    ["proxy_wake_up"],
+  )
 }
 
 ///|
@@ -276,10 +279,11 @@ test "did_finish_launching_and_dispatch_runs_init_before_stop_on_launch" {
     active_event_loop_for_test(),
   )
 
-  assert_eq(launch_init_callback_order_for_test.val, [
-    "new_events", "can_create_surfaces",
-  ])
-  assert_eq(launch_init_stop_flag_seen_for_test.val, [true, true])
+  assert_true(
+    launch_init_callback_order_for_test.val ==
+    ["new_events", "can_create_surfaces"],
+  )
+  assert_true(launch_init_stop_flag_seen_for_test.val == [true, true])
   assert_false(app_state_runtime.val.stop_on_launch)
 }
 
@@ -312,9 +316,10 @@ test "reentrant_non_redraw_window_event_is_queued" {
   app_state_queue_window_callback(@core.WindowId::from_raw(1), Focused(true))
 
   assert_eq(seen.val.length(), 0)
-  assert_eq(callback_names_for_test(app_state_runtime.val.deferred_callbacks), [
-    "window_event",
-  ])
+  assert_true(
+    callback_names_for_test(app_state_runtime.val.deferred_callbacks) ==
+    ["window_event"],
+  )
 }
 
 ///|
@@ -331,7 +336,7 @@ test "before_waiting_dispatches_redraws_then_about_to_wait" {
 
   app_state_on_before_waiting()
 
-  assert_eq(seen.val, ["window_event", "window_event", "about_to_wait"])
+  assert_true(seen.val == ["window_event", "window_event", "about_to_wait"])
   assert_eq(app_state_runtime.val.pending_redraw_window_ids.length(), 0)
   assert_true(app_state_runtime.val.start_time_ms is Some(_))
 }
@@ -354,7 +359,9 @@ test "after_waiting_dispatches_new_events_with_wait_cause" {
 
   app_state_on_after_waiting()
 
-  assert_eq(captured_causes.val, [WaitCancelled(start, Some(requested_resume))])
+  assert_true(
+    captured_causes.val == [WaitCancelled(start, Some(requested_resume))],
+  )
 }
 
 ///|
@@ -371,9 +378,10 @@ test "queue_did_finish_launching_dispatches_init_when_handler_registered" {
 
   assert_true(app_state_is_launched())
   assert_true(app_state_is_running())
-  assert_eq(launch_init_callback_order_for_test.val, [
-    "new_events", "can_create_surfaces",
-  ])
+  assert_true(
+    launch_init_callback_order_for_test.val ==
+    ["new_events", "can_create_surfaces"],
+  )
   app_state_clear_dispatch_handler()
 }
 
@@ -398,7 +406,7 @@ test "before_waiting_noops_without_dispatch_handler" {
 
   app_state_on_before_waiting()
 
-  assert_eq(app_state_runtime.val.pending_redraw_window_ids, [1])
+  assert_true(app_state_runtime.val.pending_redraw_window_ids == [1])
   assert_true(app_state_runtime.val.start_time_ms is None)
 }
 
@@ -455,14 +463,15 @@ test "nested_proxy_wake_is_deferred_until_explicit_drain" {
 
   app_state_maybe_dispatch_callback(AboutToWait)
 
-  assert_eq(seen.val, ["about_to_wait"])
-  assert_eq(callback_names_for_test(app_state_runtime.val.deferred_callbacks), [
-    "proxy_wake_up",
-  ])
+  assert_true(seen.val == ["about_to_wait"])
+  assert_true(
+    callback_names_for_test(app_state_runtime.val.deferred_callbacks) ==
+    ["proxy_wake_up"],
+  )
 
   app_state_dispatch_registered_deferred_callbacks()
 
-  assert_eq(seen.val, ["about_to_wait", "proxy_wake_up"])
+  assert_true(seen.val == ["about_to_wait", "proxy_wake_up"])
   assert_eq(app_state_runtime.val.deferred_callbacks.length(), 0)
 }
 
@@ -485,7 +494,7 @@ test "nested_redraw_is_dropped_while_handler_is_in_use" {
 
   app_state_maybe_dispatch_callback(AboutToWait)
 
-  assert_eq(seen.val, ["about_to_wait"])
+  assert_true(seen.val == ["about_to_wait"])
   assert_eq(app_state_runtime.val.deferred_callbacks.length(), 0)
 }
 
@@ -501,7 +510,7 @@ test "before_waiting_drains_deferred_callbacks_before_about_to_wait" {
 
   app_state_on_before_waiting()
 
-  assert_eq(seen.val, ["proxy_wake_up", "about_to_wait"])
+  assert_true(seen.val == ["proxy_wake_up", "about_to_wait"])
   assert_eq(app_state_runtime.val.deferred_callbacks.length(), 0)
 }
 
@@ -515,9 +524,10 @@ test "moved_event_is_deduplicated_when_position_is_unchanged" {
   app_state_queue_native_window_event(4, 7, 10, 20, 0, 0.0)
   app_state_queue_native_window_event(4, 7, 10, 20, 0, 0.0)
 
-  assert_eq(callback_names_for_test(app_state_runtime.val.deferred_callbacks), [
-    "window_event",
-  ])
+  assert_true(
+    callback_names_for_test(app_state_runtime.val.deferred_callbacks) ==
+    ["window_event"],
+  )
 }
 
 ///|
@@ -530,7 +540,8 @@ test "moved_event_is_queued_again_when_position_changes" {
   app_state_queue_native_window_event(4, 7, 10, 20, 0, 0.0)
   app_state_queue_native_window_event(4, 7, 11, 20, 0, 0.0)
 
-  assert_eq(callback_names_for_test(app_state_runtime.val.deferred_callbacks), [
-    "window_event", "window_event",
-  ])
+  assert_true(
+    callback_names_for_test(app_state_runtime.val.deferred_callbacks) ==
+    ["window_event", "window_event"],
+  )
 }

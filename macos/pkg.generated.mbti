@@ -124,6 +124,7 @@ pub struct Window {
 } derive(Eq, @debug.Debug)
 pub fn Window::Window(EventLoop, @core.WindowAttributes) -> Self raise @core.RequestError
 pub fn Window::available_monitors(Self) -> Array[@core.MonitorHandle]
+pub fn Window::content_view_handle(Self) -> UInt64 raise @core.RequestError
 pub fn Window::current_monitor(Self) -> @core.MonitorHandle?
 pub fn Window::cursor(Self) -> @core.Cursor
 pub fn Window::display_handle(Self) -> UInt64

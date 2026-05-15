@@ -124,6 +124,28 @@ pub fn Window::window_handle(self : Window) -> UInt64 {
 }
 
 ///|
+fn content_view_handle_from_raw(
+  raw_view_handle : UInt64,
+) -> UInt64 raise @core.RequestError {
+  guard raw_view_handle != (0 : Int).to_uint64() else {
+    raise @core.RequestError::os(
+      "Window content view handle is unavailable",
+      domain=appkit_window_error_domain,
+    )
+  }
+  raw_view_handle
+}
+
+///|
+pub fn Window::content_view_handle(
+  self : Window,
+) -> UInt64 raise @core.RequestError {
+  content_view_handle_from_raw(
+    native_window_content_view_objc_handle(self.raw_window_handle),
+  )
+}
+
+///|
 // Port target: window.rs::Drop::drop
 pub fn Window::drop(self : Window) -> Unit {
   if self.simple_fullscreen_state {

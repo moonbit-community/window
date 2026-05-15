@@ -94,6 +94,29 @@ This library follows MoonBit `raise`-based error handling (typed errors), not
   and `Window::set_preferred_screen_edges_deferring_system_gestures(...)`
   are parity state setters on macOS (no native AppKit effect).
 
+## macOS Renderer Integration
+
+`@macos.Window::window_handle()` follows the AppKit raw-window-handle contract
+and returns the window content view (`NSView*`) as an opaque `UInt64`.
+For renderer integrations that need this boundary explicitly,
+`@macos.Window::content_view_handle()` returns the same stable content-view
+handle and raises `@core.RequestError` if the handle is unavailable.
+
+The window package owns the AppKit window/content-view lookup. Renderer
+packages such as `wgpu_mbt` should own Metal or `wgpu` surface setup on top of
+that handle. In particular, downstream code should not scan
+`NSApplication.windows` or use the internal `rawId` selector to find a window.
+
+For `CAMetalLayer` integration, create/attach/sync the layer in the renderer
+layer using the content-view handle. Keep the layer synchronized with:
+
+- `Window::scale_factor()` for `contentsScale`
+- `Window::surface_size()` for physical drawable size
+- `WindowEvent::SurfaceResized` and `WindowEvent::ScaleFactorChanged` for
+  resize/scale resync
+- the content view bounds for the layer frame
+- autoresizing or an explicit renderer-side sync step for future view resizes
+
 ## API Overview
 
 Import only the subpackages you need:

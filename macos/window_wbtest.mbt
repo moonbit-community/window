@@ -40,3 +40,32 @@ test "invalid_native_window_handle_maps_to_os_error" {
   assert_true(os.code() == Some(invalid_native_window_handle_status))
   assert_true(os.domain() == Some("AppKit.NSWindow"))
 }
+
+///|
+test "content_view_handle_from_raw_returns_view_handle" {
+  let handle = (42 : Int).to_uint64()
+  let actual = content_view_handle_from_raw(handle) catch {
+    _ => fail("expected content view handle")
+  }
+  assert_eq(actual, handle)
+}
+
+///|
+test "content_view_handle_from_raw_rejects_null_handle" {
+  let raised = try {
+    ignore(content_view_handle_from_raw((0 : Int).to_uint64()))
+    false
+  } catch {
+    Os(os) => {
+      assert_eq(os.message(), "Window content view handle is unavailable")
+      assert_true(os.code() == None)
+      assert_true(os.domain() == Some("AppKit.NSWindow"))
+      true
+    }
+    _ => {
+      fail("expected RequestError::Os")
+      false
+    }
+  }
+  assert_true(raised)
+}
