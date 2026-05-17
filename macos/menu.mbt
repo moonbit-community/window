@@ -82,7 +82,7 @@ fn initialize(default_menu : Bool) -> Unit {
 }
 
 ///|
-let default_menu_initialized : Ref[Bool] = Ref::new(false)
+let default_menu_initialized : Ref[Bool] = Ref(false)
 
 ///|
 fn native_appkit_new_menu(title : String) -> UInt64 {

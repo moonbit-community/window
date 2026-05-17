@@ -14,21 +14,21 @@ test "ime_initial_request_caps_match" {
   let position : @dpi.Position = @dpi.LogicalPosition::new(0.0, 0.0).into_position()
   let size : @dpi.Size = @dpi.LogicalSize::new(0.0, 0.0).into_size()
 
-  assert_eq(
+  @debug.assert_eq(
     ImeEnableRequest::new(
       ImeCapabilities::default().with_cursor_area(),
       ImeRequestData::default(),
     ),
     None,
   )
-  assert_eq(
+  @debug.assert_eq(
     ImeEnableRequest::new(
       ImeCapabilities::default().with_hint_and_purpose(),
       ImeRequestData::default(),
     ),
     None,
   )
-  assert_eq(
+  @debug.assert_eq(
     ImeEnableRequest::new(
       ImeCapabilities::default().with_cursor_area(),
       ImeRequestData::default().with_hint_and_purpose(
@@ -38,7 +38,7 @@ test "ime_initial_request_caps_match" {
     ),
     None,
   )
-  assert_eq(
+  @debug.assert_eq(
     ImeEnableRequest::new(
       ImeCapabilities::default(),
       ImeRequestData::default()
@@ -47,7 +47,7 @@ test "ime_initial_request_caps_match" {
     ),
     None,
   )
-  assert_eq(
+  @debug.assert_eq(
     ImeEnableRequest::new(
       ImeCapabilities::default().with_cursor_area(),
       ImeRequestData::default()
@@ -93,7 +93,7 @@ test "ime_initial_request_caps_match" {
 ///|
 test "window_attributes_name_skip_taskbar_clip_children" {
   let attrs = WindowAttributes::default()
-  assert_eq(attrs.name(), None)
+  @debug.assert_eq(attrs.name(), None)
   assert_false(attrs.skip_taskbar())
   assert_true(attrs.clip_children())
 
@@ -102,7 +102,7 @@ test "window_attributes_name_skip_taskbar_clip_children" {
     .with_skip_taskbar(true)
     .with_clip_children(false)
 
-  assert_eq(attrs.name(), Some("editor-main"))
+  @debug.assert_eq(attrs.name(), Some("editor-main"))
   assert_true(attrs.skip_taskbar())
   assert_false(attrs.clip_children())
 }

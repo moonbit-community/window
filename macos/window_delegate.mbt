@@ -19,61 +19,61 @@ fn clamp_size(size : Int) -> Int {
 }
 
 ///|
-let invisible_cursor_obj_handle : Ref[UInt64] = Ref::new((0 : Int).to_uint64())
+let invisible_cursor_obj_handle : Ref[UInt64] = Ref((0 : Int).to_uint64())
 
 ///|
-let maximized_standard_frame_window_handles : Ref[Array[UInt64]] = Ref::new([])
+let maximized_standard_frame_window_handles : Ref[Array[UInt64]] = Ref([])
 
 ///|
-let maximized_standard_frame_xs : Ref[Array[Double]] = Ref::new([])
+let maximized_standard_frame_xs : Ref[Array[Double]] = Ref([])
 
 ///|
-let maximized_standard_frame_ys : Ref[Array[Double]] = Ref::new([])
+let maximized_standard_frame_ys : Ref[Array[Double]] = Ref([])
 
 ///|
-let maximized_standard_frame_widths : Ref[Array[Double]] = Ref::new([])
+let maximized_standard_frame_widths : Ref[Array[Double]] = Ref([])
 
 ///|
-let maximized_standard_frame_heights : Ref[Array[Double]] = Ref::new([])
+let maximized_standard_frame_heights : Ref[Array[Double]] = Ref([])
 
 ///|
-let fullscreen_transition_window_handles : Ref[Array[UInt64]] = Ref::new([])
+let fullscreen_transition_window_handles : Ref[Array[UInt64]] = Ref([])
 
 ///|
-let fullscreen_transition_values : Ref[Array[Bool]] = Ref::new([])
+let fullscreen_transition_values : Ref[Array[Bool]] = Ref([])
 
 ///|
-let window_platform_state_handles : Ref[Array[UInt64]] = Ref::new([])
+let window_platform_state_handles : Ref[Array[UInt64]] = Ref([])
 
 ///|
-let window_ime_allowed_values : Ref[Array[Bool]] = Ref::new([])
+let window_ime_allowed_values : Ref[Array[Bool]] = Ref([])
 
 ///|
-let window_cursor_visible_values : Ref[Array[Bool]] = Ref::new([])
+let window_cursor_visible_values : Ref[Array[Bool]] = Ref([])
 
 ///|
-let window_accepts_first_mouse_values : Ref[Array[Bool]] = Ref::new([])
+let window_accepts_first_mouse_values : Ref[Array[Bool]] = Ref([])
 
 ///|
-let window_option_as_alt_values : Ref[Array[Int]] = Ref::new([])
+let window_option_as_alt_values : Ref[Array[Int]] = Ref([])
 
 ///|
-let window_ime_purpose_values : Ref[Array[Int]] = Ref::new([])
+let window_ime_purpose_values : Ref[Array[Int]] = Ref([])
 
 ///|
-let window_ime_hints_values : Ref[Array[Int]] = Ref::new([])
+let window_ime_hints_values : Ref[Array[Int]] = Ref([])
 
 ///|
-let window_ime_cursor_x_values : Ref[Array[Int]] = Ref::new([])
+let window_ime_cursor_x_values : Ref[Array[Int]] = Ref([])
 
 ///|
-let window_ime_cursor_y_values : Ref[Array[Int]] = Ref::new([])
+let window_ime_cursor_y_values : Ref[Array[Int]] = Ref([])
 
 ///|
-let window_ime_cursor_width_values : Ref[Array[Int]] = Ref::new([])
+let window_ime_cursor_width_values : Ref[Array[Int]] = Ref([])
 
 ///|
-let window_ime_cursor_height_values : Ref[Array[Int]] = Ref::new([])
+let window_ime_cursor_height_values : Ref[Array[Int]] = Ref([])
 
 ///|
 fn window_fullscreen_transition_index(window_handle : UInt64) -> Int? {

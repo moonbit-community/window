@@ -47,10 +47,10 @@ fn active_event_loop_for_test() -> ActiveEventLoop {
 }
 
 ///|
-let launch_init_callback_order_for_test : Ref[Array[String]] = Ref::new([])
+let launch_init_callback_order_for_test : Ref[Array[String]] = Ref([])
 
 ///|
-let launch_init_stop_flag_seen_for_test : Ref[Array[Bool]] = Ref::new([])
+let launch_init_stop_flag_seen_for_test : Ref[Array[Bool]] = Ref([])
 
 ///|
 struct LaunchInitCallbacksApp {}
@@ -80,20 +80,20 @@ pub impl ApplicationHandler for LaunchInitCallbacksApp with can_create_surfaces(
 
 ///|
 test "min_timeout_handles_none_and_picks_smaller_timeout" {
-  assert_eq(min_timeout_ms(None, None), None)
-  assert_eq(
+  @debug.assert_eq(min_timeout_ms(None, None), None)
+  @debug.assert_eq(
     min_timeout_ms(Some((10 : Int).to_int64()), None),
     Some((10 : Int).to_int64()),
   )
-  assert_eq(
+  @debug.assert_eq(
     min_timeout_ms(None, Some((20 : Int).to_int64())),
     Some((20 : Int).to_int64()),
   )
-  assert_eq(
+  @debug.assert_eq(
     min_timeout_ms(Some((30 : Int).to_int64()), Some((20 : Int).to_int64())),
     Some((20 : Int).to_int64()),
   )
-  assert_eq(
+  @debug.assert_eq(
     min_timeout_ms(Some((5 : Int).to_int64()), Some((20 : Int).to_int64())),
     Some((5 : Int).to_int64()),
   )
@@ -105,11 +105,11 @@ test "queue_unique_window_id_is_deduplicated" {
   app_state_queue_unique_window_id(ids, 7)
   app_state_queue_unique_window_id(ids, 7)
   app_state_queue_unique_window_id(ids, 8)
-  assert_eq(ids, [7, 8])
+  @debug.assert_eq(ids, [7, 8])
 
   assert_true(app_state_take_window_id(ids, 7))
   assert_false(app_state_take_window_id(ids, 7))
-  assert_eq(ids, [8])
+  @debug.assert_eq(ids, [8])
 }
 
 ///|
@@ -119,24 +119,24 @@ test "wait_cause_matches_control_flow" {
   app_state_runtime.val.start_time_ms = Some(start)
 
   app_state_set_control_flow(@core.ControlFlow::Poll)
-  assert_eq(app_state_wait_cause(), @core.StartCause::Poll)
+  @debug.assert_eq(app_state_wait_cause(), @core.StartCause::Poll)
 
   app_state_set_control_flow(@core.ControlFlow::Wait)
-  assert_eq(
+  @debug.assert_eq(
     app_state_wait_cause(),
     @core.StartCause::WaitCancelled(start, None),
   )
 
   let future = runtime_now_ms() + (2000 : Int).to_int64()
   app_state_set_control_flow(@core.ControlFlow::WaitUntil(future))
-  assert_eq(
+  @debug.assert_eq(
     app_state_wait_cause(),
     @core.StartCause::WaitCancelled(start, Some(future)),
   )
 
   let past = runtime_now_ms() - (2000 : Int).to_int64()
   app_state_set_control_flow(@core.ControlFlow::WaitUntil(past))
-  assert_eq(
+  @debug.assert_eq(
     app_state_wait_cause(),
     @core.StartCause::ResumeTimeReached(start, past),
   )
@@ -150,9 +150,10 @@ test "did_finish_launching_notification_is_deduplicated_in_queue" {
   )
 
   app_state_queue_did_finish_launching_notification()
-  assert_eq(callback_names_for_test(app_state_runtime.val.deferred_callbacks), [
-    "did_finish_launching",
-  ])
+  @debug.assert_eq(
+    callback_names_for_test(app_state_runtime.val.deferred_callbacks),
+    ["did_finish_launching"],
+  )
 }
 
 ///|
@@ -161,9 +162,10 @@ test "will_terminate_notification_is_deduplicated_in_queue" {
   app_state_runtime.val.deferred_callbacks.push(DeferredCallback::WillTerminate)
 
   app_state_queue_will_terminate_notification()
-  assert_eq(callback_names_for_test(app_state_runtime.val.deferred_callbacks), [
-    "will_terminate",
-  ])
+  @debug.assert_eq(
+    callback_names_for_test(app_state_runtime.val.deferred_callbacks),
+    ["will_terminate"],
+  )
 }
 
 ///|
@@ -172,21 +174,21 @@ test "will_terminate_notification_noops_after_handled" {
   app_state_runtime.val.will_terminate_handled = true
 
   app_state_queue_will_terminate_notification()
-  assert_eq(app_state_runtime.val.deferred_callbacks.length(), 0)
+  @debug.assert_eq(app_state_runtime.val.deferred_callbacks.length(), 0)
 }
 
 ///|
 test "will_terminate_callback_bypasses_registered_dispatch_handler" {
   reset_app_state_runtime_for_test()
   app_state_runtime.val.will_terminate_handled = true
-  let seen : Ref[Array[String]] = Ref::new([])
+  let seen : Ref[Array[String]] = Ref([])
   app_state_runtime.val.dispatch_callback = Some(fn(callback) {
     seen.val.push(callback_name_for_test(callback))
   })
 
   app_state_maybe_dispatch_callback(DeferredCallback::WillTerminate)
 
-  assert_eq(seen.val.length(), 0)
+  @debug.assert_eq(seen.val.length(), 0)
 }
 
 ///|
@@ -213,7 +215,7 @@ test "will_terminate_does_not_set_exit_flag" {
 test "callbacks_requiring_running_are_ignored_when_not_running" {
   reset_app_state_runtime_for_test()
   app_state_queue_proxy_wake_up()
-  assert_eq(app_state_runtime.val.deferred_callbacks.length(), 0)
+  @debug.assert_eq(app_state_runtime.val.deferred_callbacks.length(), 0)
 }
 
 ///|
@@ -231,7 +233,7 @@ test "internal_exit_preserves_stop_on_launch_flag" {
 ///|
 test "dispatch_registered_deferred_callbacks_keeps_order_when_running" {
   reset_app_state_runtime_for_test()
-  let seen : Ref[Array[String]] = Ref::new([])
+  let seen : Ref[Array[String]] = Ref([])
   app_state_runtime.val.dispatch_callback = Some(fn(callback) {
     seen.val.push(callback_name_for_test(callback))
   })
@@ -241,14 +243,14 @@ test "dispatch_registered_deferred_callbacks_keeps_order_when_running" {
   app_state_runtime.val.deferred_callbacks.push(DeferredCallback::AboutToWait)
   app_state_dispatch_registered_deferred_callbacks()
 
-  assert_eq(seen.val, ["proxy_wake_up", "about_to_wait"])
-  assert_eq(app_state_runtime.val.deferred_callbacks.length(), 0)
+  @debug.assert_eq(seen.val, ["proxy_wake_up", "about_to_wait"])
+  @debug.assert_eq(app_state_runtime.val.deferred_callbacks.length(), 0)
 }
 
 ///|
 test "dispatch_registered_deferred_callbacks_dispatches_lifecycle_while_not_running" {
   reset_app_state_runtime_for_test()
-  let seen : Ref[Array[String]] = Ref::new([])
+  let seen : Ref[Array[String]] = Ref([])
   app_state_runtime.val.dispatch_callback = Some(fn(callback) {
     seen.val.push(callback_name_for_test(callback))
   })
@@ -261,10 +263,11 @@ test "dispatch_registered_deferred_callbacks_dispatches_lifecycle_while_not_runn
   )
   app_state_dispatch_registered_deferred_callbacks()
 
-  assert_eq(seen.val, ["will_terminate", "did_finish_launching"])
-  assert_eq(callback_names_for_test(app_state_runtime.val.deferred_callbacks), [
-    "proxy_wake_up",
-  ])
+  @debug.assert_eq(seen.val, ["will_terminate", "did_finish_launching"])
+  @debug.assert_eq(
+    callback_names_for_test(app_state_runtime.val.deferred_callbacks),
+    ["proxy_wake_up"],
+  )
 }
 
 ///|
@@ -290,10 +293,10 @@ test "did_finish_launching_and_dispatch_runs_init_before_stop_on_launch" {
     active_event_loop_for_test(),
   )
 
-  assert_eq(launch_init_callback_order_for_test.val, [
+  @debug.assert_eq(launch_init_callback_order_for_test.val, [
     "new_events", "can_create_surfaces",
   ])
-  assert_eq(launch_init_stop_flag_seen_for_test.val, [true, true])
+  @debug.assert_eq(launch_init_stop_flag_seen_for_test.val, [true, true])
   assert_false(app_state_runtime.val.stop_on_launch)
 }
 
@@ -302,7 +305,7 @@ test "reentrant_redraw_requested_is_dropped" {
   reset_app_state_runtime_for_test()
   app_state_set_running(true)
   app_state_set_handler_in_use(true)
-  let seen : Ref[Array[String]] = Ref::new([])
+  let seen : Ref[Array[String]] = Ref([])
   app_state_runtime.val.dispatch_callback = Some(fn(callback) {
     seen.val.push(callback_name_for_test(callback))
   })
@@ -312,8 +315,8 @@ test "reentrant_redraw_requested_is_dropped" {
     @core.WindowEvent::RedrawRequested,
   )
 
-  assert_eq(seen.val.length(), 0)
-  assert_eq(app_state_runtime.val.deferred_callbacks.length(), 0)
+  @debug.assert_eq(seen.val.length(), 0)
+  @debug.assert_eq(app_state_runtime.val.deferred_callbacks.length(), 0)
 }
 
 ///|
@@ -321,7 +324,7 @@ test "reentrant_non_redraw_window_event_is_queued" {
   reset_app_state_runtime_for_test()
   app_state_set_running(true)
   app_state_set_handler_in_use(true)
-  let seen : Ref[Array[String]] = Ref::new([])
+  let seen : Ref[Array[String]] = Ref([])
   app_state_runtime.val.dispatch_callback = Some(fn(callback) {
     seen.val.push(callback_name_for_test(callback))
   })
@@ -331,17 +334,18 @@ test "reentrant_non_redraw_window_event_is_queued" {
     @core.WindowEvent::Focused(true),
   )
 
-  assert_eq(seen.val.length(), 0)
-  assert_eq(callback_names_for_test(app_state_runtime.val.deferred_callbacks), [
-    "window_event",
-  ])
+  @debug.assert_eq(seen.val.length(), 0)
+  @debug.assert_eq(
+    callback_names_for_test(app_state_runtime.val.deferred_callbacks),
+    ["window_event"],
+  )
 }
 
 ///|
 test "before_waiting_dispatches_redraws_then_about_to_wait" {
   reset_app_state_runtime_for_test()
   app_state_set_running(true)
-  let seen : Ref[Array[String]] = Ref::new([])
+  let seen : Ref[Array[String]] = Ref([])
   app_state_runtime.val.dispatch_callback = Some(fn(callback) {
     seen.val.push(callback_name_for_test(callback))
   })
@@ -351,8 +355,8 @@ test "before_waiting_dispatches_redraws_then_about_to_wait" {
 
   app_state_on_before_waiting()
 
-  assert_eq(seen.val, ["window_event", "window_event", "about_to_wait"])
-  assert_eq(app_state_runtime.val.pending_redraw_window_ids.length(), 0)
+  @debug.assert_eq(seen.val, ["window_event", "window_event", "about_to_wait"])
+  @debug.assert_eq(app_state_runtime.val.pending_redraw_window_ids.length(), 0)
   assert_true(app_state_runtime.val.start_time_ms is Some(_))
 }
 
@@ -360,7 +364,7 @@ test "before_waiting_dispatches_redraws_then_about_to_wait" {
 test "after_waiting_dispatches_new_events_with_wait_cause" {
   reset_app_state_runtime_for_test()
   app_state_set_running(true)
-  let captured_causes : Ref[Array[@core.StartCause]] = Ref::new([])
+  let captured_causes : Ref[Array[@core.StartCause]] = Ref([])
   app_state_runtime.val.dispatch_callback = Some(fn(callback) {
     match callback {
       DeferredCallback::NewEvents(cause) => captured_causes.val.push(cause)
@@ -374,7 +378,7 @@ test "after_waiting_dispatches_new_events_with_wait_cause" {
 
   app_state_on_after_waiting()
 
-  assert_eq(captured_causes.val, [
+  @debug.assert_eq(captured_causes.val, [
     @core.StartCause::WaitCancelled(start, Some(requested_resume)),
   ])
 }
@@ -393,7 +397,7 @@ test "queue_did_finish_launching_dispatches_init_when_handler_registered" {
 
   assert_true(app_state_is_launched())
   assert_true(app_state_is_running())
-  assert_eq(launch_init_callback_order_for_test.val, [
+  @debug.assert_eq(launch_init_callback_order_for_test.val, [
     "new_events", "can_create_surfaces",
   ])
   app_state_clear_dispatch_handler()
@@ -420,7 +424,7 @@ test "before_waiting_noops_without_dispatch_handler" {
 
   app_state_on_before_waiting()
 
-  assert_eq(app_state_runtime.val.pending_redraw_window_ids, [1])
+  @debug.assert_eq(app_state_runtime.val.pending_redraw_window_ids, [1])
   assert_true(app_state_runtime.val.start_time_ms is None)
 }
 
@@ -434,7 +438,7 @@ test "after_waiting_noops_without_dispatch_handler" {
 
   app_state_on_after_waiting()
 
-  assert_eq(app_state_runtime.val.deferred_callbacks.length(), 0)
+  @debug.assert_eq(app_state_runtime.val.deferred_callbacks.length(), 0)
 }
 
 ///|
@@ -449,7 +453,7 @@ test "running_callbacks_are_dropped_when_dispatch_handler_absent" {
     @core.WindowEvent::Focused(true),
   )
 
-  assert_eq(app_state_runtime.val.deferred_callbacks.length(), 0)
+  @debug.assert_eq(app_state_runtime.val.deferred_callbacks.length(), 0)
 }
 
 ///|
@@ -462,14 +466,14 @@ test "did_finish_launching_updates_state_without_dispatch_handler" {
 
   assert_true(app_state_is_launched())
   assert_false(app_state_is_running())
-  assert_eq(app_state_runtime.val.deferred_callbacks.length(), 0)
+  @debug.assert_eq(app_state_runtime.val.deferred_callbacks.length(), 0)
 }
 
 ///|
 test "nested_proxy_wake_is_deferred_until_explicit_drain" {
   reset_app_state_runtime_for_test()
   app_state_set_running(true)
-  let seen : Ref[Array[String]] = Ref::new([])
+  let seen : Ref[Array[String]] = Ref([])
   app_state_runtime.val.dispatch_callback = Some(fn(callback) {
     seen.val.push(callback_name_for_test(callback))
     match callback {
@@ -480,22 +484,23 @@ test "nested_proxy_wake_is_deferred_until_explicit_drain" {
 
   app_state_maybe_dispatch_callback(DeferredCallback::AboutToWait)
 
-  assert_eq(seen.val, ["about_to_wait"])
-  assert_eq(callback_names_for_test(app_state_runtime.val.deferred_callbacks), [
-    "proxy_wake_up",
-  ])
+  @debug.assert_eq(seen.val, ["about_to_wait"])
+  @debug.assert_eq(
+    callback_names_for_test(app_state_runtime.val.deferred_callbacks),
+    ["proxy_wake_up"],
+  )
 
   app_state_dispatch_registered_deferred_callbacks()
 
-  assert_eq(seen.val, ["about_to_wait", "proxy_wake_up"])
-  assert_eq(app_state_runtime.val.deferred_callbacks.length(), 0)
+  @debug.assert_eq(seen.val, ["about_to_wait", "proxy_wake_up"])
+  @debug.assert_eq(app_state_runtime.val.deferred_callbacks.length(), 0)
 }
 
 ///|
 test "nested_redraw_is_dropped_while_handler_is_in_use" {
   reset_app_state_runtime_for_test()
   app_state_set_running(true)
-  let seen : Ref[Array[String]] = Ref::new([])
+  let seen : Ref[Array[String]] = Ref([])
   app_state_runtime.val.dispatch_callback = Some(fn(callback) {
     seen.val.push(callback_name_for_test(callback))
     match callback {
@@ -510,15 +515,15 @@ test "nested_redraw_is_dropped_while_handler_is_in_use" {
 
   app_state_maybe_dispatch_callback(DeferredCallback::AboutToWait)
 
-  assert_eq(seen.val, ["about_to_wait"])
-  assert_eq(app_state_runtime.val.deferred_callbacks.length(), 0)
+  @debug.assert_eq(seen.val, ["about_to_wait"])
+  @debug.assert_eq(app_state_runtime.val.deferred_callbacks.length(), 0)
 }
 
 ///|
 test "before_waiting_drains_deferred_callbacks_before_about_to_wait" {
   reset_app_state_runtime_for_test()
   app_state_set_running(true)
-  let seen : Ref[Array[String]] = Ref::new([])
+  let seen : Ref[Array[String]] = Ref([])
   app_state_runtime.val.dispatch_callback = Some(fn(callback) {
     seen.val.push(callback_name_for_test(callback))
   })
@@ -526,8 +531,8 @@ test "before_waiting_drains_deferred_callbacks_before_about_to_wait" {
 
   app_state_on_before_waiting()
 
-  assert_eq(seen.val, ["proxy_wake_up", "about_to_wait"])
-  assert_eq(app_state_runtime.val.deferred_callbacks.length(), 0)
+  @debug.assert_eq(seen.val, ["proxy_wake_up", "about_to_wait"])
+  @debug.assert_eq(app_state_runtime.val.deferred_callbacks.length(), 0)
 }
 
 ///|
@@ -540,9 +545,10 @@ test "moved_event_is_deduplicated_when_position_is_unchanged" {
   app_state_queue_native_window_event(4, 7, 10, 20, 0, 0.0)
   app_state_queue_native_window_event(4, 7, 10, 20, 0, 0.0)
 
-  assert_eq(callback_names_for_test(app_state_runtime.val.deferred_callbacks), [
-    "window_event",
-  ])
+  @debug.assert_eq(
+    callback_names_for_test(app_state_runtime.val.deferred_callbacks),
+    ["window_event"],
+  )
 }
 
 ///|
@@ -555,7 +561,8 @@ test "moved_event_is_queued_again_when_position_changes" {
   app_state_queue_native_window_event(4, 7, 10, 20, 0, 0.0)
   app_state_queue_native_window_event(4, 7, 11, 20, 0, 0.0)
 
-  assert_eq(callback_names_for_test(app_state_runtime.val.deferred_callbacks), [
-    "window_event", "window_event",
-  ])
+  @debug.assert_eq(
+    callback_names_for_test(app_state_runtime.val.deferred_callbacks),
+    ["window_event", "window_event"],
+  )
 }

@@ -1304,7 +1304,7 @@ pub impl @macos.ApplicationHandler for Application with device_event(
   device_id,
   event,
 ) {
-  println("Device \{device_id} event: \{event}")
+  println("Device \{to_repr(device_id)} event: \{to_repr(event)}")
 }
 
 ///|

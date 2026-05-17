@@ -433,7 +433,7 @@ fn App::handle_ime_event(self : App, ime_event : @core.Ime) -> Unit {
         None => println("IME enabled")
       }
     @core.Ime::Preedit(text, caret_pos) =>
-      println("Preedit: \{text}, with caret at \{caret_pos}")
+      println("Preedit: \{text}, with caret at \{to_repr(caret_pos)}")
     @core.Ime::Commit(text) => {
       self.input_state.append_text(text)
       self.request_ime_update()

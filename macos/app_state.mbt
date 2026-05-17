@@ -82,16 +82,16 @@ fn AppStateRuntime::new() -> AppStateRuntime {
 }
 
 ///|
-let app_state_runtime : Ref[AppStateRuntime] = Ref::new(AppStateRuntime::new())
+let app_state_runtime : Ref[AppStateRuntime] = Ref(AppStateRuntime::new())
 
 ///|
-let app_state_window_position_raw_ids : Ref[Array[Int]] = Ref::new([])
+let app_state_window_position_raw_ids : Ref[Array[Int]] = Ref([])
 
 ///|
-let app_state_window_position_xs : Ref[Array[Int]] = Ref::new([])
+let app_state_window_position_xs : Ref[Array[Int]] = Ref([])
 
 ///|
-let app_state_window_position_ys : Ref[Array[Int]] = Ref::new([])
+let app_state_window_position_ys : Ref[Array[Int]] = Ref([])
 
 ///|
 fn app_state_window_position_index(raw_id : Int) -> Int? {

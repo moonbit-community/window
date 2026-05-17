@@ -3,7 +3,7 @@ test "initial_window_surface_size_prefers_surface_size" {
   let surface = Some(
     @dpi.Size::from_physical(@dpi.PhysicalSize::new(1024, 768)),
   )
-  assert_eq(
+  @debug.assert_eq(
     initial_window_surface_size(surface, 2.0),
     @dpi.LogicalSize::new(512.0, 384.0),
   )
@@ -11,7 +11,7 @@ test "initial_window_surface_size_prefers_surface_size" {
 
 ///|
 test "initial_window_surface_size_falls_back_to_default" {
-  assert_eq(
+  @debug.assert_eq(
     initial_window_surface_size(None, 1.5),
     @dpi.LogicalSize::new(800.0, 600.0),
   )
@@ -63,7 +63,7 @@ test "window_position_to_logical_preserves_logical_input" {
     @dpi.LogicalPosition::new(40.0, 25.0).into_position(),
     2.0,
   )
-  assert_eq(logical, @dpi.LogicalPosition::new(40.0, 25.0))
+  @debug.assert_eq(logical, @dpi.LogicalPosition::new(40.0, 25.0))
 }
 
 ///|
@@ -72,7 +72,7 @@ test "window_position_to_logical_converts_physical_input" {
     @dpi.PhysicalPosition::new(80, 50).into_position(),
     2.0,
   )
-  assert_eq(logical, @dpi.LogicalPosition::new(40.0, 25.0))
+  @debug.assert_eq(logical, @dpi.LogicalPosition::new(40.0, 25.0))
 }
 
 ///|
@@ -81,7 +81,7 @@ test "physical_outer_position_to_logical_converts_physical_input" {
     @dpi.PhysicalPosition::new(120, 64),
     2.0,
   )
-  assert_eq(logical, @dpi.LogicalPosition::new(60.0, 32.0))
+  @debug.assert_eq(logical, @dpi.LogicalPosition::new(60.0, 32.0))
 }
 
 ///|
@@ -95,7 +95,7 @@ test "monitor_position_to_logical_uses_monitor_scale_factor" {
     None,
     [],
   )
-  assert_eq(
+  @debug.assert_eq(
     monitor_position_to_logical(monitor),
     @dpi.LogicalPosition::new(1920.0, 0.0),
   )
@@ -127,14 +127,14 @@ test "fullscreen_target_surface_size_prefers_target_monitor" {
     Some(60000),
   )
 
-  assert_eq(
+  @debug.assert_eq(
     fullscreen_target_surface_size(
       Some(@core.Fullscreen::Borderless(Some(external))),
       Some(primary),
     ),
     Some(@dpi.LogicalSize::new(1920.0, 1080.0)),
   )
-  assert_eq(
+  @debug.assert_eq(
     fullscreen_target_surface_size(
       Some(@core.Fullscreen::Exclusive(external, mode)),
       Some(primary),
@@ -155,15 +155,15 @@ test "fullscreen_target_surface_size_falls_back_to_primary_monitor" {
     [],
   )
 
-  assert_eq(
+  @debug.assert_eq(
     fullscreen_target_surface_size(
       Some(@core.Fullscreen::Borderless(None)),
       Some(primary),
     ),
     Some(@dpi.LogicalSize::new(1500.0, 1000.0)),
   )
-  assert_eq(fullscreen_target_surface_size(None, Some(primary)), None)
-  assert_eq(
+  @debug.assert_eq(fullscreen_target_surface_size(None, Some(primary)), None)
+  @debug.assert_eq(
     fullscreen_target_surface_size(
       Some(@core.Fullscreen::Borderless(None)),
       None,
@@ -177,10 +177,10 @@ test "ime_cursor_area_state_tracks_position_and_clamps_size" {
   let handle = (91 : Int).to_uint64()
   set_window_ime_cursor_area_state(handle, 12, 34, 0, -5)
 
-  assert_eq(window_ime_cursor_x_state(handle), 12)
-  assert_eq(window_ime_cursor_y_state(handle), 34)
-  assert_eq(window_ime_cursor_width_state(handle), 1)
-  assert_eq(window_ime_cursor_height_state(handle), 1)
+  @debug.assert_eq(window_ime_cursor_x_state(handle), 12)
+  @debug.assert_eq(window_ime_cursor_y_state(handle), 34)
+  @debug.assert_eq(window_ime_cursor_width_state(handle), 1)
+  @debug.assert_eq(window_ime_cursor_height_state(handle), 1)
 }
 
 ///|
@@ -188,10 +188,10 @@ test "ime_cursor_area_state_preserves_positive_size" {
   let handle = (92 : Int).to_uint64()
   set_window_ime_cursor_area_state(handle, 7, 8, 21, 22)
 
-  assert_eq(window_ime_cursor_x_state(handle), 7)
-  assert_eq(window_ime_cursor_y_state(handle), 8)
-  assert_eq(window_ime_cursor_width_state(handle), 21)
-  assert_eq(window_ime_cursor_height_state(handle), 22)
+  @debug.assert_eq(window_ime_cursor_x_state(handle), 7)
+  @debug.assert_eq(window_ime_cursor_y_state(handle), 8)
+  @debug.assert_eq(window_ime_cursor_width_state(handle), 21)
+  @debug.assert_eq(window_ime_cursor_height_state(handle), 22)
 }
 
 ///|
@@ -206,7 +206,7 @@ test "native_drag_should_accept_rejects_null_handle" {
 
 ///|
 test "logical_position_f64_to_physical_applies_scale_factor" {
-  assert_eq(
+  @debug.assert_eq(
     logical_position_f64_to_physical(10.5, 20.25, 2.0),
     @dpi.PhysicalPositionF64::new(21.0, 40.5),
   )
@@ -214,11 +214,11 @@ test "logical_position_f64_to_physical_applies_scale_factor" {
 
 ///|
 test "logical_position_f64_to_physical_falls_back_to_identity_scale" {
-  assert_eq(
+  @debug.assert_eq(
     logical_position_f64_to_physical(3.25, 4.5, 0.0),
     @dpi.PhysicalPositionF64::new(3.25, 4.5),
   )
-  assert_eq(
+  @debug.assert_eq(
     logical_position_f64_to_physical(3.25, 4.5, -2.0),
     @dpi.PhysicalPositionF64::new(3.25, 4.5),
   )
@@ -229,12 +229,15 @@ test "flip_window_screen_coordinate_y_is_symmetric" {
   let logical_y = 128.0
   let frame_height = 320.0
   let appkit_y = flip_window_screen_coordinate_y(logical_y, frame_height)
-  assert_eq(flip_window_screen_coordinate_y(appkit_y, frame_height), logical_y)
+  @debug.assert_eq(
+    flip_window_screen_coordinate_y(appkit_y, frame_height),
+    logical_y,
+  )
 }
 
 ///|
 test "window_surface_offset_y_from_frame_and_content_matches_expected" {
-  assert_eq(
+  @debug.assert_eq(
     window_surface_offset_y_from_frame_and_content(100.0, 600.0, 120.0, 560.0),
     20.0,
   )
@@ -244,7 +247,7 @@ test "window_surface_offset_y_from_frame_and_content_matches_expected" {
 test "cursor_screen_y_from_content_rect_matches_top_edge_at_zero_offset" {
   let content_y = 120.0
   let content_height = 560.0
-  assert_eq(
+  @debug.assert_eq(
     cursor_screen_y_from_content_rect(content_y, content_height, 0),
     flip_window_screen_coordinate_y(content_y, content_height),
   )
@@ -256,7 +259,7 @@ test "cursor_screen_y_from_content_rect_increases_with_cursor_offset" {
   let content_height = 560.0
   let base = cursor_screen_y_from_content_rect(content_y, content_height, 0)
   let moved = cursor_screen_y_from_content_rect(content_y, content_height, 37)
-  assert_eq(moved - base, 37.0)
+  @debug.assert_eq(moved - base, 37.0)
 }
 
 ///|

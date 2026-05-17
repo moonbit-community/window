@@ -136,7 +136,7 @@ pub struct AsyncRequestSerial {
 } derive(Eq, Debug)
 
 ///|
-let async_request_serial_counter : Ref[Int] = Ref::new(0)
+let async_request_serial_counter : Ref[Int] = Ref(0)
 
 ///|
 pub fn AsyncRequestSerial::get() -> AsyncRequestSerial {

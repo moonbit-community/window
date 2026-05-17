@@ -5,7 +5,7 @@ pub struct SurfaceSizeWriter {
 
 ///|
 pub fn SurfaceSizeWriter::new(size : @dpi.PhysicalSize) -> SurfaceSizeWriter {
-  { size: Ref::new(size) }
+  { size: Ref(size) }
 }
 
 ///|

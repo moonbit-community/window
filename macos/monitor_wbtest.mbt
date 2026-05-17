@@ -16,8 +16,8 @@ test "uuid_stable" {
     Some(handle_a) =>
       match handle_b {
         Some(handle_b) => {
-          assert_eq(handle_a, handle_b)
-          assert_eq(handle_a.native_id(), handle_b.native_id())
+          @debug.assert_eq(handle_a, handle_b)
+          @debug.assert_eq(handle_a.native_id(), handle_b.native_id())
         }
         None => ()
       }
@@ -32,8 +32,8 @@ test "uuid_stable" {
     Some(handle_c) =>
       match handle_d {
         Some(handle_d) => {
-          assert_eq(handle_c, handle_d)
-          assert_eq(handle_c.native_id(), handle_d.native_id())
+          @debug.assert_eq(handle_c, handle_d)
+          @debug.assert_eq(handle_c.native_id(), handle_d.native_id())
         }
         None => ()
       }
@@ -54,8 +54,8 @@ test "monitorhandle_from_zero" {
     Some(handle0) =>
       match handle1 {
         Some(handle1) => {
-          assert_eq(handle0, handle1)
-          assert_eq(handle0.native_id(), handle1.native_id())
+          @debug.assert_eq(handle0, handle1)
+          @debug.assert_eq(handle0.native_id(), handle1.native_id())
         }
         None => ()
       }
@@ -65,12 +65,12 @@ test "monitorhandle_from_zero" {
 
 ///|
 test "from_invalid_id" {
-  assert_eq(monitor_from_native_id((10000 : Int).to_uint64()), None)
+  @debug.assert_eq(monitor_from_native_id((10000 : Int).to_uint64()), None)
 }
 
 ///|
 test "invalid_monitor_handle" {
-  assert_eq(monitor_from_native_id((10000 : Int).to_uint64()), None)
+  @debug.assert_eq(monitor_from_native_id((10000 : Int).to_uint64()), None)
 }
 
 ///|

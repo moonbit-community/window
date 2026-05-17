@@ -284,7 +284,7 @@ fn drag_paths_from_native(bytes : Bytes) -> Array[String] {
   let text = text_from_native(bytes)
   let paths : Array[String] = []
   for path in text.split("\n"[:]) {
-    let value = path.to_string()
+    let value = path.to_owned()
     if value != "" {
       paths.push(value)
     }

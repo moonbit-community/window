@@ -61,10 +61,10 @@ fn queue_view_standard_key_binding(
 }
 
 ///|
-let view_modifier_window_ids : Ref[Array[Int]] = Ref::new([])
+let view_modifier_window_ids : Ref[Array[Int]] = Ref([])
 
 ///|
-let view_modifier_window_values : Ref[Array[@core.ModifiersKeys]] = Ref::new([])
+let view_modifier_window_values : Ref[Array[@core.ModifiersKeys]] = Ref([])
 
 ///|
 fn view_pressed_modifiers(window_id : Int) -> @core.ModifiersKeys {
@@ -142,31 +142,31 @@ let native_view_state_query_accepts_first_mouse = 9
 let native_sync_query_drag_accept = 100
 
 ///|
-let view_ime_window_ids : Ref[Array[Int]] = Ref::new([])
+let view_ime_window_ids : Ref[Array[Int]] = Ref([])
 
 ///|
-let view_ime_states : Ref[Array[Int]] = Ref::new([])
+let view_ime_states : Ref[Array[Int]] = Ref([])
 
 ///|
-let view_ime_old_states : Ref[Array[Int]] = Ref::new([])
+let view_ime_old_states : Ref[Array[Int]] = Ref([])
 
 ///|
-let view_ime_forward_key_to_apps : Ref[Array[Bool]] = Ref::new([])
+let view_ime_forward_key_to_apps : Ref[Array[Bool]] = Ref([])
 
 ///|
-let view_ime_input_sources : Ref[Array[String]] = Ref::new([])
+let view_ime_input_sources : Ref[Array[String]] = Ref([])
 
 ///|
-let view_ime_has_marked_texts : Ref[Array[Bool]] = Ref::new([])
+let view_ime_has_marked_texts : Ref[Array[Bool]] = Ref([])
 
 ///|
-let view_ime_marked_text_lengths : Ref[Array[Int]] = Ref::new([])
+let view_ime_marked_text_lengths : Ref[Array[Int]] = Ref([])
 
 ///|
-let view_ime_selected_range_locations : Ref[Array[Int]] = Ref::new([])
+let view_ime_selected_range_locations : Ref[Array[Int]] = Ref([])
 
 ///|
-let view_ime_selected_range_lengths : Ref[Array[Int]] = Ref::new([])
+let view_ime_selected_range_lengths : Ref[Array[Int]] = Ref([])
 
 ///|
 fn view_ime_index(raw_id : Int) -> Int? {

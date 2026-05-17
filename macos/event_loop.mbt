@@ -274,7 +274,7 @@ pub struct ActiveEventLoop {
 } derive(Debug)
 
 ///|
-let event_loop_global_created : Ref[Bool] = Ref::new(false)
+let event_loop_global_created : Ref[Bool] = Ref(false)
 
 ///|
 pub fn EventLoop::drop(self : EventLoop) -> Unit {
