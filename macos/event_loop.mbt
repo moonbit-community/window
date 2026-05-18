@@ -257,10 +257,10 @@ fn activation_policy_to_native(
 
 ///|
 pub struct EventLoop {
-  priv did_finish_launching_observer_ : UInt64
-  priv will_terminate_observer_ : UInt64
-  priv before_waiting_observer_ : UInt64
-  priv after_waiting_observer_ : UInt64
+  priv did_finish_launching_observer_ : NotificationObserver?
+  priv will_terminate_observer_ : NotificationObserver?
+  priv before_waiting_observer_ : MainRunLoopObserver?
+  priv after_waiting_observer_ : MainRunLoopObserver?
 } derive(Debug)
 
 ///|
@@ -548,10 +548,10 @@ pub fn EventLoop::try_new_with_platform_attributes(
     app_state_apply_launch_policy()
   }
   let event_loop = {
-    did_finish_launching_observer_: did_finish_launching_observer,
-    will_terminate_observer_: will_terminate_observer,
-    before_waiting_observer_: before_waiting_observer,
-    after_waiting_observer_: after_waiting_observer,
+    did_finish_launching_observer_: Some(did_finish_launching_observer),
+    will_terminate_observer_: Some(will_terminate_observer),
+    before_waiting_observer_: Some(before_waiting_observer),
+    after_waiting_observer_: Some(after_waiting_observer),
   }
   event_loop_global_created.val = true
   event_loop

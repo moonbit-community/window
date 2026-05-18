@@ -33,7 +33,11 @@ test "native view state query reads moonbit ime state" {
 
   let raw_id = 17
   let window_handle = (91 : Int).to_uint64()
-  app_state_runtime.val.window_handles.push({ raw_id, handle: window_handle })
+  app_state_runtime.val.window_handles.push({
+    raw_id,
+    identity: window_handle,
+    native_handle: None,
+  })
   set_window_ime_allowed_state(window_handle, true)
   set_window_ime_cursor_area_state(window_handle, 12, 34, 0, -5)
   view_set_has_marked_text(raw_id, true)
@@ -84,7 +88,11 @@ test "native view state query reads accepts first mouse from moonbit" {
 
   let raw_id = 19
   let window_handle = (93 : Int).to_uint64()
-  app_state_runtime.val.window_handles.push({ raw_id, handle: window_handle })
+  app_state_runtime.val.window_handles.push({
+    raw_id,
+    identity: window_handle,
+    native_handle: None,
+  })
 
   assert_eq(
     view_native_query_state(raw_id, native_view_state_query_accepts_first_mouse),

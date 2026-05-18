@@ -37,10 +37,10 @@ fn callback_names_for_test(
 fn active_event_loop_for_test() -> ActiveEventLoop {
   {
     inner: {
-      did_finish_launching_observer_: (0 : Int).to_uint64(),
-      will_terminate_observer_: (0 : Int).to_uint64(),
-      before_waiting_observer_: (0 : Int).to_uint64(),
-      after_waiting_observer_: (0 : Int).to_uint64(),
+      did_finish_launching_observer_: None,
+      will_terminate_observer_: None,
+      before_waiting_observer_: None,
+      after_waiting_observer_: None,
     },
   }
 }

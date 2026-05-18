@@ -446,7 +446,9 @@ fn view_native_query_state(raw_id : Int, kind : Int) -> Int {
             _ if kind == native_view_state_query_ime_cursor_height =>
               window_ime_cursor_height(window_handle)
             _ if kind == native_view_state_query_accepts_first_mouse =>
-              if window_accepts_first_mouse_state(window_handle) {
+              if window_accepts_first_mouse_state(
+                  native_window_identity(window_handle),
+                ) {
                 1
               } else {
                 0
@@ -862,7 +864,8 @@ fn native_modifiers_from_modifier_flags(modifier_flags : Int) -> Int {
 ///|
 fn option_as_alt_for_window(raw_id : Int) -> Int {
   match app_state_window_handle(raw_id) {
-    Some(window_handle) => window_option_as_alt_native(window_handle)
+    Some(window_handle) =>
+      window_option_as_alt_native(native_window_identity(window_handle))
     None => 0
   }
 }

@@ -21,7 +21,7 @@ fn native_find_display_mode_handle(
   height : Int,
   bit_depth : Int,
   refresh_rate_millihertz : Int,
-) -> UInt64 {
+) -> NativeDisplayMode {
   native_monitor_find_display_mode_handle(
     monitor_id.to_uint(),
     width,
@@ -32,7 +32,9 @@ fn native_find_display_mode_handle(
 }
 
 ///|
-fn native_copy_current_display_mode_handle(monitor_id : UInt64) -> UInt64 {
+fn native_copy_current_display_mode_handle(
+  monitor_id : UInt64,
+) -> NativeDisplayMode {
   native_monitor_copy_current_display_mode_handle(monitor_id.to_uint())
 }
 
@@ -50,12 +52,17 @@ fn native_copy_display_mode_count(monitor_id : UInt64) -> Int {
 fn native_copy_display_mode_handle_at(
   monitor_id : UInt64,
   index : Int,
-) -> UInt64 {
+) -> NativeDisplayMode {
   native_monitor_copy_display_mode_handle_at(monitor_id.to_uint(), index)
 }
 
 ///|
-fn native_display_mode_width(mode_handle : UInt64) -> Int {
+fn native_display_mode_valid(mode_handle : NativeDisplayMode) -> Bool {
+  native_monitor_display_mode_is_valid(mode_handle) != 0
+}
+
+///|
+fn native_display_mode_width(mode_handle : NativeDisplayMode) -> Int {
   let width = native_monitor_display_mode_width(mode_handle)
   if width > 0 {
     width
@@ -65,7 +72,7 @@ fn native_display_mode_width(mode_handle : UInt64) -> Int {
 }
 
 ///|
-fn native_display_mode_height(mode_handle : UInt64) -> Int {
+fn native_display_mode_height(mode_handle : NativeDisplayMode) -> Int {
   let height = native_monitor_display_mode_height(mode_handle)
   if height > 0 {
     height
@@ -75,7 +82,7 @@ fn native_display_mode_height(mode_handle : UInt64) -> Int {
 }
 
 ///|
-fn native_display_mode_bit_depth(mode_handle : UInt64) -> Int {
+fn native_display_mode_bit_depth(mode_handle : NativeDisplayMode) -> Int {
   let bit_depth = native_monitor_display_mode_bit_depth(mode_handle)
   if bit_depth > 0 {
     bit_depth
@@ -85,7 +92,9 @@ fn native_display_mode_bit_depth(mode_handle : UInt64) -> Int {
 }
 
 ///|
-fn native_display_mode_refresh_rate_millihertz(mode_handle : UInt64) -> Int {
+fn native_display_mode_refresh_rate_millihertz(
+  mode_handle : NativeDisplayMode,
+) -> Int {
   let refresh_rate_millihertz = native_monitor_display_mode_refresh_rate_millihertz(
     mode_handle,
   )
@@ -135,7 +144,7 @@ fn native_display_refresh_rate_millihertz(monitor_id : UInt64) -> Int {
 }
 
 ///|
-fn native_release_display_mode_handle(mode_handle : UInt64) -> Unit {
+fn native_release_display_mode_handle(mode_handle : NativeDisplayMode) -> Unit {
   native_monitor_release_display_mode_handle(mode_handle)
 }
 
@@ -147,7 +156,7 @@ fn native_capture_display(monitor_id : UInt64) -> Bool {
 ///|
 fn native_set_display_mode_handle(
   monitor_id : UInt64,
-  mode_handle : UInt64,
+  mode_handle : NativeDisplayMode,
 ) -> Bool {
   native_monitor_set_display_mode_handle(monitor_id.to_uint(), mode_handle) != 0
 }
@@ -246,9 +255,9 @@ fn fallback_display_video_mode(display_id : UInt64) -> @core.VideoMode {
 ///|
 fn display_video_mode_from_handle(
   display_id : UInt64,
-  mode_handle : UInt64,
+  mode_handle : NativeDisplayMode,
 ) -> @core.VideoMode? {
-  if mode_handle == (0 : Int).to_uint64() {
+  if native_display_mode_valid(mode_handle) == false {
     return None
   }
   let width = native_display_mode_width(mode_handle)
@@ -302,7 +311,7 @@ fn available_display_video_modes(display_id : UInt64) -> Array[@core.VideoMode] 
   let mut index = 0
   while index < count {
     let mode_handle = native_copy_display_mode_handle_at(display_id, index)
-    if mode_handle != (0 : Int).to_uint64() {
+    if native_display_mode_valid(mode_handle) {
       match display_video_mode_from_handle(display_id, mode_handle) {
         Some(mode) => push_unique_video_mode(modes, mode)
         None => ()
@@ -317,7 +326,7 @@ fn available_display_video_modes(display_id : UInt64) -> Array[@core.VideoMode] 
 ///|
 fn current_display_video_mode(display_id : UInt64) -> @core.VideoMode? {
   let mode_handle = native_copy_current_display_mode_handle(display_id)
-  if mode_handle == (0 : Int).to_uint64() {
+  if native_display_mode_valid(mode_handle) == false {
     return None
   }
   let mode = display_video_mode_from_handle(display_id, mode_handle)

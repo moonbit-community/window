@@ -101,6 +101,8 @@ pub(all) struct KeyEquivalent {
 } derive(Eq, @debug.Debug)
 pub impl Show for KeyEquivalent
 
+type MainRunLoopObserver
+
 pub(all) enum MenuAction {
   About
   Services
@@ -118,6 +120,12 @@ pub(all) struct MenuItemDescriptor {
   key_equivalent : KeyEquivalent?
 } derive(Eq, @debug.Debug)
 pub impl Show for MenuItemDescriptor
+
+type NativeDisplayMode
+
+type NativeWindow
+
+type NotificationObserver
 
 pub struct Window {
   // private fields

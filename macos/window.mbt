@@ -4,7 +4,7 @@
 ///|
 pub struct Window {
   priv id : @core.WindowId
-  priv raw_window_handle : UInt64
+  priv raw_window_handle : NativeWindow
   priv raw_view_handle : UInt64
   priv mut cursor_state : @core.Cursor
   priv mut fullscreen_state : @core.Fullscreen?
@@ -24,7 +24,7 @@ pub struct Window {
   priv mut simple_fullscreen_saved_outer_size_state : @dpi.PhysicalSize?
   priv mut exclusive_fullscreen_state : Bool
   priv mut exclusive_fullscreen_display_id_state : UInt64?
-  priv mut exclusive_fullscreen_saved_mode_state : UInt64?
+  priv mut exclusive_fullscreen_saved_mode_state : NativeDisplayMode?
   priv mut exclusive_fullscreen_saved_style_mask_state : UInt64?
   priv mut exclusive_fullscreen_saved_outer_position_state : @dpi.PhysicalPosition?
   priv mut exclusive_fullscreen_saved_outer_size_state : @dpi.PhysicalSize?
@@ -97,7 +97,7 @@ pub fn Window::rwh_06_window_handle(self : Window) -> UInt64 {
   if self.raw_view_handle != (0 : Int).to_uint64() {
     self.raw_view_handle
   } else {
-    self.raw_window_handle
+    native_window_objc_handle(self.raw_window_handle)
   }
 }
 

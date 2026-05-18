@@ -105,7 +105,14 @@ static void mbw_emit_drag_event(int32_t raw_id, int32_t kind, id<NSDraggingInfo>
 @property(nonatomic, strong) NSWindow *window;
 @property(nonatomic, strong) MBWWindowDelegate *delegate;
 @property(nonatomic, strong) MBWContentView *contentView;
+- (void)mbwDestroyExternalOwner;
 @end
+
+typedef struct {
+  MBWWindowBox *box;
+} MBWNativeWindow;
+
+static void mbw_window_box_destroy(MBWWindowBox *box);
 
 @implementation MBWContentView
 
@@ -768,6 +775,10 @@ static void mbw_emit_drag_event(int32_t raw_id, int32_t kind, id<NSDraggingInfo>
 
 @implementation MBWWindowBox
 
+- (void)mbwDestroyExternalOwner {
+  mbw_window_box_destroy(self);
+}
+
 - (void)dealloc {
   self.window = nil;
   self.delegate = nil;
@@ -776,6 +787,13 @@ static void mbw_emit_drag_event(int32_t raw_id, int32_t kind, id<NSDraggingInfo>
 }
 
 @end
+
+static MBWWindowBox *mbw_native_window_box(MBWNativeWindow *native_window) {
+  if (native_window == NULL) {
+    return nil;
+  }
+  return native_window->box;
+}
 
 static void mbw_window_box_mark_closing(MBWWindowBox *box) {
   if (box == nil) {
@@ -790,14 +808,69 @@ static void mbw_window_box_mark_closing(MBWWindowBox *box) {
   }
 }
 
-MOONBIT_FFI_EXPORT
-void mbw_window_mark_closing(uint64_t box_handle) {
-  MBWWindowBox *box = (MBWWindowBox *)(uintptr_t)box_handle;
+static void mbw_window_box_destroy(MBWWindowBox *box) {
+  if (box == nil) {
+    return;
+  }
   mbw_window_box_mark_closing(box);
+  NSWindow *window = box.window;
+  if (window != nil) {
+    [window close];
+    [window setDelegate:nil];
+  }
+  [box release];
+}
+
+static void mbw_native_window_destroy_box(MBWNativeWindow *native_window) {
+  MBWWindowBox *box = mbw_native_window_box(native_window);
+  if (box == nil) {
+    return;
+  }
+  native_window->box = nil;
+  if (pthread_main_np() != 0) {
+    mbw_window_box_destroy(box);
+  } else {
+    [box performSelectorOnMainThread:@selector(mbwDestroyExternalOwner)
+                          withObject:nil
+                       waitUntilDone:NO];
+  }
+}
+
+static void mbw_native_window_finalize(void *ptr) {
+  mbw_native_window_destroy_box((MBWNativeWindow *)ptr);
+}
+
+static MBWNativeWindow *mbw_native_window_create(MBWWindowBox *box) {
+  MBWNativeWindow *native_window =
+      (MBWNativeWindow *)moonbit_make_external_object(mbw_native_window_finalize,
+                                                      sizeof(MBWNativeWindow));
+  native_window->box = box;
+  return native_window;
 }
 
 MOONBIT_FFI_EXPORT
-uint64_t mbw_create_window(int32_t width, int32_t height) {
+uint64_t mbw_window_identity(MBWNativeWindow *native_window) {
+  return (uint64_t)(uintptr_t)native_window;
+}
+
+MOONBIT_FFI_EXPORT
+uint64_t mbw_window_objc_handle(MBWNativeWindow *native_window) {
+  MBWWindowBox *box = mbw_native_window_box(native_window);
+  return (uint64_t)(uintptr_t)(box == nil ? nil : box.window);
+}
+
+MOONBIT_FFI_EXPORT
+void mbw_window_mark_closing(MBWNativeWindow *native_window) {
+  mbw_window_box_mark_closing(mbw_native_window_box(native_window));
+}
+
+MOONBIT_FFI_EXPORT
+void mbw_window_destroy(MBWNativeWindow *native_window) {
+  mbw_native_window_destroy_box(native_window);
+}
+
+MOONBIT_FFI_EXPORT
+MBWNativeWindow *mbw_create_window(int32_t width, int32_t height) {
   mbw_ensure_app_initialized();
 
   NSRect rect = NSMakeRect(100.0, 100.0, (CGFloat)(width > 0 ? width : 1),
@@ -811,14 +884,14 @@ uint64_t mbw_create_window(int32_t width, int32_t height) {
                                                     backing:NSBackingStoreBuffered
                                                       defer:NO];
   if (window == nil) {
-    return 0;
+    return mbw_native_window_create(nil);
   }
   window.releasedWhenClosed = NO;
 
   MBWWindowDelegate *delegate = [[MBWWindowDelegate alloc] init];
   if (delegate == nil) {
     [window release];
-    return 0;
+    return mbw_native_window_create(nil);
   }
   window.delegate = delegate;
 
@@ -827,7 +900,7 @@ uint64_t mbw_create_window(int32_t width, int32_t height) {
     window.delegate = nil;
     [delegate release];
     [window release];
-    return 0;
+    return mbw_native_window_create(nil);
   }
   content_view.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
   window.contentView = content_view;
@@ -853,7 +926,7 @@ uint64_t mbw_create_window(int32_t width, int32_t height) {
     [content_view release];
     [delegate release];
     [window release];
-    return 0;
+    return mbw_native_window_create(nil);
   }
   box.window = window;
   box.delegate = delegate;
@@ -863,5 +936,5 @@ uint64_t mbw_create_window(int32_t width, int32_t height) {
   [content_view release];
   [delegate release];
   [window release];
-  return (uint64_t)(void *)box;
+  return mbw_native_window_create(box);
 }

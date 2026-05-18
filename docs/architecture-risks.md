@@ -33,6 +33,12 @@ Current control:
 - `MBWWindowBox` is the single owner for the retained `NSWindow`, content view,
   and delegate graph after creation; local `alloc` ownership is released after
   property transfer, and box teardown releases its strong properties.
+- MoonBit now stores owned macOS windows as the opaque `NativeWindow` external
+  object, not as an owned `UInt64`. `mbw_create_window` returns an external
+  object whose finalizer destroys the `MBWWindowBox`; `Window::drop` explicitly
+  calls the same native destroy path for prompt teardown. If the finalizer runs
+  off the AppKit main thread, teardown is transferred back to the main thread.
+  Public raw handle getters still return borrowed `UInt64` AppKit pointers.
 - Native callback trampolines retain MoonBit closures for the duration of each
   invocation, so callback-driven teardown or observer removal cannot release a
   closure while it is still being invoked.
@@ -40,6 +46,14 @@ Current control:
   closures on every failure path. Notification observers also retain themselves
   during callback dispatch so callback-driven observer removal cannot deallocate
   the observer before the Objective-C method returns.
+- MoonBit stores notification and run-loop observers as opaque external objects
+  with native finalizers. Explicit `EventLoop::drop` removal clears the native
+  owner pointer first, so a later finalizer is idempotent instead of double
+  releasing the observer or transferred closure.
+- Copied `CGDisplayModeRef` values are represented as `NativeDisplayMode`
+  external objects. Temporary video-mode enumeration still releases promptly,
+  and the external finalizer covers fullscreen saved-mode state if explicit
+  restore cleanup is skipped.
 - GitHub issue #5 remains open until the reporter confirms the latest release
   no longer reproduces the callback lifetime failure.
 
@@ -107,6 +121,8 @@ Required direction:
 
 - Keep raw handle APIs narrow and document whether a handle is borrowed,
   retained, stable, or only valid during a callback.
+- Do not represent owned native resources as plain `UInt64`; use external
+  objects with finalizers and expose borrowed raw pointers only at the API edge.
 - Do not expose internal selectors such as `rawId` as renderer integration API.
 
 ## Backend File Size And Responsibility Split

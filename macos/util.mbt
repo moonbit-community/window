@@ -172,7 +172,17 @@ fn native_application_shared_handle() -> UInt64 {
 }
 
 ///|
-fn native_window_objc_handle(handle : UInt64) -> UInt64 {
+fn native_window_identity(handle : NativeWindow) -> UInt64 {
+  appkit_window_identity(handle)
+}
+
+///|
+fn native_window_objc_handle(handle : NativeWindow) -> UInt64 {
+  appkit_window_objc_handle(handle)
+}
+
+///|
+fn native_objc_window_from_raw_handle(handle : UInt64) -> UInt64 {
   if handle == (0 : Int).to_uint64() {
     return (0 : Int).to_uint64()
   }
@@ -188,7 +198,7 @@ fn native_window_objc_handle(handle : UInt64) -> UInt64 {
 }
 
 ///|
-fn native_window_content_view_objc_handle(handle : UInt64) -> UInt64 {
+fn native_window_content_view_objc_handle(handle : NativeWindow) -> UInt64 {
   let window = native_window_objc_handle(handle)
   if window == (0 : Int).to_uint64() {
     return (0 : Int).to_uint64()
@@ -197,7 +207,7 @@ fn native_window_content_view_objc_handle(handle : UInt64) -> UInt64 {
 }
 
 ///|
-fn native_window_delegate_objc_handle(handle : UInt64) -> UInt64 {
+fn native_window_delegate_objc_handle(handle : NativeWindow) -> UInt64 {
   let window = native_window_objc_handle(handle)
   if window == (0 : Int).to_uint64() {
     return (0 : Int).to_uint64()

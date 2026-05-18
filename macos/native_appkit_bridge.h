@@ -9,6 +9,7 @@
 #import <stdint.h>
 
 #include <dlfcn.h>
+#include <pthread.h>
 #include <stdlib.h>
 #include <string.h>
 

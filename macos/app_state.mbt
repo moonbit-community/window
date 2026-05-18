@@ -18,7 +18,8 @@ priv enum DeferredCallback {
 ///|
 priv struct WindowHandleEntry {
   raw_id : Int
-  handle : UInt64
+  identity : UInt64
+  native_handle : NativeWindow?
 }
 
 ///|
@@ -406,8 +407,10 @@ fn app_state_queue_native_window_event(
     2 => {
       match window_handle {
         Some(window_handle) => {
-          clear_window_fullscreen_transition_state(window_handle)
-          clear_window_platform_state(window_handle)
+          clear_window_fullscreen_transition_state(
+            native_window_identity(window_handle),
+          )
+          clear_window_platform_state(native_window_identity(window_handle))
         }
         None => ()
       }
@@ -458,19 +461,28 @@ fn app_state_queue_native_window_event(
     9 =>
       match window_handle {
         Some(window_handle) =>
-          set_window_fullscreen_transition_state(window_handle, true)
+          set_window_fullscreen_transition_state(
+            native_window_identity(window_handle),
+            true,
+          )
         None => ()
       }
     10 =>
       match window_handle {
         Some(window_handle) =>
-          set_window_fullscreen_transition_state(window_handle, true)
+          set_window_fullscreen_transition_state(
+            native_window_identity(window_handle),
+            true,
+          )
         None => ()
       }
     11 => {
       match window_handle {
         Some(window_handle) =>
-          set_window_fullscreen_transition_state(window_handle, false)
+          set_window_fullscreen_transition_state(
+            native_window_identity(window_handle),
+            false,
+          )
         None => ()
       }
       app_state_process_queued_fullscreen_request(raw_id)
@@ -486,7 +498,10 @@ fn app_state_queue_native_window_event(
     12 => {
       match window_handle {
         Some(window_handle) =>
-          set_window_fullscreen_transition_state(window_handle, false)
+          set_window_fullscreen_transition_state(
+            native_window_identity(window_handle),
+            false,
+          )
         None => ()
       }
       app_state_process_queued_fullscreen_request(raw_id)
@@ -502,7 +517,10 @@ fn app_state_queue_native_window_event(
     13 => {
       match window_handle {
         Some(window_handle) =>
-          set_window_fullscreen_transition_state(window_handle, false)
+          set_window_fullscreen_transition_state(
+            native_window_identity(window_handle),
+            false,
+          )
         None => ()
       }
       app_state_process_queued_fullscreen_request(raw_id)
@@ -834,20 +852,29 @@ fn native_callback_window_event(
 ///|
 fn app_state_register_window_handle(
   raw_id : Int,
-  window_handle : UInt64,
+  window_handle : NativeWindow,
 ) -> Unit {
   let next_entries : Array[WindowHandleEntry] = []
   let mut replaced = false
+  let window_identity = native_window_identity(window_handle)
   for entry in app_state_runtime.val.window_handles {
     if entry.raw_id == raw_id {
-      next_entries.push({ raw_id, handle: window_handle })
+      next_entries.push({
+        raw_id,
+        identity: window_identity,
+        native_handle: Some(window_handle),
+      })
       replaced = true
     } else {
       next_entries.push(entry)
     }
   }
   if replaced == false {
-    next_entries.push({ raw_id, handle: window_handle })
+    next_entries.push({
+      raw_id,
+      identity: window_identity,
+      native_handle: Some(window_handle),
+    })
   }
   app_state_runtime.val.window_handles = next_entries
   app_state_set_window_position_state(
@@ -871,21 +898,22 @@ fn app_state_unregister_window_handle(raw_id : Int) -> Unit {
 }
 
 ///|
-fn app_state_window_handle(raw_id : Int) -> UInt64? {
+fn app_state_window_handle(raw_id : Int) -> NativeWindow? {
   match
     app_state_runtime.val.window_handles.search_by(entry => {
       entry.raw_id == raw_id
     }) {
-    Some(index) => Some(app_state_runtime.val.window_handles[index].handle)
+    Some(index) => app_state_runtime.val.window_handles[index].native_handle
     None => None
   }
 }
 
 ///|
-fn app_state_window_raw_id(window_handle : UInt64) -> Int? {
+fn app_state_window_raw_id(window_handle : NativeWindow) -> Int? {
+  let window_identity = native_window_identity(window_handle)
   match
     app_state_runtime.val.window_handles.search_by(entry => {
-      entry.handle == window_handle
+      entry.identity == window_identity
     }) {
     Some(index) => Some(app_state_runtime.val.window_handles[index].raw_id)
     None => None
@@ -893,9 +921,10 @@ fn app_state_window_raw_id(window_handle : UInt64) -> Int? {
 }
 
 ///|
-fn app_state_has_window_handle(window_handle : UInt64) -> Bool {
+fn app_state_has_window_handle(window_handle : NativeWindow) -> Bool {
+  let window_identity = native_window_identity(window_handle)
   app_state_runtime.val.window_handles.search_by(entry => {
-    entry.handle == window_handle
+    entry.identity == window_identity
   }) !=
   None
 }

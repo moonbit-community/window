@@ -7,11 +7,49 @@ typedef struct {
   int32_t callback_kind;
 } MBWMainRunLoopObserver;
 
+typedef struct {
+  MBWMainRunLoopObserver *box;
+} MBWMainRunLoopObserverHandle;
+
 @interface MBWNotificationObserver : NSObject
 @property(nonatomic, assign) int32_t callbackKind;
 @property(nonatomic, assign) mbw_lifecycle_trampoline_t trampoline;
 @property(nonatomic, assign) void *closure;
 @end
+
+typedef struct {
+  MBWNotificationObserver *observer;
+} MBWNotificationObserverHandle;
+
+static void mbw_notification_observer_destroy(MBWNotificationObserver *observer) {
+  if (observer == nil) {
+    return;
+  }
+  [[NSNotificationCenter defaultCenter] removeObserver:observer];
+  if (observer.closure != NULL) {
+    moonbit_decref(observer.closure);
+    observer.closure = NULL;
+  }
+  [observer release];
+}
+
+static void mbw_notification_observer_handle_finalize(void *ptr) {
+  MBWNotificationObserverHandle *handle = (MBWNotificationObserverHandle *)ptr;
+  if (handle == NULL) {
+    return;
+  }
+  MBWNotificationObserver *observer = handle->observer;
+  handle->observer = nil;
+  mbw_notification_observer_destroy(observer);
+}
+
+static MBWNotificationObserverHandle *
+mbw_notification_observer_handle_create(MBWNotificationObserver *observer) {
+  MBWNotificationObserverHandle *handle = (MBWNotificationObserverHandle *)moonbit_make_external_object(
+      mbw_notification_observer_handle_finalize, sizeof(MBWNotificationObserverHandle));
+  handle->observer = observer;
+  return handle;
+}
 
 @implementation MBWNotificationObserver
 
@@ -39,21 +77,21 @@ static NSNotificationName mbw_notification_name_from_kind(int32_t notification_k
 }
 
 MOONBIT_FFI_EXPORT
-uint64_t mbw_notification_center_add_observer(mbw_lifecycle_trampoline_t trampoline,
-                                              void *closure, int32_t notification_kind,
-                                              int32_t callback_kind) {
+MBWNotificationObserverHandle *
+mbw_notification_center_add_observer(mbw_lifecycle_trampoline_t trampoline, void *closure,
+                                     int32_t notification_kind, int32_t callback_kind) {
   NSNotificationName name = mbw_notification_name_from_kind(notification_kind);
   if (name == nil || trampoline == NULL || closure == NULL) {
     if (closure != NULL) {
       moonbit_decref(closure);
     }
-    return 0;
+    return mbw_notification_observer_handle_create(nil);
   }
   [NSApplication sharedApplication];
   MBWNotificationObserver *observer = [[MBWNotificationObserver alloc] init];
   if (observer == nil) {
     moonbit_decref(closure);
-    return 0;
+    return mbw_notification_observer_handle_create(nil);
   }
   observer.callbackKind = callback_kind;
   observer.trampoline = trampoline;
@@ -62,23 +100,17 @@ uint64_t mbw_notification_center_add_observer(mbw_lifecycle_trampoline_t trampol
                                            selector:@selector(handleNotification:)
                                                name:name
                                              object:nil];
-  return (uint64_t)(void *)observer;
+  return mbw_notification_observer_handle_create(observer);
 }
 
 MOONBIT_FFI_EXPORT
-void mbw_notification_center_remove_observer(uint64_t observer_handle) {
-  if (observer_handle == 0) {
+void mbw_notification_center_remove_observer(MBWNotificationObserverHandle *observer_handle) {
+  if (observer_handle == NULL) {
     return;
   }
-  MBWNotificationObserver *observer = (MBWNotificationObserver *)(void *)observer_handle;
-  if (observer != nil) {
-    [[NSNotificationCenter defaultCenter] removeObserver:observer];
-    if (observer.closure != NULL) {
-      moonbit_decref(observer.closure);
-      observer.closure = NULL;
-    }
-    [observer release];
-  }
+  MBWNotificationObserver *observer = observer_handle->observer;
+  observer_handle->observer = nil;
+  mbw_notification_observer_destroy(observer);
 }
 
 static CFRunLoopActivity mbw_main_run_loop_activity_from_kind(int32_t activity_kind) {
@@ -103,52 +135,7 @@ static void mbw_main_run_loop_observer_callback(CFRunLoopObserverRef observer,
   mbw_call_lifecycle_trampoline(box->trampoline, box->closure, box->callback_kind);
 }
 
-MOONBIT_FFI_EXPORT
-uint64_t mbw_main_run_loop_add_observer(mbw_lifecycle_trampoline_t trampoline, void *closure,
-                                         int32_t activity_kind, int32_t callback_kind,
-                                         int32_t order) {
-  if (trampoline == NULL || closure == NULL) {
-    if (closure != NULL) {
-      moonbit_decref(closure);
-    }
-    return 0;
-  }
-  CFRunLoopActivity activity = mbw_main_run_loop_activity_from_kind(activity_kind);
-  if (activity == 0) {
-    moonbit_decref(closure);
-    return 0;
-  }
-  mbw_ensure_app_initialized();
-  MBWMainRunLoopObserver *box = (MBWMainRunLoopObserver *)malloc(sizeof(MBWMainRunLoopObserver));
-  if (box == NULL) {
-    moonbit_decref(closure);
-    return 0;
-  }
-  memset(box, 0, sizeof(MBWMainRunLoopObserver));
-  box->trampoline = trampoline;
-  box->closure = closure;
-  box->callback_kind = callback_kind;
-  CFRunLoopObserverContext context = { 0 };
-  context.info = box;
-  CFRunLoopObserverRef observer_ref = CFRunLoopObserverCreate(
-      kCFAllocatorDefault, activity, true, (CFIndex)order, mbw_main_run_loop_observer_callback,
-      &context);
-  if (observer_ref == NULL) {
-    moonbit_decref(box->closure);
-    free(box);
-    return 0;
-  }
-  box->observer = observer_ref;
-  CFRunLoopAddObserver(CFRunLoopGetMain(), observer_ref, kCFRunLoopCommonModes);
-  return (uint64_t)(void *)box;
-}
-
-MOONBIT_FFI_EXPORT
-void mbw_main_run_loop_remove_observer(uint64_t observer_handle) {
-  if (observer_handle == 0) {
-    return;
-  }
-  MBWMainRunLoopObserver *box = (MBWMainRunLoopObserver *)(void *)observer_handle;
+static void mbw_main_run_loop_observer_destroy_box(MBWMainRunLoopObserver *box) {
   if (box == NULL) {
     return;
   }
@@ -162,4 +149,72 @@ void mbw_main_run_loop_remove_observer(uint64_t observer_handle) {
     box->closure = NULL;
   }
   free(box);
+}
+
+static void mbw_main_run_loop_observer_handle_finalize(void *ptr) {
+  MBWMainRunLoopObserverHandle *handle = (MBWMainRunLoopObserverHandle *)ptr;
+  if (handle == NULL) {
+    return;
+  }
+  MBWMainRunLoopObserver *box = handle->box;
+  handle->box = NULL;
+  mbw_main_run_loop_observer_destroy_box(box);
+}
+
+static MBWMainRunLoopObserverHandle *
+mbw_main_run_loop_observer_handle_create(MBWMainRunLoopObserver *box) {
+  MBWMainRunLoopObserverHandle *handle = (MBWMainRunLoopObserverHandle *)moonbit_make_external_object(
+      mbw_main_run_loop_observer_handle_finalize, sizeof(MBWMainRunLoopObserverHandle));
+  handle->box = box;
+  return handle;
+}
+
+MOONBIT_FFI_EXPORT
+MBWMainRunLoopObserverHandle *
+mbw_main_run_loop_add_observer(mbw_lifecycle_trampoline_t trampoline, void *closure,
+                               int32_t activity_kind, int32_t callback_kind, int32_t order) {
+  if (trampoline == NULL || closure == NULL) {
+    if (closure != NULL) {
+      moonbit_decref(closure);
+    }
+    return mbw_main_run_loop_observer_handle_create(NULL);
+  }
+  CFRunLoopActivity activity = mbw_main_run_loop_activity_from_kind(activity_kind);
+  if (activity == 0) {
+    moonbit_decref(closure);
+    return mbw_main_run_loop_observer_handle_create(NULL);
+  }
+  mbw_ensure_app_initialized();
+  MBWMainRunLoopObserver *box = (MBWMainRunLoopObserver *)malloc(sizeof(MBWMainRunLoopObserver));
+  if (box == NULL) {
+    moonbit_decref(closure);
+    return mbw_main_run_loop_observer_handle_create(NULL);
+  }
+  memset(box, 0, sizeof(MBWMainRunLoopObserver));
+  box->trampoline = trampoline;
+  box->closure = closure;
+  box->callback_kind = callback_kind;
+  CFRunLoopObserverContext context = { 0 };
+  context.info = box;
+  CFRunLoopObserverRef observer_ref = CFRunLoopObserverCreate(
+      kCFAllocatorDefault, activity, true, (CFIndex)order, mbw_main_run_loop_observer_callback,
+      &context);
+  if (observer_ref == NULL) {
+    moonbit_decref(box->closure);
+    free(box);
+    return mbw_main_run_loop_observer_handle_create(NULL);
+  }
+  box->observer = observer_ref;
+  CFRunLoopAddObserver(CFRunLoopGetMain(), observer_ref, kCFRunLoopCommonModes);
+  return mbw_main_run_loop_observer_handle_create(box);
+}
+
+MOONBIT_FFI_EXPORT
+void mbw_main_run_loop_remove_observer(MBWMainRunLoopObserverHandle *observer_handle) {
+  if (observer_handle == NULL) {
+    return;
+  }
+  MBWMainRunLoopObserver *box = observer_handle->box;
+  observer_handle->box = NULL;
+  mbw_main_run_loop_observer_destroy_box(box);
 }

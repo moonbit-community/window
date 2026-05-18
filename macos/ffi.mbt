@@ -1,8 +1,9 @@
 ///|
 // Port target: winit-reference/winit-appkit/src/ffi.rs
 // MoonBit adaptation:
-// 1. Raw pointer-like values are represented as UInt64.
-// 2. kTISPropertyUnicodeKeyLayoutData is modeled by creating a CFString key.
+// 1. Borrowed pointer-like values are represented as UInt64.
+// 2. Owned native resources use opaque external objects with native finalizers.
+// 3. kTISPropertyUnicodeKeyLayoutData is modeled by creating a CFString key.
 
 extern "C" fn native_cg_display_create_uuid_from_display_id(
   display : UInt,
@@ -91,11 +92,12 @@ extern "C" fn native_notification_center_add_observer(
   callback : (Int) -> Unit,
   notification_kind : Int,
   callback_kind : Int,
-) -> UInt64 = "mbw_notification_center_add_observer"
+) -> NotificationObserver = "mbw_notification_center_add_observer"
 
 ///|
+#borrow(observer_handle)
 extern "C" fn appkit_notification_center_remove_observer(
-  observer_handle : UInt64,
+  observer_handle : NotificationObserver,
 ) -> Unit = "mbw_notification_center_remove_observer"
 
 ///|
@@ -107,11 +109,12 @@ extern "C" fn native_main_run_loop_add_observer(
   activity_kind : Int,
   callback_kind : Int,
   order : Int,
-) -> UInt64 = "mbw_main_run_loop_add_observer"
+) -> MainRunLoopObserver = "mbw_main_run_loop_add_observer"
 
 ///|
+#borrow(observer_handle)
 extern "C" fn appkit_main_run_loop_remove_observer(
-  observer_handle : UInt64,
+  observer_handle : MainRunLoopObserver,
 ) -> Unit = "mbw_main_run_loop_remove_observer"
 
 ///|
@@ -250,10 +253,83 @@ extern "C" fn native_install_sync_query_callback(
 extern "C" fn native_override_send_event() -> Unit = "mbw_override_send_event"
 
 ///|
-extern "C" fn appkit_create_window(width : Int, height : Int) -> UInt64 = "mbw_create_window"
+type NativeWindow
 
 ///|
-extern "C" fn appkit_window_mark_closing(window_handle : UInt64) -> Unit = "mbw_window_mark_closing"
+type NotificationObserver
+
+///|
+impl Debug for NotificationObserver with to_repr(_self) {
+  Repr::opaque_("NotificationObserver", Repr::literal("<appkit>"))
+}
+
+///|
+type MainRunLoopObserver
+
+///|
+impl Debug for MainRunLoopObserver with to_repr(_self) {
+  Repr::opaque_("MainRunLoopObserver", Repr::literal("<appkit>"))
+}
+
+///|
+type NativeDisplayMode
+
+///|
+impl Eq for NativeDisplayMode with equal(self, other) {
+  native_monitor_display_mode_identity(self) ==
+  native_monitor_display_mode_identity(other)
+}
+
+///|
+impl Eq for NativeDisplayMode with not_equal(self, other) {
+  native_monitor_display_mode_identity(self) !=
+  native_monitor_display_mode_identity(other)
+}
+
+///|
+impl Debug for NativeDisplayMode with to_repr(self) {
+  Repr::opaque_(
+    "NativeDisplayMode",
+    Repr::literal("0x" + native_monitor_display_mode_identity(self).to_string()),
+  )
+}
+
+///|
+impl Eq for NativeWindow with equal(self, other) {
+  appkit_window_identity(self) == appkit_window_identity(other)
+}
+
+///|
+impl Eq for NativeWindow with not_equal(self, other) {
+  appkit_window_identity(self) != appkit_window_identity(other)
+}
+
+///|
+impl Debug for NativeWindow with to_repr(self) {
+  Repr::opaque_(
+    "NativeWindow",
+    Repr::literal("0x" + appkit_window_identity(self).to_string()),
+  )
+}
+
+///|
+extern "C" fn appkit_create_window(width : Int, height : Int) -> NativeWindow = "mbw_create_window"
+
+///|
+#borrow(window_handle)
+extern "C" fn appkit_window_identity(window_handle : NativeWindow) -> UInt64 = "mbw_window_identity"
+
+///|
+#borrow(window_handle)
+extern "C" fn appkit_window_objc_handle(window_handle : NativeWindow) -> UInt64 = "mbw_window_objc_handle"
+
+///|
+#borrow(window_handle)
+extern "C" fn appkit_window_destroy(window_handle : NativeWindow) -> Unit = "mbw_window_destroy"
+
+///|
+#borrow(window_handle)
+extern "C" fn appkit_window_mark_closing(window_handle : NativeWindow) -> Unit = "mbw_window_mark_closing"
 
 ///|
 #borrow(rgba)
@@ -515,12 +591,12 @@ extern "C" fn native_monitor_find_display_mode_handle(
   height : Int,
   bit_depth : Int,
   refresh_rate_millihertz : Int,
-) -> UInt64 = "mbw_find_display_mode_handle"
+) -> NativeDisplayMode = "mbw_find_display_mode_handle"
 
 ///|
 extern "C" fn native_monitor_copy_current_display_mode_handle(
   monitor_id : UInt,
-) -> UInt64 = "mbw_copy_current_display_mode_handle"
+) -> NativeDisplayMode = "mbw_copy_current_display_mode_handle"
 
 ///|
 extern "C" fn native_monitor_copy_display_mode_count(monitor_id : UInt) -> Int = "mbw_copy_display_mode_count"
@@ -529,36 +605,58 @@ extern "C" fn native_monitor_copy_display_mode_count(monitor_id : UInt) -> Int =
 extern "C" fn native_monitor_copy_display_mode_handle_at(
   monitor_id : UInt,
   index : Int,
-) -> UInt64 = "mbw_copy_display_mode_handle_at"
+) -> NativeDisplayMode = "mbw_copy_display_mode_handle_at"
 
 ///|
-extern "C" fn native_monitor_display_mode_width(mode_handle : UInt64) -> Int = "mbw_display_mode_width"
+#borrow(mode_handle)
+extern "C" fn native_monitor_display_mode_identity(
+  mode_handle : NativeDisplayMode,
+) -> UInt64 = "mbw_display_mode_identity"
 
 ///|
-extern "C" fn native_monitor_display_mode_height(mode_handle : UInt64) -> Int = "mbw_display_mode_height"
+#borrow(mode_handle)
+extern "C" fn native_monitor_display_mode_is_valid(
+  mode_handle : NativeDisplayMode,
+) -> Int = "mbw_display_mode_is_valid"
 
 ///|
+#borrow(mode_handle)
+extern "C" fn native_monitor_display_mode_width(
+  mode_handle : NativeDisplayMode,
+) -> Int = "mbw_display_mode_width"
+
+///|
+#borrow(mode_handle)
+extern "C" fn native_monitor_display_mode_height(
+  mode_handle : NativeDisplayMode,
+) -> Int = "mbw_display_mode_height"
+
+///|
+#borrow(mode_handle)
 extern "C" fn native_monitor_display_mode_bit_depth(
-  mode_handle : UInt64,
+  mode_handle : NativeDisplayMode,
 ) -> Int = "mbw_display_mode_bit_depth"
 
 ///|
+#borrow(mode_handle)
 extern "C" fn native_monitor_display_mode_refresh_rate_millihertz(
-  mode_handle : UInt64,
+  mode_handle : NativeDisplayMode,
 ) -> Int = "mbw_display_mode_refresh_rate_millihertz"
 
 ///|
+#borrow(mode_handle)
 extern "C" fn native_monitor_release_display_mode_handle(
-  mode_handle : UInt64,
+  mode_handle : NativeDisplayMode,
 ) -> Unit = "mbw_release_display_mode_handle"
 
 ///|
 extern "C" fn native_monitor_capture_display(monitor_id : UInt) -> Int = "mbw_capture_display"
 
 ///|
+#borrow(mode_handle)
 extern "C" fn native_monitor_set_display_mode_handle(
   monitor_id : UInt,
-  mode_handle : UInt64,
+  mode_handle : NativeDisplayMode,
 ) -> Int = "mbw_set_display_mode_handle"
 
 ///|
