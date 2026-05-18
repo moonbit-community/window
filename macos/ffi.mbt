@@ -253,6 +253,9 @@ extern "C" fn native_override_send_event() -> Unit = "mbw_override_send_event"
 extern "C" fn appkit_create_window(width : Int, height : Int) -> UInt64 = "mbw_create_window"
 
 ///|
+extern "C" fn appkit_window_mark_closing(window_handle : UInt64) -> Unit = "mbw_window_mark_closing"
+
+///|
 #borrow(rgba)
 extern "C" fn appkit_custom_cursor_create_rgba(
   rgba : Bytes,

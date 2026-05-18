@@ -2354,6 +2354,7 @@ fn close_window(window_handle : UInt64) -> Unit {
   }
   native_window_forget_standard_frame(window_handle)
   clear_window_fullscreen_transition_state(window_handle)
+  appkit_window_mark_closing(window_handle)
   let window = native_window_objc_handle(window_handle)
   if window != (0 : Int).to_uint64() {
     appkit_objc_msg_send_void(window, objc_runtime_selector_handle("close"))

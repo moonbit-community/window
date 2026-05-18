@@ -97,6 +97,8 @@ static void mbw_emit_drag_event(int32_t raw_id, int32_t kind, id<NSDraggingInfo>
 
 @interface MBWWindowDelegate : NSObject <NSWindowDelegate, NSDraggingDestination>
 @property(nonatomic, assign) int32_t rawId;
+@property(nonatomic, assign) BOOL closing;
+@property(nonatomic, assign) BOOL destroyedEmitted;
 @end
 
 @interface MBWWindowBox : NSObject
@@ -601,13 +603,40 @@ static void mbw_emit_drag_event(int32_t raw_id, int32_t kind, id<NSDraggingInfo>
 
 @implementation MBWWindowDelegate
 
+- (BOOL)mbw_canEmitEvent {
+  return self.rawId > 0 && !self.closing && !self.destroyedEmitted;
+}
+
+- (void)mbw_emitEventKind:(int32_t)kind
+                     arg0:(int32_t)arg0
+                     arg1:(int32_t)arg1
+                     arg2:(int32_t)arg2
+                   arg3F64:(double)arg3F64 {
+  if (![self mbw_canEmitEvent]) {
+    return;
+  }
+  mbw_call_window_event_trampoline(kind, self.rawId, arg0, arg1, arg2, arg3F64);
+}
+
+- (void)mbw_emitDestroyedIfNeeded {
+  if (self.destroyedEmitted || self.rawId <= 0) {
+    return;
+  }
+  self.destroyedEmitted = YES;
+  mbw_call_window_event_trampoline(2, self.rawId, 0, 0, 0, 0.0);
+}
+
 - (BOOL)windowShouldClose:(id)sender {
   (void)sender;
+  if (![self mbw_canEmitEvent]) {
+    return YES;
+  }
   mbw_call_window_event_trampoline(1, self.rawId, 0, 0, 0, 0.0);
   return NO;
 }
 
 - (void)windowWillClose:(NSNotification *)notification {
+  self.closing = YES;
   NSWindow *window = notification.object;
   if ([window isKindOfClass:[NSWindow class]]) {
     NSView *content_view = [window contentView];
@@ -615,68 +644,75 @@ static void mbw_emit_drag_event(int32_t raw_id, int32_t kind, id<NSDraggingInfo>
       [[NSNotificationCenter defaultCenter] removeObserver:content_view
                                                       name:NSViewFrameDidChangeNotification
                                                     object:content_view];
+      if ([content_view isKindOfClass:[MBWContentView class]]) {
+        ((MBWContentView *)content_view).rawId = 0;
+      }
     }
     [window setDelegate:nil];
   }
-  mbw_call_window_event_trampoline(2, self.rawId, 0, 0, 0, 0.0);
+  [self mbw_emitDestroyedIfNeeded];
+  self.rawId = 0;
 }
 
 - (void)windowDidBecomeKey:(NSNotification *)notification {
   (void)notification;
-  mbw_call_window_event_trampoline(3, self.rawId, 1, 0, 0, 0.0);
+  [self mbw_emitEventKind:3 arg0:1 arg1:0 arg2:0 arg3F64:0.0];
 }
 
 - (void)windowDidResignKey:(NSNotification *)notification {
   (void)notification;
-  mbw_call_window_event_trampoline(3, self.rawId, 0, 0, 0, 0.0);
+  [self mbw_emitEventKind:3 arg0:0 arg1:0 arg2:0 arg3F64:0.0];
 }
 
 - (void)windowDidMove:(NSNotification *)notification {
   (void)notification;
-  mbw_call_window_event_trampoline(4, self.rawId, 0, 0, 0, 0.0);
+  [self mbw_emitEventKind:4 arg0:0 arg1:0 arg2:0 arg3F64:0.0];
 }
 
 - (void)windowDidResize:(NSNotification *)notification {
   (void)notification;
-  mbw_call_window_event_trampoline(4, self.rawId, 0, 0, 0, 0.0);
+  [self mbw_emitEventKind:4 arg0:0 arg1:0 arg2:0 arg3F64:0.0];
 }
 
 - (void)windowDidChangeBackingProperties:(NSNotification *)notification {
   (void)notification;
-  mbw_call_window_event_trampoline(5, self.rawId, 0, 0, 0, 0.0);
+  [self mbw_emitEventKind:5 arg0:0 arg1:0 arg2:0 arg3F64:0.0];
 }
 
 - (void)windowDidChangeOcclusionState:(NSNotification *)notification {
   (void)notification;
-  mbw_call_window_event_trampoline(7, self.rawId, 0, 0, 0, 0.0);
+  [self mbw_emitEventKind:7 arg0:0 arg1:0 arg2:0 arg3F64:0.0];
 }
 
 - (void)windowWillEnterFullScreen:(NSNotification *)notification {
   (void)notification;
-  mbw_call_window_event_trampoline(9, self.rawId, 0, 0, 0, 0.0);
+  [self mbw_emitEventKind:9 arg0:0 arg1:0 arg2:0 arg3F64:0.0];
 }
 
 - (void)windowWillExitFullScreen:(NSNotification *)notification {
   (void)notification;
-  mbw_call_window_event_trampoline(10, self.rawId, 0, 0, 0, 0.0);
+  [self mbw_emitEventKind:10 arg0:0 arg1:0 arg2:0 arg3F64:0.0];
 }
 
 - (void)windowDidEnterFullScreen:(NSNotification *)notification {
   (void)notification;
-  mbw_call_window_event_trampoline(11, self.rawId, 0, 0, 0, 0.0);
+  [self mbw_emitEventKind:11 arg0:0 arg1:0 arg2:0 arg3F64:0.0];
 }
 
 - (void)windowDidExitFullScreen:(NSNotification *)notification {
   (void)notification;
-  mbw_call_window_event_trampoline(12, self.rawId, 0, 0, 0, 0.0);
+  [self mbw_emitEventKind:12 arg0:0 arg1:0 arg2:0 arg3F64:0.0];
 }
 
 - (void)windowDidFailToEnterFullScreen:(NSWindow *)window {
   (void)window;
-  mbw_call_window_event_trampoline(13, self.rawId, 0, 0, 0, 0.0);
+  [self mbw_emitEventKind:13 arg0:0 arg1:0 arg2:0 arg3F64:0.0];
 }
 
 - (NSDragOperation)draggingEntered:(id<NSDraggingInfo>)sender {
+  if (![self mbw_canEmitEvent]) {
+    return NSDragOperationNone;
+  }
   if (!mbw_drag_has_paths(sender)) {
     return NSDragOperationNone;
   }
@@ -689,6 +725,9 @@ static void mbw_emit_drag_event(int32_t raw_id, int32_t kind, id<NSDraggingInfo>
 }
 
 - (NSDragOperation)draggingUpdated:(id<NSDraggingInfo>)sender {
+  if (![self mbw_canEmitEvent]) {
+    return NSDragOperationNone;
+  }
   if (!mbw_drag_has_paths(sender)) {
     return NSDragOperationNone;
   }
@@ -697,14 +736,23 @@ static void mbw_emit_drag_event(int32_t raw_id, int32_t kind, id<NSDraggingInfo>
 }
 
 - (void)draggingExited:(id<NSDraggingInfo>)sender {
+  if (![self mbw_canEmitEvent]) {
+    return;
+  }
   mbw_emit_drag_event(self.rawId, 12, sender);
 }
 
 - (BOOL)prepareForDragOperation:(id<NSDraggingInfo>)sender {
+  if (![self mbw_canEmitEvent]) {
+    return NO;
+  }
   return mbw_drag_has_paths(sender);
 }
 
 - (BOOL)performDragOperation:(id<NSDraggingInfo>)sender {
+  if (![self mbw_canEmitEvent]) {
+    return NO;
+  }
   if (!mbw_drag_has_paths(sender)) {
     return NO;
   }
@@ -719,7 +767,34 @@ static void mbw_emit_drag_event(int32_t raw_id, int32_t kind, id<NSDraggingInfo>
 @end
 
 @implementation MBWWindowBox
+
+- (void)dealloc {
+  self.window = nil;
+  self.delegate = nil;
+  self.contentView = nil;
+  [super dealloc];
+}
+
 @end
+
+static void mbw_window_box_mark_closing(MBWWindowBox *box) {
+  if (box == nil) {
+    return;
+  }
+  box.delegate.closing = YES;
+  if (box.contentView != nil) {
+    [[NSNotificationCenter defaultCenter] removeObserver:box.contentView
+                                                    name:NSViewFrameDidChangeNotification
+                                                  object:box.contentView];
+    box.contentView.rawId = 0;
+  }
+}
+
+MOONBIT_FFI_EXPORT
+void mbw_window_mark_closing(uint64_t box_handle) {
+  MBWWindowBox *box = (MBWWindowBox *)(uintptr_t)box_handle;
+  mbw_window_box_mark_closing(box);
+}
 
 MOONBIT_FFI_EXPORT
 uint64_t mbw_create_window(int32_t width, int32_t height) {
@@ -741,9 +816,19 @@ uint64_t mbw_create_window(int32_t width, int32_t height) {
   window.releasedWhenClosed = NO;
 
   MBWWindowDelegate *delegate = [[MBWWindowDelegate alloc] init];
+  if (delegate == nil) {
+    [window release];
+    return 0;
+  }
   window.delegate = delegate;
 
   MBWContentView *content_view = [[MBWContentView alloc] initWithFrame:window.contentView.bounds];
+  if (content_view == nil) {
+    window.delegate = nil;
+    [delegate release];
+    [window release];
+    return 0;
+  }
   content_view.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
   window.contentView = content_view;
   [window setInitialFirstResponder:content_view];
@@ -760,11 +845,23 @@ uint64_t mbw_create_window(int32_t width, int32_t height) {
   [window setAcceptsMouseMovedEvents:YES];
 
   MBWWindowBox *box = [[MBWWindowBox alloc] init];
+  if (box == nil) {
+    [[NSNotificationCenter defaultCenter] removeObserver:content_view
+                                                    name:NSViewFrameDidChangeNotification
+                                                  object:content_view];
+    window.delegate = nil;
+    [content_view release];
+    [delegate release];
+    [window release];
+    return 0;
+  }
   box.window = window;
   box.delegate = delegate;
   box.contentView = content_view;
   [window orderOut:nil];
 
-  [box retain];
+  [content_view release];
+  [delegate release];
+  [window release];
   return (uint64_t)(void *)box;
 }

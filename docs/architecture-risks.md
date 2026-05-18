@@ -26,9 +26,20 @@ Current control:
   snapshot `NSEvent` inside ObjC and pass primitive/c-string payloads to
   MoonBit. IME key-down forwarding uses MoonBit pending key snapshot state
   instead of replaying an AppKit event handle.
+- Window close begins with an explicit native closing marker. The marker
+  removes content-view frame observers, clears the content-view raw id, blocks
+  normal delegate/drag event emission, and lets the delegate emit `Destroyed`
+  at most once before clearing its raw id.
+- `MBWWindowBox` is the single owner for the retained `NSWindow`, content view,
+  and delegate graph after creation; local `alloc` ownership is released after
+  property transfer, and box teardown releases its strong properties.
 - Native callback trampolines retain MoonBit closures for the duration of each
   invocation, so callback-driven teardown or observer removal cannot release a
   closure while it is still being invoked.
+- Native notification/run-loop observer creation consumes owned MoonBit
+  closures on every failure path. Notification observers also retain themselves
+  during callback dispatch so callback-driven observer removal cannot deallocate
+  the observer before the Objective-C method returns.
 - GitHub issue #5 remains open until the reporter confirms the latest release
   no longer reproduces the callback lifetime failure.
 
@@ -51,6 +62,9 @@ Current control:
 
 - macOS tests are compiled by `moon test --build-only`.
 - Core/dpi tests execute through `scripts/check_ci.sh`.
+- Deferred callback draining re-checks that a registered dispatch handler still
+  exists before each queue pop, so a callback that clears the handler cannot
+  cause the next deferred event to be removed and dropped.
 
 Required direction:
 

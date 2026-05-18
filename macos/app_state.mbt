@@ -237,10 +237,8 @@ fn app_state_take_next_dispatchable_callback() -> DeferredCallback? {
 
 ///|
 fn app_state_dispatch_registered_deferred_callbacks() -> Unit {
-  if app_state_runtime.val.dispatch_callback is None {
-    return ()
-  }
-  while app_state_runtime.val.event_handler_in_use == false {
+  while app_state_runtime.val.event_handler_in_use == false &&
+        app_state_runtime.val.dispatch_callback is Some(_) {
     match app_state_take_next_dispatchable_callback() {
       Some(callback) =>
         if app_state_dispatch_with_registered_callback(callback) == false {

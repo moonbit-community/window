@@ -515,6 +515,27 @@ test "before_waiting_drains_deferred_callbacks_before_about_to_wait" {
 }
 
 ///|
+test "dispatch_registered_deferred_callbacks_keeps_queue_when_handler_is_cleared" {
+  reset_app_state_runtime_for_test()
+  app_state_set_running(true)
+  let seen : Ref[Array[String]] = Ref([])
+  app_state_runtime.val.dispatch_callback = Some(fn(callback) {
+    seen.val.push(callback_name_for_test(callback))
+    app_state_clear_dispatch_handler()
+  })
+  app_state_runtime.val.deferred_callbacks.push(ProxyWakeUp)
+  app_state_runtime.val.deferred_callbacks.push(AboutToWait)
+
+  app_state_dispatch_registered_deferred_callbacks()
+
+  assert_true(seen.val == ["proxy_wake_up"])
+  assert_true(
+    callback_names_for_test(app_state_runtime.val.deferred_callbacks) ==
+    ["about_to_wait"],
+  )
+}
+
+///|
 test "moved_event_is_deduplicated_when_position_is_unchanged" {
   reset_app_state_runtime_for_test()
   app_state_set_running(true)

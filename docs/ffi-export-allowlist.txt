@@ -52,3 +52,4 @@ mbw_objc_msg_send_void_u64_u64
 mbw_objc_release
 mbw_objc_sel_register_name
 mbw_override_send_event
+mbw_window_mark_closing

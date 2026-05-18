@@ -17,7 +17,12 @@ typedef struct {
 
 - (void)handleNotification:(NSNotification *)notification {
   (void)notification;
-  mbw_call_lifecycle_trampoline(self.trampoline, self.closure, self.callbackKind);
+  [self retain];
+  mbw_lifecycle_trampoline_t trampoline = self.trampoline;
+  void *closure = self.closure;
+  int32_t callback_kind = self.callbackKind;
+  mbw_call_lifecycle_trampoline(trampoline, closure, callback_kind);
+  [self release];
 }
 
 @end
@@ -39,11 +44,15 @@ uint64_t mbw_notification_center_add_observer(mbw_lifecycle_trampoline_t trampol
                                               int32_t callback_kind) {
   NSNotificationName name = mbw_notification_name_from_kind(notification_kind);
   if (name == nil || trampoline == NULL || closure == NULL) {
+    if (closure != NULL) {
+      moonbit_decref(closure);
+    }
     return 0;
   }
   [NSApplication sharedApplication];
   MBWNotificationObserver *observer = [[MBWNotificationObserver alloc] init];
   if (observer == nil) {
+    moonbit_decref(closure);
     return 0;
   }
   observer.callbackKind = callback_kind;
@@ -53,7 +62,6 @@ uint64_t mbw_notification_center_add_observer(mbw_lifecycle_trampoline_t trampol
                                            selector:@selector(handleNotification:)
                                                name:name
                                              object:nil];
-  [observer retain];
   return (uint64_t)(void *)observer;
 }
 
@@ -100,15 +108,20 @@ uint64_t mbw_main_run_loop_add_observer(mbw_lifecycle_trampoline_t trampoline, v
                                          int32_t activity_kind, int32_t callback_kind,
                                          int32_t order) {
   if (trampoline == NULL || closure == NULL) {
+    if (closure != NULL) {
+      moonbit_decref(closure);
+    }
     return 0;
   }
   CFRunLoopActivity activity = mbw_main_run_loop_activity_from_kind(activity_kind);
   if (activity == 0) {
+    moonbit_decref(closure);
     return 0;
   }
   mbw_ensure_app_initialized();
   MBWMainRunLoopObserver *box = (MBWMainRunLoopObserver *)malloc(sizeof(MBWMainRunLoopObserver));
   if (box == NULL) {
+    moonbit_decref(closure);
     return 0;
   }
   memset(box, 0, sizeof(MBWMainRunLoopObserver));
