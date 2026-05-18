@@ -174,10 +174,16 @@ pub impl Show for CursorIcon
 
 pub struct CustomCursor {
   // private fields
-} derive(Eq, @debug.Debug)
+}
+pub fn CustomCursor::from_native(UInt64, CustomCursorHandle) -> Self
 pub fn CustomCursor::from_raw(UInt64) -> Self
 pub fn CustomCursor::into_raw(Self) -> UInt64
+pub impl Eq for CustomCursor
 pub impl Show for CustomCursor
+pub impl @debug.Debug for CustomCursor
+
+pub(all) type CustomCursorHandle
+pub impl @debug.Debug for CustomCursorHandle
 
 pub(all) enum CustomCursorSource {
   Rgba(Bytes, Int, Int, Int, Int)

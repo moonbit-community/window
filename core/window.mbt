@@ -366,13 +366,46 @@ pub(all) enum CursorIcon {
 } derive(Eq, Debug)
 
 ///|
+pub(all) type CustomCursorHandle
+
+///|
+pub impl Debug for CustomCursorHandle with to_repr(_self) {
+  Repr::opaque_("CustomCursorHandle", Repr::literal("<native>"))
+}
+
+///|
 pub struct CustomCursor {
   priv raw : UInt64
-} derive(Eq, Debug)
+  priv handle : CustomCursorHandle?
+}
+
+///|
+pub impl Eq for CustomCursor with equal(self, other) {
+  self.raw == other.raw
+}
+
+///|
+pub impl Eq for CustomCursor with not_equal(self, other) {
+  self.raw != other.raw
+}
+
+///|
+pub impl Debug for CustomCursor with to_repr(self) {
+  let _ = self.handle
+  Repr::opaque_("CustomCursor", Repr::literal("0x" + self.raw.to_string()))
+}
 
 ///|
 pub fn CustomCursor::from_raw(raw : UInt64) -> CustomCursor {
-  { raw, }
+  { raw, handle: None }
+}
+
+///|
+pub fn CustomCursor::from_native(
+  raw : UInt64,
+  handle : CustomCursorHandle,
+) -> CustomCursor {
+  { raw, handle: Some(handle) }
 }
 
 ///|

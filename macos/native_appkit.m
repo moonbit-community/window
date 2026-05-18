@@ -70,15 +70,36 @@ int32_t mbw_cgs_set_window_background_blur_radius(int32_t window_number, int32_t
   return result == 0 ? 1 : 0;
 }
 
+typedef struct {
+  NSCursor *cursor;
+} MBWCustomCursorHandle;
+
+static void mbw_custom_cursor_handle_finalize(void *ptr) {
+  MBWCustomCursorHandle *handle = (MBWCustomCursorHandle *)ptr;
+  if (handle == NULL || handle->cursor == nil) {
+    return;
+  }
+  [handle->cursor release];
+  handle->cursor = nil;
+}
+
+static MBWCustomCursorHandle *mbw_custom_cursor_handle_create(NSCursor *cursor) {
+  MBWCustomCursorHandle *handle = (MBWCustomCursorHandle *)moonbit_make_external_object(
+      mbw_custom_cursor_handle_finalize, sizeof(MBWCustomCursorHandle));
+  handle->cursor = cursor;
+  return handle;
+}
+
 MOONBIT_FFI_EXPORT
-uint64_t mbw_custom_cursor_create_rgba(const uint8_t *rgba, int32_t rgba_len, int32_t width,
-                                       int32_t height, int32_t hotspot_x, int32_t hotspot_y) {
+MBWCustomCursorHandle *mbw_custom_cursor_create_rgba(const uint8_t *rgba, int32_t rgba_len,
+                                                    int32_t width, int32_t height,
+                                                    int32_t hotspot_x, int32_t hotspot_y) {
   if (rgba == NULL || width <= 0 || height <= 0 || hotspot_x < 0 || hotspot_y < 0) {
-    return 0;
+    return mbw_custom_cursor_handle_create(nil);
   }
   int32_t expected_len = width * height * 4;
   if (expected_len <= 0 || rgba_len < expected_len) {
-    return 0;
+    return mbw_custom_cursor_handle_create(nil);
   }
 
   NSBitmapImageRep *rep =
@@ -95,14 +116,14 @@ uint64_t mbw_custom_cursor_create_rgba(const uint8_t *rgba, int32_t rgba_len, in
                                              bitsPerPixel:32];
   if (rep == nil || [rep bitmapData] == NULL) {
     [rep release];
-    return 0;
+    return mbw_custom_cursor_handle_create(nil);
   }
   memcpy([rep bitmapData], rgba, (size_t)expected_len);
 
   NSImage *image = [[NSImage alloc] initWithSize:NSMakeSize((CGFloat)width, (CGFloat)height)];
   if (image == nil) {
     [rep release];
-    return 0;
+    return mbw_custom_cursor_handle_create(nil);
   }
   [image addRepresentation:rep];
   [rep release];
@@ -112,10 +133,18 @@ uint64_t mbw_custom_cursor_create_rgba(const uint8_t *rgba, int32_t rgba_len, in
             hotSpot:NSMakePoint((CGFloat)hotspot_x, (CGFloat)hotspot_y)];
   [image release];
   if (cursor == nil) {
-    return 0;
+    return mbw_custom_cursor_handle_create(nil);
   }
 
-  return (uint64_t)(void *)cursor;
+  return mbw_custom_cursor_handle_create(cursor);
+}
+
+MOONBIT_FFI_EXPORT
+uint64_t mbw_custom_cursor_objc_handle(MBWCustomCursorHandle *cursor_handle) {
+  if (cursor_handle == NULL || cursor_handle->cursor == nil) {
+    return 0;
+  }
+  return (uint64_t)(void *)cursor_handle->cursor;
 }
 
 MOONBIT_FFI_EXPORT

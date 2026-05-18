@@ -42,13 +42,13 @@ fn EventLoop::create_custom_cursor_from_rgba_source(
 }
 
 ///|
-fn native_custom_cursor_create_rgba(
+fn native_custom_cursor_create_rgba_handle(
   rgba : Bytes,
   width : Int,
   height : Int,
   hotspot_x : Int,
   hotspot_y : Int,
-) -> UInt64 {
+) -> @core.CustomCursorHandle {
   appkit_custom_cursor_create_rgba(
     rgba,
     rgba.length(),
@@ -90,14 +90,15 @@ fn validate_rgba_cursor_source(
 
 ///|
 fn custom_cursor_from_native(
-  raw : UInt64,
+  handle : @core.CustomCursorHandle,
 ) -> @core.CustomCursor raise @core.RequestError {
+  let raw = appkit_custom_cursor_objc_handle(handle)
   if raw == (0 : Int).to_uint64() {
     raise @core.RequestError::not_supported(
       "Failed to create a native custom cursor from RGBA data",
     )
   } else {
-    let custom = @core.CustomCursor::from_raw(raw)
+    let custom = @core.CustomCursor::from_native(raw, handle)
     ignore(is_animated(custom))
     custom
   }
@@ -114,7 +115,9 @@ fn cursor_from_image(
 ) -> @core.CustomCursor raise @core.RequestError {
   validate_rgba_cursor_source(rgba, width, height, hotspot_x, hotspot_y)
   custom_cursor_from_native(
-    native_custom_cursor_create_rgba(rgba, width, height, hotspot_x, hotspot_y),
+    native_custom_cursor_create_rgba_handle(
+      rgba, width, height, hotspot_x, hotspot_y,
+    ),
   )
 }
 

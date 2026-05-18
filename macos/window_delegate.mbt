@@ -20,7 +20,7 @@ fn clamp_size(size : Int) -> Int {
 }
 
 ///|
-let invisible_cursor_obj_handle : Ref[UInt64] = Ref((0 : Int).to_uint64())
+let invisible_cursor_obj_handle : Ref[@core.CustomCursorHandle?] = Ref(None)
 
 ///|
 let maximized_standard_frame_window_handles : Ref[Array[UInt64]] = Ref([])
@@ -409,11 +409,16 @@ fn native_window_apply_cursor_obj(
 
 ///|
 fn native_invisible_cursor_obj() -> UInt64 {
-  let cached = invisible_cursor_obj_handle.val
-  if cached != (0 : Int).to_uint64() {
-    return cached
+  match invisible_cursor_obj_handle.val {
+    Some(cached) => {
+      let cached_obj = appkit_custom_cursor_objc_handle(cached)
+      if cached_obj != (0 : Int).to_uint64() {
+        return cached_obj
+      }
+    }
+    None => ()
   }
-  let cursor = appkit_custom_cursor_create_rgba(
+  let cursor_handle = appkit_custom_cursor_create_rgba(
     Bytes::make(4, (0 : Int).to_byte()),
     4,
     1,
@@ -421,8 +426,9 @@ fn native_invisible_cursor_obj() -> UInt64 {
     0,
     0,
   )
+  let cursor = appkit_custom_cursor_objc_handle(cursor_handle)
   if cursor != (0 : Int).to_uint64() {
-    invisible_cursor_obj_handle.val = cursor
+    invisible_cursor_obj_handle.val = Some(cursor_handle)
   }
   cursor
 }

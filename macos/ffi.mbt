@@ -340,7 +340,13 @@ extern "C" fn appkit_custom_cursor_create_rgba(
   height : Int,
   hotspot_x : Int,
   hotspot_y : Int,
-) -> UInt64 = "mbw_custom_cursor_create_rgba"
+) -> @core.CustomCursorHandle = "mbw_custom_cursor_create_rgba"
+
+///|
+#borrow(cursor_handle)
+extern "C" fn appkit_custom_cursor_objc_handle(
+  cursor_handle : @core.CustomCursorHandle,
+) -> UInt64 = "mbw_custom_cursor_objc_handle"
 
 ///|
 extern "C" fn appkit_objc_msg_send_u64(

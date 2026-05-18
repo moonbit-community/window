@@ -54,6 +54,10 @@ Current control:
   external objects. Temporary video-mode enumeration still releases promptly,
   and the external finalizer covers fullscreen saved-mode state if explicit
   restore cleanup is skipped.
+- Custom `NSCursor` values created from RGBA data are retained by a
+  backend-agnostic `CustomCursorHandle` external object stored inside
+  `core.CustomCursor`. `CustomCursor::into_raw()` remains a borrowed AppKit
+  pointer projection used only at the platform edge.
 - GitHub issue #5 remains open until the reporter confirms the latest release
   no longer reproduces the callback lifetime failure.
 
