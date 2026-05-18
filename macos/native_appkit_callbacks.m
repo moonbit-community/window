@@ -26,13 +26,21 @@ void mbw_call_window_event_trampoline(int32_t kind, int32_t raw_id, int32_t arg0
   moonbit_decref(closure);
 }
 
-void mbw_call_input_event_trampoline(int32_t raw_id, int32_t kind, uint64_t event_handle) {
+void mbw_call_input_event_trampoline(
+    int32_t raw_id, int32_t kind, int32_t event_type, double x, double y, int32_t state,
+    int32_t button, int32_t modifier_flags, int32_t scancode, int32_t repeat,
+    int32_t pointer_source, int32_t pointer_kind, int32_t scroll_delta_kind, double delta_x,
+    double delta_y, int32_t phase, uint64_t text_with_all_modifiers,
+    uint64_t text_ignoring_modifiers, uint64_t text_without_modifiers) {
   if (g_input_event_trampoline == NULL || g_input_event_closure == NULL) {
     return;
   }
   void *closure = g_input_event_closure;
   moonbit_incref(closure);
-  g_input_event_trampoline(closure, raw_id, kind, event_handle);
+  g_input_event_trampoline(closure, raw_id, kind, event_type, x, y, state, button,
+                           modifier_flags, scancode, repeat, pointer_source, pointer_kind,
+                           scroll_delta_kind, delta_x, delta_y, phase, text_with_all_modifiers,
+                           text_ignoring_modifiers, text_without_modifiers);
   moonbit_decref(closure);
 }
 

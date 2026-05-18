@@ -516,8 +516,33 @@ fn app_state_queue_native_window_event(
 ///|
 fn app_state_install_native_callbacks() -> Unit {
   native_install_input_event_callback(
-    fn(callback, raw_id, kind, event_handle) {
-      callback(raw_id, kind, event_handle)
+    fn(
+      callback,
+      raw_id,
+      kind,
+      event_type,
+      x,
+      y,
+      state,
+      button,
+      modifier_flags,
+      scancode,
+      repeat,
+      pointer_source,
+      pointer_kind,
+      scroll_delta_kind,
+      delta_x,
+      delta_y,
+      phase,
+      text_with_all_modifiers,
+      text_ignoring_modifiers,
+      text_without_modifiers,
+    ) {
+      callback(
+        raw_id, kind, event_type, x, y, state, button, modifier_flags, scancode,
+        repeat, pointer_source, pointer_kind, scroll_delta_kind, delta_x, delta_y,
+        phase, text_with_all_modifiers, text_ignoring_modifiers, text_without_modifiers,
+      )
     },
     native_callback_input_event,
   )
@@ -578,9 +603,100 @@ fn native_callback_will_terminate() -> Unit {
 fn native_callback_input_event(
   raw_id : Int,
   kind : Int,
-  event_handle : UInt64,
+  event_type : Int,
+  x : Double,
+  y : Double,
+  state : Int,
+  button : Int,
+  modifier_flags : Int,
+  scancode : Int,
+  repeat : Int,
+  pointer_source : Int,
+  pointer_kind : Int,
+  scroll_delta_kind : Int,
+  delta_x : Double,
+  delta_y : Double,
+  phase : Int,
+  text_with_all_modifiers : UInt64,
+  text_ignoring_modifiers : UInt64,
+  text_without_modifiers : UInt64,
 ) -> Unit {
-  queue_native_input_event(raw_id, kind, event_handle)
+  let modifiers = native_modifiers_from_modifier_flags(modifier_flags)
+  let text_with_all_modifiers = native_copy_utf8_cstr_bytes(
+    text_with_all_modifiers,
+  )
+  let text_ignoring_modifiers = native_copy_utf8_cstr_bytes(
+    text_ignoring_modifiers,
+  )
+  let mut text_without_modifiers = native_copy_utf8_cstr_bytes(
+    text_without_modifiers,
+  )
+  let mut text_with_all_modifiers = text_with_all_modifiers
+  if kind == 7 && (event_type == 10 || event_type == 11) {
+    let left_alt_pressed = (modifier_flags & 0x20) != 0
+    let right_alt_pressed = (modifier_flags & 0x40) != 0
+    let alt_pressed = left_alt_pressed || right_alt_pressed
+    let control_pressed = (modifier_flags & 262_144) != 0
+    let meta_pressed = (modifier_flags & 1_048_576) != 0
+    if !control_pressed && !meta_pressed {
+      let option_as_alt = option_as_alt_for_window(raw_id)
+      if (option_as_alt == 1 && left_alt_pressed) ||
+        (option_as_alt == 2 && right_alt_pressed) ||
+        (option_as_alt == 3 && alt_pressed) {
+        text_with_all_modifiers = text_ignoring_modifiers
+      }
+    }
+    text_without_modifiers = text_ignoring_modifiers
+  }
+  if kind == 7 && event_type == 12 {
+    let state = modifiers_state_from_native(modifiers)
+    let pressed_modifiers = normalize_pressed_modifier_keys(
+      state,
+      view_pressed_modifiers(raw_id),
+    )
+    view_set_pressed_modifiers(raw_id, pressed_modifiers)
+    app_state_queue_window_callback(
+      @core.WindowId::from_raw(raw_id),
+      ModifiersChanged(@core.Modifiers::from_state(state, pressed_modifiers)),
+    )
+  }
+  if kind == 7 && event_type == 11 && !view_ime_allows_key_up(raw_id) {
+    return ()
+  }
+  if kind == 4 ||
+    kind == 5 ||
+    kind == 13 ||
+    kind == 14 ||
+    kind == 15 ||
+    kind == 16 ||
+    kind == 17 {
+    queue_pointer_motion_event(raw_id, x, y)
+  }
+  queue_input_event(
+    raw_id,
+    kind,
+    x,
+    y,
+    state,
+    button,
+    modifiers,
+    scancode,
+    repeat,
+    pointer_source,
+    pointer_kind,
+    scroll_delta_kind,
+    delta_x,
+    delta_y,
+    phase,
+    text_with_all_modifiers,
+    text_ignoring_modifiers,
+    text_without_modifiers,
+    0,
+    @utf8.encode(""[:], bom=false),
+    -1,
+    -1,
+    @utf8.encode(""[:], bom=false),
+  )
 }
 
 ///|

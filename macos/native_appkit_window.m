@@ -31,6 +31,22 @@ static BOOL mbw_drag_has_paths(id<NSDraggingInfo> sender) {
   return [mbw_drag_paths_string(sender) length] > 0;
 }
 
+static int32_t mbw_nsevent_phase_to_native(NSEventPhase phase) {
+  switch (phase) {
+  case NSEventPhaseMayBegin:
+  case NSEventPhaseBegan:
+    return 1;
+  case NSEventPhaseChanged:
+    return 2;
+  case NSEventPhaseEnded:
+    return 3;
+  case NSEventPhaseCancelled:
+    return 4;
+  default:
+    return 0;
+  }
+}
+
 static NSPoint mbw_drag_location_in_content_view(id<NSDraggingInfo> sender) {
   if (sender == nil) {
     return NSZeroPoint;
@@ -132,15 +148,153 @@ static void mbw_emit_drag_event(int32_t raw_id, int32_t kind, id<NSDraggingInfo>
   if (self.rawId <= 0) {
     return;
   }
-  uint64_t event_handle = 0;
+  int32_t event_type = event == nil ? 0 : (int32_t)event.type;
+  int32_t modifier_flags = event == nil ? 0 : (int32_t)event.modifierFlags;
+  int32_t state = 0;
+  int32_t button = 0;
+  int32_t scancode = 0;
+  int32_t repeat = 0;
+  int32_t pointer_source = 0;
+  int32_t pointer_kind = 0;
+  int32_t scroll_delta_kind = 0;
+  double delta_x = 0.0;
+  double delta_y = 0.0;
+  int32_t phase = 0;
+  NSPoint position = NSZeroPoint;
   if (event != nil) {
-    [event retain];
-    event_handle = (uint64_t)(uintptr_t)(__bridge void *)event;
+    position = [self convertPoint:[event locationInWindow] fromView:nil];
   }
-  mbw_call_input_event_trampoline(self.rawId, kind, event_handle);
-  if (event != nil) {
-    [event release];
+  double scale = self.window == nil || self.window.backingScaleFactor <= 0.0
+                     ? 1.0
+                     : (double)self.window.backingScaleFactor;
+  NSString *text_with_all_modifiers = @"";
+  NSString *text_ignoring_modifiers = @"";
+  NSString *text_without_modifiers = @"";
+
+  switch (kind) {
+  case 1:
+  case 2:
+  case 3:
+    pointer_source = 1;
+    pointer_kind = 1;
+    break;
+  case 4:
+    pointer_source = 1;
+    pointer_kind = 1;
+    if (event_type == NSEventTypeLeftMouseDown || event_type == NSEventTypeRightMouseDown ||
+        event_type == NSEventTypeOtherMouseDown) {
+      state = 1;
+    } else if (event_type == NSEventTypeLeftMouseUp || event_type == NSEventTypeRightMouseUp ||
+               event_type == NSEventTypeOtherMouseUp) {
+      state = 2;
+    }
+    button = event == nil ? 0 : (int32_t)event.buttonNumber;
+    break;
+  case 5:
+    pointer_source = 1;
+    pointer_kind = 1;
+    if (event != nil) {
+      scroll_delta_kind = event.hasPreciseScrollingDeltas ? 2 : 1;
+      delta_x = (double)event.scrollingDeltaX;
+      delta_y = (double)event.scrollingDeltaY;
+      phase = mbw_nsevent_phase_to_native(event.momentumPhase);
+      if (phase == 0) {
+        int32_t event_phase = mbw_nsevent_phase_to_native(event.phase);
+        phase = event_phase == 0 ? 2 : event_phase;
+      }
+    }
+    break;
+  case 7:
+    scancode = event == nil ? 0 : (int32_t)event.keyCode;
+    if (event_type == NSEventTypeKeyDown) {
+      state = 1;
+    } else if (event_type == NSEventTypeKeyUp) {
+      state = 2;
+    } else if (event_type == NSEventTypeFlagsChanged) {
+      switch (scancode) {
+      case 56:
+      case 60:
+        state = (modifier_flags & (int32_t)NSEventModifierFlagShift) != 0 ? 1 : 2;
+        break;
+      case 59:
+      case 62:
+        state = (modifier_flags & (int32_t)NSEventModifierFlagControl) != 0 ? 1 : 2;
+        break;
+      case 58:
+      case 61:
+        state = (modifier_flags & (int32_t)NSEventModifierFlagOption) != 0 ? 1 : 2;
+        break;
+      case 55:
+      case 54:
+        state = (modifier_flags & (int32_t)NSEventModifierFlagCommand) != 0 ? 1 : 2;
+        break;
+      case 57:
+        state = (modifier_flags & (int32_t)NSEventModifierFlagCapsLock) != 0 ? 1 : 2;
+        break;
+      case 63:
+        state = (modifier_flags & (int32_t)NSEventModifierFlagFunction) != 0 ? 1 : 2;
+        break;
+      default:
+        state = 0;
+        break;
+      }
+    }
+    repeat = event != nil && event_type == NSEventTypeKeyDown && event.isARepeat ? 1 : 0;
+    if (event != nil && (event_type == NSEventTypeKeyDown || event_type == NSEventTypeKeyUp)) {
+      text_with_all_modifiers = event.characters == nil ? @"" : event.characters;
+      text_ignoring_modifiers =
+          event.charactersIgnoringModifiers == nil ? @"" : event.charactersIgnoringModifiers;
+      text_without_modifiers = text_ignoring_modifiers;
+    }
+    break;
+  case 13:
+    pointer_source = 1;
+    pointer_kind = 1;
+    delta_x = event == nil ? 0.0 : (double)event.magnification;
+    phase = event == nil ? 0 : mbw_nsevent_phase_to_native(event.phase);
+    break;
+  case 14:
+    pointer_source = 1;
+    pointer_kind = 1;
+    delta_x = event == nil ? 0.0 : (double)event.deltaX;
+    delta_y = event == nil ? 0.0 : (double)event.deltaY;
+    phase = event == nil ? 2 : mbw_nsevent_phase_to_native(event.phase);
+    if (phase == 0) {
+      phase = 2;
+    }
+    break;
+  case 15:
+    pointer_source = 1;
+    pointer_kind = 1;
+    break;
+  case 16:
+    pointer_source = 1;
+    pointer_kind = 1;
+    delta_x = event == nil ? 0.0 : (double)event.rotation;
+    phase = event == nil ? 0 : mbw_nsevent_phase_to_native(event.phase);
+    break;
+  case 17:
+    pointer_source = 1;
+    pointer_kind = 1;
+    state = event == nil ? 0 : (int32_t)event.stage;
+    delta_x = event == nil ? 0.0 : (double)event.pressure;
+    break;
+  default:
+    break;
   }
+  mbw_call_input_event_trampoline(
+      self.rawId, kind, event_type, (double)position.x * scale, (double)position.y * scale, state,
+      button, modifier_flags, scancode, repeat, pointer_source, pointer_kind, scroll_delta_kind,
+      delta_x, delta_y, phase,
+      (uint64_t)(uintptr_t)(text_with_all_modifiers.UTF8String == NULL
+                                ? ""
+                                : text_with_all_modifiers.UTF8String),
+      (uint64_t)(uintptr_t)(text_ignoring_modifiers.UTF8String == NULL
+                                ? ""
+                                : text_ignoring_modifiers.UTF8String),
+      (uint64_t)(uintptr_t)(text_without_modifiers.UTF8String == NULL
+                                ? ""
+                                : text_without_modifiers.UTF8String));
 }
 
 - (int32_t)mbw_i32FromRangeValue:(NSUInteger)value {

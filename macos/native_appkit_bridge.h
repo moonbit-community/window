@@ -15,8 +15,12 @@
 typedef void (*mbw_window_event_trampoline_t)(void *closure, int32_t kind, int32_t raw_id,
                                               int32_t arg0, int32_t arg1, int32_t arg2,
                                               double argd);
-typedef void (*mbw_input_event_trampoline_t)(void *closure, int32_t raw_id, int32_t kind,
-                                             uint64_t event_handle);
+typedef void (*mbw_input_event_trampoline_t)(
+    void *closure, int32_t raw_id, int32_t kind, int32_t event_type, double x, double y,
+    int32_t state, int32_t button, int32_t modifier_flags, int32_t scancode, int32_t repeat,
+    int32_t pointer_source, int32_t pointer_kind, int32_t scroll_delta_kind, double delta_x,
+    double delta_y, int32_t phase, uint64_t text_with_all_modifiers,
+    uint64_t text_ignoring_modifiers, uint64_t text_without_modifiers);
 typedef void (*mbw_text_input_event_trampoline_t)(void *closure, int32_t raw_id, int32_t kind,
                                                   uint64_t event_handle, int32_t state,
                                                   uint64_t text_handle, int32_t cursor_start,
@@ -46,7 +50,12 @@ enum {
 
 void mbw_call_window_event_trampoline(int32_t kind, int32_t raw_id, int32_t arg0, int32_t arg1,
                                       int32_t arg2, double argd);
-void mbw_call_input_event_trampoline(int32_t raw_id, int32_t kind, uint64_t event_handle);
+void mbw_call_input_event_trampoline(
+    int32_t raw_id, int32_t kind, int32_t event_type, double x, double y, int32_t state,
+    int32_t button, int32_t modifier_flags, int32_t scancode, int32_t repeat,
+    int32_t pointer_source, int32_t pointer_kind, int32_t scroll_delta_kind, double delta_x,
+    double delta_y, int32_t phase, uint64_t text_with_all_modifiers,
+    uint64_t text_ignoring_modifiers, uint64_t text_without_modifiers);
 void mbw_call_text_input_event_trampoline(int32_t raw_id, int32_t kind, uint64_t event_handle,
                                           int32_t state, uint64_t text_handle,
                                           int32_t cursor_start, int32_t cursor_end,

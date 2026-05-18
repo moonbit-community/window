@@ -39,6 +39,8 @@ This tracker records macOS-only gaps and fix progress in this repository.
 | MBW-MAC-030 | Local architecture risk | `native_appkit.m` concentrated global C callback state, observer lifetimes, `NSEvent`/`NSDraggingInfo` handoff, and AppKit view/delegate ownership in one file. | DONE | Split into `native_appkit_callbacks.m`, `native_appkit_observers.m`, `native_appkit_window.m`, shared `native_appkit_bridge.h`, and retained `native_appkit.m` for generic AppKit/ObjC utility exports; updated FFI surface check to scan all native stubs |
 | MBW-MAC-031 | Local architecture risk | `NSDraggingInfo*` crossed into MoonBit and was queried there, forcing retain/release around an AppKit callback-scoped object. | DONE | Added dedicated drag snapshot callback: ObjC extracts paths and physical position synchronously, MoonBit receives only primitive payloads; removed obsolete dragging-info handle query path |
 | MBW-MAC-032 | Local architecture risk | Global `sendEvent:` device-event interception passed `NSEvent*` into MoonBit for button/motion extraction. | DONE | Device events are now snapshotted in ObjC and delivered as primitive kind/button/delta payloads; MoonBit no longer queries `NSEvent*` for `DeviceEvent` |
+| MBW-MAC-033 | Local architecture risk | View-level mouse, scroll, gesture, key-up, and modifier callbacks passed `NSEvent*` into MoonBit for field extraction. | DONE | `mbw_emitInputWithKind` now snapshots position, button/key state, modifier flags, scroll/gesture deltas, phases, and text fields in ObjC; MoonBit receives primitive/c-string payloads |
+| MBW-MAC-034 | Local architecture risk | IME `keyDown` forwarding still passes callback-scoped `NSEvent*` through `mbw_emitTextInputWithKind` so MoonBit can replay keyboard input after IME handling. | TODO | Replace with pending key snapshot state: keyDown begin stores primitive key payload, keyDown end forwards stored payload if IME did not consume it |
 | MBW-MAC-005 | GitHub issue #4 | `with_inner_size` not applied on window creation. | DONE | `with_inner_size` maps to `with_surface_size`, and creation path reads `attributes.surface_size()` |
 | MBW-MAC-006 | GitHub issue #2 | `flagsChanged` path crash due invalid character extraction. | DONE | Current path handles modifier events without unsafe text extraction in `flagsChanged` |
 | MBW-MAC-011 | GitHub issue #1 | `rwh_06_window_handle` should expose `NSView*` semantics instead of `NSWindow*`. | DONE | `Window::rwh_06_window_handle()` returns `raw_view_handle` first and only falls back to window handle |
@@ -50,4 +52,4 @@ This tracker records macOS-only gaps and fix progress in this repository.
 
 ## Current Work Queue
 
-_empty_
+| MBW-MAC-034 | TODO | Replace IME keyDown `NSEvent*` forwarding with pending key snapshot state |
