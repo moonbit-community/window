@@ -22,7 +22,7 @@ extract_exports() {
       next if /^\s*$/;
       if(/(mbw_[A-Za-z0-9_]+)\s*\(/){print "$1\n"; $w=0}
     }
-  ' "$ROOT/macos/native_appkit.m" "$ROOT/macos/native_monitor.c" | sort -u
+  ' "$ROOT"/macos/native_*.m "$ROOT"/macos/native_*.c | sort -u
 }
 
 current_exports="$(extract_exports)"

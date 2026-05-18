@@ -7,6 +7,12 @@ import {
 supported_targets = "native"
 
 options(
-  "native-stub": [ "native_monitor.c", "native_appkit.m" ],
+  "native-stub": [
+    "native_monitor.c",
+    "native_appkit_callbacks.m",
+    "native_appkit_observers.m",
+    "native_appkit_window.m",
+    "native_appkit.m",
+  ],
   targets: { "ffi.mbt": [ "native" ] },
 )

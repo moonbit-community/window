@@ -13,6 +13,11 @@ Current control:
 
 - `scripts/check_ffi_surface.sh` prevents accidental FFI surface growth and
   payload-wrapper regressions.
+- Native lifecycle responsibilities are split by ownership boundary:
+  `native_appkit_callbacks.m` owns global MoonBit callback registration and
+  trampoline invocation; `native_appkit_observers.m` owns notification/run-loop
+  observer lifetimes; `native_appkit_window.m` owns `NSView`/`NSWindowDelegate`
+  lifetimes and short-lived `NSEvent`/`NSDraggingInfo` handoff.
 - Native callback trampolines retain MoonBit closures for the duration of each
   invocation, so callback-driven teardown or observer removal cannot release a
   closure while it is still being invoked.
@@ -25,6 +30,8 @@ Required direction:
   workarounds.
 - Prefer narrowing FFI entry points and centralizing callback payload ownership
   before adding more native callbacks.
+- Do not move callback registry, AppKit observer ownership, and window delegate
+  ownership back into the same native source file.
 
 ## AppState Runtime Reentrancy
 
