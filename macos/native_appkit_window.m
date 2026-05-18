@@ -1,27 +1,71 @@
 #import "native_appkit_bridge.h"
 
+static NSString *mbw_drag_paths_string(id<NSDraggingInfo> sender) {
+  if (sender == nil) {
+    return @"";
+  }
+  NSPasteboard *pasteboard = [sender draggingPasteboard];
+  if (pasteboard == nil) {
+    return @"";
+  }
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+  NSArray *paths = [pasteboard propertyListForType:NSFilenamesPboardType];
+#pragma clang diagnostic pop
+  if (![paths isKindOfClass:[NSArray class]] || paths.count == 0) {
+    return @"";
+  }
+  NSMutableArray<NSString *> *strings = [NSMutableArray arrayWithCapacity:paths.count];
+  for (id path in paths) {
+    if ([path isKindOfClass:[NSString class]] && [(NSString *)path length] > 0) {
+      [strings addObject:(NSString *)path];
+    }
+  }
+  if (strings.count == 0) {
+    return @"";
+  }
+  return [strings componentsJoinedByString:@"\n"];
+}
+
+static BOOL mbw_drag_has_paths(id<NSDraggingInfo> sender) {
+  return [mbw_drag_paths_string(sender) length] > 0;
+}
+
+static NSPoint mbw_drag_location_in_content_view(id<NSDraggingInfo> sender) {
+  if (sender == nil) {
+    return NSZeroPoint;
+  }
+  NSPoint location = [sender draggingLocation];
+  NSWindow *window = [sender draggingDestinationWindow];
+  NSView *content_view = [window contentView];
+  if (content_view != nil) {
+    return [content_view convertPoint:location fromView:nil];
+  }
+  return location;
+}
+
+static double mbw_drag_scale_factor(id<NSDraggingInfo> sender) {
+  if (sender == nil) {
+    return 1.0;
+  }
+  NSWindow *window = [sender draggingDestinationWindow];
+  if (window == nil || window.backingScaleFactor <= 0.0) {
+    return 1.0;
+  }
+  return (double)window.backingScaleFactor;
+}
+
 static void mbw_emit_drag_event(int32_t raw_id, int32_t kind, id<NSDraggingInfo> sender) {
   if (raw_id <= 0) {
     return;
   }
-  id dragging_info = sender;
-  if (dragging_info != nil) {
-    [dragging_info retain];
-  }
-  uint64_t dragging_info_handle =
-      dragging_info == nil ? 0 : (uint64_t)(uintptr_t)(__bridge void *)dragging_info;
-  mbw_call_text_input_event_trampoline(raw_id, kind, dragging_info_handle, 0, 0, 0, 0, 0);
-  if (dragging_info != nil) {
-    [dragging_info release];
-  }
-}
-
-static BOOL mbw_query_drag_operation(int32_t raw_id, id<NSDraggingInfo> sender) {
-  if (raw_id <= 0 || sender == nil) {
-    return NO;
-  }
-  uint64_t dragging_info_handle = (uint64_t)(uintptr_t)(__bridge void *)sender;
-  return mbw_sync_query(raw_id, MBW_SYNC_QUERY_DRAG_ACCEPT, dragging_info_handle, 0) != 0;
+  NSString *paths = mbw_drag_paths_string(sender);
+  NSPoint location = mbw_drag_location_in_content_view(sender);
+  double scale = mbw_drag_scale_factor(sender);
+  const char *path_cstr = paths == nil ? "" : [paths UTF8String];
+  mbw_call_drag_event_trampoline(raw_id, kind, (double)location.x * scale,
+                                 (double)location.y * scale, sender == nil ? 0 : 1,
+                                 (uint64_t)(uintptr_t)(path_cstr == NULL ? "" : path_cstr));
 }
 
 @interface MBWContentView : NSView <NSTextInputClient>
@@ -494,7 +538,7 @@ static BOOL mbw_query_drag_operation(int32_t raw_id, id<NSDraggingInfo> sender) 
 }
 
 - (NSDragOperation)draggingEntered:(id<NSDraggingInfo>)sender {
-  if (!mbw_query_drag_operation(self.rawId, sender)) {
+  if (!mbw_drag_has_paths(sender)) {
     return NSDragOperationNone;
   }
   mbw_emit_drag_event(self.rawId, 9, sender);
@@ -506,7 +550,7 @@ static BOOL mbw_query_drag_operation(int32_t raw_id, id<NSDraggingInfo> sender) 
 }
 
 - (NSDragOperation)draggingUpdated:(id<NSDraggingInfo>)sender {
-  if (!mbw_query_drag_operation(self.rawId, sender)) {
+  if (!mbw_drag_has_paths(sender)) {
     return NSDragOperationNone;
   }
   mbw_emit_drag_event(self.rawId, 10, sender);
@@ -518,11 +562,11 @@ static BOOL mbw_query_drag_operation(int32_t raw_id, id<NSDraggingInfo> sender) 
 }
 
 - (BOOL)prepareForDragOperation:(id<NSDraggingInfo>)sender {
-  return mbw_query_drag_operation(self.rawId, sender);
+  return mbw_drag_has_paths(sender);
 }
 
 - (BOOL)performDragOperation:(id<NSDraggingInfo>)sender {
-  if (!mbw_query_drag_operation(self.rawId, sender)) {
+  if (!mbw_drag_has_paths(sender)) {
     return NO;
   }
   mbw_emit_drag_event(self.rawId, 11, sender);

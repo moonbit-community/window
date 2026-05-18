@@ -159,6 +159,24 @@ extern "C" fn native_install_device_event_callback(
 ///|
 #borrow(call_closure)
 #owned(callback)
+extern "C" fn native_install_drag_event_callback(
+  call_closure : FuncRef[
+    (
+      (Int, Int, Double, Double, Int, UInt64) -> Unit,
+      Int,
+      Int,
+      Double,
+      Double,
+      Int,
+      UInt64,
+    ) -> Unit,
+  ],
+  callback : (Int, Int, Double, Double, Int, UInt64) -> Unit,
+) -> Unit = "mbw_install_drag_event_callback"
+
+///|
+#borrow(call_closure)
+#owned(callback)
 extern "C" fn native_install_sync_query_callback(
   call_closure : FuncRef[((Int, Int, UInt64) -> Int, Int, Int, UInt64) -> Int],
   callback : (Int, Int, UInt64) -> Int,

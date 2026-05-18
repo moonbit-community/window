@@ -8,6 +8,8 @@ static mbw_text_input_event_trampoline_t g_text_input_event_trampoline = NULL;
 static void *g_text_input_event_closure = NULL;
 static mbw_device_event_trampoline_t g_device_event_trampoline = NULL;
 static void *g_device_event_closure = NULL;
+static mbw_drag_event_trampoline_t g_drag_event_trampoline = NULL;
+static void *g_drag_event_closure = NULL;
 static mbw_sync_query_trampoline_t g_sync_query_trampoline = NULL;
 static void *g_sync_query_closure = NULL;
 static mbw_send_event_impl_t g_original_send_event_impl = NULL;
@@ -55,6 +57,17 @@ void mbw_call_device_event_trampoline(uint64_t event_handle) {
   void *closure = g_device_event_closure;
   moonbit_incref(closure);
   g_device_event_trampoline(closure, event_handle);
+  moonbit_decref(closure);
+}
+
+void mbw_call_drag_event_trampoline(int32_t raw_id, int32_t kind, double x, double y,
+                                    int32_t has_position, uint64_t path_cstr) {
+  if (g_drag_event_trampoline == NULL || g_drag_event_closure == NULL) {
+    return;
+  }
+  void *closure = g_drag_event_closure;
+  moonbit_incref(closure);
+  g_drag_event_trampoline(closure, raw_id, kind, x, y, has_position, path_cstr);
   moonbit_decref(closure);
 }
 
@@ -167,6 +180,15 @@ void mbw_install_device_event_callback(mbw_device_event_trampoline_t trampoline,
   }
   g_device_event_trampoline = trampoline;
   g_device_event_closure = closure;
+}
+
+MOONBIT_FFI_EXPORT
+void mbw_install_drag_event_callback(mbw_drag_event_trampoline_t trampoline, void *closure) {
+  if (g_drag_event_closure != NULL) {
+    moonbit_decref(g_drag_event_closure);
+  }
+  g_drag_event_trampoline = trampoline;
+  g_drag_event_closure = closure;
 }
 
 MOONBIT_FFI_EXPORT

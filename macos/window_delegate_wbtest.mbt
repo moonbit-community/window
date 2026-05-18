@@ -174,36 +174,6 @@ test "ime_cursor_area_state_preserves_positive_size" {
 }
 
 ///|
-test "dragging_info_has_paths_rejects_null_handle" {
-  assert_false(dragging_info_has_paths((0 : Int).to_uint64()))
-}
-
-///|
-test "native_drag_should_accept_rejects_null_handle" {
-  assert_false(native_drag_should_accept(1, (0 : Int).to_uint64()))
-}
-
-///|
-test "logical_position_f64_to_physical_applies_scale_factor" {
-  assert_eq(
-    logical_position_f64_to_physical(10.5, 20.25, 2.0),
-    PhysicalPositionF64(21.0, 40.5),
-  )
-}
-
-///|
-test "logical_position_f64_to_physical_falls_back_to_identity_scale" {
-  assert_eq(
-    logical_position_f64_to_physical(3.25, 4.5, 0.0),
-    PhysicalPositionF64(3.25, 4.5),
-  )
-  assert_eq(
-    logical_position_f64_to_physical(3.25, 4.5, -2.0),
-    PhysicalPositionF64(3.25, 4.5),
-  )
-}
-
-///|
 test "flip_window_screen_coordinate_y_is_symmetric" {
   let logical_y = 128.0
   let frame_height = 320.0

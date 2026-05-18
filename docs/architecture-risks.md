@@ -18,6 +18,8 @@ Current control:
   trampoline invocation; `native_appkit_observers.m` owns notification/run-loop
   observer lifetimes; `native_appkit_window.m` owns `NSView`/`NSWindowDelegate`
   lifetimes and short-lived `NSEvent`/`NSDraggingInfo` handoff.
+- Drag-and-drop callbacks snapshot `NSDraggingInfo` inside ObjC and pass only
+  physical position plus UTF-8 path payloads to MoonBit.
 - Native callback trampolines retain MoonBit closures for the duration of each
   invocation, so callback-driven teardown or observer removal cannot release a
   closure while it is still being invoked.

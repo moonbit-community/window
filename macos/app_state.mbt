@@ -550,6 +550,12 @@ fn app_state_install_native_callbacks() -> Unit {
     fn(callback, event_handle) { callback(event_handle) },
     native_callback_device_event,
   )
+  native_install_drag_event_callback(
+    fn(callback, raw_id, kind, x, y, has_position, path_cstr) {
+      callback(raw_id, kind, x, y, has_position, path_cstr)
+    },
+    native_callback_drag_event,
+  )
   native_install_sync_query_callback(
     fn(callback, raw_id, kind, arg0) { callback(raw_id, kind, arg0) },
     native_callback_sync_query,
@@ -586,14 +592,27 @@ fn native_callback_text_input_event(
   cursor_end : Int,
   path_handle : UInt64,
 ) -> Unit {
-  match kind {
-    9 | 10 | 11 | 12 => queue_native_drag_event(raw_id, kind, event_handle)
-    _ =>
-      queue_native_text_input_event(
-        raw_id, kind, event_handle, state, text_handle, cursor_start, cursor_end,
-        path_handle,
-      )
-  }
+  queue_native_text_input_event(
+    raw_id, kind, event_handle, state, text_handle, cursor_start, cursor_end, path_handle,
+  )
+}
+
+///|
+fn native_callback_drag_event(
+  raw_id : Int,
+  kind : Int,
+  x : Double,
+  y : Double,
+  has_position : Int,
+  path_cstr : UInt64,
+) -> Unit {
+  queue_drag_event_from_payload(
+    raw_id,
+    kind,
+    PhysicalPositionF64(x, y),
+    native_copy_utf8_cstr_bytes(path_cstr),
+    has_position != 0,
+  )
 }
 
 ///|
@@ -647,14 +666,8 @@ fn native_callback_device_event(event_handle : UInt64) -> Unit {
 }
 
 ///|
-fn native_callback_sync_query(raw_id : Int, kind : Int, arg0 : UInt64) -> Int {
+fn native_callback_sync_query(raw_id : Int, kind : Int, _arg0 : UInt64) -> Int {
   match kind {
-    _ if kind == native_sync_query_drag_accept =>
-      if native_drag_should_accept(raw_id, arg0) {
-        1
-      } else {
-        0
-      }
     _ => view_native_query_state(raw_id, kind)
   }
 }
