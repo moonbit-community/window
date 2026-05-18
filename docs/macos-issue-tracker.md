@@ -1,6 +1,6 @@
 # macOS Issue Tracker
 
-Last updated: 2026-03-31
+Last updated: 2026-05-18
 
 This tracker records macOS-only gaps and fix progress in this repository.
 
@@ -32,6 +32,9 @@ This tracker records macOS-only gaps and fix progress in this repository.
 | MBW-MAC-023 | Upstream commit `0b6b794f` | IME toggling semantics need revalidation against latest upstream enable/disable handling. | DONE | Aligned `request_ime_update` flow in `macos/window.mbt`: `Enable/Update` gate on `ime_capabilities_state`, `Disable` clears state + native disable path; `set_ime_allowed` default request shape synced to upstream core helper |
 | MBW-MAC-024 | Example parity requirement | Missing executable transcript diff workflow for upstream-vs-MoonBit example output comparison. | DONE | Added `scripts/check_example_transcripts.sh` (ANSI/prefix normalization + strict diff) and aligned `examples/pump_events/main.mbt`; current run result: `example transcript check passed` |
 | MBW-MAC-025 | Upstream pin sync | `docs/upstream.md` and local parity baseline were pinned to old `winit` commit `5e2f421...`. | DONE | Updated upstream pin to `b5252f136632aac27937ad00fbd6764f812d4922`; local `winit-reference` checked out to this commit for audit |
+| MBW-MAC-026 | GitHub issue #13 / renderer integration | Renderer packages needed a stable content-view handle and sizing contract instead of scanning `NSApplication.windows` or using internal selectors. | DONE | Added `@macos.Window::content_view_handle()` and documented renderer ownership/sizing contract in README; released in 0.4.1 |
+| MBW-MAC-027 | Local validation risk | Full `moon test` and AppKit-linked `moon run --target native` executions can fail through the current MoonBit native runner because `tcc -run` fails on framework arguments (`tcc: error: file 'AppKit' not found`). | BLOCKED | Added `scripts/check_ci.sh`, `scripts/check_examples_build.sh`, and `docs/testing.md`; macOS tests/examples are validated with build-only commands until framework-linked native execution is supported upstream |
+| MBW-MAC-028 | Local architecture risk | Native lifecycle/callback ownership, AppState reentrancy, raw handle boundaries, and backend file-size risks were implicit instead of documented. | DONE | Added `docs/architecture-risks.md`; GitHub issue #5 remains open pending reporter confirmation because callback lifetime crashes were historically intermittent |
 | MBW-MAC-005 | GitHub issue #4 | `with_inner_size` not applied on window creation. | DONE | `with_inner_size` maps to `with_surface_size`, and creation path reads `attributes.surface_size()` |
 | MBW-MAC-006 | GitHub issue #2 | `flagsChanged` path crash due invalid character extraction. | DONE | Current path handles modifier events without unsafe text extraction in `flagsChanged` |
 | MBW-MAC-011 | GitHub issue #1 | `rwh_06_window_handle` should expose `NSView*` semantics instead of `NSWindow*`. | DONE | `Window::rwh_06_window_handle()` returns `raw_view_handle` first and only falls back to window handle |

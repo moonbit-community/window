@@ -160,3 +160,20 @@ The repository includes runnable examples under `examples/*`.
 ```bash
 moon run examples/window --target native
 ```
+
+## Validation
+
+Use the repository gate before publishing or committing backend changes:
+
+```bash
+scripts/check_ci.sh
+```
+
+For the slower upstream-vs-MoonBit example transcript comparison:
+
+```bash
+RUN_EXAMPLE_TRANSCRIPTS=1 scripts/check_ci.sh
+```
+
+See `docs/testing.md` for why the macOS package currently uses
+`moon test --build-only` instead of full framework-linked native test execution.
