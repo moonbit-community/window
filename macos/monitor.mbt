@@ -6,11 +6,11 @@
 
 fn normalize_display_id(display_id : UInt64) -> UInt64 {
   let uuid = cg_display_create_uuid_from_display_id(display_id)
-  if uuid == (0 : Int).to_uint64() {
+  if !cf_object_valid(uuid) {
     return (0 : Int).to_uint64()
   }
-  let normalized = cg_display_get_display_id_from_uuid(uuid)
-  cf_release(uuid)
+  let normalized = cg_display_get_display_id_from_uuid(cf_object_handle(uuid))
+  cf_object_release(uuid)
   normalized
 }
 

@@ -5,11 +5,6 @@
 // 2. Owned native resources use opaque external objects with native finalizers.
 // 3. kTISPropertyUnicodeKeyLayoutData is modeled by creating a CFString key.
 
-extern "C" fn native_cg_display_create_uuid_from_display_id(
-  display : UInt,
-) -> UInt64 = "CGDisplayCreateUUIDFromDisplayID"
-
-///|
 extern "C" fn native_cf_absolute_time_get_current() -> Double = "CFAbsoluteTimeGetCurrent"
 
 ///|
@@ -49,9 +44,6 @@ extern "C" fn native_cg_display_pixels_high(display : UInt) -> UInt64 = "CGDispl
 
 ///|
 extern "C" fn native_cg_display_get_display_id_from_uuid(uuid : UInt64) -> UInt = "CGDisplayGetDisplayIDFromUUID"
-
-///|
-extern "C" fn native_cf_release(cf_type : UInt64) -> Unit = "CFRelease"
 
 ///|
 extern "C" fn native_pthread_main_np() -> Int = "pthread_main_np"
@@ -273,6 +265,9 @@ impl Debug for MainRunLoopObserver with to_repr(_self) {
 
 ///|
 type NativeDisplayMode
+
+///|
+priv type NativeCfObject
 
 ///|
 priv type NativeObjcObject
@@ -685,3 +680,16 @@ extern "C" fn native_monitor_set_display_mode_handle(
 
 ///|
 extern "C" fn native_monitor_release_display_capture(monitor_id : UInt) -> Int = "mbw_release_display_capture"
+
+///|
+extern "C" fn native_cg_display_create_uuid_from_display_id(
+  display : UInt,
+) -> NativeCfObject = "mbw_cg_display_create_uuid_from_display_id"
+
+///|
+#borrow(handle)
+extern "C" fn native_cf_object_handle(handle : NativeCfObject) -> UInt64 = "mbw_cf_object_handle"
+
+///|
+#borrow(handle)
+extern "C" fn native_cf_object_release(handle : NativeCfObject) -> Unit = "mbw_cf_object_release"

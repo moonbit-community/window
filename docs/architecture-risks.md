@@ -54,6 +54,10 @@ Current control:
   external objects. Temporary video-mode enumeration still releases promptly,
   and the external finalizer covers fullscreen saved-mode state if explicit
   restore cleanup is skipped.
+- Copied CoreFoundation objects that cross into MoonBit, such as
+  `CGDisplayCreateUUIDFromDisplayID` results, are represented as private
+  external objects. MoonBit can borrow the raw handle for CoreGraphics queries
+  but never owns the `CFTypeRef` as a plain integer.
 - Custom `NSCursor` values created from RGBA data are retained by a
   backend-agnostic `CustomCursorHandle` external object stored inside
   `core.CustomCursor`. `CustomCursor::into_raw()` remains a borrowed AppKit

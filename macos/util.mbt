@@ -2,7 +2,9 @@
 // Port target: winit-reference/winit-appkit/src/util.rs
 
 ///|
-fn cg_display_create_uuid_from_display_id(display_id : UInt64) -> UInt64 {
+fn cg_display_create_uuid_from_display_id(
+  display_id : UInt64,
+) -> NativeCfObject {
   native_cg_display_create_uuid_from_display_id(display_id.to_uint())
 }
 
@@ -32,10 +34,18 @@ fn cg_display_get_display_id_from_uuid(uuid : UInt64) -> UInt64 {
 }
 
 ///|
-fn cf_release(cf_type : UInt64) -> Unit {
-  if cf_type != (0 : Int).to_uint64() {
-    native_cf_release(cf_type)
-  }
+fn cf_object_handle(handle : NativeCfObject) -> UInt64 {
+  native_cf_object_handle(handle)
+}
+
+///|
+fn cf_object_valid(handle : NativeCfObject) -> Bool {
+  cf_object_handle(handle) != (0 : Int).to_uint64()
+}
+
+///|
+fn cf_object_release(handle : NativeCfObject) -> Unit {
+  native_cf_object_release(handle)
 }
 
 ///|

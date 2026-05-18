@@ -5,6 +5,51 @@
 #include <stdint.h>
 #include <stdlib.h>
 
+typedef struct {
+  CFTypeRef object;
+} MBWCfObjectHandle;
+
+static void mbw_cf_object_handle_release_object(MBWCfObjectHandle *handle) {
+  if (handle == NULL || handle->object == NULL) {
+    return;
+  }
+  CFRelease(handle->object);
+  handle->object = NULL;
+}
+
+static void mbw_cf_object_handle_finalize(void *ptr) {
+  mbw_cf_object_handle_release_object((MBWCfObjectHandle *)ptr);
+}
+
+static MBWCfObjectHandle *mbw_cf_object_handle_create(CFTypeRef object) {
+  MBWCfObjectHandle *handle = (MBWCfObjectHandle *)moonbit_make_external_object(
+      mbw_cf_object_handle_finalize, sizeof(MBWCfObjectHandle));
+  handle->object = object;
+  return handle;
+}
+
+MOONBIT_FFI_EXPORT
+MBWCfObjectHandle *mbw_cg_display_create_uuid_from_display_id(uint32_t display_id) {
+  if (display_id == 0) {
+    return mbw_cf_object_handle_create(NULL);
+  }
+  CFUUIDRef uuid = CGDisplayCreateUUIDFromDisplayID((CGDirectDisplayID)display_id);
+  return mbw_cf_object_handle_create(uuid);
+}
+
+MOONBIT_FFI_EXPORT
+uint64_t mbw_cf_object_handle(MBWCfObjectHandle *handle) {
+  if (handle == NULL || handle->object == NULL) {
+    return 0;
+  }
+  return (uint64_t)(uintptr_t)handle->object;
+}
+
+MOONBIT_FFI_EXPORT
+void mbw_cf_object_release(MBWCfObjectHandle *handle) {
+  mbw_cf_object_handle_release_object(handle);
+}
+
 int32_t mbw_cg_active_display_count(void) {
   uint32_t count = 0;
   CGError err = CGGetActiveDisplayList(0, NULL, &count);

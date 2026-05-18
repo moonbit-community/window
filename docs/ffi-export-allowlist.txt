@@ -1,4 +1,7 @@
 mbw_appkit_window_level
+mbw_cf_object_handle
+mbw_cf_object_release
+mbw_cg_display_create_uuid_from_display_id
 mbw_cg_warp_mouse_cursor_position
 mbw_cgfloat_max
 mbw_copy_utf8_cstr_bytes
