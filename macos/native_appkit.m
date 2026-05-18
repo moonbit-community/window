@@ -74,12 +74,57 @@ typedef struct {
   NSCursor *cursor;
 } MBWCustomCursorHandle;
 
+@interface MBWOwnedObjectReleaser : NSObject {
+@public
+  id object;
+}
+- (instancetype)initWithOwnedObject:(id)object;
+- (void)mbwReleaseOwnedObject;
+@end
+
+@implementation MBWOwnedObjectReleaser
+
+- (instancetype)initWithOwnedObject:(id)ownedObject {
+  self = [super init];
+  if (self != nil) {
+    object = ownedObject;
+  }
+  return self;
+}
+
+- (void)mbwReleaseOwnedObject {
+  [object release];
+  object = nil;
+  [self release];
+}
+
+@end
+
+static void mbw_release_appkit_object_on_main(id object) {
+  if (object == nil) {
+    return;
+  }
+  if (pthread_main_np() != 0) {
+    [object release];
+  } else {
+    MBWOwnedObjectReleaser *releaser =
+        [[MBWOwnedObjectReleaser alloc] initWithOwnedObject:object];
+    if (releaser == nil) {
+      [object release];
+      return;
+    }
+    [releaser performSelectorOnMainThread:@selector(mbwReleaseOwnedObject)
+                               withObject:nil
+                            waitUntilDone:NO];
+  }
+}
+
 static void mbw_custom_cursor_handle_finalize(void *ptr) {
   MBWCustomCursorHandle *handle = (MBWCustomCursorHandle *)ptr;
   if (handle == NULL || handle->cursor == nil) {
     return;
   }
-  [handle->cursor release];
+  mbw_release_appkit_object_on_main(handle->cursor);
   handle->cursor = nil;
 }
 
@@ -171,7 +216,7 @@ void mbw_objc_release(uint64_t object_handle) {
   if (object == nil) {
     return;
   }
-  [object release];
+  mbw_release_appkit_object_on_main(object);
 }
 
 MOONBIT_FFI_EXPORT

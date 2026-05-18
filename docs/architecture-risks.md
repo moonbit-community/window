@@ -58,6 +58,10 @@ Current control:
   backend-agnostic `CustomCursorHandle` external object stored inside
   `core.CustomCursor`. `CustomCursor::into_raw()` remains a borrowed AppKit
   pointer projection used only at the platform edge.
+- AppKit-backed external-object finalizers now share the same thread contract:
+  prompt explicit cleanup clears the external wrapper immediately, and any
+  AppKit/RunLoop teardown reached from a GC finalizer is transferred back to
+  the main thread before releasing native objects or unregistering observers.
 - GitHub issue #5 remains open until the reporter confirms the latest release
   no longer reproduces the callback lifetime failure.
 

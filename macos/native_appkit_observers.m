@@ -15,13 +15,14 @@ typedef struct {
 @property(nonatomic, assign) int32_t callbackKind;
 @property(nonatomic, assign) mbw_lifecycle_trampoline_t trampoline;
 @property(nonatomic, assign) void *closure;
+- (void)mbwDestroyExternalOwner;
 @end
 
 typedef struct {
   MBWNotificationObserver *observer;
 } MBWNotificationObserverHandle;
 
-static void mbw_notification_observer_destroy(MBWNotificationObserver *observer) {
+static void mbw_notification_observer_destroy_now(MBWNotificationObserver *observer) {
   if (observer == nil) {
     return;
   }
@@ -31,6 +32,19 @@ static void mbw_notification_observer_destroy(MBWNotificationObserver *observer)
     observer.closure = NULL;
   }
   [observer release];
+}
+
+static void mbw_notification_observer_destroy(MBWNotificationObserver *observer) {
+  if (observer == nil) {
+    return;
+  }
+  if (pthread_main_np() != 0) {
+    mbw_notification_observer_destroy_now(observer);
+  } else {
+    [observer performSelectorOnMainThread:@selector(mbwDestroyExternalOwner)
+                               withObject:nil
+                            waitUntilDone:NO];
+  }
 }
 
 static void mbw_notification_observer_handle_finalize(void *ptr) {
@@ -52,6 +66,10 @@ mbw_notification_observer_handle_create(MBWNotificationObserver *observer) {
 }
 
 @implementation MBWNotificationObserver
+
+- (void)mbwDestroyExternalOwner {
+  mbw_notification_observer_destroy_now(self);
+}
 
 - (void)handleNotification:(NSNotification *)notification {
   (void)notification;
@@ -135,7 +153,36 @@ static void mbw_main_run_loop_observer_callback(CFRunLoopObserverRef observer,
   mbw_call_lifecycle_trampoline(box->trampoline, box->closure, box->callback_kind);
 }
 
-static void mbw_main_run_loop_observer_destroy_box(MBWMainRunLoopObserver *box) {
+static void mbw_main_run_loop_observer_destroy_box_now(MBWMainRunLoopObserver *box);
+
+@interface MBWMainRunLoopObserverOwner : NSObject {
+@public
+  MBWMainRunLoopObserver *box;
+}
+- (instancetype)initWithBox:(MBWMainRunLoopObserver *)box;
+- (void)mbwDestroyExternalOwner;
+@end
+
+@implementation MBWMainRunLoopObserverOwner
+
+- (instancetype)initWithBox:(MBWMainRunLoopObserver *)observerBox {
+  self = [super init];
+  if (self != nil) {
+    box = observerBox;
+  }
+  return self;
+}
+
+- (void)mbwDestroyExternalOwner {
+  MBWMainRunLoopObserver *ownedBox = box;
+  box = NULL;
+  mbw_main_run_loop_observer_destroy_box_now(ownedBox);
+  [self release];
+}
+
+@end
+
+static void mbw_main_run_loop_observer_destroy_box_now(MBWMainRunLoopObserver *box) {
   if (box == NULL) {
     return;
   }
@@ -149,6 +196,25 @@ static void mbw_main_run_loop_observer_destroy_box(MBWMainRunLoopObserver *box) 
     box->closure = NULL;
   }
   free(box);
+}
+
+static void mbw_main_run_loop_observer_destroy_box(MBWMainRunLoopObserver *box) {
+  if (box == NULL) {
+    return;
+  }
+  if (pthread_main_np() != 0) {
+    mbw_main_run_loop_observer_destroy_box_now(box);
+  } else {
+    MBWMainRunLoopObserverOwner *owner =
+        [[MBWMainRunLoopObserverOwner alloc] initWithBox:box];
+    if (owner == nil) {
+      mbw_main_run_loop_observer_destroy_box_now(box);
+      return;
+    }
+    [owner performSelectorOnMainThread:@selector(mbwDestroyExternalOwner)
+                            withObject:nil
+                         waitUntilDone:NO];
+  }
 }
 
 static void mbw_main_run_loop_observer_handle_finalize(void *ptr) {
