@@ -74,6 +74,10 @@ typedef struct {
   NSCursor *cursor;
 } MBWCustomCursorHandle;
 
+typedef struct {
+  id object;
+} MBWObjcOwnedObjectHandle;
+
 @interface MBWOwnedObjectReleaser : NSObject {
 @public
   id object;
@@ -117,6 +121,41 @@ static void mbw_release_appkit_object_on_main(id object) {
                                withObject:nil
                             waitUntilDone:NO];
   }
+}
+
+static void mbw_objc_owned_object_release_object(MBWObjcOwnedObjectHandle *handle) {
+  if (handle == NULL || handle->object == nil) {
+    return;
+  }
+  id object = handle->object;
+  handle->object = nil;
+  mbw_release_appkit_object_on_main(object);
+}
+
+static void mbw_objc_owned_object_finalize(void *ptr) {
+  mbw_objc_owned_object_release_object((MBWObjcOwnedObjectHandle *)ptr);
+}
+
+MOONBIT_FFI_EXPORT
+MBWObjcOwnedObjectHandle *mbw_objc_wrap_owned_object(uint64_t object_handle) {
+  MBWObjcOwnedObjectHandle *handle =
+      (MBWObjcOwnedObjectHandle *)moonbit_make_external_object(
+          mbw_objc_owned_object_finalize, sizeof(MBWObjcOwnedObjectHandle));
+  handle->object = (__bridge id)(void *)(uintptr_t)object_handle;
+  return handle;
+}
+
+MOONBIT_FFI_EXPORT
+uint64_t mbw_objc_owned_object_handle(MBWObjcOwnedObjectHandle *handle) {
+  if (handle == NULL || handle->object == nil) {
+    return 0;
+  }
+  return (uint64_t)(void *)handle->object;
+}
+
+MOONBIT_FFI_EXPORT
+void mbw_objc_owned_object_release(MBWObjcOwnedObjectHandle *handle) {
+  mbw_objc_owned_object_release_object(handle);
 }
 
 static void mbw_custom_cursor_handle_finalize(void *ptr) {

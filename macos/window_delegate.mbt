@@ -1970,26 +1970,26 @@ fn native_window_set_unified_titlebar(
     }
     let identifier = objc_nsstring_from_string("window-unified-titlebar")
     if identifier == (0 : Int).to_uint64() {
+      appkit_objc_release_raw_object(toolbar_alloc)
       return ()
     }
-    let toolbar = appkit_objc_msg_send_u64_u64(
+    let toolbar_raw = appkit_objc_msg_send_u64_u64(
       toolbar_alloc,
       objc_runtime_selector_handle("initWithIdentifier:"),
       identifier,
     )
-    let toolbar_handle = if toolbar == (0 : Int).to_uint64() {
-      (0 : Int).to_uint64()
-    } else {
-      appkit_objc_msg_send_u64(
-        toolbar,
-        objc_runtime_selector_handle("autorelease"),
-      )
+    if toolbar_raw == (0 : Int).to_uint64() {
+      appkit_objc_release_raw_object(toolbar_alloc)
     }
-    appkit_objc_msg_send_void_u64(
-      window,
-      objc_runtime_selector_handle("setToolbar:"),
-      toolbar_handle,
-    )
+    let toolbar = appkit_objc_wrap_owned_object(toolbar_raw)
+    if native_objc_owned_valid(toolbar) {
+      appkit_objc_msg_send_void_u64(
+        window,
+        objc_runtime_selector_handle("setToolbar:"),
+        native_objc_owned_handle(toolbar),
+      )
+      appkit_objc_release_object(toolbar)
+    }
     let set_toolbar_style = objc_runtime_selector_handle("setToolbarStyle:")
     if appkit_objc_msg_send_bool_u64(
         window,

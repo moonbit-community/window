@@ -73,22 +73,37 @@ fn initialize(default_menu : Bool) -> Unit {
 let default_menu_initialized : Ref[Bool] = Ref(false)
 
 ///|
-fn native_appkit_new_menu(title : String) -> UInt64 {
+fn native_objc_owned_null() -> NativeObjcObject {
+  appkit_objc_wrap_owned_object((0 : Int).to_uint64())
+}
+
+///|
+fn native_objc_owned_handle(handle : NativeObjcObject) -> UInt64 {
+  appkit_objc_owned_object_handle(handle)
+}
+
+///|
+fn native_objc_owned_valid(handle : NativeObjcObject) -> Bool {
+  native_objc_owned_handle(handle) != (0 : Int).to_uint64()
+}
+
+///|
+fn native_appkit_new_menu(title : String) -> NativeObjcObject {
   let ns_menu_class = objc_runtime_class_handle("NSMenu")
   if ns_menu_class == (0 : Int).to_uint64() {
-    return (0 : Int).to_uint64()
+    return native_objc_owned_null()
   }
   let menu_alloc = appkit_objc_msg_send_u64(
     ns_menu_class,
     objc_runtime_selector_handle("alloc"),
   )
   if menu_alloc == (0 : Int).to_uint64() {
-    return (0 : Int).to_uint64()
+    return native_objc_owned_null()
   }
   let title_handle = objc_nsstring_from_string(title)
   if title_handle == (0 : Int).to_uint64() {
-    appkit_objc_release_object(menu_alloc)
-    return (0 : Int).to_uint64()
+    appkit_objc_release_raw_object(menu_alloc)
+    return native_objc_owned_null()
   }
   let menu = appkit_objc_msg_send_u64_u64(
     menu_alloc,
@@ -96,9 +111,9 @@ fn native_appkit_new_menu(title : String) -> UInt64 {
     title_handle,
   )
   if menu == (0 : Int).to_uint64() {
-    appkit_objc_release_object(menu_alloc)
+    appkit_objc_release_raw_object(menu_alloc)
   }
-  menu
+  appkit_objc_wrap_owned_object(menu)
 }
 
 ///|
@@ -108,25 +123,25 @@ fn native_appkit_new_menu_item(
   key_equivalent : String,
   target : UInt64,
   key_modifier_mask : Int,
-) -> UInt64 {
+) -> NativeObjcObject {
   let ns_menu_item_class = objc_runtime_class_handle("NSMenuItem")
   if ns_menu_item_class == (0 : Int).to_uint64() {
-    return (0 : Int).to_uint64()
+    return native_objc_owned_null()
   }
   let item_alloc = appkit_objc_msg_send_u64(
     ns_menu_item_class,
     objc_runtime_selector_handle("alloc"),
   )
   if item_alloc == (0 : Int).to_uint64() {
-    return (0 : Int).to_uint64()
+    return native_objc_owned_null()
   }
   let item = appkit_objc_msg_send_u64(
     item_alloc,
     objc_runtime_selector_handle("init"),
   )
   if item == (0 : Int).to_uint64() {
-    appkit_objc_release_object(item_alloc)
-    return (0 : Int).to_uint64()
+    appkit_objc_release_raw_object(item_alloc)
+    return native_objc_owned_null()
   }
   let title_handle = objc_nsstring_from_string(title)
   if title_handle != (0 : Int).to_uint64() {
@@ -165,24 +180,30 @@ fn native_appkit_new_menu_item(
       key_modifier_mask.to_uint64(),
     )
   }
-  item
+  appkit_objc_wrap_owned_object(item)
 }
 
 ///|
-fn native_appkit_add_menu_item(menu : UInt64, item : UInt64) -> Unit {
-  if menu == (0 : Int).to_uint64() || item == (0 : Int).to_uint64() {
+fn native_appkit_add_menu_item(
+  menu : NativeObjcObject,
+  item : NativeObjcObject,
+) -> Unit {
+  let menu_raw = native_objc_owned_handle(menu)
+  let item_raw = native_objc_owned_handle(item)
+  if menu_raw == (0 : Int).to_uint64() || item_raw == (0 : Int).to_uint64() {
     return ()
   }
   appkit_objc_msg_send_void_u64(
-    menu,
+    menu_raw,
     objc_runtime_selector_handle("addItem:"),
-    item,
+    item_raw,
   )
 }
 
 ///|
-fn native_appkit_add_separator_item(menu : UInt64) -> Unit {
-  if menu == (0 : Int).to_uint64() {
+fn native_appkit_add_separator_item(menu : NativeObjcObject) -> Unit {
+  let menu_raw = native_objc_owned_handle(menu)
+  if menu_raw == (0 : Int).to_uint64() {
     return ()
   }
   let ns_menu_item_class = objc_runtime_class_handle("NSMenuItem")
@@ -193,7 +214,13 @@ fn native_appkit_add_separator_item(menu : UInt64) -> Unit {
     ns_menu_item_class,
     objc_runtime_selector_handle("separatorItem"),
   )
-  native_appkit_add_menu_item(menu, separator)
+  if separator != (0 : Int).to_uint64() {
+    appkit_objc_msg_send_void_u64(
+      menu_raw,
+      objc_runtime_selector_handle("addItem:"),
+      separator,
+    )
+  }
 }
 
 ///|
@@ -235,7 +262,7 @@ fn native_application_initialize_default_menu(enabled : Bool) -> Unit {
   }
   let app_name = if process_name == "" { "Application" } else { process_name }
   let main_menu = native_appkit_new_menu("")
-  if main_menu == (0 : Int).to_uint64() {
+  if native_objc_owned_valid(main_menu) == false {
     return ()
   }
   let app_menu_item = native_appkit_new_menu_item(
@@ -246,17 +273,17 @@ fn native_application_initialize_default_menu(enabled : Bool) -> Unit {
     -1,
   )
   let app_menu = native_appkit_new_menu("")
-  if app_menu_item != (0 : Int).to_uint64() {
+  if native_objc_owned_valid(app_menu_item) {
     native_appkit_add_menu_item(main_menu, app_menu_item)
-    if app_menu != (0 : Int).to_uint64() {
+    if native_objc_owned_valid(app_menu) {
       appkit_objc_msg_send_void_u64(
-        app_menu_item,
+        native_objc_owned_handle(app_menu_item),
         objc_runtime_selector_handle("setSubmenu:"),
-        app_menu,
+        native_objc_owned_handle(app_menu),
       )
     }
   }
-  if app_menu != (0 : Int).to_uint64() {
+  if native_objc_owned_valid(app_menu) {
     let about_item = native_appkit_new_menu_item(
       "About " + app_name,
       "orderFrontStandardAboutPanel:",
@@ -264,7 +291,7 @@ fn native_application_initialize_default_menu(enabled : Bool) -> Unit {
       app,
       -1,
     )
-    if about_item != (0 : Int).to_uint64() {
+    if native_objc_owned_valid(about_item) {
       native_appkit_add_menu_item(app_menu, about_item)
       appkit_objc_release_object(about_item)
     }
@@ -277,22 +304,22 @@ fn native_application_initialize_default_menu(enabled : Bool) -> Unit {
       -1,
     )
     let services_menu = native_appkit_new_menu("Services")
-    if services_menu != (0 : Int).to_uint64() {
+    if native_objc_owned_valid(services_menu) {
       appkit_objc_msg_send_void_u64(
         app,
         objc_runtime_selector_handle("setServicesMenu:"),
-        services_menu,
+        native_objc_owned_handle(services_menu),
       )
-      if services_item != (0 : Int).to_uint64() {
+      if native_objc_owned_valid(services_item) {
         appkit_objc_msg_send_void_u64(
-          services_item,
+          native_objc_owned_handle(services_item),
           objc_runtime_selector_handle("setSubmenu:"),
-          services_menu,
+          native_objc_owned_handle(services_menu),
         )
       }
       appkit_objc_release_object(services_menu)
     }
-    if services_item != (0 : Int).to_uint64() {
+    if native_objc_owned_valid(services_item) {
       native_appkit_add_menu_item(app_menu, services_item)
       appkit_objc_release_object(services_item)
     }
@@ -303,7 +330,7 @@ fn native_application_initialize_default_menu(enabled : Bool) -> Unit {
       app,
       -1,
     )
-    if hide_item != (0 : Int).to_uint64() {
+    if native_objc_owned_valid(hide_item) {
       native_appkit_add_menu_item(app_menu, hide_item)
       appkit_objc_release_object(hide_item)
     }
@@ -311,14 +338,14 @@ fn native_application_initialize_default_menu(enabled : Bool) -> Unit {
     let hide_others_item = native_appkit_new_menu_item(
       "Hide Others", "hideOtherApplications:", "h", app, option_command_modifier_mask,
     )
-    if hide_others_item != (0 : Int).to_uint64() {
+    if native_objc_owned_valid(hide_others_item) {
       native_appkit_add_menu_item(app_menu, hide_others_item)
       appkit_objc_release_object(hide_others_item)
     }
     let show_all_item = native_appkit_new_menu_item(
       "Show All", "unhideAllApplications:", "", app, -1,
     )
-    if show_all_item != (0 : Int).to_uint64() {
+    if native_objc_owned_valid(show_all_item) {
       native_appkit_add_menu_item(app_menu, show_all_item)
       appkit_objc_release_object(show_all_item)
     }
@@ -330,7 +357,7 @@ fn native_application_initialize_default_menu(enabled : Bool) -> Unit {
       app,
       -1,
     )
-    if quit_item != (0 : Int).to_uint64() {
+    if native_objc_owned_valid(quit_item) {
       native_appkit_add_menu_item(app_menu, quit_item)
       appkit_objc_release_object(quit_item)
     }
@@ -338,12 +365,12 @@ fn native_application_initialize_default_menu(enabled : Bool) -> Unit {
   appkit_objc_msg_send_void_u64(
     app,
     objc_runtime_selector_handle("setMainMenu:"),
-    main_menu,
+    native_objc_owned_handle(main_menu),
   )
-  if app_menu != (0 : Int).to_uint64() {
+  if native_objc_owned_valid(app_menu) {
     appkit_objc_release_object(app_menu)
   }
-  if app_menu_item != (0 : Int).to_uint64() {
+  if native_objc_owned_valid(app_menu_item) {
     appkit_objc_release_object(app_menu_item)
   }
   appkit_objc_release_object(main_menu)

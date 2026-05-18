@@ -275,6 +275,9 @@ impl Debug for MainRunLoopObserver with to_repr(_self) {
 type NativeDisplayMode
 
 ///|
+priv type NativeObjcObject
+
+///|
 impl Eq for NativeDisplayMode with equal(self, other) {
   native_monitor_display_mode_identity(self) ==
   native_monitor_display_mode_identity(other)
@@ -584,7 +587,22 @@ extern "C" fn appkit_objc_msg_send_edge_insets_right(
 extern "C" fn appkit_objc_get_class(name : Bytes) -> UInt64 = "mbw_objc_get_class"
 
 ///|
-extern "C" fn appkit_objc_release_object(handle : UInt64) -> Unit = "mbw_objc_release"
+extern "C" fn appkit_objc_release_raw_object(handle : UInt64) -> Unit = "mbw_objc_release"
+
+///|
+extern "C" fn appkit_objc_wrap_owned_object(
+  handle : UInt64,
+) -> NativeObjcObject = "mbw_objc_wrap_owned_object"
+
+///|
+#borrow(handle)
+extern "C" fn appkit_objc_owned_object_handle(
+  handle : NativeObjcObject,
+) -> UInt64 = "mbw_objc_owned_object_handle"
+
+///|
+#borrow(handle)
+extern "C" fn appkit_objc_release_object(handle : NativeObjcObject) -> Unit = "mbw_objc_owned_object_release"
 
 ///|
 #borrow(name)

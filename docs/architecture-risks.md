@@ -62,6 +62,11 @@ Current control:
   prompt explicit cleanup clears the external wrapper immediately, and any
   AppKit/RunLoop teardown reached from a GC finalizer is transferred back to
   the main thread before releasing native objects or unregistering observers.
+- Default-menu and unified-titlebar construction no longer carry owned
+  `NSMenu`/`NSMenuItem`/`NSToolbar` objects as plain `UInt64`. Short-lived +1
+  Objective-C objects are wrapped in a private `NativeObjcObject` external
+  object; selector calls receive borrowed raw handles, and explicit
+  release/finalizer cleanup is idempotent.
 - GitHub issue #5 remains open until the reporter confirms the latest release
   no longer reproduces the callback lifetime failure.
 
