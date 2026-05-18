@@ -21,7 +21,8 @@ typedef void (*mbw_text_input_event_trampoline_t)(void *closure, int32_t raw_id,
                                                   uint64_t event_handle, int32_t state,
                                                   uint64_t text_handle, int32_t cursor_start,
                                                   int32_t cursor_end, uint64_t path_handle);
-typedef void (*mbw_device_event_trampoline_t)(void *closure, uint64_t event_handle);
+typedef void (*mbw_device_event_trampoline_t)(void *closure, int32_t kind, int32_t button,
+                                              double delta_x, double delta_y);
 typedef void (*mbw_drag_event_trampoline_t)(void *closure, int32_t raw_id, int32_t kind,
                                             double x, double y, int32_t has_position,
                                             uint64_t path_cstr);
@@ -50,7 +51,8 @@ void mbw_call_text_input_event_trampoline(int32_t raw_id, int32_t kind, uint64_t
                                           int32_t state, uint64_t text_handle,
                                           int32_t cursor_start, int32_t cursor_end,
                                           uint64_t path_handle);
-void mbw_call_device_event_trampoline(uint64_t event_handle);
+void mbw_call_device_event_trampoline(int32_t kind, int32_t button, double delta_x,
+                                      double delta_y);
 void mbw_call_drag_event_trampoline(int32_t raw_id, int32_t kind, double x, double y,
                                     int32_t has_position, uint64_t path_cstr);
 int32_t mbw_sync_query(int32_t raw_id, int32_t kind, uint64_t arg0, int32_t default_value);

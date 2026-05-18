@@ -152,8 +152,10 @@ extern "C" fn native_install_text_input_event_callback(
 #borrow(call_closure)
 #owned(callback)
 extern "C" fn native_install_device_event_callback(
-  call_closure : FuncRef[((UInt64) -> Unit, UInt64) -> Unit],
-  callback : (UInt64) -> Unit,
+  call_closure : FuncRef[
+    ((Int, Int, Double, Double) -> Unit, Int, Int, Double, Double) -> Unit,
+  ],
+  callback : (Int, Int, Double, Double) -> Unit,
 ) -> Unit = "mbw_install_device_event_callback"
 
 ///|

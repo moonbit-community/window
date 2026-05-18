@@ -50,13 +50,14 @@ void mbw_call_text_input_event_trampoline(int32_t raw_id, int32_t kind, uint64_t
   moonbit_decref(closure);
 }
 
-void mbw_call_device_event_trampoline(uint64_t event_handle) {
+void mbw_call_device_event_trampoline(int32_t kind, int32_t button, double delta_x,
+                                      double delta_y) {
   if (g_device_event_trampoline == NULL || g_device_event_closure == NULL) {
     return;
   }
   void *closure = g_device_event_closure;
   moonbit_incref(closure);
-  g_device_event_trampoline(closure, event_handle);
+  g_device_event_trampoline(closure, kind, button, delta_x, delta_y);
   moonbit_decref(closure);
 }
 
@@ -104,9 +105,28 @@ static void mbw_maybe_dispatch_device_event(NSEvent *event) {
   if (event == nil) {
     return;
   }
-  [event retain];
-  mbw_call_device_event_trampoline((uint64_t)(uintptr_t)(__bridge void *)event);
-  [event release];
+  switch (event.type) {
+  case NSEventTypeMouseMoved:
+  case NSEventTypeLeftMouseDragged:
+  case NSEventTypeRightMouseDragged:
+  case NSEventTypeOtherMouseDragged:
+    if (event.deltaX != 0.0 || event.deltaY != 0.0) {
+      mbw_call_device_event_trampoline(1, 0, (double)event.deltaX, (double)event.deltaY);
+    }
+    break;
+  case NSEventTypeLeftMouseDown:
+  case NSEventTypeRightMouseDown:
+  case NSEventTypeOtherMouseDown:
+    mbw_call_device_event_trampoline(2, (int32_t)event.buttonNumber, 0.0, 0.0);
+    break;
+  case NSEventTypeLeftMouseUp:
+  case NSEventTypeRightMouseUp:
+  case NSEventTypeOtherMouseUp:
+    mbw_call_device_event_trampoline(3, (int32_t)event.buttonNumber, 0.0, 0.0);
+    break;
+  default:
+    break;
+  }
 }
 
 static void mbw_overridden_send_event(id self, SEL _cmd, NSEvent *event) {

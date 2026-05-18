@@ -20,6 +20,8 @@ Current control:
   lifetimes and short-lived `NSEvent`/`NSDraggingInfo` handoff.
 - Drag-and-drop callbacks snapshot `NSDraggingInfo` inside ObjC and pass only
   physical position plus UTF-8 path payloads to MoonBit.
+- Global `sendEvent:` device-event interception snapshots `NSEvent` inside ObjC
+  and passes only device-event kind, button, and motion delta to MoonBit.
 - Native callback trampolines retain MoonBit closures for the duration of each
   invocation, so callback-driven teardown or observer removal cannot release a
   closure while it is still being invoked.

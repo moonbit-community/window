@@ -547,7 +547,9 @@ fn app_state_install_native_callbacks() -> Unit {
     native_callback_window_event,
   )
   native_install_device_event_callback(
-    fn(callback, event_handle) { callback(event_handle) },
+    fn(callback, kind, button, delta_x, delta_y) {
+      callback(kind, button, delta_x, delta_y)
+    },
     native_callback_device_event,
   )
   native_install_drag_event_callback(
@@ -616,53 +618,13 @@ fn native_callback_drag_event(
 }
 
 ///|
-fn native_callback_device_event(event_handle : UInt64) -> Unit {
-  if event_handle == (0 : Int).to_uint64() {
-    return ()
-  }
-  let event_type = appkit_objc_msg_send_i64(
-    event_handle,
-    objc_runtime_selector_handle("type"),
-  ).to_int()
-  match event_type {
-    // NSEventTypeMouseMoved | LeftMouseDragged | RightMouseDragged | OtherMouseDragged.
-    5 | 6 | 7 | 27 => {
-      let delta_x = appkit_objc_msg_send_double(
-        event_handle,
-        objc_runtime_selector_handle("deltaX"),
-      )
-      let delta_y = appkit_objc_msg_send_double(
-        event_handle,
-        objc_runtime_selector_handle("deltaY"),
-      )
-      if delta_x != 0.0 || delta_y != 0.0 {
-        app_state_queue_device_event(1, 0, delta_x, delta_y)
-      }
-    }
-    // NSEventTypeLeftMouseDown | RightMouseDown | OtherMouseDown.
-    1 | 3 | 25 =>
-      app_state_queue_device_event(
-        2,
-        appkit_objc_msg_send_i64(
-          event_handle,
-          objc_runtime_selector_handle("buttonNumber"),
-        ).to_int(),
-        0.0,
-        0.0,
-      )
-    // NSEventTypeLeftMouseUp | RightMouseUp | OtherMouseUp.
-    2 | 4 | 26 =>
-      app_state_queue_device_event(
-        3,
-        appkit_objc_msg_send_i64(
-          event_handle,
-          objc_runtime_selector_handle("buttonNumber"),
-        ).to_int(),
-        0.0,
-        0.0,
-      )
-    _ => ()
-  }
+fn native_callback_device_event(
+  kind : Int,
+  button : Int,
+  delta_x : Double,
+  delta_y : Double,
+) -> Unit {
+  app_state_queue_device_event(kind, button, delta_x, delta_y)
 }
 
 ///|
