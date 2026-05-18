@@ -73,21 +73,6 @@ fn initialize(default_menu : Bool) -> Unit {
 let default_menu_initialized : Ref[Bool] = Ref(false)
 
 ///|
-fn native_objc_owned_null() -> NativeObjcObject {
-  appkit_objc_wrap_owned_object((0 : Int).to_uint64())
-}
-
-///|
-fn native_objc_owned_handle(handle : NativeObjcObject) -> UInt64 {
-  appkit_objc_owned_object_handle(handle)
-}
-
-///|
-fn native_objc_owned_valid(handle : NativeObjcObject) -> Bool {
-  native_objc_owned_handle(handle) != (0 : Int).to_uint64()
-}
-
-///|
 fn native_appkit_new_menu(title : String) -> NativeObjcObject {
   let ns_menu_class = objc_runtime_class_handle("NSMenu")
   if ns_menu_class == (0 : Int).to_uint64() {
