@@ -70,14 +70,20 @@ static void mbw_call_window_event_trampoline(int32_t kind, int32_t raw_id, int32
   if (g_window_event_trampoline == NULL || g_window_event_closure == NULL) {
     return;
   }
-  g_window_event_trampoline(g_window_event_closure, kind, raw_id, arg0, arg1, arg2, argd);
+  void *closure = g_window_event_closure;
+  moonbit_incref(closure);
+  g_window_event_trampoline(closure, kind, raw_id, arg0, arg1, arg2, argd);
+  moonbit_decref(closure);
 }
 
 static void mbw_call_input_event_trampoline(int32_t raw_id, int32_t kind, uint64_t event_handle) {
   if (g_input_event_trampoline == NULL || g_input_event_closure == NULL) {
     return;
   }
-  g_input_event_trampoline(g_input_event_closure, raw_id, kind, event_handle);
+  void *closure = g_input_event_closure;
+  moonbit_incref(closure);
+  g_input_event_trampoline(closure, raw_id, kind, event_handle);
+  moonbit_decref(closure);
 }
 
 static void mbw_call_text_input_event_trampoline(
@@ -86,15 +92,21 @@ static void mbw_call_text_input_event_trampoline(
   if (g_text_input_event_trampoline == NULL || g_text_input_event_closure == NULL) {
     return;
   }
-  g_text_input_event_trampoline(g_text_input_event_closure, raw_id, kind, event_handle, state,
-                                text_handle, cursor_start, cursor_end, path_handle);
+  void *closure = g_text_input_event_closure;
+  moonbit_incref(closure);
+  g_text_input_event_trampoline(closure, raw_id, kind, event_handle, state, text_handle,
+                                cursor_start, cursor_end, path_handle);
+  moonbit_decref(closure);
 }
 
 static void mbw_call_device_event_trampoline(uint64_t event_handle) {
   if (g_device_event_trampoline == NULL || g_device_event_closure == NULL) {
     return;
   }
-  g_device_event_trampoline(g_device_event_closure, event_handle);
+  void *closure = g_device_event_closure;
+  moonbit_incref(closure);
+  g_device_event_trampoline(closure, event_handle);
+  moonbit_decref(closure);
 }
 
 static int32_t mbw_sync_query(int32_t raw_id, int32_t kind, uint64_t arg0,
@@ -102,7 +114,11 @@ static int32_t mbw_sync_query(int32_t raw_id, int32_t kind, uint64_t arg0,
   if (raw_id <= 0 || g_sync_query_trampoline == NULL || g_sync_query_closure == NULL) {
     return default_value;
   }
-  return g_sync_query_trampoline(g_sync_query_closure, raw_id, kind, arg0);
+  void *closure = g_sync_query_closure;
+  moonbit_incref(closure);
+  int32_t result = g_sync_query_trampoline(closure, raw_id, kind, arg0);
+  moonbit_decref(closure);
+  return result;
 }
 
 static void mbw_call_lifecycle_trampoline(mbw_lifecycle_trampoline_t trampoline, void *closure,
@@ -110,7 +126,9 @@ static void mbw_call_lifecycle_trampoline(mbw_lifecycle_trampoline_t trampoline,
   if (trampoline == NULL || closure == NULL) {
     return;
   }
+  moonbit_incref(closure);
   trampoline(closure, callback_kind);
+  moonbit_decref(closure);
 }
 
 static void mbw_emit_drag_event(int32_t raw_id, int32_t kind, id<NSDraggingInfo> sender) {

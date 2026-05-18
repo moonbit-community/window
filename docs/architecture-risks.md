@@ -13,6 +13,9 @@ Current control:
 
 - `scripts/check_ffi_surface.sh` prevents accidental FFI surface growth and
   payload-wrapper regressions.
+- Native callback trampolines retain MoonBit closures for the duration of each
+  invocation, so callback-driven teardown or observer removal cannot release a
+  closure while it is still being invoked.
 - GitHub issue #5 remains open until the reporter confirms the latest release
   no longer reproduces the callback lifetime failure.
 
