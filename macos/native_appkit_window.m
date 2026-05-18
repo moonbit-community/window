@@ -88,7 +88,6 @@ static void mbw_emit_drag_event(int32_t raw_id, int32_t kind, id<NSDraggingInfo>
 @property(nonatomic, assign) int32_t rawId;
 @property(nonatomic, retain) NSMutableAttributedString *markedText;
 - (void)mbw_emitTextInputWithKind:(int32_t)kind
-                      eventHandle:(uint64_t)eventHandle
                            state:(int32_t)state
                             text:(id)text
                      cursorStart:(int32_t)cursorStart
@@ -308,7 +307,6 @@ static void mbw_emit_drag_event(int32_t raw_id, int32_t kind, id<NSDraggingInfo>
 }
 
 - (void)mbw_emitTextInputWithKind:(int32_t)kind
-                      eventHandle:(uint64_t)eventHandle
                            state:(int32_t)state
                             text:(id)text
                      cursorStart:(int32_t)cursorStart
@@ -318,19 +316,12 @@ static void mbw_emit_drag_event(int32_t raw_id, int32_t kind, id<NSDraggingInfo>
     return;
   }
   id text_object = text == nil ? nil : text;
-  id event_object = eventHandle == 0 ? nil : (__bridge id)(void *)(uintptr_t)eventHandle;
   if (text_object != nil) {
     [text_object retain];
   }
-  if (event_object != nil) {
-    [event_object retain];
-  }
-  mbw_call_text_input_event_trampoline(self.rawId, kind, eventHandle, state,
+  mbw_call_text_input_event_trampoline(self.rawId, kind, state,
                                        (uint64_t)(uintptr_t)(__bridge void *)text_object,
                                        cursorStart, cursorEnd, pathHandle);
-  if (event_object != nil) {
-    [event_object release];
-  }
   if (text_object != nil) {
     [text_object release];
   }
@@ -446,9 +437,8 @@ static void mbw_emit_drag_event(int32_t raw_id, int32_t kind, id<NSDraggingInfo>
 }
 
 - (void)keyDown:(NSEvent *)event {
-  uint64_t event_handle = event == nil ? 0 : (uint64_t)(uintptr_t)(__bridge void *)event;
+  [self mbw_emitInputWithKind:26 event:event];
   [self mbw_emitTextInputWithKind:20
-                      eventHandle:event_handle
                             state:0
                              text:nil
                       cursorStart:0
@@ -459,7 +449,6 @@ static void mbw_emit_drag_event(int32_t raw_id, int32_t kind, id<NSDraggingInfo>
     [self interpretKeyEvents:events];
   }
   [self mbw_emitTextInputWithKind:21
-                      eventHandle:event_handle
                             state:0
                              text:nil
                       cursorStart:0
@@ -507,7 +496,6 @@ static void mbw_emit_drag_event(int32_t raw_id, int32_t kind, id<NSDraggingInfo>
   (void)replacementRange;
   self.markedText = [self mbw_markedTextFromObject:string];
   [self mbw_emitTextInputWithKind:22
-                      eventHandle:0
                              state:[self mbw_i32FromRangeValue:selectedRange.location]
                               text:string
                        cursorStart:[self mbw_i32FromRangeValue:selectedRange.length]
@@ -522,7 +510,6 @@ static void mbw_emit_drag_event(int32_t raw_id, int32_t kind, id<NSDraggingInfo>
   }
   [self mbw_clearMarkedText];
   [self mbw_emitTextInputWithKind:23
-                      eventHandle:0
                              state:0
                               text:@""
                        cursorStart:0
@@ -594,7 +581,6 @@ static void mbw_emit_drag_event(int32_t raw_id, int32_t kind, id<NSDraggingInfo>
   (void)replacementRange;
   [self mbw_clearMarkedText];
   [self mbw_emitTextInputWithKind:24
-                      eventHandle:0
                             state:0
                              text:string
                       cursorStart:0
@@ -604,7 +590,6 @@ static void mbw_emit_drag_event(int32_t raw_id, int32_t kind, id<NSDraggingInfo>
 
 - (void)doCommandBySelector:(SEL)selector {
   [self mbw_emitTextInputWithKind:25
-                      eventHandle:0
                              state:0
                               text:nil
                        cursorStart:0

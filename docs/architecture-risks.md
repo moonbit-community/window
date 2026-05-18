@@ -22,9 +22,10 @@ Current control:
   physical position plus UTF-8 path payloads to MoonBit.
 - Global `sendEvent:` device-event interception snapshots `NSEvent` inside ObjC
   and passes only device-event kind, button, and motion delta to MoonBit.
-- View-level mouse, scroll, gesture, key-up, and modifier events snapshot
-  `NSEvent` inside ObjC and pass primitive payloads to MoonBit; IME key-down
-  forwarding is tracked separately because it depends on the IME state machine.
+- View-level mouse, scroll, gesture, key, modifier, and IME forwarding paths
+  snapshot `NSEvent` inside ObjC and pass primitive/c-string payloads to
+  MoonBit. IME key-down forwarding uses MoonBit pending key snapshot state
+  instead of replaying an AppKit event handle.
 - Native callback trampolines retain MoonBit closures for the duration of each
   invocation, so callback-driven teardown or observer removal cannot release a
   closure while it is still being invoked.

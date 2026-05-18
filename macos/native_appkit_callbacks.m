@@ -44,17 +44,16 @@ void mbw_call_input_event_trampoline(
   moonbit_decref(closure);
 }
 
-void mbw_call_text_input_event_trampoline(int32_t raw_id, int32_t kind, uint64_t event_handle,
-                                          int32_t state, uint64_t text_handle,
-                                          int32_t cursor_start, int32_t cursor_end,
-                                          uint64_t path_handle) {
+void mbw_call_text_input_event_trampoline(int32_t raw_id, int32_t kind, int32_t state,
+                                          uint64_t text_handle, int32_t cursor_start,
+                                          int32_t cursor_end, uint64_t path_handle) {
   if (g_text_input_event_trampoline == NULL || g_text_input_event_closure == NULL) {
     return;
   }
   void *closure = g_text_input_event_closure;
   moonbit_incref(closure);
-  g_text_input_event_trampoline(closure, raw_id, kind, event_handle, state, text_handle,
-                                cursor_start, cursor_end, path_handle);
+  g_text_input_event_trampoline(closure, raw_id, kind, state, text_handle, cursor_start,
+                                cursor_end, path_handle);
   moonbit_decref(closure);
 }
 

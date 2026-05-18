@@ -551,7 +551,6 @@ fn app_state_install_native_callbacks() -> Unit {
       callback,
       raw_id,
       kind,
-      event_handle,
       state,
       text_handle,
       cursor_start,
@@ -559,8 +558,7 @@ fn app_state_install_native_callbacks() -> Unit {
       path_handle,
     ) {
       callback(
-        raw_id, kind, event_handle, state, text_handle, cursor_start, cursor_end,
-        path_handle,
+        raw_id, kind, state, text_handle, cursor_start, cursor_end, path_handle,
       )
     },
     native_callback_text_input_event,
@@ -632,7 +630,7 @@ fn native_callback_input_event(
     text_without_modifiers,
   )
   let mut text_with_all_modifiers = text_with_all_modifiers
-  if kind == 7 && (event_type == 10 || event_type == 11) {
+  if (kind == 7 || kind == 26) && (event_type == 10 || event_type == 11) {
     let left_alt_pressed = (modifier_flags & 0x20) != 0
     let right_alt_pressed = (modifier_flags & 0x40) != 0
     let alt_pressed = left_alt_pressed || right_alt_pressed
@@ -661,6 +659,27 @@ fn native_callback_input_event(
     )
   }
   if kind == 7 && event_type == 11 && !view_ime_allows_key_up(raw_id) {
+    return ()
+  }
+  if kind == 26 {
+    view_set_pending_key_snapshot(raw_id, {
+      x,
+      y,
+      state,
+      button,
+      modifiers,
+      scancode,
+      repeat,
+      pointer_source,
+      pointer_kind,
+      scroll_delta_kind,
+      delta_x,
+      delta_y,
+      phase,
+      text_with_all_modifiers,
+      text_ignoring_modifiers,
+      text_without_modifiers,
+    })
     return ()
   }
   if kind == 4 ||
@@ -703,7 +722,6 @@ fn native_callback_input_event(
 fn native_callback_text_input_event(
   raw_id : Int,
   kind : Int,
-  event_handle : UInt64,
   state : Int,
   text_handle : UInt64,
   cursor_start : Int,
@@ -711,7 +729,7 @@ fn native_callback_text_input_event(
   path_handle : UInt64,
 ) -> Unit {
   queue_native_text_input_event(
-    raw_id, kind, event_handle, state, text_handle, cursor_start, cursor_end, path_handle,
+    raw_id, kind, state, text_handle, cursor_start, cursor_end, path_handle,
   )
 }
 
