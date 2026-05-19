@@ -909,6 +909,17 @@ fn app_state_window_handle(raw_id : Int) -> NativeWindow? {
 }
 
 ///|
+fn app_state_window_identity(raw_id : Int) -> UInt64? {
+  match
+    app_state_runtime.val.window_handles.search_by(entry => {
+      entry.raw_id == raw_id
+    }) {
+    Some(index) => Some(app_state_runtime.val.window_handles[index].identity)
+    None => None
+  }
+}
+
+///|
 fn app_state_window_raw_id(window_handle : NativeWindow) -> Int? {
   let window_identity = native_window_identity(window_handle)
   match

@@ -405,8 +405,8 @@ fn view_content_view_handle(raw_id : Int) -> UInt64 {
 
 ///|
 fn view_ime_allowed(raw_id : Int) -> Bool {
-  match app_state_window_handle(raw_id) {
-    Some(window_handle) => window_ime_allowed(window_handle)
+  match app_state_window_identity(raw_id) {
+    Some(window_identity) => window_ime_allowed_state(window_identity)
     None => false
   }
 }
@@ -433,18 +433,30 @@ fn view_native_query_state(raw_id : Int, kind : Int) -> Int {
       view_selected_range_location(raw_id)
     _ if kind == native_view_state_query_selected_range_length =>
       view_selected_range_length(raw_id)
+    _ if kind == native_view_state_query_ime_cursor_x =>
+      match app_state_window_identity(raw_id) {
+        Some(window_identity) => window_ime_cursor_x_state(window_identity)
+        None => 0
+      }
+    _ if kind == native_view_state_query_ime_cursor_y =>
+      match app_state_window_identity(raw_id) {
+        Some(window_identity) => window_ime_cursor_y_state(window_identity)
+        None => 0
+      }
+    _ if kind == native_view_state_query_ime_cursor_width =>
+      match app_state_window_identity(raw_id) {
+        Some(window_identity) => window_ime_cursor_width_state(window_identity)
+        None => 1
+      }
+    _ if kind == native_view_state_query_ime_cursor_height =>
+      match app_state_window_identity(raw_id) {
+        Some(window_identity) => window_ime_cursor_height_state(window_identity)
+        None => 1
+      }
     _ =>
       match app_state_window_handle(raw_id) {
         Some(window_handle) =>
           match kind {
-            _ if kind == native_view_state_query_ime_cursor_x =>
-              window_ime_cursor_x(window_handle)
-            _ if kind == native_view_state_query_ime_cursor_y =>
-              window_ime_cursor_y(window_handle)
-            _ if kind == native_view_state_query_ime_cursor_width =>
-              window_ime_cursor_width(window_handle)
-            _ if kind == native_view_state_query_ime_cursor_height =>
-              window_ime_cursor_height(window_handle)
             _ if kind == native_view_state_query_accepts_first_mouse =>
               if window_accepts_first_mouse_state(
                   native_window_identity(window_handle),
