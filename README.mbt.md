@@ -22,50 +22,63 @@ root `@Milky2018/window` package.
 
 ## Quick Start
 
-Use explicit subpackage imports:
+Use explicit subpackage imports in your package's `moon.pkg`:
 
-```mbt nocheck
+```moonbit
 import {
   "Milky2018/window/core",
   "Milky2018/window/macos",
 }
 
+supported_targets = "native"
+
+options("is-main": true)
+```
+
+Then write the app in `main.mbt`:
+
+```moonbit
+///|
 struct App {
   mut window : @macos.Window?
 }
 
+///|
 pub impl @macos.ApplicationHandler for App with can_create_surfaces(
   self,
   event_loop,
 ) {
-  let attrs =
-    @core.WindowAttributes::default()
-    .with_title("window demo")
-  let window = event_loop.create_window(attrs)
-  self.window = Some(window)
-  window.request_redraw()
+  let attrs = @core.WindowAttributes::default().with_title("window demo")
+  let window : @macos.Window? = Some(event_loop.try_create_window(attrs)) catch {
+    err => {
+      println("error creating window: \{err}")
+      event_loop.exit()
+      None
+    }
+  }
+  self.window = window
 }
 
+///|
 pub impl @macos.ApplicationHandler for App with window_event(
   self,
   event_loop,
   _id,
   event,
 ) {
-  for compat_event in event.into_winit_events() {
-    match compat_event {
-      @core.WinitWindowEvent::CloseRequested => event_loop.exit()
-      @core.WinitWindowEvent::Resized(_) =>
-        match self.window {
-          Some(window) => window.request_redraw()
-          None => ()
-        }
-      @core.WinitWindowEvent::RedrawRequested => println("redraw requested")
-      _ => ()
-    }
+  match event {
+    CloseRequested => event_loop.exit()
+    SurfaceResized(_) =>
+      match self.window {
+        Some(window) => window.request_redraw()
+        None => ()
+      }
+    RedrawRequested => println("redraw requested")
+    _ => ()
   }
 }
 
+///|
 fn main {
   let event_loop = @macos.EventLoop::EventLoop()
   event_loop.run_app({ window: None })
@@ -134,7 +147,7 @@ Import only the subpackages you need:
 
 You can also match native event variants directly:
 
-```mbt nocheck
+```moonbit
 ///|
 pub impl @macos.ApplicationHandler for App with window_event(
   self,
@@ -143,11 +156,11 @@ pub impl @macos.ApplicationHandler for App with window_event(
   event,
 ) {
   match event {
-    @core.WindowEvent::PointerMoved(_, position, _, _) =>
+    PointerMoved(_, position, _, _) =>
       println("pointer moved: \{position}")
-    @core.WindowEvent::DragEntered(paths, position) =>
+    DragEntered(paths, position) =>
       println("drag entered at \{position}: \{paths}")
-    @core.WindowEvent::CloseRequested => event_loop.exit()
+    CloseRequested => event_loop.exit()
     _ => ()
   }
 }
