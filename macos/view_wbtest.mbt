@@ -9,6 +9,8 @@ fn reset_view_state_for_test() -> Unit {
   view_ime_marked_text_lengths.val = []
   view_ime_selected_range_locations.val = []
   view_ime_selected_range_lengths.val = []
+  view_pending_key_window_ids.val = []
+  view_pending_key_snapshots.val = []
 
   app_state_runtime.val = AppStateRuntime()
   app_state_window_position_raw_ids.val = []
@@ -141,4 +143,56 @@ test "disable_ime_clears_marked_text_query_state" {
   assert_eq(view_marked_text_length(raw_id), 0)
   assert_eq(view_selected_range_location(raw_id), -1)
   assert_eq(view_selected_range_length(raw_id), 0)
+}
+
+///|
+test "pending_key_snapshot_forwards_pressed_keyboard_input" {
+  reset_view_state_for_test()
+
+  let raw_id = 41
+  app_state_set_running(true)
+  app_state_set_handler_in_use(true)
+  app_state_runtime.val.dispatch_callback = Some(fn(_callback) {  })
+
+  native_callback_input_event(
+    raw_id,
+    26,
+    10,
+    12.0,
+    34.0,
+    1,
+    0,
+    0,
+    0x12,
+    0,
+    0,
+    0,
+    0,
+    0.0,
+    0.0,
+    0,
+    (0 : Int).to_uint64(),
+    (0 : Int).to_uint64(),
+    (0 : Int).to_uint64(),
+  )
+  native_callback_text_input_event(
+    raw_id,
+    21,
+    0,
+    (0 : Int).to_uint64(),
+    0,
+    0,
+    (0 : Int).to_uint64(),
+  )
+
+  assert_eq(app_state_runtime.val.deferred_callbacks.length(), 1)
+  match app_state_runtime.val.deferred_callbacks[0] {
+    WindowEvent(window_id, KeyboardInput(_, key_event, false)) => {
+      assert_eq(window_id, @core.WindowId::from_raw(raw_id))
+      assert_eq(key_event.state(), Pressed)
+      assert_eq(key_event.physical_key(), Code(Digit1))
+      assert_false(key_event.repeat())
+    }
+    _ => fail("expected pressed keyboard input from pending key snapshot")
+  }
 }

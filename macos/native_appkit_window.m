@@ -213,6 +213,7 @@ static void mbw_window_box_destroy(MBWWindowBox *box);
     }
     break;
   case 7:
+  case 26:
     scancode = event == nil ? 0 : (int32_t)event.keyCode;
     if (event_type == NSEventTypeKeyDown) {
       state = 1;
