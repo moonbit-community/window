@@ -453,27 +453,17 @@ fn view_native_query_state(raw_id : Int, kind : Int) -> Int {
         Some(window_identity) => window_ime_cursor_height_state(window_identity)
         None => 1
       }
-    _ =>
-      match app_state_window_handle(raw_id) {
-        Some(window_handle) =>
-          match kind {
-            _ if kind == native_view_state_query_accepts_first_mouse =>
-              if window_accepts_first_mouse_state(
-                  native_window_identity(window_handle),
-                ) {
-                1
-              } else {
-                0
-              }
-            _ => 0
+    _ if kind == native_view_state_query_accepts_first_mouse =>
+      match app_state_window_identity(raw_id) {
+        Some(window_identity) =>
+          if window_accepts_first_mouse_state(window_identity) {
+            1
+          } else {
+            0
           }
-        None =>
-          match kind {
-            _ if kind == native_view_state_query_ime_cursor_width => 1
-            _ if kind == native_view_state_query_ime_cursor_height => 1
-            _ => 0
-          }
+        None => 0
       }
+    _ => 0
   }
 }
 
