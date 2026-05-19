@@ -30,9 +30,6 @@ static MBWCfObjectHandle *mbw_cf_object_handle_create(CFTypeRef object) {
 
 MOONBIT_FFI_EXPORT
 MBWCfObjectHandle *mbw_cg_display_create_uuid_from_display_id(uint32_t display_id) {
-  if (display_id == 0) {
-    return mbw_cf_object_handle_create(NULL);
-  }
   CFUUIDRef uuid = CGDisplayCreateUUIDFromDisplayID((CGDirectDisplayID)display_id);
   return mbw_cf_object_handle_create(uuid);
 }
