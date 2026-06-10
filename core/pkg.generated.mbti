@@ -1520,6 +1520,6 @@ pub impl Show for WinitWindowEvent
 
 // Traits
 pub(open) trait WindowCursorHittest {
-  set_cursor_hittest(Self, Bool) -> Unit raise RequestError
+  fn set_cursor_hittest(Self, Bool) -> Unit raise RequestError
 }
 
