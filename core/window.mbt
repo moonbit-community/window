@@ -114,7 +114,7 @@ pub struct ImeSurroundingText {
 } derive(Eq, Debug)
 
 ///|
-pub fn ImeSurroundingText::new(
+pub fn ImeSurroundingText::ImeSurroundingText(
   text : String,
   cursor : Int,
   anchor : Int,
@@ -122,19 +122,19 @@ pub fn ImeSurroundingText::new(
   let utf8_bytes = @utf8.encode(text[:], bom=false)
   let byte_len = utf8_bytes.length()
   if byte_len > 4000 {
-    raise ImeSurroundingTextError::TextTooLong
+    raise TextTooLong
   }
   if cursor < 0 || cursor > byte_len {
-    raise ImeSurroundingTextError::CursorBadPosition
+    raise CursorBadPosition
   }
   if anchor < 0 || anchor > byte_len {
-    raise ImeSurroundingTextError::AnchorBadPosition
+    raise AnchorBadPosition
   }
   let _ = @utf8.decode(utf8_bytes[:cursor], ignore_bom=false) catch {
-    _ => raise ImeSurroundingTextError::CursorBadPosition
+    _ => raise CursorBadPosition
   }
   let _ = @utf8.decode(utf8_bytes[:anchor], ignore_bom=false) catch {
-    _ => raise ImeSurroundingTextError::AnchorBadPosition
+    _ => raise AnchorBadPosition
   }
   { text, cursor, anchor }
 }
@@ -162,7 +162,7 @@ pub struct ImeCapabilities {
 } derive(Eq, Debug)
 
 ///|
-pub fn ImeCapabilities::new(
+pub fn ImeCapabilities::ImeCapabilities(
   hint_and_purpose : Bool,
   cursor_area : Bool,
   surrounding_text : Bool,
@@ -200,11 +200,80 @@ pub(all) suberror ImeRequestError {
 } derive(Debug)
 
 ///|
+pub struct NotSupportedError {
+  priv reason : String
+} derive(Eq, Debug)
+
+///|
+pub fn NotSupportedError::NotSupportedError(
+  reason : String,
+) -> NotSupportedError {
+  { reason, }
+}
+
+///|
+pub fn NotSupportedError::reason(self : NotSupportedError) -> String {
+  self.reason
+}
+
+///|
+pub struct OsError {
+  priv message : String
+  priv code : Int?
+  priv domain : String?
+} derive(Eq, Debug)
+
+///|
+pub fn OsError::OsError(
+  message : String,
+  code : Int?,
+  domain : String?,
+) -> OsError {
+  { message, code, domain }
+}
+
+///|
+pub fn OsError::message(self : OsError) -> String {
+  self.message
+}
+
+///|
+pub fn OsError::code(self : OsError) -> Int? {
+  self.code
+}
+
+///|
+pub fn OsError::domain(self : OsError) -> String? {
+  self.domain
+}
+
+///|
 pub(all) suberror RequestError {
-  NotSupported
+  NotSupported(NotSupportedError)
   Ignored
-  Os
+  Os(OsError)
 } derive(Debug)
+
+///|
+pub fn RequestError::not_supported(reason : String) -> RequestError {
+  NotSupported(NotSupportedError(reason))
+}
+
+///|
+pub fn RequestError::os(
+  message : String,
+  code? : Int,
+  domain? : String,
+) -> RequestError {
+  Os(OsError(message, code, domain))
+}
+
+///|
+// Backend-agnostic capability aligned with winit's window API:
+// all backend windows should support set_cursor_hittest.
+pub(open) trait WindowCursorHittest {
+  fn set_cursor_hittest(Self, Bool) -> Unit raise RequestError
+}
 
 ///|
 pub struct ActivationToken {
@@ -297,13 +366,46 @@ pub(all) enum CursorIcon {
 } derive(Eq, Debug)
 
 ///|
+pub(all) type CustomCursorHandle
+
+///|
+pub impl Debug for CustomCursorHandle with fn to_repr(_self) {
+  Repr::opaque_("CustomCursorHandle", Repr::literal("<native>"))
+}
+
+///|
 pub struct CustomCursor {
   priv raw : UInt64
-} derive(Eq, Debug)
+  priv handle : CustomCursorHandle?
+}
+
+///|
+pub impl Eq for CustomCursor with fn equal(self, other) {
+  self.raw == other.raw
+}
+
+///|
+pub impl Eq for CustomCursor with fn not_equal(self, other) {
+  self.raw != other.raw
+}
+
+///|
+pub impl Debug for CustomCursor with fn to_repr(self) {
+  let _ = self.handle
+  Repr::opaque_("CustomCursor", Repr::literal("0x" + self.raw.to_string()))
+}
 
 ///|
 pub fn CustomCursor::from_raw(raw : UInt64) -> CustomCursor {
-  { raw, }
+  { raw, handle: None }
+}
+
+///|
+pub fn CustomCursor::from_native(
+  raw : UInt64,
+  handle : CustomCursorHandle,
+) -> CustomCursor {
+  { raw, handle: Some(handle) }
 }
 
 ///|
@@ -347,7 +449,7 @@ pub fn CustomCursorSource::from_rgba(
   hotspot_y : Int,
 ) -> CustomCursorSource raise BadCustomCursorSource {
   if width <= 0 || height <= 0 {
-    raise BadCustomCursorSource::DimensionsVsPixelCount(
+    raise DimensionsVsPixelCount(
       width,
       height,
       width * height,
@@ -355,24 +457,20 @@ pub fn CustomCursorSource::from_rgba(
     )
   }
   if width > 2048 || height > 2048 {
-    raise BadCustomCursorSource::TooLarge(width, height)
+    raise TooLarge(width, height)
   }
   if rgba.length() % 4 != 0 {
-    raise BadCustomCursorSource::ByteCountNotDivisibleBy4(rgba.length())
+    raise ByteCountNotDivisibleBy4(rgba.length())
   }
   let pixel_count = rgba.length() / 4
   let width_x_height = width * height
   if pixel_count != width_x_height {
-    raise BadCustomCursorSource::DimensionsVsPixelCount(
-      width, height, width_x_height, pixel_count,
-    )
+    raise DimensionsVsPixelCount(width, height, width_x_height, pixel_count)
   }
   if hotspot_x < 0 || hotspot_x >= width || hotspot_y < 0 || hotspot_y >= height {
-    raise BadCustomCursorSource::HotspotOutOfBounds(
-      width, height, hotspot_x, hotspot_y,
-    )
+    raise HotspotOutOfBounds(width, height, hotspot_x, hotspot_y)
   }
-  CustomCursorSource::Rgba(rgba, width, height, hotspot_x, hotspot_y)
+  Rgba(rgba, width, height, hotspot_x, hotspot_y)
 }
 
 ///|
@@ -381,14 +479,12 @@ pub fn CustomCursorSource::from_animation(
   cursors : Array[CustomCursor],
 ) -> CustomCursorSource raise BadCustomCursorAnimation {
   if frame_duration_millis <= 0 {
-    raise BadCustomCursorAnimation::NonPositiveFrameDuration(
-      frame_duration_millis,
-    )
+    raise NonPositiveFrameDuration(frame_duration_millis)
   }
   if cursors.length() == 0 {
-    raise BadCustomCursorAnimation::Empty
+    raise Empty
   }
-  CustomCursorSource::Animation(frame_duration_millis, cursors)
+  Animation(frame_duration_millis, cursors)
 }
 
 ///|
@@ -407,7 +503,7 @@ pub(all) enum OptionAsAlt {
 
 ///|
 pub fn OptionAsAlt::default() -> OptionAsAlt {
-  OptionAsAlt::None
+  None
 }
 
 ///|
@@ -492,7 +588,7 @@ pub fn PlatformWindowAttributes::default() -> PlatformWindowAttributes {
     has_shadow: true,
     movable_by_window_background: false,
     borderless_game: false,
-    option_as_alt: OptionAsAlt::None,
+    option_as_alt: None,
     tabbing_identifier: None,
     title_hidden: false,
     titlebar_hidden: false,
@@ -739,16 +835,18 @@ pub struct Icon {
 } derive(Eq, Debug)
 
 ///|
-pub fn Icon::new(rgba : Bytes, width : Int, height : Int) -> Icon raise BadIcon {
+pub fn Icon::Icon(
+  rgba : Bytes,
+  width : Int,
+  height : Int,
+) -> Icon raise BadIcon {
   if rgba.length() % 4 != 0 {
-    raise BadIcon::ByteCountNotDivisibleBy4(rgba.length())
+    raise ByteCountNotDivisibleBy4(rgba.length())
   }
   let pixel_count = rgba.length() / 4
   let width_x_height = width * height
   if width <= 0 || height <= 0 || pixel_count != width_x_height {
-    raise BadIcon::DimensionsVsPixelCount(
-      width, height, width_x_height, pixel_count,
-    )
+    raise DimensionsVsPixelCount(width, height, width_x_height, pixel_count)
   } else {
     { width, height, rgba }
   }
@@ -898,14 +996,14 @@ pub fn WindowAttributes::default() -> WindowAttributes {
     blur: false,
     clip_children: true,
     content_protected: false,
-    cursor: Cursor::Icon(CursorIcon::Default),
+    cursor: Icon(Default),
     cursor_hittest: true,
     cursor_visible: true,
     decorations: true,
     enabled_buttons: WindowButtons::all(),
     fullscreen: None,
     ime_hints: ImeHint::none(),
-    ime_purpose: ImePurpose::Normal,
+    ime_purpose: Normal,
     maximized: false,
     min_surface_size: None,
     max_surface_size: None,
@@ -922,7 +1020,7 @@ pub fn WindowAttributes::default() -> WindowAttributes {
     resizable: true,
     title: "winit window",
     visible: true,
-    window_level: WindowLevel::Normal,
+    window_level: Normal,
   }
 }
 
@@ -1098,7 +1196,7 @@ pub fn WindowAttributes::with_cursor_icon(
   self : WindowAttributes,
   cursor : CursorIcon,
 ) -> WindowAttributes {
-  self.with_cursor(Cursor::Icon(cursor))
+  self.with_cursor(Icon(cursor))
 }
 
 ///|

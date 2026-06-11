@@ -366,7 +366,10 @@ fn logical_position_f64_to_physical(
   scale_factor : Double,
 ) -> @dpi.PhysicalPositionF64 {
   let normalized_scale = if scale_factor > 0.0 { scale_factor } else { 1.0 }
-  @dpi.PhysicalPositionF64::new(x * normalized_scale, y * normalized_scale)
+  @dpi.PhysicalPositionF64::PhysicalPositionF64(
+    x * normalized_scale,
+    y * normalized_scale,
+  )
 }
 
 ///|
@@ -2774,7 +2777,7 @@ fn set_window_outer_size(
   width : Int,
   height : Int,
 ) -> Unit {
-  let logical_size = @dpi.PhysicalSize::new(width, height).to_logical(
+  let logical_size = @dpi.PhysicalSize::PhysicalSize(width, height).to_logical(
     window_native_scale_factor(window_handle),
   )
   set_surface_size(
@@ -3848,7 +3851,7 @@ fn initial_window_surface_size(
 ) -> @dpi.LogicalSize {
   match surface_size {
     Some(size) => size.to_logical(scale_factor)
-    None => @dpi.LogicalSize::new(800.0, 600.0)
+    None => @dpi.LogicalSize::LogicalSize(800.0, 600.0)
   }
 }
 
@@ -3917,7 +3920,9 @@ fn new_window(
   event_loop : EventLoop,
   attributes : @core.WindowAttributes,
 ) -> Window raise @core.RequestError {
-  guard is_main_thread() else { raise @core.RequestError::Os }
+  guard is_main_thread() else {
+    raise @core.RequestError::os("macOS window operation failed")
+  }
   let raw_id = app_state_next_window_id()
   let scale_factor = match event_loop.primary_monitor() {
     Some(monitor) => monitor.scale_factor()
@@ -3938,7 +3943,7 @@ fn new_window(
     Some(parent_window) => {
       guard set_parent_window(raw_window_handle, parent_window.into_raw()) else {
         close_window(raw_window_handle)
-        raise @core.RequestError::Os
+        raise @core.RequestError::os("macOS window operation failed")
       }
     }
     None => ()
@@ -4171,7 +4176,7 @@ fn new_window(
 
 ///|
 pub fn Window::surface_size(self : Window) -> @dpi.PhysicalSize {
-  @dpi.LogicalSize::new(
+  @dpi.LogicalSize::LogicalSize(
     native_window_width(self.raw_window_handle).to_double(),
     native_window_height(self.raw_window_handle).to_double(),
   ).to_physical(self.scale_factor())
@@ -4184,7 +4189,7 @@ pub fn Window::inner_size(self : Window) -> @dpi.PhysicalSize {
 
 ///|
 pub fn Window::outer_size(self : Window) -> @dpi.PhysicalSize {
-  @dpi.LogicalSize::new(
+  @dpi.LogicalSize::LogicalSize(
     window_outer_width(self.raw_window_handle).to_double(),
     window_outer_height(self.raw_window_handle).to_double(),
   ).to_physical(self.scale_factor())
@@ -4192,7 +4197,7 @@ pub fn Window::outer_size(self : Window) -> @dpi.PhysicalSize {
 
 ///|
 pub fn Window::surface_position(self : Window) -> @dpi.PhysicalPosition {
-  @dpi.LogicalPosition::new(
+  @dpi.LogicalPosition::LogicalPosition(
     window_surface_x(self.raw_window_handle).to_double(),
     window_surface_y(self.raw_window_handle).to_double(),
   ).to_physical(self.scale_factor())
@@ -4206,7 +4211,7 @@ pub fn Window::inner_position(self : Window) -> @dpi.PhysicalPosition {
 ///|
 pub fn Window::safe_area(self : Window) -> @dpi.PhysicalInsets {
   let scale_factor = self.scale_factor()
-  @dpi.PhysicalInsets::new(
+  @dpi.PhysicalInsets::PhysicalInsets(
     (window_safe_area_top(self.raw_window_handle).to_double() * scale_factor).to_int(),
     (window_safe_area_left(self.raw_window_handle).to_double() * scale_factor).to_int(),
     (window_safe_area_bottom(self.raw_window_handle).to_double() * scale_factor).to_int(),
@@ -4265,7 +4270,7 @@ pub fn Window::surface_resize_increments(self : Window) -> @dpi.PhysicalSize? {
   let height = window_resize_increment_height(self.raw_window_handle)
   if width > 0 && height > 0 {
     Some(
-      @dpi.LogicalSize::new(width.to_double(), height.to_double()).to_physical(
+      @dpi.LogicalSize::LogicalSize(width.to_double(), height.to_double()).to_physical(
         self.scale_factor(),
       ),
     )
@@ -4325,7 +4330,7 @@ pub fn Window::min_surface_size(self : Window) -> @dpi.PhysicalSize? {
   let height = window_min_surface_height(self.raw_window_handle)
   if width > 0 && height > 0 {
     Some(
-      @dpi.LogicalSize::new(width.to_double(), height.to_double()).to_physical(
+      @dpi.LogicalSize::LogicalSize(width.to_double(), height.to_double()).to_physical(
         self.scale_factor(),
       ),
     )
@@ -4345,7 +4350,7 @@ pub fn Window::max_surface_size(self : Window) -> @dpi.PhysicalSize? {
   let height = window_max_surface_height(self.raw_window_handle)
   if width > 0 && height > 0 {
     Some(
-      @dpi.LogicalSize::new(width.to_double(), height.to_double()).to_physical(
+      @dpi.LogicalSize::LogicalSize(width.to_double(), height.to_double()).to_physical(
         self.scale_factor(),
       ),
     )
@@ -4367,7 +4372,7 @@ pub fn Window::outer_position(
   if raw_id == (0 : Int).to_uint64() {
     raise @core.RequestError::Ignored
   }
-  @dpi.LogicalPosition::new(
+  @dpi.LogicalPosition::LogicalPosition(
     window_x(raw_id).to_double(),
     window_y(raw_id).to_double(),
   ).to_physical(self.scale_factor())

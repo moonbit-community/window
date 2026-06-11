@@ -12,9 +12,13 @@ pub fn EventLoop::create_custom_cursor(
         rgba, width, height, hotspot_x, hotspot_y,
       )
     @core.CustomCursorSource::Url(_, _, _) =>
-      raise @core.RequestError::NotSupported
+      raise @core.RequestError::not_supported(
+        "operation is not supported on macOS",
+      )
     @core.CustomCursorSource::Animation(_, _) =>
-      raise @core.RequestError::NotSupported
+      raise @core.RequestError::not_supported(
+        "operation is not supported on macOS",
+      )
   }
 }
 
@@ -68,7 +72,9 @@ fn validate_rgba_cursor_source(
   }
   // Keep runtime-side checks even though `from_rgba` already validates.
   if width > 2048 || height > 2048 {
-    raise @core.RequestError::NotSupported
+    raise @core.RequestError::not_supported(
+      "operation is not supported on macOS",
+    )
   }
   if rgba.length() % 4 != 0 {
     raise @core.RequestError::Ignored
@@ -87,7 +93,9 @@ fn custom_cursor_from_native(
   raw : UInt64,
 ) -> @core.CustomCursor raise @core.RequestError {
   if raw == (0 : Int).to_uint64() {
-    raise @core.RequestError::NotSupported
+    raise @core.RequestError::not_supported(
+      "operation is not supported on macOS",
+    )
   } else {
     let custom = @core.CustomCursor::from_raw(raw)
     ignore(is_animated(custom))

@@ -360,7 +360,7 @@ fn app_state_logical_size_to_physical(
   width : Int,
   height : Int,
 ) -> @dpi.PhysicalSize {
-  @dpi.LogicalSize::new(width.to_double(), height.to_double()).to_physical(
+  @dpi.LogicalSize::LogicalSize(width.to_double(), height.to_double()).to_physical(
     app_state_window_scale_factor(raw_id),
   )
 }
@@ -371,7 +371,7 @@ fn app_state_logical_position_to_physical(
   x : Int,
   y : Int,
 ) -> @dpi.PhysicalPosition {
-  @dpi.LogicalPosition::new(x.to_double(), y.to_double()).to_physical(
+  @dpi.LogicalPosition::LogicalPosition(x.to_double(), y.to_double()).to_physical(
     app_state_window_scale_factor(raw_id),
   )
 }
@@ -1220,11 +1220,11 @@ fn[A : ApplicationHandler] app_state_dispatch_callback(
       width,
       height
     ) => {
-      let physical_size = @dpi.LogicalSize::new(
+      let physical_size = @dpi.LogicalSize::LogicalSize(
         width.to_double(),
         height.to_double(),
       ).to_physical(scale_factor)
-      let writer = @core.SurfaceSizeWriter::new(physical_size)
+      let writer = @core.SurfaceSizeWriter::SurfaceSizeWriter(physical_size)
       app.window_event(
         event_loop,
         window_id,

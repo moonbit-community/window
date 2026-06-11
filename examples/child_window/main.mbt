@@ -64,8 +64,12 @@ fn App::spawn_child_window(
       )
       let child_attrs = @core.WindowAttributes::default()
         .with_title("child window")
-        .with_surface_size(@dpi.LogicalSize::new(128.0, 96.0).into_size())
-        .with_position(@dpi.LogicalPosition::new(x, y).into_position())
+        .with_surface_size(
+          @dpi.LogicalSize::LogicalSize(128.0, 96.0).into_size(),
+        )
+        .with_position(
+          @dpi.LogicalPosition::LogicalPosition(x, y).into_position(),
+        )
         .with_visible(true)
         .with_parent_window(Some(parent_raw))
       let child_window = event_loop.create_window(child_attrs)
@@ -81,14 +85,16 @@ fn App::spawn_child_window(
 }
 
 ///|
-pub impl @macos.ApplicationHandler for App with can_create_surfaces(
+pub impl @macos.ApplicationHandler for App with fn can_create_surfaces(
   self,
   event_loop,
 ) {
   let parent_attrs = @core.WindowAttributes::default()
     .with_title("parent window")
-    .with_position(@dpi.LogicalPosition::new(0.0, 0.0).into_position())
-    .with_surface_size(@dpi.LogicalSize::new(640.0, 480.0).into_size())
+    .with_position(
+      @dpi.LogicalPosition::LogicalPosition(0.0, 0.0).into_position(),
+    )
+    .with_surface_size(@dpi.LogicalSize::LogicalSize(640.0, 480.0).into_size())
   let parent_window = event_loop.create_window(parent_attrs)
   let parent_window_id = parent_window.id()
   self.parent_window_id = Some(parent_window_id)
@@ -97,7 +103,7 @@ pub impl @macos.ApplicationHandler for App with can_create_surfaces(
 }
 
 ///|
-pub impl @macos.ApplicationHandler for App with window_event(
+pub impl @macos.ApplicationHandler for App with fn window_event(
   self,
   event_loop,
   window_id,
@@ -140,7 +146,7 @@ pub impl @macos.ApplicationHandler for App with window_event(
 }
 
 ///|
-pub impl @macos.ApplicationHandler for App with about_to_wait(
+pub impl @macos.ApplicationHandler for App with fn about_to_wait(
   _self,
   _event_loop,
 ) {

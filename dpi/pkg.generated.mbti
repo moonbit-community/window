@@ -15,8 +15,8 @@ pub struct LogicalPosition {
   x : Double
   y : Double
 } derive(Eq, @debug.Debug)
+pub fn LogicalPosition::LogicalPosition(Double, Double) -> Self
 pub fn LogicalPosition::into_position(Self) -> Position
-pub fn LogicalPosition::new(Double, Double) -> Self
 pub fn LogicalPosition::to_physical(Self, Double) -> PhysicalPosition
 pub fn LogicalPosition::x(Self) -> Double
 pub fn LogicalPosition::y(Self) -> Double
@@ -26,9 +26,9 @@ pub struct LogicalSize {
   width : Double
   height : Double
 } derive(Eq, @debug.Debug)
+pub fn LogicalSize::LogicalSize(Double, Double) -> Self
 pub fn LogicalSize::height(Self) -> Double
 pub fn LogicalSize::into_size(Self) -> Size
-pub fn LogicalSize::new(Double, Double) -> Self
 pub fn LogicalSize::to_physical(Self, Double) -> PhysicalSize
 pub fn LogicalSize::width(Self) -> Double
 pub impl Show for LogicalSize
@@ -39,9 +39,9 @@ pub struct PhysicalInsets {
   bottom : Int
   right : Int
 } derive(Eq, @debug.Debug)
+pub fn PhysicalInsets::PhysicalInsets(Int, Int, Int, Int) -> Self
 pub fn PhysicalInsets::bottom(Self) -> Int
 pub fn PhysicalInsets::left(Self) -> Int
-pub fn PhysicalInsets::new(Int, Int, Int, Int) -> Self
 pub fn PhysicalInsets::right(Self) -> Int
 pub fn PhysicalInsets::top(Self) -> Int
 pub impl Show for PhysicalInsets
@@ -50,8 +50,8 @@ pub struct PhysicalPosition {
   x : Int
   y : Int
 } derive(Eq, @debug.Debug)
+pub fn PhysicalPosition::PhysicalPosition(Int, Int) -> Self
 pub fn PhysicalPosition::into_position(Self) -> Position
-pub fn PhysicalPosition::new(Int, Int) -> Self
 pub fn PhysicalPosition::to_logical(Self, Double) -> LogicalPosition
 pub fn PhysicalPosition::x(Self) -> Int
 pub fn PhysicalPosition::y(Self) -> Int
@@ -61,7 +61,7 @@ pub struct PhysicalPositionF64 {
   x : Double
   y : Double
 } derive(Eq, @debug.Debug)
-pub fn PhysicalPositionF64::new(Double, Double) -> Self
+pub fn PhysicalPositionF64::PhysicalPositionF64(Double, Double) -> Self
 pub fn PhysicalPositionF64::x(Self) -> Double
 pub fn PhysicalPositionF64::y(Self) -> Double
 pub impl Show for PhysicalPositionF64
@@ -70,9 +70,9 @@ pub struct PhysicalSize {
   width : Int
   height : Int
 } derive(Eq, @debug.Debug)
+pub fn PhysicalSize::PhysicalSize(Int, Int) -> Self
 pub fn PhysicalSize::height(Self) -> Int
 pub fn PhysicalSize::into_size(Self) -> Size
-pub fn PhysicalSize::new(Int, Int) -> Self
 pub fn PhysicalSize::to_logical(Self, Double) -> LogicalSize
 pub fn PhysicalSize::width(Self) -> Int
 pub impl Show for PhysicalSize

@@ -202,7 +202,7 @@ pub struct Modifiers {
 } derive(Eq, Debug)
 
 ///|
-pub fn Modifiers::new(
+pub fn Modifiers::Modifiers(
   shift : Bool,
   control : Bool,
   alt : Bool,
@@ -318,9 +318,9 @@ fn pressed_modifier_key_state(
   modifier : ModifiersKeys,
 ) -> ModifiersKeyState {
   if pressed_mods.contains(modifier) {
-    ModifiersKeyState::Pressed
+    Pressed
   } else {
-    ModifiersKeyState::Unknown
+    Unknown
   }
 }
 

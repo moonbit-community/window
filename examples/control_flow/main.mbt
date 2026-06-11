@@ -27,7 +27,7 @@ fn ControlFlowDemo::new() -> ControlFlowDemo {
 }
 
 ///|
-pub impl @macos.ApplicationHandler for ControlFlowDemo with new_events(
+pub impl @macos.ApplicationHandler for ControlFlowDemo with fn new_events(
   self,
   _event_loop,
   cause,
@@ -40,7 +40,7 @@ pub impl @macos.ApplicationHandler for ControlFlowDemo with new_events(
 }
 
 ///|
-pub impl @macos.ApplicationHandler for ControlFlowDemo with can_create_surfaces(
+pub impl @macos.ApplicationHandler for ControlFlowDemo with fn can_create_surfaces(
   self,
   event_loop,
 ) {
@@ -52,7 +52,7 @@ pub impl @macos.ApplicationHandler for ControlFlowDemo with can_create_surfaces(
 }
 
 ///|
-pub impl @macos.ApplicationHandler for ControlFlowDemo with window_event(
+pub impl @macos.ApplicationHandler for ControlFlowDemo with fn window_event(
   self,
   _event_loop,
   _window_id,
@@ -98,7 +98,7 @@ pub impl @macos.ApplicationHandler for ControlFlowDemo with window_event(
 }
 
 ///|
-pub impl @macos.ApplicationHandler for ControlFlowDemo with about_to_wait(
+pub impl @macos.ApplicationHandler for ControlFlowDemo with fn about_to_wait(
   self,
   event_loop,
 ) {

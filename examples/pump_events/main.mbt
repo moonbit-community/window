@@ -10,7 +10,7 @@ fn PumpDemo::new() -> PumpDemo {
 }
 
 ///|
-pub impl @macos.ApplicationHandler for PumpDemo with can_create_surfaces(
+pub impl @macos.ApplicationHandler for PumpDemo with fn can_create_surfaces(
   self,
   event_loop,
 ) {
@@ -22,7 +22,7 @@ pub impl @macos.ApplicationHandler for PumpDemo with can_create_surfaces(
 }
 
 ///|
-pub impl @macos.ApplicationHandler for PumpDemo with window_event(
+pub impl @macos.ApplicationHandler for PumpDemo with fn window_event(
   self,
   event_loop,
   _window_id,

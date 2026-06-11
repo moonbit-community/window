@@ -2,6 +2,9 @@
 extern "C" fn native_register_window_class() -> Int = "mbw_register_window_class"
 
 ///|
+extern "C" fn native_hinstance_handle() -> UInt64 = "mbw_hinstance_handle"
+
+///|
 extern "C" fn native_create_msg_window() -> UInt64 = "mbw_create_msg_window"
 
 ///|
@@ -13,13 +16,11 @@ extern "C" fn native_create_window(
   x : Int,
   y : Int,
   parent_hwnd : UInt64,
+  raw_id : Int,
 ) -> UInt64 = "mbw_create_window"
 
 ///|
 extern "C" fn native_set_window_raw_id(hwnd : UInt64, raw_id : Int) -> Unit = "mbw_set_window_raw_id"
-
-///|
-extern "C" fn native_get_window_raw_id(hwnd : UInt64) -> Int = "mbw_get_window_raw_id"
 
 ///|
 extern "C" fn native_destroy_window(hwnd : UInt64) -> Unit = "mbw_destroy_window"
@@ -71,8 +72,7 @@ extern "C" fn native_wait_and_process_message(
 extern "C" fn native_wait_timeout_and_process(timeout_ms : UInt) -> Int = "mbw_wait_timeout_and_process"
 
 ///|
-#borrow(key_path)
-#borrow(value_name)
+#borrow(key_path, value_name)
 extern "C" fn native_read_registry_dword_bytes(
   key_path : Bytes,
   value_name : Bytes,
@@ -87,13 +87,7 @@ extern "C" fn native_post_thread_message(
 ) -> Int = "mbw_post_thread_message"
 
 ///|
-extern "C" fn native_post_quit_message(exit_code : Int) -> Unit = "mbw_post_quit_message"
-
-///|
 extern "C" fn native_get_current_thread_id() -> UInt = "mbw_get_current_thread_id"
-
-///|
-extern "C" fn native_get_module_handle() -> UInt64 = "mbw_get_module_handle"
 
 ///|
 #borrow(text)
@@ -151,22 +145,7 @@ extern "C" fn native_client_to_screen_y(hwnd : UInt64, x : Int, y : Int) -> Int 
 extern "C" fn native_get_key_state(vk : Int) -> Int = "mbw_get_key_state"
 
 ///|
-extern "C" fn native_set_window_long_ptr(
-  hwnd : UInt64,
-  index : Int,
-  value : UInt64,
-) -> UInt64 = "mbw_set_window_long_ptr"
-
-///|
-extern "C" fn native_get_window_long_ptr(hwnd : UInt64, index : Int) -> UInt64 = "mbw_get_window_long_ptr"
-
-///|
-extern "C" fn native_def_window_proc(
-  hwnd : UInt64,
-  msg : UInt,
-  wparam : UInt64,
-  lparam : Int64,
-) -> UInt64 = "mbw_def_window_proc"
+extern "C" fn native_consume_utf8_text(ptr : UInt64, len : Int) -> Bytes = "mbw_consume_utf8_text"
 
 ///|
 extern "C" fn native_invalidate_rect(hwnd : UInt64, erase : Bool) -> Int = "mbw_invalidate_rect"
@@ -187,9 +166,6 @@ extern "C" fn native_clip_cursor(
   right : Int,
   bottom : Int,
 ) -> Int = "mbw_clip_cursor"
-
-///|
-extern "C" fn native_get_cursor_pos(x : UInt64, y : UInt64) -> Int = "mbw_get_cursor_pos"
 
 ///|
 extern "C" fn native_set_cursor_pos(x : Int, y : Int) -> Int = "mbw_set_cursor_pos"
@@ -234,17 +210,6 @@ extern "C" fn native_set_window_long_ex_style(
 ) -> UInt64 = "mbw_set_window_long_ex_style"
 
 ///|
-extern "C" fn native_adjust_window_rect_ex(
-  left : UInt64,
-  top : UInt64,
-  right : UInt64,
-  bottom : UInt64,
-  style : UInt64,
-  menu : Bool,
-  ex_style : UInt64,
-) -> Int = "mbw_adjust_window_rect_ex"
-
-///|
 extern "C" fn native_release_capture() -> Unit = "mbw_release_capture"
 
 ///|
@@ -260,6 +225,3 @@ extern "C" fn native_get_system_metrics(index : Int) -> Int = "mbw_get_system_me
 
 ///|
 extern "C" fn native_track_mouse_event(hwnd : UInt64, flags : UInt) -> Int = "mbw_track_mouse_event"
-
-///|
-extern "C" fn native_get_double_click_time() -> Double = "mbw_getDoubleClickTime"

@@ -527,7 +527,7 @@ pub fn EventLoop::try_new_with_platform_attributes(
   attributes : @core.PlatformEventLoopAttributes,
 ) -> EventLoop raise @core.EventLoopError {
   if !attributes.any_thread() && is_main_thread() == false {
-    raise @core.EventLoopError::Os
+    raise @core.EventLoopError::os("macOS event loop operation failed")
   }
   if event_loop_global_created.val {
     raise @core.EventLoopError::RecreationAttempt

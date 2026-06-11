@@ -35,6 +35,11 @@ pub fn EventLoopBuilder::new() -> EventLoopBuilder {
 }
 
 ///|
+pub fn EventLoopBuilder::EventLoopBuilder() -> EventLoopBuilder {
+  EventLoopBuilder::new()
+}
+
+///|
 pub fn EventLoopBuilder::default() -> EventLoopBuilder {
   EventLoopBuilder::new()
 }
@@ -105,6 +110,11 @@ pub fn EventLoop::new() -> EventLoop {
 }
 
 ///|
+pub fn EventLoop::EventLoop() -> EventLoop {
+  EventLoop::new()
+}
+
+///|
 pub fn EventLoop::try_new() -> EventLoop raise @core.EventLoopError {
   EventLoop::builder().try_build()
 }
@@ -121,16 +131,17 @@ pub fn EventLoop::try_new_with_platform_attributes(
   _attributes : @core.PlatformEventLoopAttributes,
 ) -> EventLoop raise @core.EventLoopError {
   if event_loop_global_created.val {
-    raise @core.EventLoopError::RecreationAttempt
+    raise RecreationAttempt
   }
   ignore(native_enable_modern_dpi_awareness())
   if native_register_window_class() == 0 {
-    raise @core.EventLoopError::Os
+    raise @core.EventLoopError::os("OS error")
   }
   let msg_window = native_create_msg_window()
+  if msg_window == (0 : Int).to_uint64() {
+    raise @core.EventLoopError::os("OS error")
+  }
   let thread_id = native_get_current_thread_id()
-  app_state_set_msg_window(msg_window)
-  app_state_set_thread_id(thread_id)
   app_state_install_native_callbacks()
   event_loop_global_created.val = true
   { msg_window, thread_id }
@@ -148,7 +159,10 @@ pub fn EventLoop::window_target(self : EventLoop) -> ActiveEventLoop {
 
 ///|
 pub fn EventLoop::drop(self : EventLoop) -> Unit {
-  let _ = self
+  if self.msg_window != (0 : Int).to_uint64() {
+    native_destroy_window(self.msg_window)
+    app_state_clear_all_window_runtime_state()
+  }
 }
 
 ///|
@@ -253,7 +267,9 @@ pub fn EventLoop::create_custom_cursor(
   _source : @core.CustomCursorSource,
 ) -> @core.CustomCursor raise @core.RequestError {
   let _ = self
-  raise @core.RequestError::NotSupported
+  raise @core.RequestError::not_supported(
+    "Windows custom cursors are not supported yet",
+  )
 }
 
 ///|
@@ -263,12 +279,14 @@ pub fn EventLoop::display_handle(self : EventLoop) -> UInt64 {
 
 ///|
 pub fn EventLoop::owned_display_handle(self : EventLoop) -> UInt64 {
-  (0 : Int).to_uint64()
+  let _ = self
+  native_hinstance_handle()
 }
 
 ///|
 pub fn EventLoop::rwh_06_handle(self : EventLoop) -> UInt64 {
-  (0 : Int).to_uint64()
+  let _ = self
+  native_hinstance_handle()
 }
 
 ///|
@@ -397,18 +415,15 @@ pub fn ActiveEventLoop::display_handle(self : ActiveEventLoop) -> UInt64 {
 }
 
 ///|
-fn[A : ApplicationHandler] EventLoop::dispatch_events(
-  self : EventLoop,
-  app : A,
-) -> Unit {
-  app_state_dispatch_redraws(app, self.as_active())
-  app_state_dispatch_deferred_callbacks(app, self.as_active())
+fn EventLoop::dispatch_events(self : EventLoop) -> Unit {
+  let _ = self
+  app_state_dispatch_redraws()
+  app_state_dispatch_deferred_callbacks()
 }
 
 ///|
-fn[A : ApplicationHandler] EventLoop::run_message_loop(
+fn EventLoop::run_message_loop(
   self : EventLoop,
-  app : A,
   blocking : Bool,
   timeout_ms : Int?,
 ) -> Unit {
@@ -424,19 +439,20 @@ fn[A : ApplicationHandler] EventLoop::run_message_loop(
           native_process_one_message((0 : Int).to_uint64(), 0, 0, pm_remove) !=
           0
         }
-      WaitUntil(ms) =>
+      WaitUntil(_) =>
         match timeout_ms {
           Some(t) if t <= 0 =>
             native_process_one_message((0 : Int).to_uint64(), 0, 0, pm_remove) !=
             0
-          Some(t) => native_wait_timeout_and_process(t.to_uint()) != 0
+          Some(t) =>
+            native_wait_timeout_and_process(t.reinterpret_as_uint()) != 0
           None =>
             native_wait_and_process_message((0 : Int).to_uint64(), 0, 0) > 0
         }
     }
-    self.dispatch_events(app)
+    self.dispatch_events()
     app_state_queue_callback(AboutToWait)
-    app_state_dispatch_deferred_callbacks(app, self.as_active())
+    app_state_dispatch_deferred_callbacks()
     if app_state_exit_requested() {
       continue_loop = false
     }
@@ -465,12 +481,12 @@ pub fn[A : ApplicationHandler] EventLoop::try_run_app(
   app : A,
 ) -> Unit raise @core.EventLoopError {
   if app_state_is_running() {
-    raise @core.EventLoopError::RecreationAttempt
+    raise RecreationAttempt
   }
   app_state_set_running(true)
   app_state_set_dispatch_handler(app, self.as_active())
   app_state_dispatch_init_events(app, self.as_active())
-  self.run_message_loop(app, true, None)
+  self.run_message_loop(true, None)
   app_state_internal_exit()
   app_state_clear_dispatch_handler()
 }
@@ -489,13 +505,13 @@ pub fn[A : ApplicationHandler] EventLoop::try_run_app_on_demand(
   app : A,
 ) -> Unit raise @core.EventLoopError {
   if app_state_is_running() {
-    raise @core.EventLoopError::RecreationAttempt
+    raise RecreationAttempt
   }
   app_state_set_running(true)
   app_state_clear_exit()
   app_state_set_dispatch_handler(app, self.as_active())
   app_state_dispatch_init_events(app, self.as_active())
-  self.run_message_loop(app, true, None)
+  self.run_message_loop(true, None)
   app_state_internal_exit()
   app_state_clear_dispatch_handler()
 }
@@ -522,12 +538,12 @@ pub fn[A : ApplicationHandler] EventLoop::try_pump_app_events(
   } else {
     app_state_set_dispatch_handler(app, self.as_active())
   }
-  self.run_message_loop(app, false, timeout_ms)
+  self.run_message_loop(false, timeout_ms)
   app_state_clear_dispatch_handler()
   if app_state_exit_requested() {
-    @core.PumpStatus::Exit(app_state_exit_code())
+    Exit(app_state_exit_code())
   } else {
-    @core.PumpStatus::Continue
+    Continue
   }
 }
 
@@ -557,8 +573,8 @@ fn native_system_theme() -> Int {
 ///|
 fn theme_from_native(theme : Int) -> @core.Theme? {
   match theme {
-    0 => Some(@core.Theme::Light)
-    1 => Some(@core.Theme::Dark)
+    0 => Some(Light)
+    1 => Some(Dark)
     _ => None
   }
 }

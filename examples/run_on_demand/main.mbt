@@ -7,21 +7,24 @@ struct App {
 }
 
 ///|
-pub impl @macos.ApplicationHandler for App with can_create_surfaces(
+pub impl @macos.ApplicationHandler for App with fn can_create_surfaces(
   self,
   event_loop,
 ) {
   let title = "Fantastic window number one!"
   let attrs = @core.WindowAttributes::default()
     .with_title(title)
-    .with_surface_size(@dpi.LogicalSize::new(128.0, 128.0).into_size())
+    .with_surface_size(@dpi.LogicalSize::LogicalSize(128.0, 128.0).into_size())
   let window = event_loop.create_window(attrs)
   self.window_id = Some(window.id())
   self.window = Some(window)
 }
 
 ///|
-pub impl @macos.ApplicationHandler for App with about_to_wait(self, _event_loop) {
+pub impl @macos.ApplicationHandler for App with fn about_to_wait(
+  self,
+  _event_loop,
+) {
   match self.window {
     Some(window) => window.request_redraw()
     None => ()
@@ -29,7 +32,7 @@ pub impl @macos.ApplicationHandler for App with about_to_wait(self, _event_loop)
 }
 
 ///|
-pub impl @macos.ApplicationHandler for App with window_event(
+pub impl @macos.ApplicationHandler for App with fn window_event(
   self,
   event_loop,
   window_id,

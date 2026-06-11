@@ -4,6 +4,6 @@ fn[T : Debug] debug_output(value : T, logger : &Logger) -> Unit {
 }
 
 ///|
-impl Show for Mode with output(self, logger) {
+impl Show for Mode with fn output(self, logger) {
   debug_output(self, logger)
 }

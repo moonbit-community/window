@@ -933,7 +933,7 @@ fn Application::perform_window_action(
       if window.resize_increments() is None {
         println("Had increments: false")
         window.set_resize_increments(
-          Some(@dpi.LogicalSize::new(25.0, 25.0).into_size()),
+          Some(@dpi.LogicalSize::LogicalSize(25.0, 25.0).into_size()),
         )
       } else {
         println("Had increments: true")
@@ -999,7 +999,7 @@ fn Application::perform_window_action(
     }
     Action::RequestResize => {
       let old_surface_size = window.surface_size()
-      let requested_surface_size = @dpi.PhysicalSize::new(
+      let requested_surface_size = @dpi.PhysicalSize::PhysicalSize(
         old_surface_size.height(),
         old_surface_size.width(),
       )
@@ -1227,7 +1227,7 @@ fn Application::handle_pointer_binding(
       }
     (Some(@core.MouseButton::Right), Some(window)) =>
       if modifiers_match(modifiers, true, false, false, false) {
-        let menu_position = @dpi.PhysicalPosition::new(
+        let menu_position = @dpi.PhysicalPosition::PhysicalPosition(
           position.x().to_int(),
           position.y().to_int(),
         )
@@ -1250,7 +1250,7 @@ fn Application::window_state(
 }
 
 ///|
-pub impl @macos.ApplicationHandler for Application with can_create_surfaces(
+pub impl @macos.ApplicationHandler for Application with fn can_create_surfaces(
   self,
   event_loop,
 ) {
@@ -1261,7 +1261,7 @@ pub impl @macos.ApplicationHandler for Application with can_create_surfaces(
 }
 
 ///|
-pub impl @macos.ApplicationHandler for Application with proxy_wake_up(
+pub impl @macos.ApplicationHandler for Application with fn proxy_wake_up(
   self,
   event_loop,
 ) {
@@ -1272,7 +1272,7 @@ pub impl @macos.ApplicationHandler for Application with proxy_wake_up(
 }
 
 ///|
-pub impl @macos.ApplicationHandler for Application with about_to_wait(
+pub impl @macos.ApplicationHandler for Application with fn about_to_wait(
   self,
   event_loop,
 ) {
@@ -1298,7 +1298,7 @@ pub impl @macos.ApplicationHandler for Application with about_to_wait(
 }
 
 ///|
-pub impl @macos.ApplicationHandler for Application with device_event(
+pub impl @macos.ApplicationHandler for Application with fn device_event(
   _self,
   _event_loop,
   device_id,
@@ -1308,7 +1308,7 @@ pub impl @macos.ApplicationHandler for Application with device_event(
 }
 
 ///|
-pub impl @macos.ApplicationHandler for Application with window_event(
+pub impl @macos.ApplicationHandler for Application with fn window_event(
   self,
   event_loop,
   window_id,
@@ -1456,7 +1456,7 @@ pub impl @macos.ApplicationHandler for Application with window_event(
 }
 
 ///|
-pub impl @macos.ApplicationHandler for Application with standard_key_binding(
+pub impl @macos.ApplicationHandler for Application with fn standard_key_binding(
   _self,
   _event_loop,
   window_id,

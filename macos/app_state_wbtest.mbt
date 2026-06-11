@@ -56,7 +56,7 @@ let launch_init_stop_flag_seen_for_test : Ref[Array[Bool]] = Ref::new([])
 struct LaunchInitCallbacksApp {}
 
 ///|
-pub impl ApplicationHandler for LaunchInitCallbacksApp with new_events(
+pub impl ApplicationHandler for LaunchInitCallbacksApp with fn new_events(
   _self,
   _event_loop,
   _cause,
@@ -68,7 +68,7 @@ pub impl ApplicationHandler for LaunchInitCallbacksApp with new_events(
 }
 
 ///|
-pub impl ApplicationHandler for LaunchInitCallbacksApp with can_create_surfaces(
+pub impl ApplicationHandler for LaunchInitCallbacksApp with fn can_create_surfaces(
   _self,
   _event_loop,
 ) {

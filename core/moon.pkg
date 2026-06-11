@@ -4,7 +4,7 @@ import {
   "Milky2018/window/dpi",
 }
 
-supported_targets = "native"
+supported_targets = "+native+wasm-gc"
 
 options(
   targets: { },

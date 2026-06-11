@@ -530,7 +530,7 @@ fn create_key_event(
       }
     @core.ElementState::Released => None
   }
-  @core.KeyEvent::new(
+  @core.KeyEvent::KeyEvent(
     physical_key,
     logical_key,
     key_without_modifiers,
@@ -590,7 +590,9 @@ fn scroll_delta_from_native(
     1 => Some(@core.MouseScrollDelta::LineDelta(x, y))
     2 =>
       Some(
-        @core.MouseScrollDelta::PixelDelta(@dpi.PhysicalPositionF64::new(x, y)),
+        @core.MouseScrollDelta::PixelDelta(
+          @dpi.PhysicalPositionF64::PhysicalPositionF64(x, y),
+        ),
       )
     _ => None
   }

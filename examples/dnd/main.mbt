@@ -10,7 +10,7 @@ fn Application::new() -> Application {
 }
 
 ///|
-pub impl @macos.ApplicationHandler for Application with can_create_surfaces(
+pub impl @macos.ApplicationHandler for Application with fn can_create_surfaces(
   self,
   event_loop,
 ) {
@@ -22,7 +22,7 @@ pub impl @macos.ApplicationHandler for Application with can_create_surfaces(
 }
 
 ///|
-pub impl @macos.ApplicationHandler for Application with window_event(
+pub impl @macos.ApplicationHandler for Application with fn window_event(
   self,
   event_loop,
   _window_id,

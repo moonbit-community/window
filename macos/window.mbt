@@ -149,7 +149,9 @@ pub fn Window::set_cursor_hittest(
   hittest : Bool,
 ) -> Unit raise @core.RequestError {
   if set_window_cursor_hittest(self.raw_window_handle, hittest) == false {
-    raise @core.RequestError::NotSupported
+    raise @core.RequestError::not_supported(
+      "operation is not supported on macOS",
+    )
   }
 }
 
@@ -176,7 +178,9 @@ pub fn Window::set_cursor_position(
       logical_position.y().to_int(),
     ) ==
     false {
-    raise @core.RequestError::NotSupported
+    raise @core.RequestError::not_supported(
+      "operation is not supported on macOS",
+    )
   }
 }
 
@@ -186,11 +190,15 @@ pub fn Window::set_cursor_grab(
   mode : @core.CursorGrabMode,
 ) -> Unit raise @core.RequestError {
   if mode is @core.CursorGrabMode::Confined {
-    raise @core.RequestError::NotSupported
+    raise @core.RequestError::not_supported(
+      "operation is not supported on macOS",
+    )
   }
   if set_cursor_grab(self.raw_window_handle, cursor_grab_mode_to_native(mode)) ==
     false {
-    raise @core.RequestError::NotSupported
+    raise @core.RequestError::not_supported(
+      "operation is not supported on macOS",
+    )
   }
 }
 
@@ -201,7 +209,9 @@ pub fn Window::drag_window(self : Window) -> Unit raise @core.RequestError {
     raise @core.RequestError::Ignored
   }
   if status == 0 {
-    raise @core.RequestError::NotSupported
+    raise @core.RequestError::not_supported(
+      "operation is not supported on macOS",
+    )
   }
 }
 
@@ -215,7 +225,9 @@ pub fn Window::drag_resize_window(
       resize_direction_to_native(direction),
     ) ==
     false {
-    raise @core.RequestError::NotSupported
+    raise @core.RequestError::not_supported(
+      "operation is not supported on macOS",
+    )
   }
 }
 
@@ -281,10 +293,11 @@ pub fn Window::set_ime_allowed(self : Window, allowed : Bool) -> Unit {
     let request_data = @core.ImeRequestData::default()
       .with_hint_and_purpose(@core.ImeHint::none(), @core.ImePurpose::Normal)
       .with_cursor_area(
-        @dpi.LogicalPosition::new(0.0, 0.0).into_position(),
-        @dpi.LogicalSize::new(0.0, 0.0).into_size(),
+        @dpi.LogicalPosition::LogicalPosition(0.0, 0.0).into_position(),
+        @dpi.LogicalSize::LogicalSize(0.0, 0.0).into_size(),
       )
-    match @core.ImeEnableRequest::new(capabilities, request_data) {
+    match
+      @core.ImeEnableRequest::from_capabilities(capabilities, request_data) {
       Some(enable_request) => Some(@core.ImeRequest::Enable(enable_request))
       None => None
     }
@@ -377,7 +390,7 @@ pub fn Window::set_ime_surrounding_text(
 
 ///|
 pub fn Window::ime_cursor_area_position(self : Window) -> @dpi.PhysicalPosition {
-  @dpi.LogicalPosition::new(
+  @dpi.LogicalPosition::LogicalPosition(
     window_ime_cursor_x(self.raw_window_handle).to_double(),
     window_ime_cursor_y(self.raw_window_handle).to_double(),
   ).to_physical(self.scale_factor())
@@ -385,7 +398,7 @@ pub fn Window::ime_cursor_area_position(self : Window) -> @dpi.PhysicalPosition 
 
 ///|
 pub fn Window::ime_cursor_area_size(self : Window) -> @dpi.PhysicalSize {
-  @dpi.LogicalSize::new(
+  @dpi.LogicalSize::LogicalSize(
     window_ime_cursor_width(self.raw_window_handle).to_double(),
     window_ime_cursor_height(self.raw_window_handle).to_double(),
   ).to_physical(self.scale_factor())

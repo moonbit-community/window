@@ -261,7 +261,7 @@ fn App::get_ime_update(self : App) -> @core.ImeRequestData {
     None => ""
   }
   let chars_before_caret = text_before_caret.to_array().length()
-  let cursor_pos = @dpi.LogicalPosition::new(
+  let cursor_pos = @dpi.LogicalPosition::LogicalPosition(
     (10 * chars_before_caret).to_double(),
     0.0,
   )
@@ -309,11 +309,11 @@ fn App::get_ime_update(self : App) -> @core.ImeRequestData {
     .with_hint_and_purpose(self.input_state.hint, self.input_state.purpose)
     .with_cursor_area(
       cursor_pos.into_position(),
-      @dpi.PhysicalSize::new(20, 20).into_size(),
+      @dpi.PhysicalSize::PhysicalSize(20, 20).into_size(),
     )
 
   let surrounding = Some(
-    @core.ImeSurroundingText::new(
+    @core.ImeSurroundingText::ImeSurroundingText(
       surrounding_text, relative_cursor, relative_cursor,
     ),
   ) catch {
@@ -346,7 +346,7 @@ fn App::toggle_ime(self : App) -> Unit {
   match self.window {
     Some(window) =>
       if enable {
-        let enable_request = @core.ImeEnableRequest::new(
+        let enable_request = @core.ImeEnableRequest::from_capabilities(
           @core.ImeCapabilities::default()
           .with_hint_and_purpose()
           .with_cursor_area()
@@ -455,7 +455,7 @@ fn App::handle_ime_event(self : App, ime_event : @core.Ime) -> Unit {
 }
 
 ///|
-pub impl @macos.ApplicationHandler for App with can_create_surfaces(
+pub impl @macos.ApplicationHandler for App with fn can_create_surfaces(
   self,
   event_loop,
 ) {
@@ -472,7 +472,7 @@ pub impl @macos.ApplicationHandler for App with can_create_surfaces(
 
   match self.window {
     Some(current_window) => {
-      let enable_request = @core.ImeEnableRequest::new(
+      let enable_request = @core.ImeEnableRequest::from_capabilities(
         @core.ImeCapabilities::default()
         .with_hint_and_purpose()
         .with_cursor_area()
@@ -492,7 +492,7 @@ pub impl @macos.ApplicationHandler for App with can_create_surfaces(
 }
 
 ///|
-pub impl @macos.ApplicationHandler for App with window_event(
+pub impl @macos.ApplicationHandler for App with fn window_event(
   self,
   event_loop,
   _window_id,

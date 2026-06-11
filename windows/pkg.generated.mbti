@@ -40,6 +40,7 @@ pub impl Show for ActiveEventLoop
 pub struct EventLoop {
   // private fields
 } derive(@debug.Debug)
+pub fn EventLoop::EventLoop() -> Self
 pub fn EventLoop::allows_automatic_window_tabbing(Self) -> Bool
 pub fn EventLoop::available_monitors(Self) -> Array[@core.MonitorHandle]
 pub fn EventLoop::builder() -> EventLoopBuilder
@@ -77,6 +78,7 @@ pub impl Show for EventLoop
 pub struct EventLoopBuilder {
   // private fields
 } derive(Eq, @debug.Debug)
+pub fn EventLoopBuilder::EventLoopBuilder() -> Self
 pub fn EventLoopBuilder::build(Self) -> EventLoop
 pub fn EventLoopBuilder::default() -> Self
 pub fn EventLoopBuilder::new() -> Self
@@ -98,6 +100,7 @@ pub impl Show for EventLoopProxy
 pub struct Window {
   // private fields
 } derive(Eq, @debug.Debug)
+pub fn Window::Window(EventLoop, @core.WindowAttributes) -> Self raise @core.RequestError
 pub fn Window::available_monitors(Self) -> Array[@core.MonitorHandle]
 pub fn Window::current_monitor(Self) -> @core.MonitorHandle?
 pub fn Window::cursor(Self) -> @core.Cursor
@@ -220,16 +223,16 @@ pub using @core {type PlatformWindowAttributes as WindowAttributesWindows}
 
 // Traits
 pub(open) trait ApplicationHandler {
-  new_events(Self, ActiveEventLoop, @core.StartCause) -> Unit = _
-  resumed(Self, ActiveEventLoop) -> Unit = _
-  can_create_surfaces(Self, ActiveEventLoop) -> Unit = _
-  proxy_wake_up(Self, ActiveEventLoop) -> Unit = _
-  window_event(Self, ActiveEventLoop, @core.WindowId, @core.WindowEvent) -> Unit = _
-  device_event(Self, ActiveEventLoop, @core.DeviceId?, @core.DeviceEvent) -> Unit = _
-  about_to_wait(Self, ActiveEventLoop) -> Unit = _
-  suspended(Self, ActiveEventLoop) -> Unit = _
-  destroy_surfaces(Self, ActiveEventLoop) -> Unit = _
-  memory_warning(Self, ActiveEventLoop) -> Unit = _
-  standard_key_binding(Self, ActiveEventLoop, @core.WindowId, String) -> Unit = _
+  fn new_events(Self, ActiveEventLoop, @core.StartCause) -> Unit = _
+  fn resumed(Self, ActiveEventLoop) -> Unit = _
+  fn can_create_surfaces(Self, ActiveEventLoop) -> Unit = _
+  fn proxy_wake_up(Self, ActiveEventLoop) -> Unit = _
+  fn window_event(Self, ActiveEventLoop, @core.WindowId, @core.WindowEvent) -> Unit = _
+  fn device_event(Self, ActiveEventLoop, @core.DeviceId?, @core.DeviceEvent) -> Unit = _
+  fn about_to_wait(Self, ActiveEventLoop) -> Unit = _
+  fn suspended(Self, ActiveEventLoop) -> Unit = _
+  fn destroy_surfaces(Self, ActiveEventLoop) -> Unit = _
+  fn memory_warning(Self, ActiveEventLoop) -> Unit = _
+  fn standard_key_binding(Self, ActiveEventLoop, @core.WindowId, String) -> Unit = _
 }
 

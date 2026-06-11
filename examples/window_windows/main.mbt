@@ -4,7 +4,7 @@ struct App {
 }
 
 ///|
-pub impl @windows.ApplicationHandler for App with can_create_surfaces(
+pub impl @windows.ApplicationHandler for App with fn can_create_surfaces(
   self,
   event_loop,
 ) {
@@ -24,7 +24,7 @@ pub impl @windows.ApplicationHandler for App with can_create_surfaces(
 }
 
 ///|
-pub impl @windows.ApplicationHandler for App with window_event(
+pub impl @windows.ApplicationHandler for App with fn window_event(
   self,
   event_loop,
   _window_id,
@@ -32,16 +32,16 @@ pub impl @windows.ApplicationHandler for App with window_event(
 ) {
   println("\{event}")
   match event {
-    @core.WindowEvent::CloseRequested => {
+    CloseRequested => {
       println("Close was requested; stopping")
       event_loop.exit()
     }
-    @core.WindowEvent::SurfaceResized(_) =>
+    SurfaceResized(_) =>
       match self.window {
         Some(window) => window.request_redraw()
         None => ()
       }
-    @core.WindowEvent::RedrawRequested =>
+    RedrawRequested =>
       match self.window {
         Some(window) => window.pre_present_notify()
         None => ()

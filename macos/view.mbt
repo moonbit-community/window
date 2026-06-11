@@ -14,7 +14,7 @@ fn ime_from_native_payload(
       let cursor_start = ime_cursor_start
       let cursor_end = ime_cursor_end
       let cursor = if cursor_start >= 0 && cursor_end >= cursor_start {
-        Some(@core.ImeCursorRange::new(cursor_start, cursor_end))
+        Some(@core.ImeCursorRange::ImeCursorRange(cursor_start, cursor_end))
       } else {
         None
       }
@@ -326,7 +326,7 @@ fn view_event_pointer_position(
   event_handle : UInt64,
 ) -> @dpi.PhysicalPositionF64 {
   if event_handle == (0 : Int).to_uint64() {
-    return @dpi.PhysicalPositionF64::new(0.0, 0.0)
+    return @dpi.PhysicalPositionF64::PhysicalPositionF64(0.0, 0.0)
   }
   let window_x = appkit_objc_msg_send_point_x(
     event_handle,
@@ -360,7 +360,7 @@ fn view_event_pointer_position(
     )
   }
   let scale_factor = view_window_scale_factor(raw_id)
-  @dpi.PhysicalPositionF64::new(
+  @dpi.PhysicalPositionF64::PhysicalPositionF64(
     logical_x * scale_factor,
     logical_y * scale_factor,
   )
@@ -647,7 +647,7 @@ fn queue_input_event(
   let window_id = @core.WindowId::from_raw(raw_id)
   let pointer_device_id = Some(@core.DeviceId::from_raw(1L))
   let keyboard_device_id = Some(@core.DeviceId::from_raw(2L))
-  let position = @dpi.PhysicalPositionF64::new(x, y)
+  let position = @dpi.PhysicalPositionF64::PhysicalPositionF64(x, y)
   match kind {
     1 =>
       app_state_queue_window_callback(
@@ -781,7 +781,7 @@ fn queue_input_event(
             window_id,
             @core.WindowEvent::PanGesture(
               pointer_device_id,
-              @dpi.PhysicalPositionF64::new(delta_x, delta_y),
+              @dpi.PhysicalPositionF64::PhysicalPositionF64(delta_x, delta_y),
               phase,
             ),
           )
@@ -1259,7 +1259,7 @@ fn queue_native_text_input_event(
           text_string_handle, utf16_end,
         )
         if start >= 0 && end >= start {
-          Some(@core.ImeCursorRange::new(start, end))
+          Some(@core.ImeCursorRange::ImeCursorRange(start, end))
         } else {
           None
         }
