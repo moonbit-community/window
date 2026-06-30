@@ -6,9 +6,7 @@ cd "$ROOT"
 
 moon check
 moon check --warn-list +73
-moon test core
-moon test dpi
-moon test --build-only
+moon test --release
 moon build
 scripts/check_examples_build.sh
 scripts/check_ffi_surface.sh

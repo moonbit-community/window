@@ -241,3 +241,27 @@ test "clear_window_platform_state_resets_cursor_visible_state" {
   clear_window_platform_state(handle)
   assert_true(window_cursor_visible_state(handle))
 }
+
+///|
+test "clear_window_platform_state_preserves_other_windows" {
+  reset_window_platform_state_for_test()
+  let first = (97 : Int).to_uint64()
+  let second = (98 : Int).to_uint64()
+
+  set_window_ime_allowed_state(first, true)
+  set_window_cursor_visible_state(first, false)
+  set_window_accepts_first_mouse_state(second, true)
+  set_window_option_as_alt_state(second, 3)
+  set_window_ime_cursor_area_state(second, 11, 12, 13, 14)
+
+  clear_window_platform_state(first)
+
+  assert_false(window_ime_allowed_state(first))
+  assert_true(window_cursor_visible_state(first))
+  assert_true(window_accepts_first_mouse_state(second))
+  assert_eq(window_option_as_alt_native(second), 3)
+  assert_eq(window_ime_cursor_x_state(second), 11)
+  assert_eq(window_ime_cursor_y_state(second), 12)
+  assert_eq(window_ime_cursor_width_state(second), 13)
+  assert_eq(window_ime_cursor_height_state(second), 14)
+}

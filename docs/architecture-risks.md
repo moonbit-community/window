@@ -91,8 +91,11 @@ callbacks can violate assumptions if queue transitions are not explicit.
 
 Current control:
 
-- macOS tests are compiled by `moon test --build-only`.
-- Core/dpi tests execute through `scripts/check_ci.sh`.
+- macOS, core, and dpi tests execute through `moon test --release` in
+  `scripts/check_ci.sh`.
+- Deferred callback queue mutation is isolated in
+  `macos/app_state_deferred_queue.mbt`; AppState dispatch code uses the queue
+  seam instead of directly pushing, searching, or removing deferred callbacks.
 - Deferred callback draining re-checks that a registered dispatch handler still
   exists before each queue pop, so a callback that clears the handler cannot
   cause the next deferred event to be removed and dropped.
@@ -105,21 +108,21 @@ Required direction:
 
 ## Framework-Linked Native Test Execution
 
-Risk: full `moon test` currently cannot execute AppKit-linked native tests
-through the MoonBit native runner because the runner uses a `tcc -run` path that
-fails on macOS framework arguments.
+Risk: default debug `moon test` can still fail AppKit-linked native tests through
+the MoonBit native runner because that path can use `tcc -run`, which fails on
+macOS framework arguments.
 
 Current control:
 
-- `scripts/check_ci.sh` uses `moon test --build-only` for macOS package test
-  artifacts and executable tests for framework-free packages.
-- `docs/testing.md` documents the exact limitation and the expected validation
-  command.
+- `scripts/check_ci.sh` uses `moon test --release`, which executes the
+  framework-linked macOS tests reliably on the local target.
+- `docs/testing.md` documents the debug-runner limitation and the expected
+  validation command.
 
 Required direction:
 
-- Replace the build-only macOS gate with executable macOS tests once the
-  toolchain supports framework-linked native test execution.
+- Keep release-mode executable tests as the local gate until debug native test
+  execution handles AppKit framework arguments consistently.
 
 ## Opaque Native Handles
 

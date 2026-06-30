@@ -17,16 +17,7 @@ fn reset_view_state_for_test() -> Unit {
   app_state_window_position_xs.val = []
   app_state_window_position_ys.val = []
 
-  window_platform_state_handles.val = []
-  window_ime_allowed_values.val = []
-  window_accepts_first_mouse_values.val = []
-  window_option_as_alt_values.val = []
-  window_ime_purpose_values.val = []
-  window_ime_hints_values.val = []
-  window_ime_cursor_x_values.val = []
-  window_ime_cursor_y_values.val = []
-  window_ime_cursor_width_values.val = []
-  window_ime_cursor_height_values.val = []
+  reset_window_platform_state_for_test()
 }
 
 ///|

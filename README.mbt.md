@@ -188,5 +188,5 @@ For the slower upstream-vs-MoonBit example transcript comparison:
 RUN_EXAMPLE_TRANSCRIPTS=1 scripts/check_ci.sh
 ```
 
-See `docs/testing.md` for why the macOS package currently uses
-`moon test --build-only` instead of full framework-linked native test execution.
+See `docs/testing.md` for why the local gate uses `moon test --release` for
+framework-linked macOS tests.

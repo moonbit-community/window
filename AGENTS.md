@@ -41,8 +41,11 @@ You can browse and install extra skills here:
   format the code. Check the diffs of `.mbti` file to see if the changes are
   expected.
 
-- Run `moon test` to check tests pass. MoonBit supports snapshot testing; when
-  changes affect outputs, run `moon test --update` to refresh snapshots.
+- Run `moon test --release` to check tests pass. On macOS, the default debug
+  test runner can fail to link native framework suites with errors such as
+  `tcc: error: file 'AppKit' not found`; release mode is the reliable local test
+  gate for this project. MoonBit supports snapshot testing; when changes affect
+  outputs, run `moon test --update` to refresh snapshots.
 
 - Prefer `assert_eq` or `assert_true(pattern is Pattern(...))` for results that
   are stable or very unlikely to change. Use snapshot tests to record current

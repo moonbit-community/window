@@ -10,32 +10,29 @@ The gate runs:
 
 - `moon check`
 - `moon check --warn-list +73`
-- `moon test core`
-- `moon test dpi`
-- `moon test --build-only`
+- `moon test --release`
 - `moon build`
 - `scripts/check_examples_build.sh`
 - `scripts/check_ffi_surface.sh`
 
-`moon test --build-only` is intentional for the macOS package. The current
-MoonBit native test runner executes generated native tests through `tcc -run`,
-and that path does not currently pass macOS framework arguments such as
-`-framework AppKit` in a way `tcc -run` accepts. The failure mode is:
+`moon test --release` is intentional for this repository. On macOS, the default
+debug test runner can still execute generated native tests through a `tcc -run`
+path that does not pass framework arguments such as `-framework AppKit` in a way
+`tcc -run` accepts. The failure mode is:
 
 ```text
 tcc: error: file 'AppKit' not found
 ```
 
-That is a toolchain/native-runner execution limitation, not evidence that the
-macOS package fails to compile. The same limitation can affect AppKit-linked
-examples when they are executed through `moon run --target native`. Until the
-runner supports framework-linked native execution on macOS, the repository gate
-verifies macOS tests and examples with build-only commands and keeps executable
-unit tests on packages that do not need AppKit framework execution.
+That is a debug/native-runner limitation, not evidence that the macOS package
+fails. Release mode is the reliable local executable test gate and currently
+runs the AppKit-linked macOS white-box tests.
 
-For upstream-vs-MoonBit example transcript parity, run the slower optional gate
-only in an environment where `moon run --target native` can execute
-AppKit-linked examples:
+Examples are still built with `scripts/check_examples_build.sh` because they are
+interactive AppKit applications. Use the optional transcript gate when validating
+example output behavior.
+
+For upstream-vs-MoonBit example transcript parity, run the slower optional gate:
 
 ```bash
 RUN_EXAMPLE_TRANSCRIPTS=1 scripts/check_ci.sh

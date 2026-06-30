@@ -200,7 +200,7 @@ fn app_state_callback_requires_running(callback : DeferredCallback) -> Bool {
 
 ///|
 fn app_state_defer_callback(callback : DeferredCallback) -> Unit {
-  app_state_runtime.val.deferred_callbacks.push(callback)
+  app_state_deferred_queue_push(callback)
   native_event_loop_wake_up()
 }
 
@@ -221,19 +221,7 @@ fn app_state_dispatch_with_registered_callback(
 
 ///|
 fn app_state_take_next_dispatchable_callback() -> DeferredCallback? {
-  if app_state_runtime.val.deferred_callbacks.is_empty() {
-    return None
-  }
-  if app_state_is_running() {
-    return Some(app_state_runtime.val.deferred_callbacks.remove(0))
-  }
-  match
-    app_state_runtime.val.deferred_callbacks.search_by(callback => {
-      app_state_callback_requires_running(callback) == false
-    }) {
-    Some(index) => Some(app_state_runtime.val.deferred_callbacks.remove(index))
-    None => None
-  }
+  app_state_deferred_queue_take_next_dispatchable(app_state_is_running())
 }
 
 ///|
@@ -290,10 +278,10 @@ fn app_state_queue_did_finish_launching_notification() -> Unit {
   if app_state_runtime.val.is_launched {
     return ()
   }
-  for callback in app_state_runtime.val.deferred_callbacks {
-    if callback is DidFinishLaunching {
-      return ()
-    }
+  if app_state_deferred_queue_contains(callback => {
+      callback is DidFinishLaunching
+    }) {
+    return ()
   }
   app_state_maybe_dispatch_callback(DidFinishLaunching)
 }
@@ -303,10 +291,8 @@ fn app_state_queue_will_terminate_notification() -> Unit {
   if app_state_runtime.val.will_terminate_handled {
     return ()
   }
-  for callback in app_state_runtime.val.deferred_callbacks {
-    if callback is WillTerminate {
-      return ()
-    }
+  if app_state_deferred_queue_contains(callback => callback is WillTerminate) {
+    return ()
   }
   app_state_maybe_dispatch_callback(WillTerminate)
 }
@@ -1277,7 +1263,7 @@ fn app_state_will_terminate() -> Unit {
   app_state_runtime.val.will_terminate_handled = true
   notify_windows_of_exit()
   app_state_runtime.val.dispatch_callback = None
-  app_state_runtime.val.deferred_callbacks = []
+  app_state_deferred_queue_clear()
   app_state_internal_exit()
 }
 
