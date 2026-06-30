@@ -600,21 +600,6 @@ fn native_callback_will_terminate() -> Unit {
 }
 
 ///|
-fn native_callback_text_input_event(
-  raw_id : Int,
-  kind : Int,
-  state : Int,
-  text_handle : UInt64,
-  cursor_start : Int,
-  cursor_end : Int,
-  path_handle : UInt64,
-) -> Unit {
-  queue_native_text_input_event(
-    raw_id, kind, state, text_handle, cursor_start, cursor_end, path_handle,
-  )
-}
-
-///|
 fn native_callback_drag_event(
   raw_id : Int,
   kind : Int,

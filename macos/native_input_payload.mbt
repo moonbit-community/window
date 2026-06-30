@@ -22,6 +22,17 @@ priv struct NativeInputPayload {
 }
 
 ///|
+priv struct NativeTextInputPayload {
+  raw_id : Int
+  kind : Int
+  state : Int
+  text_handle : UInt64
+  cursor_start : Int
+  cursor_end : Int
+  path_handle : UInt64
+}
+
+///|
 priv struct NativeInputTextPayload {
   text_with_all_modifiers : Bytes
   text_ignoring_modifiers : Bytes
@@ -47,6 +58,19 @@ priv struct NativeInputEventPayload {
   delta_y : Double
   phase : Int
   text : NativeInputTextPayload
+}
+
+///|
+fn queue_native_text_input_payload(payload : NativeTextInputPayload) -> Unit {
+  queue_native_text_input_event(
+    payload.raw_id,
+    payload.kind,
+    payload.state,
+    payload.text_handle,
+    payload.cursor_start,
+    payload.cursor_end,
+    payload.path_handle,
+  )
 }
 
 ///|
@@ -245,5 +269,26 @@ fn native_callback_input_event(
     text_with_all_modifiers,
     text_ignoring_modifiers,
     text_without_modifiers,
+  })
+}
+
+///|
+fn native_callback_text_input_event(
+  raw_id : Int,
+  kind : Int,
+  state : Int,
+  text_handle : UInt64,
+  cursor_start : Int,
+  cursor_end : Int,
+  path_handle : UInt64,
+) -> Unit {
+  queue_native_text_input_payload({
+    raw_id,
+    kind,
+    state,
+    text_handle,
+    cursor_start,
+    cursor_end,
+    path_handle,
   })
 }

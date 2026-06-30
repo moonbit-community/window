@@ -28,8 +28,8 @@ Current control:
   instead of replaying an AppKit event handle.
 - Native input callback payload normalization is isolated in
   `macos/native_input_payload.mbt`, keeping raw callback arguments, modifier
-  text normalization, pending-key snapshots, and event translation behind one
-  MoonBit seam.
+  text normalization, text-input callback payloads, pending-key snapshots, and
+  event translation behind one MoonBit seam.
 - Window close begins with an explicit native closing marker. The marker
   removes content-view frame observers, clears the content-view raw id, blocks
   normal delegate/drag event emission, and lets the delegate emit `Destroyed`
