@@ -26,6 +26,10 @@ Current control:
   snapshot `NSEvent` inside ObjC and pass primitive/c-string payloads to
   MoonBit. IME key-down forwarding uses MoonBit pending key snapshot state
   instead of replaying an AppKit event handle.
+- Native input callback payload normalization is isolated in
+  `macos/native_input_payload.mbt`, keeping raw callback arguments, modifier
+  text normalization, pending-key snapshots, and event translation behind one
+  MoonBit seam.
 - Window close begins with an explicit native closing marker. The marker
   removes content-view frame observers, clears the content-view raw id, blocks
   normal delegate/drag event emission, and lets the delegate emit `Destroyed`
