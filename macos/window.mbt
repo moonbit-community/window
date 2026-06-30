@@ -34,45 +34,6 @@ pub struct Window {
 pub type WindowAttributesMacOS = @core.PlatformWindowAttributes
 
 ///|
-let invalid_native_window_handle_status = -1
-
-///|
-let core_graphics_error_domain = "CoreGraphics.CGError"
-
-///|
-let appkit_window_error_domain = "AppKit.NSWindow"
-
-///|
-fn request_error_from_native_status(
-  status : Int,
-  operation : String,
-) -> @core.RequestError {
-  if status == invalid_native_window_handle_status {
-    @core.RequestError::os(
-      "\{operation}: invalid native window handle",
-      code=status,
-      domain=appkit_window_error_domain,
-    )
-  } else {
-    @core.RequestError::os(
-      operation,
-      code=status,
-      domain=core_graphics_error_domain,
-    )
-  }
-}
-
-///|
-fn raise_request_error_from_native_status(
-  status : Int,
-  operation : String,
-) -> Unit raise @core.RequestError {
-  if status != 0 {
-    raise request_error_from_native_status(status, operation)
-  }
-}
-
-///|
 // Port target: window.rs::Window::Window
 pub fn Window::Window(
   event_loop : EventLoop,
@@ -87,12 +48,21 @@ pub fn Window::id(self : Window) -> @core.WindowId {
 }
 
 ///|
+/// Return the CoreGraphics display id used by raw-window-handle 0.6.
+///
+/// This is a borrowed platform identifier, not an owned object. Callers must
+/// not release it or treat it as a retained CoreFoundation/AppKit object.
 pub fn Window::rwh_06_display_handle(self : Window) -> UInt64 {
   let _ = self
   cg_main_display_id()
 }
 
 ///|
+/// Return the AppKit content view/window handle used by raw-window-handle 0.6.
+///
+/// This is a borrowed AppKit/Objective-C handle. It is only valid while the
+/// window and the underlying AppKit object stay alive; callers must not retain
+/// ownership assumptions from this integer or release it.
 pub fn Window::rwh_06_window_handle(self : Window) -> UInt64 {
   if self.raw_view_handle != (0 : Int).to_uint64() {
     self.raw_view_handle
@@ -114,11 +84,19 @@ fn Window::raw_window_handle_rwh_06(self : Window) -> UInt64 {
 }
 
 ///|
+/// Return the raw display handle for this window.
+///
+/// The returned value is a borrowed CoreGraphics display id, not an owned
+/// CoreFoundation/AppKit object.
 pub fn Window::display_handle(self : Window) -> UInt64 {
   self.raw_display_handle_rwh_06()
 }
 
 ///|
+/// Return the raw AppKit window/view handle for this window.
+///
+/// The returned value is borrowed from AppKit and remains owned by the windowing
+/// backend. Do not release it.
 pub fn Window::window_handle(self : Window) -> UInt64 {
   self.raw_window_handle_rwh_06()
 }
@@ -137,6 +115,10 @@ fn content_view_handle_from_raw(
 }
 
 ///|
+/// Return the borrowed AppKit content view handle for this window.
+///
+/// The handle is not retained for the caller. Use it only while the `Window` is
+/// alive, and do not release it.
 pub fn Window::content_view_handle(
   self : Window,
 ) -> UInt64 raise @core.RequestError {
@@ -224,7 +206,7 @@ fn window_set_cursor_hittest(
 }
 
 ///|
-pub impl @core.WindowCursorHittest for Window with set_cursor_hittest(
+pub impl @core.WindowCursorHittest for Window with fn set_cursor_hittest(
   self,
   hittest,
 ) {
@@ -264,7 +246,7 @@ pub fn Window::set_cursor_grab(
   mode : @core.CursorGrabMode,
 ) -> Unit raise @core.RequestError {
   if mode is Confined {
-    raise @core.RequestError::not_supported(
+    raise_request_not_supported(
       "Confined cursor grab is not supported on macOS",
     )
   }
@@ -276,15 +258,9 @@ pub fn Window::set_cursor_grab(
 
 ///|
 pub fn Window::drag_window(self : Window) -> Unit raise @core.RequestError {
-  let status = drag_window(self.raw_window_handle)
-  if status == -1 {
-    raise Ignored
-  }
-  if status == 0 {
-    raise @core.RequestError::not_supported(
-      "Window dragging is not supported in the current state",
-    )
-  }
+  raise_request_error_from_drag_window_status(
+    drag_window(self.raw_window_handle),
+  )
 }
 
 ///|
@@ -292,15 +268,12 @@ pub fn Window::drag_resize_window(
   self : Window,
   direction : @core.ResizeDirection,
 ) -> Unit raise @core.RequestError {
-  if drag_resize_window(
+  raise_request_error_from_drag_resize_result(
+    drag_resize_window(
       self.raw_window_handle,
       resize_direction_to_native(direction),
-    ) ==
-    false {
-    raise @core.RequestError::not_supported(
-      "Window edge dragging is not supported in the current state",
-    )
-  }
+    ),
+  )
 }
 
 ///|

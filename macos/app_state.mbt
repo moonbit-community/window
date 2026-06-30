@@ -205,37 +205,8 @@ fn app_state_defer_callback(callback : DeferredCallback) -> Unit {
 }
 
 ///|
-fn app_state_dispatch_with_registered_callback(
-  callback : DeferredCallback,
-) -> Bool {
-  match app_state_runtime.val.dispatch_callback {
-    Some(dispatch) => {
-      app_state_runtime.val.event_handler_in_use = true
-      dispatch(callback)
-      app_state_runtime.val.event_handler_in_use = false
-      true
-    }
-    None => false
-  }
-}
-
-///|
 fn app_state_take_next_dispatchable_callback() -> DeferredCallback? {
   app_state_deferred_queue_take_next_dispatchable(app_state_is_running())
-}
-
-///|
-fn app_state_dispatch_registered_deferred_callbacks() -> Unit {
-  while app_state_runtime.val.event_handler_in_use == false &&
-        app_state_runtime.val.dispatch_callback is Some(_) {
-    match app_state_take_next_dispatchable_callback() {
-      Some(callback) =>
-        if app_state_dispatch_with_registered_callback(callback) == false {
-          return ()
-        }
-      None => return ()
-    }
-  }
 }
 
 ///|
@@ -248,7 +219,7 @@ fn app_state_maybe_dispatch_callback(callback : DeferredCallback) -> Unit {
     app_state_is_running() == false {
     return ()
   }
-  if app_state_runtime.val.dispatch_callback is None {
+  if !app_state_has_dispatch_handler() {
     match callback {
       // Port target: app_state.rs::did_finish_launching / will_terminate
       // Even without an active handler, lifecycle state still advances.
@@ -258,7 +229,7 @@ fn app_state_maybe_dispatch_callback(callback : DeferredCallback) -> Unit {
     }
     return ()
   }
-  if app_state_runtime.val.event_handler_in_use {
+  if app_state_handler_in_use() {
     match callback {
       // Port target: app_state.rs::handle_redraw
       // Drop re-entrant redraw callbacks instead of queueing them.
@@ -275,7 +246,7 @@ fn app_state_maybe_dispatch_callback(callback : DeferredCallback) -> Unit {
 
 ///|
 fn app_state_queue_did_finish_launching_notification() -> Unit {
-  if app_state_runtime.val.is_launched {
+  if app_state_is_launched() {
     return ()
   }
   if app_state_deferred_queue_contains(callback => {
@@ -288,7 +259,7 @@ fn app_state_queue_did_finish_launching_notification() -> Unit {
 
 ///|
 fn app_state_queue_will_terminate_notification() -> Unit {
-  if app_state_runtime.val.will_terminate_handled {
+  if app_state_will_terminate_handled() {
     return ()
   }
   if app_state_deferred_queue_contains(callback => callback is WillTerminate) {
@@ -894,83 +865,6 @@ fn app_state_setup_global(
 }
 
 ///|
-fn app_state_set_stop_before_wait(value : Bool) -> Unit {
-  app_state_runtime.val.stop_before_wait = value
-}
-
-///|
-fn app_state_set_stop_on_launch(value : Bool) -> Unit {
-  app_state_runtime.val.stop_on_launch = value
-}
-
-///|
-fn app_state_stop_before_wait() -> Bool {
-  app_state_runtime.val.stop_before_wait
-}
-
-///|
-fn app_state_set_stop_after_wait(value : Bool) -> Unit {
-  app_state_runtime.val.stop_after_wait = value
-}
-
-///|
-fn app_state_stop_after_wait() -> Bool {
-  app_state_runtime.val.stop_after_wait
-}
-
-///|
-fn app_state_set_stop_on_redraw(value : Bool) -> Unit {
-  app_state_runtime.val.stop_on_redraw = value
-}
-
-///|
-fn app_state_stop_on_redraw() -> Bool {
-  app_state_runtime.val.stop_on_redraw
-}
-
-///|
-fn app_state_is_launched() -> Bool {
-  app_state_runtime.val.is_launched
-}
-
-///|
-fn app_state_set_running(value : Bool) -> Unit {
-  app_state_runtime.val.is_running = value
-}
-
-///|
-fn app_state_is_running() -> Bool {
-  app_state_runtime.val.is_running
-}
-
-///|
-fn app_state_set_handler_in_use(value : Bool) -> Unit {
-  app_state_runtime.val.event_handler_in_use = value
-}
-
-///|
-fn app_state_handler_ready() -> Bool {
-  app_state_runtime.val.is_running &&
-  app_state_runtime.val.event_handler_in_use == false &&
-  app_state_runtime.val.dispatch_callback is Some(_)
-}
-
-///|
-fn app_state_exit() -> Unit {
-  app_state_runtime.val.exit_requested = true
-}
-
-///|
-fn app_state_clear_exit() -> Unit {
-  app_state_runtime.val.exit_requested = false
-}
-
-///|
-fn app_state_exiting() -> Bool {
-  app_state_runtime.val.exit_requested
-}
-
-///|
 fn app_state_set_control_flow(value : @core.ControlFlow) -> Unit {
   app_state_runtime.val.control_flow = value
 }
@@ -1040,10 +934,9 @@ fn app_state_wait_cause() -> @core.StartCause {
 
 ///|
 fn app_state_did_finish_launching() -> Unit {
-  if app_state_runtime.val.is_launched {
+  if !app_state_mark_launched() {
     return ()
   }
-  app_state_runtime.val.is_launched = true
   app_state_apply_launch_policy()
   app_state_runtime.val.waker.start()
 }
@@ -1120,32 +1013,6 @@ fn app_state_apply_launch_policy() -> Unit {
 }
 
 ///|
-fn app_state_will_terminate() -> Unit {
-  if app_state_runtime.val.will_terminate_handled {
-    return ()
-  }
-  app_state_runtime.val.will_terminate_handled = true
-  notify_windows_of_exit()
-  app_state_runtime.val.dispatch_callback = None
-  app_state_deferred_queue_clear()
-  app_state_internal_exit()
-}
-
-///|
-fn app_state_internal_exit() -> Unit {
-  app_state_runtime.val.is_running = false
-  app_state_runtime.val.event_handler_in_use = false
-  app_state_runtime.val.stop_on_redraw = false
-  app_state_runtime.val.stop_before_wait = false
-  app_state_runtime.val.stop_after_wait = false
-  app_state_runtime.val.waker.stop()
-  app_state_runtime.val.wait_timeout_ms = None
-  app_state_runtime.val.start_time_ms = None
-  app_state_runtime.val.pending_redraw_window_ids = []
-  app_state_runtime.val.fullscreen_requests = []
-}
-
-///|
 fn[A : ApplicationHandler] app_state_dispatch_callback(
   app : A,
   event_loop : ActiveEventLoop,
@@ -1202,45 +1069,6 @@ fn[A : ApplicationHandler] app_state_dispatch_callback(
 }
 
 ///|
-fn[A : ApplicationHandler] app_state_set_dispatch_handler(
-  app : A,
-  event_loop : ActiveEventLoop,
-) -> Unit {
-  app_state_runtime.val.dispatch_callback = Some(fn(callback) {
-    app_state_dispatch_callback(app, event_loop, callback)
-  })
-}
-
-///|
-fn app_state_clear_dispatch_handler() -> Unit {
-  app_state_runtime.val.dispatch_callback = None
-}
-
-///|
-fn[A : ApplicationHandler] app_state_with_handler(
-  app : A,
-  event_loop : ActiveEventLoop,
-  callback : DeferredCallback,
-) -> Unit {
-  app_state_set_handler_in_use(true)
-  app_state_dispatch_callback(app, event_loop, callback)
-  app_state_set_handler_in_use(false)
-}
-
-///|
-fn[A : ApplicationHandler] app_state_dispatch_deferred_callbacks(
-  app : A,
-  event_loop : ActiveEventLoop,
-) -> Unit {
-  while app_state_runtime.val.event_handler_in_use == false {
-    match app_state_take_next_dispatchable_callback() {
-      Some(callback) => app_state_with_handler(app, event_loop, callback)
-      None => return ()
-    }
-  }
-}
-
-///|
 fn[A : ApplicationHandler] app_state_dispatch_init_events(
   app : A,
   event_loop : ActiveEventLoop,
@@ -1259,8 +1087,7 @@ fn[A : ApplicationHandler] app_state_did_finish_launching_and_dispatch(
   }
   app_state_did_finish_launching()
   app_state_dispatch_init_events(app, event_loop)
-  if app_state_runtime.val.stop_on_launch {
-    app_state_runtime.val.stop_on_launch = false
+  if app_state_take_stop_on_launch() {
     stop_app_immediately()
   }
 }

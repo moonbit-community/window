@@ -42,6 +42,65 @@ test "invalid_native_window_handle_maps_to_os_error" {
 }
 
 ///|
+test "drag_window_invalid_handle_status_maps_to_ignored" {
+  let raised = try {
+    raise_request_error_from_drag_window_status(
+      invalid_native_window_handle_status,
+    )
+    false
+  } catch {
+    Ignored => true
+    _ => {
+      fail("expected RequestError::Ignored")
+      false
+    }
+  }
+  assert_true(raised)
+}
+
+///|
+test "drag_window_zero_status_maps_to_not_supported" {
+  let raised = try {
+    raise_request_error_from_drag_window_status(0)
+    false
+  } catch {
+    NotSupported(error) => {
+      assert_eq(
+        error.reason(),
+        "Window dragging is not supported in the current state",
+      )
+      true
+    }
+    _ => {
+      fail("expected RequestError::NotSupported")
+      false
+    }
+  }
+  assert_true(raised)
+}
+
+///|
+test "drag_resize_false_result_maps_to_not_supported" {
+  let raised = try {
+    raise_request_error_from_drag_resize_result(false)
+    false
+  } catch {
+    NotSupported(error) => {
+      assert_eq(
+        error.reason(),
+        "Window edge dragging is not supported in the current state",
+      )
+      true
+    }
+    _ => {
+      fail("expected RequestError::NotSupported")
+      false
+    }
+  }
+  assert_true(raised)
+}
+
+///|
 test "content_view_handle_from_raw_returns_view_handle" {
   let handle = (42 : Int).to_uint64()
   let actual = content_view_handle_from_raw(handle) catch {

@@ -1,13 +1,19 @@
 ///|
 // Port target: winit-reference/winit-appkit/src/window_delegate.rs
-fn registered_native_handle(window_handle : NativeWindow) -> UInt64 {
-  let native_handle = native_window_objc_handle(window_handle)
-  if native_handle != (0 : Int).to_uint64() &&
-    app_state_has_window_handle(window_handle) {
+fn registered_borrowed_native_handle(
+  window_handle : NativeWindow,
+) -> BorrowedObjcHandle {
+  let native_handle = native_window_borrowed_objc_handle(window_handle)
+  if native_handle.is_non_null() && app_state_has_window_handle(window_handle) {
     native_handle
   } else {
-    (0 : Int).to_uint64()
+    BorrowedObjcHandle::null()
   }
+}
+
+///|
+fn registered_native_handle(window_handle : NativeWindow) -> UInt64 {
+  registered_borrowed_native_handle(window_handle).raw()
 }
 
 ///|
@@ -21,60 +27,6 @@ fn clamp_size(size : Int) -> Int {
 
 ///|
 let invisible_cursor_obj_handle : Ref[@core.CustomCursorHandle?] = Ref(None)
-
-///|
-let maximized_standard_frame_window_handles : Ref[Array[UInt64]] = Ref([])
-
-///|
-let maximized_standard_frame_xs : Ref[Array[Double]] = Ref([])
-
-///|
-let maximized_standard_frame_ys : Ref[Array[Double]] = Ref([])
-
-///|
-let maximized_standard_frame_widths : Ref[Array[Double]] = Ref([])
-
-///|
-let maximized_standard_frame_heights : Ref[Array[Double]] = Ref([])
-
-///|
-let fullscreen_transition_window_handles : Ref[Array[UInt64]] = Ref([])
-
-///|
-let fullscreen_transition_values : Ref[Array[Bool]] = Ref([])
-
-///|
-fn window_fullscreen_transition_index(window_handle : UInt64) -> Int? {
-  let window_identity = window_handle
-  fullscreen_transition_window_handles.val.search_by(handle => {
-    handle == window_identity
-  })
-}
-
-///|
-fn set_window_fullscreen_transition_state(
-  window_handle : UInt64,
-  in_transition : Bool,
-) -> Unit {
-  match window_fullscreen_transition_index(window_handle) {
-    Some(index) => fullscreen_transition_values.val[index] = in_transition
-    None => {
-      fullscreen_transition_window_handles.val.push(window_handle)
-      fullscreen_transition_values.val.push(in_transition)
-    }
-  }
-}
-
-///|
-fn clear_window_fullscreen_transition_state(window_handle : UInt64) -> Unit {
-  match window_fullscreen_transition_index(window_handle) {
-    Some(index) => {
-      ignore(fullscreen_transition_window_handles.val.remove(index))
-      ignore(fullscreen_transition_values.val.remove(index))
-    }
-    None => ()
-  }
-}
 
 ///|
 fn queue_drag_event_from_payload(
@@ -105,53 +57,6 @@ fn queue_drag_event_from_payload(
         DragLeft(if has_position { Some(position) } else { None }),
       )
     _ => ()
-  }
-}
-
-///|
-fn native_window_store_standard_frame(
-  handle : NativeWindow,
-  x : Double,
-  y : Double,
-  width : Double,
-  height : Double,
-) -> Unit {
-  let handle_identity = native_window_identity(handle)
-  match
-    maximized_standard_frame_window_handles.val.search_by(window_handle => {
-      window_handle == handle_identity
-    }) {
-    Some(index) => {
-      maximized_standard_frame_xs.val[index] = x
-      maximized_standard_frame_ys.val[index] = y
-      maximized_standard_frame_widths.val[index] = width
-      maximized_standard_frame_heights.val[index] = height
-    }
-    None => {
-      maximized_standard_frame_window_handles.val.push(handle_identity)
-      maximized_standard_frame_xs.val.push(x)
-      maximized_standard_frame_ys.val.push(y)
-      maximized_standard_frame_widths.val.push(width)
-      maximized_standard_frame_heights.val.push(height)
-    }
-  }
-}
-
-///|
-fn native_window_forget_standard_frame(handle : NativeWindow) -> Unit {
-  let handle_identity = native_window_identity(handle)
-  match
-    maximized_standard_frame_window_handles.val.search_by(window_handle => {
-      window_handle == handle_identity
-    }) {
-    Some(index) => {
-      ignore(maximized_standard_frame_window_handles.val.remove(index))
-      ignore(maximized_standard_frame_xs.val.remove(index))
-      ignore(maximized_standard_frame_ys.val.remove(index))
-      ignore(maximized_standard_frame_widths.val.remove(index))
-      ignore(maximized_standard_frame_heights.val.remove(index))
-    }
-    None => ()
   }
 }
 
@@ -371,18 +276,15 @@ fn native_window_set_maximized(handle : NativeWindow, maximized : Bool) -> Unit 
     return ()
   }
 
-  match
-    maximized_standard_frame_window_handles.val.search_by(window_handle => {
-      window_handle == native_window_identity(handle)
-    }) {
-    Some(index) =>
+  match native_window_saved_standard_frame(handle) {
+    Some(frame) =>
       appkit_objc_msg_send_void_rect_bool(
         window,
         set_frame_display,
-        maximized_standard_frame_xs.val[index],
-        maximized_standard_frame_ys.val[index],
-        maximized_standard_frame_widths.val[index],
-        maximized_standard_frame_heights.val[index],
+        frame.x,
+        frame.y,
+        frame.width,
+        frame.height,
         false,
       )
     None =>
@@ -2439,15 +2341,6 @@ fn set_window_maximized(window_handle : NativeWindow, maximized : Bool) -> Unit 
 }
 
 ///|
-fn window_in_fullscreen_transition(window_handle : NativeWindow) -> Bool {
-  match
-    window_fullscreen_transition_index(native_window_identity(window_handle)) {
-    Some(index) => fullscreen_transition_values.val[index]
-    None => false
-  }
-}
-
-///|
 fn toggle_window_fullscreen(
   window_handle : NativeWindow,
   fullscreen : Bool,
@@ -2844,16 +2737,12 @@ fn set_window_cursor_hittest(
   window_handle : NativeWindow,
   hittest : Bool,
 ) -> Int {
-  let native_handle = registered_native_handle(window_handle)
-  if native_handle == (0 : Int).to_uint64() {
-    return -1
-  }
-  let window = native_handle
-  if window == (0 : Int).to_uint64() {
+  let window = registered_borrowed_native_handle(window_handle)
+  if window.is_null() {
     return -1
   }
   appkit_objc_msg_send_void_bool(
-    window,
+    window.raw(),
     objc_runtime_selector_handle("setIgnoresMouseEvents:"),
     hittest == false,
   )
@@ -2862,20 +2751,15 @@ fn set_window_cursor_hittest(
 
 ///|
 fn window_cursor_hittest(window_handle : NativeWindow) -> Bool {
-  let native_handle = registered_native_handle(window_handle)
-  if native_handle == (0 : Int).to_uint64() {
+  let window = registered_borrowed_native_handle(window_handle)
+  if window.is_null() {
     true
   } else {
-    let window = native_handle
-    if window == (0 : Int).to_uint64() {
-      true
-    } else {
-      appkit_objc_msg_send_bool(
-        window,
-        objc_runtime_selector_handle("ignoresMouseEvents"),
-      ) ==
-      false
-    }
+    appkit_objc_msg_send_bool(
+      window.raw(),
+      objc_runtime_selector_handle("ignoresMouseEvents"),
+    ) ==
+    false
   }
 }
 

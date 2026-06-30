@@ -12,16 +12,28 @@ pub fn EventLoopProxy::wake_up(_self : EventLoopProxy) -> Unit {
 }
 
 ///|
+/// Return the CoreGraphics display id used by raw-window-handle 0.6.
+///
+/// This is a borrowed platform identifier, not an owned object. Callers must
+/// not release it or treat it as a retained CoreFoundation/AppKit object.
 pub fn EventLoop::rwh_06_handle(_self : EventLoop) -> UInt64 {
   cg_main_display_id()
 }
 
 ///|
+/// Return the raw display handle for this event loop.
+///
+/// The returned value is a borrowed CoreGraphics display id, despite the legacy
+/// method name. It does not transfer ownership to the caller.
 pub fn EventLoop::owned_display_handle(self : EventLoop) -> UInt64 {
   self.rwh_06_handle()
 }
 
 ///|
+/// Return the raw display handle for this event loop.
+///
+/// The returned value is a borrowed CoreGraphics display id, not an owned
+/// CoreFoundation/AppKit object.
 pub fn EventLoop::display_handle(self : EventLoop) -> UInt64 {
   self.owned_display_handle()
 }
@@ -404,16 +416,28 @@ pub fn ActiveEventLoop::exiting(self : ActiveEventLoop) -> Bool {
 }
 
 ///|
+/// Return the CoreGraphics display id used by raw-window-handle 0.6.
+///
+/// This forwards the borrowed display identifier from the underlying
+/// `EventLoop`.
 pub fn ActiveEventLoop::rwh_06_handle(self : ActiveEventLoop) -> UInt64 {
   self.inner.rwh_06_handle()
 }
 
 ///|
+/// Return the raw display handle for this active event loop.
+///
+/// The returned value is borrowed and does not transfer ownership to the
+/// caller.
 pub fn ActiveEventLoop::owned_display_handle(self : ActiveEventLoop) -> UInt64 {
   self.inner.owned_display_handle()
 }
 
 ///|
+/// Return the raw display handle for this active event loop.
+///
+/// The returned value is a borrowed CoreGraphics display id, not an owned
+/// CoreFoundation/AppKit object.
 pub fn ActiveEventLoop::display_handle(self : ActiveEventLoop) -> UInt64 {
   self.inner.display_handle()
 }

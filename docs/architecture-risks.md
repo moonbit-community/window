@@ -100,6 +100,13 @@ Current control:
 - Deferred callback queue mutation is isolated in
   `macos/app_state_deferred_queue.mbt`; AppState dispatch code uses the queue
   seam instead of directly pushing, searching, or removing deferred callbacks.
+- Event-loop run-state and handler-state mutation is isolated in
+  `macos/app_state_run_state.mbt`; AppState dispatch code no longer directly
+  mutates running, launched, stop, exit, will-terminate, or dispatch-handler
+  fields.
+- White-box AppState/View tests use local fixture helpers for runtime reset,
+  dispatch callback setup, deferred queue inspection, and window identity
+  fixtures; direct `app_state_runtime.val` access is confined to those helpers.
 - Deferred callback draining re-checks that a registered dispatch handler still
   exists before each queue pop, so a callback that clears the handler cannot
   cause the next deferred event to be removed and dropped.
@@ -138,8 +145,12 @@ Current control:
 
 - Public renderer integration uses explicit `Window::content_view_handle()`
   documentation.
-- `Window::window_handle()` and `Window::content_view_handle()` both expose the
-  AppKit content view, matching raw-window-handle AppKit semantics.
+- Raw display/window/content-view/`NSScreen` accessors document that returned
+  handles are borrowed and must not be released by callers.
+- Internal high-traffic registered AppKit window lookup has a
+  `BorrowedObjcHandle` adapter at the cursor hittest seam. Owned native
+  resources still use external objects with finalizers instead of plain
+  `UInt64`.
 
 Required direction:
 
@@ -158,10 +169,18 @@ translation.
 Current control:
 
 - Behavior-sensitive parity fixes are tracked in `docs/macos-issue-tracker.md`.
+- Per-window platform state lives in focused state modules:
+  `macos/window_platform_state.mbt` for IME/cursor/first-mouse state and
+  `macos/window_fullscreen_state.mbt` for fullscreen transition and maximized
+  standard frame state.
+- Native window request error conversion lives in
+  `macos/window_request_error.mbt`; cursor hittest, cursor position, cursor
+  grab, drag, and drag-resize paths share the same status/result conversion
+  policy.
 
 Required direction:
 
 - Split by responsibility only when a behavior change or test requires touching
   the area. Avoid mechanical churn without better ownership boundaries.
-- Good future seams are cursor mapping, fullscreen positioning, and window
-  request/error handling.
+- Good future seams are cursor mapping and fullscreen positioning restore
+  behavior.

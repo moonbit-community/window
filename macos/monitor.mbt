@@ -427,6 +427,12 @@ fn available_monitors() -> Array[@core.MonitorHandle] {
 ///|
 // Port target: winit-reference/winit-appkit/src/lib.rs::MonitorHandleExtMacOS::ns_screen
 // MoonBit adaptation: foreign type extension methods are not allowed, so expose a free function.
+
+///|
+/// Return the borrowed `NSScreen` handle for this monitor when available.
+///
+/// The returned Objective-C object is owned by AppKit. Callers must not release
+/// it or assume this integer represents an owned/retained object.
 pub fn monitor_ns_screen(monitor : @core.MonitorHandle) -> UInt64? {
   let screen = native_monitor_ns_screen(monitor.native_id())
   if screen == (0 : Int).to_uint64() {

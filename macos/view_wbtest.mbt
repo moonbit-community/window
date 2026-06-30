@@ -12,11 +12,7 @@ fn reset_view_state_for_test() -> Unit {
   view_pending_key_window_ids.val = []
   view_pending_key_snapshots.val = []
 
-  app_state_runtime.val = AppStateRuntime()
-  app_state_window_position_raw_ids.val = []
-  app_state_window_position_xs.val = []
-  app_state_window_position_ys.val = []
-
+  reset_app_state_runtime_for_test()
   reset_window_platform_state_for_test()
 }
 
@@ -26,11 +22,7 @@ test "native view state query reads moonbit ime state" {
 
   let raw_id = 17
   let window_handle = (91 : Int).to_uint64()
-  app_state_runtime.val.window_handles.push({
-    raw_id,
-    identity: window_handle,
-    native_handle: None,
-  })
+  app_state_register_window_identity_for_test(raw_id, window_handle)
   set_window_ime_allowed_state(window_handle, true)
   set_window_ime_cursor_area_state(window_handle, 12, 34, 0, -5)
   view_set_has_marked_text(raw_id, true)
@@ -81,11 +73,7 @@ test "native view state query reads accepts first mouse from moonbit" {
 
   let raw_id = 19
   let window_handle = (93 : Int).to_uint64()
-  app_state_runtime.val.window_handles.push({
-    raw_id,
-    identity: window_handle,
-    native_handle: None,
-  })
+  app_state_register_window_identity_for_test(raw_id, window_handle)
 
   assert_eq(
     view_native_query_state(raw_id, native_view_state_query_accepts_first_mouse),
@@ -143,7 +131,7 @@ test "pending_key_snapshot_forwards_pressed_keyboard_input" {
   let raw_id = 41
   app_state_set_running(true)
   app_state_set_handler_in_use(true)
-  app_state_runtime.val.dispatch_callback = Some(fn(_callback) {  })
+  app_state_set_dispatch_callback_for_test(fn(_callback) {  })
 
   native_callback_input_event(
     raw_id,
@@ -176,9 +164,9 @@ test "pending_key_snapshot_forwards_pressed_keyboard_input" {
     (0 : Int).to_uint64(),
   )
 
-  assert_eq(app_state_runtime.val.deferred_callbacks.length(), 1)
-  match app_state_runtime.val.deferred_callbacks[0] {
-    WindowEvent(window_id, KeyboardInput(_, key_event, false)) => {
+  assert_eq(app_state_deferred_callback_count_for_test(), 1)
+  match app_state_deferred_callback_for_test(0) {
+    Some(WindowEvent(window_id, KeyboardInput(_, key_event, false))) => {
       assert_eq(window_id, @core.WindowId::from_raw(raw_id))
       assert_eq(key_event.state(), Pressed)
       assert_eq(key_event.physical_key(), Code(Digit1))
