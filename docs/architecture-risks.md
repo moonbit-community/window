@@ -100,6 +100,13 @@ Current control:
 - Event-loop construction checks the process main thread before initializing
   `NSApplication`, observers, or run-loop state. The cross-platform
   `with_any_thread` preference cannot bypass this AppKit requirement.
+- Public `Window` methods that touch AppKit or mutable window state synchronously
+  execute their complete operation through `macos/window_threading.mbt` and
+  `dispatch_sync_f` when called from a worker thread. This preserves ordering
+  across compound fullscreen, cursor, and IME operations instead of dispatching
+  individual Objective-C messages independently.
+- `scripts/check_window_thread_boundary.sh` rejects public `Window` methods that
+  bypass the main-thread facade and verifies the native dispatch policy.
 - Deferred callback queue mutation is isolated in
   `macos/app_state_deferred_queue.mbt`; AppState dispatch code uses the queue
   seam instead of directly pushing, searching, or removing deferred callbacks.
@@ -118,6 +125,8 @@ Required direction:
 
 - Treat new event-loop behavior as state-machine work and add white-box tests
   for queue ordering, exit, and callback reentrancy.
+- Keep worker-thread `Window` support aligned with winit: dispatch complete
+  operations synchronously rather than exposing AppKit calls to caller threads.
 - Avoid spreading AppState mutation across unrelated window methods.
 
 ## Framework-Linked Native Test Execution

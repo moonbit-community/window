@@ -49,6 +49,13 @@ extern "C" fn native_cg_display_get_display_id_from_uuid(uuid : UInt64) -> UInt 
 extern "C" fn native_pthread_main_np() -> Int = "pthread_main_np"
 
 ///|
+#borrow(call_closure)
+extern "C" fn native_run_on_main(
+  call_closure : FuncRef[(() -> Unit) -> Unit],
+  callback : () -> Unit,
+) -> Unit = "mbw_run_on_main"
+
+///|
 extern "C" fn native_cg_active_display_count() -> Int = "mbw_cg_active_display_count"
 
 ///|

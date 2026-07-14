@@ -99,6 +99,10 @@ This library follows MoonBit `raise`-based error handling (typed errors), not
 - `EventLoop` must be created and run on the process main thread.
   `EventLoopBuilder::with_any_thread(true)` does not relax this AppKit
   requirement.
+- Methods on an existing `Window` may be called from worker threads.
+  AppKit-backed operations synchronously execute on the process main thread,
+  matching winit's macOS behavior. Do not block the main thread while waiting
+  for a worker that is calling a `Window` method.
 - `EventLoop::pump_app_events(...)` is for host-loop integration, not frame-by-frame rendering.
   For frame-driven apps, prefer `run_app()` with `ControlFlow::Poll` or `ControlFlow::WaitUntil`.
 - `Window::set_cursor_grab(@core.CursorGrabMode::Confined)` raises `@core.RequestError::NotSupported`.

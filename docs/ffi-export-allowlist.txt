@@ -62,6 +62,7 @@ mbw_objc_release
 mbw_objc_sel_register_name
 mbw_objc_wrap_owned_object
 mbw_override_send_event
+mbw_run_on_main
 mbw_window_destroy
 mbw_window_identity
 mbw_window_mark_closing

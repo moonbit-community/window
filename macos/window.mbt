@@ -63,7 +63,7 @@ pub fn Window::rwh_06_display_handle(self : Window) -> UInt64 {
 /// This is a borrowed AppKit/Objective-C handle. It is only valid while the
 /// window and the underlying AppKit object stay alive; callers must not retain
 /// ownership assumptions from this integer or release it.
-pub fn Window::rwh_06_window_handle(self : Window) -> UInt64 {
+fn Window::rwh_06_window_handle_on_main(self : Window) -> UInt64 {
   if self.raw_view_handle != (0 : Int).to_uint64() {
     self.raw_view_handle
   } else {
@@ -97,7 +97,7 @@ pub fn Window::display_handle(self : Window) -> UInt64 {
 ///
 /// The returned value is borrowed from AppKit and remains owned by the windowing
 /// backend. Do not release it.
-pub fn Window::window_handle(self : Window) -> UInt64 {
+fn Window::window_handle_on_main(self : Window) -> UInt64 {
   self.raw_window_handle_rwh_06()
 }
 
@@ -119,7 +119,7 @@ fn content_view_handle_from_raw(
 ///
 /// The handle is not retained for the caller. Use it only while the `Window` is
 /// alive, and do not release it.
-pub fn Window::content_view_handle(
+fn Window::content_view_handle_on_main(
   self : Window,
 ) -> UInt64 raise @core.RequestError {
   content_view_handle_from_raw(
@@ -129,7 +129,7 @@ pub fn Window::content_view_handle(
 
 ///|
 // Port target: window.rs::Drop::drop
-pub fn Window::drop(self : Window) -> Unit {
+fn Window::drop_on_main(self : Window) -> Unit {
   if self.simple_fullscreen_state {
     ignore(self.set_simple_fullscreen(false))
   }
@@ -141,7 +141,7 @@ pub fn Window::drop(self : Window) -> Unit {
 }
 
 ///|
-pub fn Window::set_cursor(self : Window, cursor : @core.Cursor) -> Unit {
+fn Window::set_cursor_on_main(self : Window, cursor : @core.Cursor) -> Unit {
   let cursor_visible = self.is_cursor_visible()
   match cursor {
     Icon(icon) => {
@@ -168,7 +168,7 @@ pub fn Window::set_cursor(self : Window, cursor : @core.Cursor) -> Unit {
 }
 
 ///|
-pub fn Window::set_cursor_icon(
+fn Window::set_cursor_icon_on_main(
   self : Window,
   cursor : @core.CursorIcon,
 ) -> Unit {
@@ -176,7 +176,7 @@ pub fn Window::set_cursor_icon(
 }
 
 ///|
-pub fn Window::set_cursor_visible(self : Window, visible : Bool) -> Unit {
+fn Window::set_cursor_visible_on_main(self : Window, visible : Bool) -> Unit {
   set_window_cursor_visible(self.raw_window_handle, visible)
   if visible {
     self.set_cursor(self.cursor_state)
@@ -184,7 +184,7 @@ pub fn Window::set_cursor_visible(self : Window, visible : Bool) -> Unit {
 }
 
 ///|
-pub fn Window::set_cursor_hittest(
+fn Window::set_cursor_hittest_on_main(
   self : Window,
   hittest : Bool,
 ) -> Unit raise @core.RequestError {
@@ -207,7 +207,7 @@ pub impl @core.WindowCursorHittest for Window with fn set_cursor_hittest(
   self,
   hittest,
 ) {
-  window_set_cursor_hittest(self, hittest)
+  self.set_cursor_hittest(hittest)
 }
 
 ///|
@@ -219,7 +219,7 @@ fn cursor_position_to_logical(
 }
 
 ///|
-pub fn Window::set_cursor_position(
+fn Window::set_cursor_position_on_main(
   self : Window,
   position : @dpi.Position,
 ) -> Unit raise @core.RequestError {
@@ -238,7 +238,7 @@ pub fn Window::set_cursor_position(
 }
 
 ///|
-pub fn Window::set_cursor_grab(
+fn Window::set_cursor_grab_on_main(
   self : Window,
   mode : @core.CursorGrabMode,
 ) -> Unit raise @core.RequestError {
@@ -254,14 +254,14 @@ pub fn Window::set_cursor_grab(
 }
 
 ///|
-pub fn Window::drag_window(self : Window) -> Unit raise @core.RequestError {
+fn Window::drag_window_on_main(self : Window) -> Unit raise @core.RequestError {
   raise_request_error_from_drag_window_status(
     drag_window(self.raw_window_handle),
   )
 }
 
 ///|
-pub fn Window::drag_resize_window(
+fn Window::drag_resize_window_on_main(
   self : Window,
   direction : @core.ResizeDirection,
 ) -> Unit raise @core.RequestError {
@@ -274,7 +274,7 @@ pub fn Window::drag_resize_window(
 }
 
 ///|
-pub fn Window::show_window_menu(
+fn Window::show_window_menu_on_main(
   self : Window,
   position : @dpi.Position,
 ) -> Unit {
@@ -287,22 +287,22 @@ pub fn Window::show_window_menu(
 }
 
 ///|
-pub fn Window::cursor(self : Window) -> @core.Cursor {
+fn Window::cursor_on_main(self : Window) -> @core.Cursor {
   self.cursor_state
 }
 
 ///|
-pub fn Window::is_cursor_visible(self : Window) -> Bool {
+fn Window::is_cursor_visible_on_main(self : Window) -> Bool {
   window_cursor_visible(self.raw_window_handle)
 }
 
 ///|
-pub fn Window::is_cursor_hittest(self : Window) -> Bool {
+fn Window::is_cursor_hittest_on_main(self : Window) -> Bool {
   window_cursor_hittest(self.raw_window_handle)
 }
 
 ///|
-pub fn Window::set_ime_purpose(
+fn Window::set_ime_purpose_on_main(
   self : Window,
   purpose : @core.ImePurpose,
 ) -> Unit {
@@ -322,12 +322,12 @@ pub fn Window::set_ime_purpose(
 }
 
 ///|
-pub fn Window::set_ime_hints(self : Window, hints : @core.ImeHint) -> Unit {
+fn Window::set_ime_hints_on_main(self : Window, hints : @core.ImeHint) -> Unit {
   set_ime_hints(self.raw_window_handle, normalize_ime_hints_bits(hints.bits()))
 }
 
 ///|
-pub fn Window::set_ime_allowed(self : Window, allowed : Bool) -> Unit {
+fn Window::set_ime_allowed_on_main(self : Window, allowed : Bool) -> Unit {
   let request : @core.ImeRequest? = if allowed {
     let capabilities = @core.ImeCapabilities::default()
       .with_hint_and_purpose()
@@ -365,12 +365,12 @@ fn Window::set_ime_allowed_raw(self : Window, allowed : Bool) -> Unit {
 }
 
 ///|
-pub fn Window::ime_allowed(self : Window) -> Bool {
+fn Window::ime_allowed_on_main(self : Window) -> Bool {
   window_ime_allowed(self.raw_window_handle)
 }
 
 ///|
-pub fn Window::set_ime_cursor_area(
+fn Window::set_ime_cursor_area_on_main(
   self : Window,
   position : @dpi.Position,
   size : @dpi.Size,
@@ -419,7 +419,7 @@ fn Window::set_ime_cursor_area_raw(
 }
 
 ///|
-pub fn Window::set_ime_surrounding_text(
+fn Window::set_ime_surrounding_text_on_main(
   self : Window,
   surrounding_text : @core.ImeSurroundingText?,
 ) -> Unit {
@@ -431,7 +431,9 @@ pub fn Window::set_ime_surrounding_text(
 }
 
 ///|
-pub fn Window::ime_cursor_area_position(self : Window) -> @dpi.PhysicalPosition {
+fn Window::ime_cursor_area_position_on_main(
+  self : Window,
+) -> @dpi.PhysicalPosition {
   @dpi.LogicalPosition::LogicalPosition(
     window_ime_cursor_x(self.raw_window_handle).to_double(),
     window_ime_cursor_y(self.raw_window_handle).to_double(),
@@ -439,7 +441,7 @@ pub fn Window::ime_cursor_area_position(self : Window) -> @dpi.PhysicalPosition 
 }
 
 ///|
-pub fn Window::ime_cursor_area_size(self : Window) -> @dpi.PhysicalSize {
+fn Window::ime_cursor_area_size_on_main(self : Window) -> @dpi.PhysicalSize {
   @dpi.LogicalSize::LogicalSize(
     window_ime_cursor_width(self.raw_window_handle).to_double(),
     window_ime_cursor_height(self.raw_window_handle).to_double(),
@@ -447,17 +449,19 @@ pub fn Window::ime_cursor_area_size(self : Window) -> @dpi.PhysicalSize {
 }
 
 ///|
-pub fn Window::ime_surrounding_text(self : Window) -> @core.ImeSurroundingText? {
+fn Window::ime_surrounding_text_on_main(
+  self : Window,
+) -> @core.ImeSurroundingText? {
   self.ime_surrounding_text_state
 }
 
 ///|
-pub fn Window::ime_purpose(self : Window) -> @core.ImePurpose {
+fn Window::ime_purpose_on_main(self : Window) -> @core.ImePurpose {
   ime_purpose_from_native(window_ime_purpose(self.raw_window_handle))
 }
 
 ///|
-pub fn Window::ime_hints(self : Window) -> @core.ImeHint {
+fn Window::ime_hints_on_main(self : Window) -> @core.ImeHint {
   @core.ImeHint::from_bits(
     normalize_ime_hints_bits(window_ime_hints(self.raw_window_handle)),
   )
@@ -482,7 +486,7 @@ fn Window::apply_ime_request_data(
 }
 
 ///|
-pub fn Window::request_ime_update(
+fn Window::request_ime_update_on_main(
   self : Window,
   request : @core.ImeRequest,
 ) -> Unit raise @core.ImeRequestError {
@@ -511,7 +515,7 @@ pub fn Window::request_ime_update(
 }
 
 ///|
-pub fn Window::ime_capabilities(self : Window) -> @core.ImeCapabilities? {
+fn Window::ime_capabilities_on_main(self : Window) -> @core.ImeCapabilities? {
   self.ime_capabilities_state
 }
 
