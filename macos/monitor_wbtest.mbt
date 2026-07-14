@@ -9,6 +9,26 @@ extern "C" fn native_test_display_refresh_rate_off_main(
 ) -> Int = "mbw_test_display_refresh_rate_off_main"
 
 ///|
+extern "C" fn native_test_refresh_rate_millihertz_from_cvtime(
+  time_scale : Int,
+  time_value : Int,
+) -> Int = "mbw_test_refresh_rate_millihertz_from_cvtime"
+
+///|
+test "CoreVideo refresh fallback preserves fractional rates" {
+  assert_eq(native_test_refresh_rate_millihertz_from_cvtime(60000, 1001), 59940)
+  assert_eq(native_test_refresh_rate_millihertz_from_cvtime(24000, 1001), 23976)
+  assert_eq(native_test_refresh_rate_millihertz_from_cvtime(60, 1), 60000)
+  assert_eq(native_test_refresh_rate_millihertz_from_cvtime(1, 2000), 1)
+  assert_eq(native_test_refresh_rate_millihertz_from_cvtime(0, 1001), 0)
+  assert_eq(native_test_refresh_rate_millihertz_from_cvtime(60000, 0), 0)
+  assert_eq(
+    native_test_refresh_rate_millihertz_from_cvtime(2147483647, 1),
+    2147483647,
+  )
+}
+
+///|
 test "uuid_stable" {
   let primary_id = cg_main_display_id()
   assert_true(primary_id > (0 : Int).to_uint64())

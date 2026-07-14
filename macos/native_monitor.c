@@ -349,6 +349,32 @@ int32_t mbw_display_mode_refresh_rate_millihertz(MBWDisplayModeHandle *mode_hand
   return (int32_t)(millihertz + 0.5);
 }
 
+static int32_t mbw_refresh_rate_millihertz_from_cvtime(int32_t time_scale,
+                                                       int64_t time_value) {
+  if (time_scale <= 0 || time_value <= 0) {
+    return 0;
+  }
+  int64_t numerator = (int64_t)time_scale * 1000;
+  int64_t millihertz = numerator / time_value;
+  int64_t remainder = numerator % time_value;
+  int64_t rounding_threshold = time_value / 2 + time_value % 2;
+  if (remainder >= rounding_threshold) {
+    millihertz += 1;
+  }
+  if (millihertz <= 0) {
+    return 0;
+  }
+  if (millihertz > INT32_MAX) {
+    return INT32_MAX;
+  }
+  return (int32_t)millihertz;
+}
+
+int32_t mbw_test_refresh_rate_millihertz_from_cvtime(int32_t time_scale,
+                                                      int32_t time_value) {
+  return mbw_refresh_rate_millihertz_from_cvtime(time_scale, time_value);
+}
+
 int32_t mbw_display_refresh_rate_millihertz(uint32_t display_id) {
   if (display_id == 0) {
     return 0;
@@ -371,14 +397,7 @@ int32_t mbw_display_refresh_rate_millihertz(uint32_t display_id) {
     return 0;
   }
 
-  int64_t refresh_rate = time.timeScale / time.timeValue;
-  if (refresh_rate <= 0) {
-    return 0;
-  }
-  if (refresh_rate > INT32_MAX / 1000) {
-    return INT32_MAX;
-  }
-  return (int32_t)(refresh_rate * 1000);
+  return mbw_refresh_rate_millihertz_from_cvtime(time.timeScale, time.timeValue);
 }
 
 typedef struct {
