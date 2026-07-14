@@ -5,6 +5,7 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 FACADE="$ROOT/macos/window_threading.mbt"
 WINDOW="$ROOT/macos/window.mbt"
 NATIVE="$ROOT/macos/native_appkit_main_thread.m"
+FFI="$ROOT/macos/ffi.mbt"
 
 unexpected_files="$(rg -n '^pub fn Window::' "$ROOT/macos" -g '*.mbt' \
   -g '!window_threading.mbt' -g '!window.mbt' || true)"
@@ -33,6 +34,28 @@ fi
 if ! grep -Fq 'pthread_main_np()' "$NATIVE" \
   || ! grep -Fq 'dispatch_sync_f(dispatch_get_main_queue()' "$NATIVE"; then
   echo "native Window dispatcher must run directly on main and sync from workers" >&2
+  exit 1
+fi
+
+if ! grep -Fq '#borrow(call_closure, callback)' "$FFI"; then
+  echo "main-thread FFI trampoline and callback must both be borrowed" >&2
+  exit 1
+fi
+
+callback_bridge="$(sed -n \
+  '/static void mbw_invoke_main_thread_call/,/^}/p' "$NATIVE")"
+if [[ "$(grep -c 'moonbit_incref(call->closure);' <<<"$callback_bridge")" != "1" ]] \
+  || [[ "$(grep -c 'moonbit_decref(call->closure);' <<<"$callback_bridge")" != "1" ]]; then
+  echo "main-thread callback bridge must locally pin the borrowed closure" >&2
+  exit 1
+fi
+
+bridge_order="$(printf '%s\n' "$callback_bridge" \
+  | grep -nE 'moonbit_(incref|decref)|call->trampoline' \
+  | cut -d: -f2-)"
+expected_order=$'    moonbit_incref(call->closure);\n    call->trampoline(call->closure);\n    moonbit_decref(call->closure);'
+if [[ "$bridge_order" != "$expected_order" ]]; then
+  echo "main-thread callback bridge must incref immediately around the trampoline call" >&2
   exit 1
 fi
 

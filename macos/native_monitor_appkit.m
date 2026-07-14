@@ -74,9 +74,9 @@ double mbw_monitor_backing_scale_factor(uint32_t display_id) {
 }
 
 MOONBIT_FFI_EXPORT
-uint64_t mbw_monitor_copy_ns_screen(uint32_t display_id) {
+MBWObjcOwnedObjectHandle *mbw_monitor_copy_ns_screen(uint32_t display_id) {
   if (display_id == 0) {
-    return 0;
+    return mbw_objc_owned_object_adopt(nil);
   }
   MBWMonitorNSScreenContext context = {
       .display_id = (CGDirectDisplayID)display_id,
@@ -87,5 +87,5 @@ uint64_t mbw_monitor_copy_ns_screen(uint32_t display_id) {
   } else {
     dispatch_sync_f(dispatch_get_main_queue(), &context, mbw_copy_monitor_ns_screen);
   }
-  return (uint64_t)(uintptr_t)context.screen;
+  return mbw_objc_owned_object_adopt(context.screen);
 }

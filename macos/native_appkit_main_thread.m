@@ -12,7 +12,10 @@ typedef struct {
 static void mbw_invoke_main_thread_call(void *raw_call) {
   MBWMainThreadCall *call = (MBWMainThreadCall *)raw_call;
   @autoreleasepool {
+    // A borrowed closure must be pinned while a native trampoline calls MoonBit.
+    moonbit_incref(call->closure);
     call->trampoline(call->closure);
+    moonbit_decref(call->closure);
   }
 }
 

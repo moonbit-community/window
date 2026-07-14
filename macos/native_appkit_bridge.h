@@ -35,6 +35,12 @@ typedef int32_t (*mbw_sync_query_trampoline_t)(void *closure, int32_t raw_id, in
                                                uint64_t arg0);
 typedef void (*mbw_lifecycle_trampoline_t)(void *closure, int32_t kind);
 typedef void (*mbw_send_event_impl_t)(id self, SEL _cmd, NSEvent *event);
+typedef struct MBWObjcOwnedObjectHandle MBWObjcOwnedObjectHandle;
+
+MBWObjcOwnedObjectHandle *mbw_objc_owned_object_adopt(id object);
+
+MOONBIT_FFI_EXPORT
+MBWObjcOwnedObjectHandle *mbw_objc_wrap_owned_object(uint64_t object_handle);
 
 enum {
   MBW_VIEW_STATE_QUERY_IME_ALLOWED = 1,

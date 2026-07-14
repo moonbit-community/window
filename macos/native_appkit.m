@@ -75,9 +75,9 @@ typedef struct {
   NSCursor *cursor;
 } MBWCustomCursorHandle;
 
-typedef struct {
+struct MBWObjcOwnedObjectHandle {
   id object;
-} MBWObjcOwnedObjectHandle;
+};
 
 @interface MBWOwnedObjectReleaser : NSObject {
 @public
@@ -137,13 +137,17 @@ static void mbw_objc_owned_object_finalize(void *ptr) {
   mbw_objc_owned_object_release_object((MBWObjcOwnedObjectHandle *)ptr);
 }
 
-MOONBIT_FFI_EXPORT
-MBWObjcOwnedObjectHandle *mbw_objc_wrap_owned_object(uint64_t object_handle) {
+MBWObjcOwnedObjectHandle *mbw_objc_owned_object_adopt(id object) {
   MBWObjcOwnedObjectHandle *handle =
       (MBWObjcOwnedObjectHandle *)moonbit_make_external_object(
           mbw_objc_owned_object_finalize, sizeof(MBWObjcOwnedObjectHandle));
-  handle->object = (__bridge id)(void *)(uintptr_t)object_handle;
+  handle->object = object;
   return handle;
+}
+
+MOONBIT_FFI_EXPORT
+MBWObjcOwnedObjectHandle *mbw_objc_wrap_owned_object(uint64_t object_handle) {
+  return mbw_objc_owned_object_adopt((__bridge id)(void *)(uintptr_t)object_handle);
 }
 
 MOONBIT_FFI_EXPORT

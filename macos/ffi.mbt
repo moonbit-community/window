@@ -49,7 +49,7 @@ extern "C" fn native_cg_display_get_display_id_from_uuid(uuid : UInt64) -> UInt 
 extern "C" fn native_pthread_main_np() -> Int = "pthread_main_np"
 
 ///|
-#borrow(call_closure)
+#borrow(call_closure, callback)
 extern "C" fn native_run_on_main(
   call_closure : FuncRef[(() -> Unit) -> Unit],
   callback : () -> Unit,
@@ -693,7 +693,9 @@ extern "C" fn native_monitor_display_refresh_rate_millihertz(
 extern "C" fn native_monitor_backing_scale_factor(monitor_id : UInt) -> Double = "mbw_monitor_backing_scale_factor"
 
 ///|
-extern "C" fn native_monitor_copy_ns_screen(monitor_id : UInt) -> UInt64 = "mbw_monitor_copy_ns_screen"
+extern "C" fn native_monitor_copy_ns_screen(
+  monitor_id : UInt,
+) -> NativeObjcObject = "mbw_monitor_copy_ns_screen"
 
 ///|
 #borrow(mode_handle)

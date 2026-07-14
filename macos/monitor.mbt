@@ -138,11 +138,11 @@ fn native_monitor_ns_screen(monitor_id : UInt64) -> NSScreenHandle? {
   if monitor_id == (0 : Int).to_uint64() {
     return None
   }
-  let raw_screen = native_monitor_copy_ns_screen(monitor_id.to_uint())
-  if raw_screen == (0 : Int).to_uint64() {
+  let screen_owner = native_monitor_copy_ns_screen(monitor_id.to_uint())
+  if appkit_objc_owned_object_handle(screen_owner) == (0 : Int).to_uint64() {
     None
   } else {
-    Some({ object: appkit_objc_wrap_owned_object(raw_screen) })
+    Some({ object: screen_owner })
   }
 }
 

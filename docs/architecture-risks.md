@@ -46,6 +46,10 @@ Current control:
 - Native callback trampolines retain MoonBit closures for the duration of each
   invocation, so callback-driven teardown or observer removal cannot release a
   closure while it is still being invoked.
+- The synchronous main-thread bridge borrows both FFI callback parameters and
+  pins the closure only around the MoonBit trampoline invocation. This avoids
+  both transferring an unconsumed owned reference and retaining the closure
+  beyond `dispatch_sync_f`.
 - Native notification/run-loop observer creation consumes owned MoonBit
   closures on every failure path. Notification observers also retain themselves
   during callback dispatch so callback-driven observer removal cannot deallocate
@@ -159,9 +163,10 @@ Current control:
   documentation.
 - Raw display/window/content-view accessors document that returned handles are
   borrowed and must not be released by callers. `monitor_ns_screen` instead
-  resolves on the AppKit main thread and returns a retained `NSScreenHandle`
-  snapshot whose external owner releases on the main thread; its raw pointer
-  projection is valid only while that handle remains alive.
+  resolves on the AppKit main thread and creates its external-object owner
+  before returning across FFI. MoonBit receives that owner directly inside a
+  retained `NSScreenHandle` snapshot; its raw pointer projection is valid only
+  while that handle remains alive.
 - Internal high-traffic registered AppKit window lookup has a
   `BorrowedObjcHandle` adapter at the cursor hittest seam. Owned native
   resources still use external objects with finalizers instead of plain
