@@ -1,6 +1,7 @@
 ///|
 fn reset_app_state_runtime_for_test() -> Unit {
   app_state_runtime.val = AppStateRuntime()
+  clear_all_window_fullscreen_state()
   app_state_window_position_raw_ids.val = []
   app_state_window_position_xs.val = []
   app_state_window_position_ys.val = []
@@ -289,11 +290,13 @@ test "internal_exit_preserves_stop_on_launch_flag" {
   reset_app_state_runtime_for_test()
   app_state_set_stop_on_launch(true)
   app_state_set_running(true)
+  set_window_fullscreen_transition_state((901 : Int).to_uint64(), true)
 
   app_state_internal_exit()
 
   assert_true(app_state_stop_on_launch_for_test())
   assert_false(app_state_is_running())
+  assert_true(fullscreen_transition_entries.val.length() == 0)
 }
 
 ///|

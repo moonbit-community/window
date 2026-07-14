@@ -122,200 +122,365 @@ fn cursor_from_image(
 }
 
 ///|
-// Port target: cursor.rs::default_cursor
-fn default_cursor() -> Int {
-  ignore(invisible_cursor())
-  0
-}
-
-///|
-// Port target: cursor.rs::try_cursor_from_selector
-fn try_cursor_from_selector(selector : String) -> Int? {
-  match selector {
-    "_helpCursor" => Some(2)
-    "_zoomInCursor" => Some(27)
-    "_zoomOutCursor" => Some(28)
-    "_windowResizeNorthEastCursor" => Some(14)
-    "_windowResizeNorthWestCursor" => Some(15)
-    "_windowResizeSouthEastCursor" => Some(17)
-    "_windowResizeSouthWestCursor" => Some(18)
-    "_windowResizeNorthEastSouthWestCursor" => Some(22)
-    "_windowResizeNorthWestSouthEastCursor" => Some(23)
-    "_moveCursor" => Some(32)
-    "_waitCursor" => Some(4)
-    "busyButClickableCursor" => Some(3)
-    _ => None
+fn native_cursor_class_cursor(
+  cursor_class : UInt64,
+  selector_name : String,
+) -> UInt64 {
+  if cursor_class == (0 : Int).to_uint64() {
+    return (0 : Int).to_uint64()
+  }
+  let selector = objc_runtime_selector_handle(selector_name)
+  if appkit_objc_msg_send_bool_u64(
+      cursor_class,
+      objc_runtime_selector_handle("respondsToSelector:"),
+      selector,
+    ) {
+    appkit_objc_msg_send_u64(cursor_class, selector)
+  } else {
+    (0 : Int).to_uint64()
   }
 }
 
 ///|
-fn _helpCursor() -> Int {
-  match try_cursor_from_selector("_helpCursor") {
-    Some(cursor) => cursor
-    None => default_cursor()
+fn native_cursor_frame_resize(
+  cursor_class : UInt64,
+  position : UInt64,
+  directions : UInt64,
+) -> UInt64 {
+  if cursor_class == (0 : Int).to_uint64() {
+    return (0 : Int).to_uint64()
+  }
+  let selector = objc_runtime_selector_handle(
+    "frameResizeCursorFromPosition:inDirections:",
+  )
+  if appkit_objc_msg_send_bool_u64(
+      cursor_class,
+      objc_runtime_selector_handle("respondsToSelector:"),
+      selector,
+    ) {
+    appkit_objc_msg_send_u64_u64_u64(
+      cursor_class, selector, position, directions,
+    )
+  } else {
+    (0 : Int).to_uint64()
   }
 }
 
 ///|
-fn _zoomInCursor() -> Int {
-  match try_cursor_from_selector("_zoomInCursor") {
-    Some(cursor) => cursor
-    None => default_cursor()
+fn native_cursor_fallback(cursor : UInt64, cursor_class : UInt64) -> UInt64 {
+  if cursor != (0 : Int).to_uint64() {
+    cursor
+  } else {
+    native_cursor_class_cursor(cursor_class, "arrowCursor")
   }
 }
 
 ///|
-fn _zoomOutCursor() -> Int {
-  match try_cursor_from_selector("_zoomOutCursor") {
-    Some(cursor) => cursor
-    None => default_cursor()
+let webkit_move_cursor_handle : Ref[@core.CustomCursorHandle?] = Ref(None)
+
+///|
+let webkit_cell_cursor_handle : Ref[@core.CustomCursorHandle?] = Ref(None)
+
+///|
+fn cached_webkit_cursor(
+  cache : Ref[@core.CustomCursorHandle?],
+  name : String,
+) -> UInt64 {
+  match cache.val {
+    Some(cached) => {
+      let cached_obj = appkit_custom_cursor_objc_handle(cached)
+      if cached_obj != (0 : Int).to_uint64() {
+        return cached_obj
+      }
+    }
+    None => ()
   }
-}
-
-///|
-fn _windowResizeNorthEastCursor() -> Int {
-  match try_cursor_from_selector("_windowResizeNorthEastCursor") {
-    Some(cursor) => cursor
-    None => default_cursor()
+  let name_bytes = @utf8.encode(name[:], bom=false)
+  let cursor_handle = appkit_custom_cursor_create_webkit(
+    name_bytes,
+    name_bytes.length(),
+  )
+  let cursor = appkit_custom_cursor_objc_handle(cursor_handle)
+  if cursor != (0 : Int).to_uint64() {
+    cache.val = Some(cursor_handle)
   }
+  cursor
 }
 
 ///|
-fn _windowResizeNorthWestCursor() -> Int {
-  match try_cursor_from_selector("_windowResizeNorthWestCursor") {
-    Some(cursor) => cursor
-    None => default_cursor()
+fn webkit_move_cursor() -> UInt64 {
+  cached_webkit_cursor(webkit_move_cursor_handle, "move")
+}
+
+///|
+fn webkit_cell_cursor() -> UInt64 {
+  cached_webkit_cursor(webkit_cell_cursor_handle, "cell")
+}
+
+///|
+fn cursor_from_icon(cursor : @core.CursorIcon) -> UInt64 {
+  let ns_cursor_class = objc_runtime_class_handle("NSCursor")
+  if ns_cursor_class == (0 : Int).to_uint64() {
+    return (0 : Int).to_uint64()
   }
-}
-
-///|
-fn _windowResizeSouthEastCursor() -> Int {
-  match try_cursor_from_selector("_windowResizeSouthEastCursor") {
-    Some(cursor) => cursor
-    None => default_cursor()
-  }
-}
-
-///|
-fn _windowResizeSouthWestCursor() -> Int {
-  match try_cursor_from_selector("_windowResizeSouthWestCursor") {
-    Some(cursor) => cursor
-    None => default_cursor()
-  }
-}
-
-///|
-fn _windowResizeNorthEastSouthWestCursor() -> Int {
-  match try_cursor_from_selector("_windowResizeNorthEastSouthWestCursor") {
-    Some(cursor) => cursor
-    None => default_cursor()
-  }
-}
-
-///|
-fn _windowResizeNorthWestSouthEastCursor() -> Int {
-  match try_cursor_from_selector("_windowResizeNorthWestSouthEastCursor") {
-    Some(cursor) => cursor
-    None => default_cursor()
-  }
-}
-
-///|
-fn _moveCursor() -> Int {
-  match try_cursor_from_selector("_moveCursor") {
-    Some(cursor) => cursor
-    None => default_cursor()
-  }
-}
-
-///|
-fn _waitCursor() -> Int {
-  match try_cursor_from_selector("_waitCursor") {
-    Some(cursor) => cursor
-    None => default_cursor()
-  }
-}
-
-///|
-fn busyButClickableCursor() -> Int {
-  match try_cursor_from_selector("busyButClickableCursor") {
-    Some(cursor) => cursor
-    None => default_cursor()
-  }
-}
-
-///|
-fn load_webkit_cursor(name : String) -> Int {
-  match name {
-    "move" => 32
-    "cell" => 5
-    _ => default_cursor()
-  }
-}
-
-///|
-fn webkit_move() -> Int {
-  load_webkit_cursor("move")
-}
-
-///|
-fn webkit_cell() -> Int {
-  load_webkit_cursor("cell")
-}
-
-///|
-fn new_invisible() -> Int {
-  0
-}
-
-///|
-fn invisible_cursor() -> Int {
-  new_invisible()
-}
-
-///|
-fn cursor_from_icon(cursor : @core.CursorIcon) -> Int {
+  let mut resolved = (0 : Int).to_uint64()
+  let direction_outward = (2 : Int).to_uint64()
+  let direction_all = (3 : Int).to_uint64()
   match cursor {
-    Default => default_cursor()
-    ContextMenu => 1
-    Help => _helpCursor()
-    Progress => busyButClickableCursor()
-    Wait => busyButClickableCursor()
-    Cell => webkit_cell()
-    VerticalText => 6
-    Alias => 7
-    Copy => 8
-    NoDrop => 9
-    Grab => 10
-    Grabbing => 11
-    EResize => 12
-    NResize => 13
-    NeResize => _windowResizeNorthEastCursor()
-    NwResize => _windowResizeNorthWestCursor()
-    SResize => 16
-    SeResize => _windowResizeSouthEastCursor()
-    SwResize => _windowResizeSouthWestCursor()
-    WResize => 19
-    EwResize => 20
-    NsResize => 21
-    NeswResize => _windowResizeNorthEastSouthWestCursor()
-    NwseResize => _windowResizeNorthWestSouthEastCursor()
-    ColResize => 24
-    RowResize => 25
-    AllScroll => _moveCursor()
-    ZoomIn => _zoomInCursor()
-    ZoomOut => _zoomOutCursor()
-    Pointer => 29
-    Text => 30
-    Crosshair => 31
-    Move => webkit_move()
-    NotAllowed => 33
+    ContextMenu =>
+      resolved = native_cursor_class_cursor(
+        ns_cursor_class, "contextualMenuCursor",
+      )
+    Help =>
+      resolved = native_cursor_class_cursor(ns_cursor_class, "_helpCursor")
+    Progress =>
+      resolved = native_cursor_class_cursor(
+        ns_cursor_class, "busyButClickableCursor",
+      )
+    Wait =>
+      resolved = native_cursor_class_cursor(
+        ns_cursor_class, "busyButClickableCursor",
+      )
+    Cell => resolved = webkit_cell_cursor()
+    VerticalText => {
+      resolved = native_cursor_class_cursor(
+        ns_cursor_class, "IBeamCursorForVerticalLayout",
+      )
+      if resolved == (0 : Int).to_uint64() {
+        resolved = native_cursor_class_cursor(ns_cursor_class, "IBeamCursor")
+      }
+    }
+    Alias =>
+      resolved = native_cursor_class_cursor(ns_cursor_class, "dragLinkCursor")
+    Copy =>
+      resolved = native_cursor_class_cursor(ns_cursor_class, "dragCopyCursor")
+    NoDrop =>
+      resolved = native_cursor_class_cursor(
+        ns_cursor_class, "operationNotAllowedCursor",
+      )
+    Grab =>
+      resolved = native_cursor_class_cursor(ns_cursor_class, "openHandCursor")
+    Grabbing =>
+      resolved = native_cursor_class_cursor(ns_cursor_class, "closedHandCursor")
+    EResize => {
+      resolved = native_cursor_frame_resize(
+        ns_cursor_class,
+        (8 : Int).to_uint64(),
+        direction_outward,
+      )
+      if resolved == (0 : Int).to_uint64() {
+        resolved = native_cursor_class_cursor(
+          ns_cursor_class, "resizeRightCursor",
+        )
+      }
+    }
+    NResize => {
+      resolved = native_cursor_frame_resize(
+        ns_cursor_class,
+        (1 : Int).to_uint64(),
+        direction_outward,
+      )
+      if resolved == (0 : Int).to_uint64() {
+        resolved = native_cursor_class_cursor(ns_cursor_class, "resizeUpCursor")
+      }
+    }
+    NeResize => {
+      resolved = native_cursor_frame_resize(
+        ns_cursor_class,
+        (9 : Int).to_uint64(),
+        direction_outward,
+      )
+      if resolved == (0 : Int).to_uint64() {
+        resolved = native_cursor_class_cursor(
+          ns_cursor_class, "_windowResizeNorthEastCursor",
+        )
+      }
+    }
+    NwResize => {
+      resolved = native_cursor_frame_resize(
+        ns_cursor_class,
+        (3 : Int).to_uint64(),
+        direction_outward,
+      )
+      if resolved == (0 : Int).to_uint64() {
+        resolved = native_cursor_class_cursor(
+          ns_cursor_class, "_windowResizeNorthWestCursor",
+        )
+      }
+    }
+    SResize => {
+      resolved = native_cursor_frame_resize(
+        ns_cursor_class,
+        (4 : Int).to_uint64(),
+        direction_outward,
+      )
+      if resolved == (0 : Int).to_uint64() {
+        resolved = native_cursor_class_cursor(
+          ns_cursor_class, "resizeDownCursor",
+        )
+      }
+    }
+    SeResize => {
+      resolved = native_cursor_frame_resize(
+        ns_cursor_class,
+        (12 : Int).to_uint64(),
+        direction_outward,
+      )
+      if resolved == (0 : Int).to_uint64() {
+        resolved = native_cursor_class_cursor(
+          ns_cursor_class, "_windowResizeSouthEastCursor",
+        )
+      }
+    }
+    SwResize => {
+      resolved = native_cursor_frame_resize(
+        ns_cursor_class,
+        (6 : Int).to_uint64(),
+        direction_outward,
+      )
+      if resolved == (0 : Int).to_uint64() {
+        resolved = native_cursor_class_cursor(
+          ns_cursor_class, "_windowResizeSouthWestCursor",
+        )
+      }
+    }
+    WResize => {
+      resolved = native_cursor_frame_resize(
+        ns_cursor_class,
+        (2 : Int).to_uint64(),
+        direction_outward,
+      )
+      if resolved == (0 : Int).to_uint64() {
+        resolved = native_cursor_class_cursor(
+          ns_cursor_class, "resizeLeftCursor",
+        )
+      }
+    }
+    EwResize => {
+      resolved = native_cursor_frame_resize(
+        ns_cursor_class,
+        (8 : Int).to_uint64(),
+        direction_all,
+      )
+      if resolved == (0 : Int).to_uint64() {
+        resolved = native_cursor_class_cursor(
+          ns_cursor_class, "resizeLeftRightCursor",
+        )
+      }
+    }
+    NsResize => {
+      resolved = native_cursor_frame_resize(
+        ns_cursor_class,
+        (1 : Int).to_uint64(),
+        direction_all,
+      )
+      if resolved == (0 : Int).to_uint64() {
+        resolved = native_cursor_class_cursor(
+          ns_cursor_class, "resizeUpDownCursor",
+        )
+      }
+    }
+    NeswResize => {
+      resolved = native_cursor_frame_resize(
+        ns_cursor_class,
+        (9 : Int).to_uint64(),
+        direction_all,
+      )
+      if resolved == (0 : Int).to_uint64() {
+        resolved = native_cursor_class_cursor(
+          ns_cursor_class, "_windowResizeNorthEastSouthWestCursor",
+        )
+      }
+    }
+    NwseResize => {
+      resolved = native_cursor_frame_resize(
+        ns_cursor_class,
+        (3 : Int).to_uint64(),
+        direction_all,
+      )
+      if resolved == (0 : Int).to_uint64() {
+        resolved = native_cursor_class_cursor(
+          ns_cursor_class, "_windowResizeNorthWestSouthEastCursor",
+        )
+      }
+    }
+    ColResize => {
+      resolved = native_cursor_class_cursor(
+        ns_cursor_class, "columnResizeCursor",
+      )
+      if resolved == (0 : Int).to_uint64() {
+        resolved = native_cursor_class_cursor(
+          ns_cursor_class, "resizeLeftRightCursor",
+        )
+      }
+    }
+    RowResize => {
+      resolved = native_cursor_class_cursor(ns_cursor_class, "rowResizeCursor")
+      if resolved == (0 : Int).to_uint64() {
+        resolved = native_cursor_class_cursor(
+          ns_cursor_class, "resizeUpDownCursor",
+        )
+      }
+    }
+    ZoomIn => {
+      resolved = native_cursor_class_cursor(ns_cursor_class, "zoomInCursor")
+      if resolved == (0 : Int).to_uint64() {
+        resolved = native_cursor_class_cursor(ns_cursor_class, "_zoomInCursor")
+      }
+    }
+    ZoomOut => {
+      resolved = native_cursor_class_cursor(ns_cursor_class, "zoomOutCursor")
+      if resolved == (0 : Int).to_uint64() {
+        resolved = native_cursor_class_cursor(ns_cursor_class, "_zoomOutCursor")
+      }
+    }
+    Pointer =>
+      resolved = native_cursor_class_cursor(
+        ns_cursor_class, "pointingHandCursor",
+      )
+    Text =>
+      resolved = native_cursor_class_cursor(ns_cursor_class, "IBeamCursor")
+    Crosshair =>
+      resolved = native_cursor_class_cursor(ns_cursor_class, "crosshairCursor")
+    AllScroll | Move => resolved = webkit_move_cursor()
+    NotAllowed =>
+      resolved = native_cursor_class_cursor(
+        ns_cursor_class, "operationNotAllowedCursor",
+      )
+    Default =>
+      resolved = native_cursor_class_cursor(ns_cursor_class, "arrowCursor")
   }
+  native_cursor_fallback(resolved, ns_cursor_class)
 }
 
 ///|
-fn cursor_icon_to_native(cursor : @core.CursorIcon) -> Int {
-  cursor_from_icon(cursor)
+let invisible_cursor_handle : Ref[@core.CustomCursorHandle?] = Ref(None)
+
+///|
+// Port target: cursor.rs::invisible_cursor
+fn invisible_cursor() -> UInt64 {
+  match invisible_cursor_handle.val {
+    Some(cached) => {
+      let cached_obj = appkit_custom_cursor_objc_handle(cached)
+      if cached_obj != (0 : Int).to_uint64() {
+        return cached_obj
+      }
+    }
+    None => ()
+  }
+  let cursor_handle = appkit_custom_cursor_create_rgba(
+    Bytes::make(4, (0 : Int).to_byte()),
+    4,
+    1,
+    1,
+    0,
+    0,
+  )
+  let cursor = appkit_custom_cursor_objc_handle(cursor_handle)
+  if cursor != (0 : Int).to_uint64() {
+    invisible_cursor_handle.val = Some(cursor_handle)
+  }
+  cursor
 }
 
 ///|

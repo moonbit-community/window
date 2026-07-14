@@ -166,7 +166,7 @@ fn app_state_internal_exit() -> Unit {
   app_state_runtime.val.wait_timeout_ms = None
   app_state_runtime.val.start_time_ms = None
   app_state_runtime.val.pending_redraw_window_ids = []
-  app_state_runtime.val.fullscreen_requests = []
+  clear_all_window_fullscreen_state()
 }
 
 ///|

@@ -26,41 +26,6 @@ fn clamp_size(size : Int) -> Int {
 }
 
 ///|
-let invisible_cursor_obj_handle : Ref[@core.CustomCursorHandle?] = Ref(None)
-
-///|
-fn queue_drag_event_from_payload(
-  raw_id : Int,
-  kind : Int,
-  position : @dpi.PhysicalPositionF64,
-  path : Bytes,
-  has_position : Bool,
-) -> Unit {
-  let window_id = @core.WindowId::from_raw(raw_id)
-  match kind {
-    9 => {
-      let paths = drag_paths_from_native(path)
-      if paths.length() > 0 {
-        app_state_queue_window_callback(window_id, DragEntered(paths, position))
-      }
-    }
-    10 => app_state_queue_window_callback(window_id, DragMoved(position))
-    11 => {
-      let paths = drag_paths_from_native(path)
-      if paths.length() > 0 {
-        app_state_queue_window_callback(window_id, DragDropped(paths, position))
-      }
-    }
-    12 =>
-      app_state_queue_window_callback(
-        window_id,
-        DragLeft(if has_position { Some(position) } else { None }),
-      )
-    _ => ()
-  }
-}
-
-///|
 fn native_window_apply_cursor_obj(
   handle : NativeWindow,
   cursor_obj : UInt64,
@@ -91,39 +56,11 @@ fn native_window_apply_cursor_obj(
 }
 
 ///|
-fn native_invisible_cursor_obj() -> UInt64 {
-  match invisible_cursor_obj_handle.val {
-    Some(cached) => {
-      let cached_obj = appkit_custom_cursor_objc_handle(cached)
-      if cached_obj != (0 : Int).to_uint64() {
-        return cached_obj
-      }
-    }
-    None => ()
-  }
-  let cursor_handle = appkit_custom_cursor_create_rgba(
-    Bytes::make(4, (0 : Int).to_byte()),
-    4,
-    1,
-    1,
-    0,
-    0,
-  )
-  let cursor = appkit_custom_cursor_objc_handle(cursor_handle)
-  if cursor != (0 : Int).to_uint64() {
-    invisible_cursor_obj_handle.val = Some(cursor_handle)
-  }
-  cursor
-}
-
-///|
-fn native_window_set_cursor(handle : NativeWindow, cursor : Int) -> Unit {
-  ignore(
-    native_window_apply_cursor_obj(
-      handle,
-      native_cursor_objc_handle_from_kind(cursor),
-    ),
-  )
+fn native_window_set_cursor(
+  handle : NativeWindow,
+  cursor : @core.CursorIcon,
+) -> Unit {
+  ignore(native_window_apply_cursor_obj(handle, cursor_from_icon(cursor)))
 }
 
 ///|
@@ -154,9 +91,7 @@ fn native_window_set_cursor_visible(
 ) -> Unit {
   set_window_cursor_visible_state(native_window_identity(handle), visible)
   if !visible {
-    ignore(
-      native_window_apply_cursor_obj(handle, native_invisible_cursor_obj()),
-    )
+    ignore(native_window_apply_cursor_obj(handle, invisible_cursor()))
   }
 }
 
@@ -297,328 +232,6 @@ fn native_window_set_maximized(handle : NativeWindow, maximized : Bool) -> Unit 
 ///|
 fn native_create_window(width : Int, height : Int) -> NativeWindow {
   appkit_create_window(width, height)
-}
-
-///|
-fn native_cursor_class_cursor(
-  cursor_class : UInt64,
-  selector_name : String,
-) -> UInt64 {
-  if cursor_class == (0 : Int).to_uint64() {
-    return (0 : Int).to_uint64()
-  }
-  let selector = objc_runtime_selector_handle(selector_name)
-  if appkit_objc_msg_send_bool_u64(
-      cursor_class,
-      objc_runtime_selector_handle("respondsToSelector:"),
-      selector,
-    ) {
-    appkit_objc_msg_send_u64(cursor_class, selector)
-  } else {
-    (0 : Int).to_uint64()
-  }
-}
-
-///|
-fn native_cursor_class_cursor_with_utf8_arg(
-  cursor_class : UInt64,
-  selector_name : String,
-  arg : String,
-) -> UInt64 {
-  if cursor_class == (0 : Int).to_uint64() {
-    return (0 : Int).to_uint64()
-  }
-  let selector = objc_runtime_selector_handle(selector_name)
-  if appkit_objc_msg_send_bool_u64(
-      cursor_class,
-      objc_runtime_selector_handle("respondsToSelector:"),
-      selector,
-    ) {
-    appkit_objc_msg_send_u64_bytes(
-      cursor_class,
-      selector,
-      @utf8.encode(arg[:], bom=false),
-    )
-  } else {
-    (0 : Int).to_uint64()
-  }
-}
-
-///|
-fn native_cursor_frame_resize(
-  cursor_class : UInt64,
-  position : UInt64,
-  directions : UInt64,
-) -> UInt64 {
-  if cursor_class == (0 : Int).to_uint64() {
-    return (0 : Int).to_uint64()
-  }
-  let selector = objc_runtime_selector_handle(
-    "frameResizeCursorFromPosition:inDirections:",
-  )
-  if appkit_objc_msg_send_bool_u64(
-      cursor_class,
-      objc_runtime_selector_handle("respondsToSelector:"),
-      selector,
-    ) {
-    appkit_objc_msg_send_u64_u64_u64(
-      cursor_class, selector, position, directions,
-    )
-  } else {
-    (0 : Int).to_uint64()
-  }
-}
-
-///|
-fn native_cursor_fallback(cursor : UInt64, cursor_class : UInt64) -> UInt64 {
-  if cursor != (0 : Int).to_uint64() {
-    cursor
-  } else {
-    native_cursor_class_cursor(cursor_class, "arrowCursor")
-  }
-}
-
-///|
-fn native_cursor_objc_handle_from_kind(cursor : Int) -> UInt64 {
-  let ns_cursor_class = objc_runtime_class_handle("NSCursor")
-  if ns_cursor_class == (0 : Int).to_uint64() {
-    return (0 : Int).to_uint64()
-  }
-  let mut resolved = (0 : Int).to_uint64()
-  let direction_outward = (2 : Int).to_uint64()
-  let direction_all = (3 : Int).to_uint64()
-  match cursor {
-    1 =>
-      resolved = native_cursor_class_cursor(
-        ns_cursor_class, "contextualMenuCursor",
-      )
-    2 => resolved = native_cursor_class_cursor(ns_cursor_class, "_helpCursor")
-    3 =>
-      resolved = native_cursor_class_cursor(
-        ns_cursor_class, "busyButClickableCursor",
-      )
-    4 =>
-      resolved = native_cursor_class_cursor(
-        ns_cursor_class, "busyButClickableCursor",
-      )
-    5 =>
-      resolved = native_cursor_class_cursor_with_utf8_arg(
-        ns_cursor_class, "_webKitCursor:", "cell",
-      )
-    6 => {
-      resolved = native_cursor_class_cursor(
-        ns_cursor_class, "IBeamCursorForVerticalLayout",
-      )
-      if resolved == (0 : Int).to_uint64() {
-        resolved = native_cursor_class_cursor(ns_cursor_class, "IBeamCursor")
-      }
-    }
-    7 =>
-      resolved = native_cursor_class_cursor(ns_cursor_class, "dragLinkCursor")
-    8 =>
-      resolved = native_cursor_class_cursor(ns_cursor_class, "dragCopyCursor")
-    9 =>
-      resolved = native_cursor_class_cursor(
-        ns_cursor_class, "operationNotAllowedCursor",
-      )
-    10 =>
-      resolved = native_cursor_class_cursor(ns_cursor_class, "openHandCursor")
-    11 =>
-      resolved = native_cursor_class_cursor(ns_cursor_class, "closedHandCursor")
-    12 => {
-      resolved = native_cursor_frame_resize(
-        ns_cursor_class,
-        (8 : Int).to_uint64(),
-        direction_outward,
-      )
-      if resolved == (0 : Int).to_uint64() {
-        resolved = native_cursor_class_cursor(
-          ns_cursor_class, "resizeRightCursor",
-        )
-      }
-    }
-    13 => {
-      resolved = native_cursor_frame_resize(
-        ns_cursor_class,
-        (1 : Int).to_uint64(),
-        direction_outward,
-      )
-      if resolved == (0 : Int).to_uint64() {
-        resolved = native_cursor_class_cursor(ns_cursor_class, "resizeUpCursor")
-      }
-    }
-    14 => {
-      resolved = native_cursor_frame_resize(
-        ns_cursor_class,
-        (9 : Int).to_uint64(),
-        direction_outward,
-      )
-      if resolved == (0 : Int).to_uint64() {
-        resolved = native_cursor_class_cursor(
-          ns_cursor_class, "_windowResizeNorthEastCursor",
-        )
-      }
-    }
-    15 => {
-      resolved = native_cursor_frame_resize(
-        ns_cursor_class,
-        (3 : Int).to_uint64(),
-        direction_outward,
-      )
-      if resolved == (0 : Int).to_uint64() {
-        resolved = native_cursor_class_cursor(
-          ns_cursor_class, "_windowResizeNorthWestCursor",
-        )
-      }
-    }
-    16 => {
-      resolved = native_cursor_frame_resize(
-        ns_cursor_class,
-        (4 : Int).to_uint64(),
-        direction_outward,
-      )
-      if resolved == (0 : Int).to_uint64() {
-        resolved = native_cursor_class_cursor(
-          ns_cursor_class, "resizeDownCursor",
-        )
-      }
-    }
-    17 => {
-      resolved = native_cursor_frame_resize(
-        ns_cursor_class,
-        (12 : Int).to_uint64(),
-        direction_outward,
-      )
-      if resolved == (0 : Int).to_uint64() {
-        resolved = native_cursor_class_cursor(
-          ns_cursor_class, "_windowResizeSouthEastCursor",
-        )
-      }
-    }
-    18 => {
-      resolved = native_cursor_frame_resize(
-        ns_cursor_class,
-        (6 : Int).to_uint64(),
-        direction_outward,
-      )
-      if resolved == (0 : Int).to_uint64() {
-        resolved = native_cursor_class_cursor(
-          ns_cursor_class, "_windowResizeSouthWestCursor",
-        )
-      }
-    }
-    19 => {
-      resolved = native_cursor_frame_resize(
-        ns_cursor_class,
-        (2 : Int).to_uint64(),
-        direction_outward,
-      )
-      if resolved == (0 : Int).to_uint64() {
-        resolved = native_cursor_class_cursor(
-          ns_cursor_class, "resizeLeftCursor",
-        )
-      }
-    }
-    20 => {
-      resolved = native_cursor_frame_resize(
-        ns_cursor_class,
-        (8 : Int).to_uint64(),
-        direction_all,
-      )
-      if resolved == (0 : Int).to_uint64() {
-        resolved = native_cursor_class_cursor(
-          ns_cursor_class, "resizeLeftRightCursor",
-        )
-      }
-    }
-    21 => {
-      resolved = native_cursor_frame_resize(
-        ns_cursor_class,
-        (1 : Int).to_uint64(),
-        direction_all,
-      )
-      if resolved == (0 : Int).to_uint64() {
-        resolved = native_cursor_class_cursor(
-          ns_cursor_class, "resizeUpDownCursor",
-        )
-      }
-    }
-    22 => {
-      resolved = native_cursor_frame_resize(
-        ns_cursor_class,
-        (9 : Int).to_uint64(),
-        direction_all,
-      )
-      if resolved == (0 : Int).to_uint64() {
-        resolved = native_cursor_class_cursor(
-          ns_cursor_class, "_windowResizeNorthEastSouthWestCursor",
-        )
-      }
-    }
-    23 => {
-      resolved = native_cursor_frame_resize(
-        ns_cursor_class,
-        (3 : Int).to_uint64(),
-        direction_all,
-      )
-      if resolved == (0 : Int).to_uint64() {
-        resolved = native_cursor_class_cursor(
-          ns_cursor_class, "_windowResizeNorthWestSouthEastCursor",
-        )
-      }
-    }
-    24 => {
-      resolved = native_cursor_class_cursor(
-        ns_cursor_class, "columnResizeCursor",
-      )
-      if resolved == (0 : Int).to_uint64() {
-        resolved = native_cursor_class_cursor(
-          ns_cursor_class, "resizeLeftRightCursor",
-        )
-      }
-    }
-    25 => {
-      resolved = native_cursor_class_cursor(ns_cursor_class, "rowResizeCursor")
-      if resolved == (0 : Int).to_uint64() {
-        resolved = native_cursor_class_cursor(
-          ns_cursor_class, "resizeUpDownCursor",
-        )
-      }
-    }
-    27 => {
-      resolved = native_cursor_class_cursor(ns_cursor_class, "zoomInCursor")
-      if resolved == (0 : Int).to_uint64() {
-        resolved = native_cursor_class_cursor(ns_cursor_class, "_zoomInCursor")
-      }
-    }
-    28 => {
-      resolved = native_cursor_class_cursor(ns_cursor_class, "zoomOutCursor")
-      if resolved == (0 : Int).to_uint64() {
-        resolved = native_cursor_class_cursor(ns_cursor_class, "_zoomOutCursor")
-      }
-    }
-    29 =>
-      resolved = native_cursor_class_cursor(
-        ns_cursor_class, "pointingHandCursor",
-      )
-    30 => resolved = native_cursor_class_cursor(ns_cursor_class, "IBeamCursor")
-    31 =>
-      resolved = native_cursor_class_cursor(ns_cursor_class, "crosshairCursor")
-    32 => {
-      resolved = native_cursor_class_cursor_with_utf8_arg(
-        ns_cursor_class, "_webKitCursor:", "move",
-      )
-      if resolved == (0 : Int).to_uint64() {
-        resolved = native_cursor_class_cursor(ns_cursor_class, "_moveCursor")
-      }
-    }
-    33 =>
-      resolved = native_cursor_class_cursor(
-        ns_cursor_class, "operationNotAllowedCursor",
-      )
-    _ => resolved = native_cursor_class_cursor(ns_cursor_class, "arrowCursor")
-  }
-  native_cursor_fallback(resolved, ns_cursor_class)
 }
 
 ///|
@@ -2374,15 +1987,12 @@ fn set_window_fullscreen(
   if native_handle == (0 : Int).to_uint64() {
     return ()
   }
-  match app_state_window_raw_id(window_handle) {
-    Some(raw_id) =>
-      if window_in_fullscreen_transition(window_handle) {
-        app_state_set_fullscreen_request(raw_id, fullscreen)
-      } else {
-        app_state_clear_fullscreen_request(raw_id)
-        toggle_window_fullscreen(window_handle, fullscreen)
-      }
-    None => toggle_window_fullscreen(window_handle, fullscreen)
+  let window_identity = native_window_identity(window_handle)
+  if window_in_fullscreen_transition(window_handle) {
+    set_window_target_fullscreen_state(window_identity, fullscreen)
+  } else {
+    clear_window_target_fullscreen_state(window_identity)
+    toggle_window_fullscreen(window_handle, fullscreen)
   }
 }
 
@@ -2672,7 +2282,10 @@ fn set_window_option_as_alt(
 }
 
 ///|
-fn set_window_cursor(window_handle : NativeWindow, cursor : Int) -> Unit {
+fn set_window_cursor(
+  window_handle : NativeWindow,
+  cursor : @core.CursorIcon,
+) -> Unit {
   if registered_native_handle(window_handle) != (0 : Int).to_uint64() {
     native_window_set_cursor(window_handle, cursor)
   }
@@ -3589,12 +3202,11 @@ fn new_window(
   set_window_blur(raw_window_handle, attributes.blur())
   let mut cursor_state = attributes.cursor()
   match attributes.cursor() {
-    Icon(icon) =>
-      set_window_cursor(raw_window_handle, cursor_icon_to_native(icon))
+    Icon(icon) => set_window_cursor(raw_window_handle, icon)
     Custom(custom_cursor) =>
       if set_window_custom_cursor(raw_window_handle, custom_cursor.into_raw()) ==
         false {
-        set_window_cursor(raw_window_handle, cursor_icon_to_native(Default))
+        set_window_cursor(raw_window_handle, Default)
         cursor_state = Icon(Default)
       }
   }

@@ -147,7 +147,7 @@ pub fn Window::set_cursor(self : Window, cursor : @core.Cursor) -> Unit {
     Icon(icon) => {
       self.cursor_state = cursor
       if cursor_visible {
-        set_window_cursor(self.raw_window_handle, cursor_icon_to_native(icon))
+        set_window_cursor(self.raw_window_handle, icon)
       }
     }
     Custom(custom_cursor) =>
@@ -159,10 +159,7 @@ pub fn Window::set_cursor(self : Window, cursor : @core.Cursor) -> Unit {
           self.cursor_state = cursor
         } else {
           self.cursor_state = Icon(Default)
-          set_window_cursor(
-            self.raw_window_handle,
-            cursor_icon_to_native(Default),
-          )
+          set_window_cursor(self.raw_window_handle, Default)
         }
       } else {
         self.cursor_state = cursor

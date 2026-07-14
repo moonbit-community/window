@@ -23,12 +23,6 @@ priv struct WindowHandleEntry {
 }
 
 ///|
-priv struct FullscreenRequestEntry {
-  raw_id : Int
-  fullscreen : Bool
-}
-
-///|
 priv struct AppStateRuntime {
   mut activation_policy : Int
   mut default_menu : Bool
@@ -49,7 +43,6 @@ priv struct AppStateRuntime {
   mut wait_timeout_ms : Int64?
   mut pending_redraw_window_ids : Array[Int]
   mut window_handles : Array[WindowHandleEntry]
-  mut fullscreen_requests : Array[FullscreenRequestEntry]
   mut deferred_callbacks : Array[DeferredCallback]
   mut dispatch_callback : ((DeferredCallback) -> Unit)?
 }
@@ -76,7 +69,6 @@ fn AppStateRuntime::AppStateRuntime() -> AppStateRuntime {
     wait_timeout_ms: None,
     pending_redraw_window_ids: [],
     window_handles: [],
-    fullscreen_requests: [],
     deferred_callbacks: [],
     dispatch_callback: None,
   }
@@ -374,7 +366,6 @@ fn app_state_queue_native_window_event(
       app_state_clear_window_redraw(raw_id)
       view_clear_pressed_modifiers(raw_id)
       view_clear_ime_state(raw_id)
-      app_state_clear_fullscreen_request(raw_id)
       app_state_clear_window_position_state(raw_id)
       app_state_unregister_window_handle(raw_id)
       app_state_queue_window_callback(window_id, Destroyed)
@@ -714,7 +705,6 @@ fn app_state_unregister_window_handle(raw_id : Int) -> Unit {
     }
   }
   app_state_runtime.val.window_handles = remaining_entries
-  app_state_clear_fullscreen_request(raw_id)
   app_state_clear_window_position_state(raw_id)
 }
 
@@ -762,57 +752,18 @@ fn app_state_has_window_handle(window_handle : NativeWindow) -> Bool {
 }
 
 ///|
-fn app_state_set_fullscreen_request(raw_id : Int, fullscreen : Bool) -> Unit {
-  let next_requests : Array[FullscreenRequestEntry] = []
-  let mut replaced = false
-  for request in app_state_runtime.val.fullscreen_requests {
-    if request.raw_id == raw_id {
-      next_requests.push({ raw_id, fullscreen })
-      replaced = true
-    } else {
-      next_requests.push(request)
-    }
-  }
-  if replaced == false {
-    next_requests.push({ raw_id, fullscreen })
-  }
-  app_state_runtime.val.fullscreen_requests = next_requests
-}
-
-///|
-fn app_state_fullscreen_request(raw_id : Int) -> Bool? {
-  match
-    app_state_runtime.val.fullscreen_requests.search_by(request => {
-      request.raw_id == raw_id
-    }) {
-    Some(index) =>
-      Some(app_state_runtime.val.fullscreen_requests[index].fullscreen)
-    None => None
-  }
-}
-
-///|
-fn app_state_clear_fullscreen_request(raw_id : Int) -> Unit {
-  let next_requests : Array[FullscreenRequestEntry] = []
-  for request in app_state_runtime.val.fullscreen_requests {
-    if request.raw_id != raw_id {
-      next_requests.push(request)
-    }
-  }
-  app_state_runtime.val.fullscreen_requests = next_requests
-}
-
-///|
 fn app_state_process_queued_fullscreen_request(raw_id : Int) -> Unit {
-  match app_state_fullscreen_request(raw_id) {
-    Some(fullscreen) =>
-      match app_state_window_handle(raw_id) {
-        Some(window_handle) =>
-          if window_in_fullscreen_transition(window_handle) == false {
-            app_state_clear_fullscreen_request(raw_id)
+  match app_state_window_handle(raw_id) {
+    Some(window_handle) =>
+      if !window_in_fullscreen_transition(window_handle) {
+        match
+          take_window_target_fullscreen_state(
+            native_window_identity(window_handle),
+          ) {
+          Some(fullscreen) =>
             toggle_window_fullscreen(window_handle, fullscreen)
-          }
-        None => app_state_clear_fullscreen_request(raw_id)
+          None => ()
+        }
       }
     None => ()
   }

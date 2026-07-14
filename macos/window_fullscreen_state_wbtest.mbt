@@ -1,7 +1,6 @@
 ///|
 fn reset_window_fullscreen_state_for_test() -> Unit {
-  maximized_standard_frame_entries.val = []
-  fullscreen_transition_entries.val = []
+  clear_all_window_fullscreen_state()
 }
 
 ///|
@@ -20,6 +19,51 @@ test "fullscreen_transition_state_preserves_other_windows" {
       assert_true(fullscreen_transition_entries.val[index].in_transition)
     None => fail("expected second transition state")
   }
+}
+
+///|
+test "fullscreen target keeps only the latest request" {
+  reset_window_fullscreen_state_for_test()
+  let window = (705 : Int).to_uint64()
+
+  set_window_target_fullscreen_state(window, true)
+  set_window_target_fullscreen_state(window, false)
+
+  assert_true(take_window_target_fullscreen_state(window) == Some(false))
+  assert_true(take_window_target_fullscreen_state(window) == None)
+}
+
+///|
+test "fullscreen target state is isolated per window" {
+  reset_window_fullscreen_state_for_test()
+  let first = (706 : Int).to_uint64()
+  let second = (707 : Int).to_uint64()
+
+  set_window_fullscreen_transition_state(first, true)
+  set_window_target_fullscreen_state(first, false)
+  set_window_target_fullscreen_state(second, true)
+  clear_window_target_fullscreen_state(first)
+
+  match fullscreen_transition_index(first) {
+    Some(index) =>
+      assert_true(fullscreen_transition_entries.val[index].in_transition)
+    None => fail("expected first transition state")
+  }
+  assert_true(take_window_target_fullscreen_state(first) == None)
+  assert_true(take_window_target_fullscreen_state(second) == Some(true))
+}
+
+///|
+test "clearing fullscreen state removes transition and target" {
+  reset_window_fullscreen_state_for_test()
+  let window = (708 : Int).to_uint64()
+
+  set_window_fullscreen_transition_state(window, true)
+  set_window_target_fullscreen_state(window, false)
+  clear_window_fullscreen_transition_state(window)
+
+  assert_true(fullscreen_transition_index(window) == None)
+  assert_true(take_window_target_fullscreen_state(window) == None)
 }
 
 ///|

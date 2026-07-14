@@ -177,10 +177,18 @@ Current control:
   `macos/window_request_error.mbt`; cursor hittest, cursor position, cursor
   grab, drag, and drag-resize paths share the same status/result conversion
   policy.
+- Cursor construction, selector fallback, system-resource loading, and retained
+  cursor caching live in `macos/cursor.mbt`; the window delegate only applies
+  the resolved AppKit cursor to a window.
+- Fullscreen transition and queued target state are stored together per window
+  in `macos/window_fullscreen_state.mbt`, matching the upstream delegate state
+  model instead of leaking delayed requests into global application state.
+- Drag-and-drop native payload conversion lives as a pure function in
+  `macos/event.mbt`; callback sites only enqueue the resulting window event.
 
 Required direction:
 
 - Split by responsibility only when a behavior change or test requires touching
   the area. Avoid mechanical churn without better ownership boundaries.
-- Good future seams are cursor mapping and fullscreen positioning restore
-  behavior.
+- Good future seams are fullscreen positioning restore behavior and other
+  native payload conversions that can be tested independently of AppKit.

@@ -590,3 +590,48 @@ fn touch_phase_from_native(phase : Int) -> @core.TouchPhase? {
     _ => None
   }
 }
+
+///|
+fn drag_event_from_native_payload(
+  kind : Int,
+  position : @dpi.PhysicalPositionF64,
+  path : Bytes,
+  has_position : Bool,
+) -> @core.WindowEvent? {
+  match kind {
+    9 => {
+      let paths = drag_paths_from_native(path)
+      if paths.length() > 0 {
+        Some(DragEntered(paths, position))
+      } else {
+        None
+      }
+    }
+    10 => Some(DragMoved(position))
+    11 => {
+      let paths = drag_paths_from_native(path)
+      if paths.length() > 0 {
+        Some(DragDropped(paths, position))
+      } else {
+        None
+      }
+    }
+    12 => Some(DragLeft(if has_position { Some(position) } else { None }))
+    _ => None
+  }
+}
+
+///|
+fn queue_drag_event_from_payload(
+  raw_id : Int,
+  kind : Int,
+  position : @dpi.PhysicalPositionF64,
+  path : Bytes,
+  has_position : Bool,
+) -> Unit {
+  match drag_event_from_native_payload(kind, position, path, has_position) {
+    Some(event) =>
+      app_state_queue_window_callback(@core.WindowId::from_raw(raw_id), event)
+    None => ()
+  }
+}

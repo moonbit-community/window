@@ -16,6 +16,7 @@ priv struct MaximizedStandardFrameEntry {
 priv struct FullscreenTransitionEntry {
   window_handle : UInt64
   mut in_transition : Bool
+  mut target_fullscreen : Bool?
 }
 
 ///|
@@ -25,6 +26,12 @@ let maximized_standard_frame_entries : Ref[Array[MaximizedStandardFrameEntry]] =
 ///|
 let fullscreen_transition_entries : Ref[Array[FullscreenTransitionEntry]] = Ref([],
 )
+
+///|
+fn clear_all_window_fullscreen_state() -> Unit {
+  maximized_standard_frame_entries.val = []
+  fullscreen_transition_entries.val = []
+}
 
 ///|
 fn maximized_standard_frame_index(window_handle : UInt64) -> Int? {
@@ -76,15 +83,56 @@ fn fullscreen_transition_index(window_handle : UInt64) -> Int? {
 }
 
 ///|
+fn fullscreen_transition_ensure_index(window_handle : UInt64) -> Int {
+  match fullscreen_transition_index(window_handle) {
+    Some(index) => index
+    None => {
+      fullscreen_transition_entries.val.push({
+        window_handle,
+        in_transition: false,
+        target_fullscreen: None,
+      })
+      fullscreen_transition_entries.val.length() - 1
+    }
+  }
+}
+
+///|
 fn set_window_fullscreen_transition_state(
   window_handle : UInt64,
   in_transition : Bool,
 ) -> Unit {
+  let index = fullscreen_transition_ensure_index(window_handle)
+  fullscreen_transition_entries.val[index].in_transition = in_transition
+}
+
+///|
+fn set_window_target_fullscreen_state(
+  window_handle : UInt64,
+  fullscreen : Bool,
+) -> Unit {
+  let index = fullscreen_transition_ensure_index(window_handle)
+  fullscreen_transition_entries.val[index].target_fullscreen = Some(fullscreen)
+}
+
+///|
+fn clear_window_target_fullscreen_state(window_handle : UInt64) -> Unit {
   match fullscreen_transition_index(window_handle) {
     Some(index) =>
-      fullscreen_transition_entries.val[index].in_transition = in_transition
-    None =>
-      fullscreen_transition_entries.val.push({ window_handle, in_transition })
+      fullscreen_transition_entries.val[index].target_fullscreen = None
+    None => ()
+  }
+}
+
+///|
+fn take_window_target_fullscreen_state(window_handle : UInt64) -> Bool? {
+  match fullscreen_transition_index(window_handle) {
+    Some(index) => {
+      let target = fullscreen_transition_entries.val[index].target_fullscreen
+      fullscreen_transition_entries.val[index].target_fullscreen = None
+      target
+    }
+    None => None
   }
 }
 
