@@ -1,6 +1,6 @@
 name = "Milky2018/window"
 
-version = "0.5.1"
+version = "0.5.2"
 
 preferred_target = "native"
 
