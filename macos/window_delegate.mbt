@@ -3352,651 +3352,742 @@ fn new_window(
 }
 
 ///|
-fn Window::surface_size_on_main(self : Window) -> @dpi.PhysicalSize {
-  @dpi.LogicalSize::LogicalSize(
-    native_window_width(self.raw_window_handle).to_double(),
-    native_window_height(self.raw_window_handle).to_double(),
-  ).to_physical(self.scale_factor())
+pub fn Window::surface_size(self : Window) -> @dpi.PhysicalSize {
+  self.maybe_wait_on_main(fn(window) {
+    @dpi.LogicalSize::LogicalSize(
+      native_window_width(window.raw_window_handle).to_double(),
+      native_window_height(window.raw_window_handle).to_double(),
+    ).to_physical(window.scale_factor())
+  })
 }
 
 ///|
-fn Window::inner_size_on_main(self : Window) -> @dpi.PhysicalSize {
-  self.surface_size()
+pub fn Window::inner_size(self : Window) -> @dpi.PhysicalSize {
+  self.maybe_wait_on_main(fn(window) { window.surface_size() })
 }
 
 ///|
-fn Window::outer_size_on_main(self : Window) -> @dpi.PhysicalSize {
-  @dpi.LogicalSize::LogicalSize(
-    window_outer_width(self.raw_window_handle).to_double(),
-    window_outer_height(self.raw_window_handle).to_double(),
-  ).to_physical(self.scale_factor())
+pub fn Window::outer_size(self : Window) -> @dpi.PhysicalSize {
+  self.maybe_wait_on_main(fn(window) {
+    @dpi.LogicalSize::LogicalSize(
+      window_outer_width(window.raw_window_handle).to_double(),
+      window_outer_height(window.raw_window_handle).to_double(),
+    ).to_physical(window.scale_factor())
+  })
 }
 
 ///|
-fn Window::surface_position_on_main(self : Window) -> @dpi.PhysicalPosition {
-  @dpi.LogicalPosition::LogicalPosition(
-    window_surface_x(self.raw_window_handle).to_double(),
-    window_surface_y(self.raw_window_handle).to_double(),
-  ).to_physical(self.scale_factor())
+pub fn Window::surface_position(self : Window) -> @dpi.PhysicalPosition {
+  self.maybe_wait_on_main(fn(window) {
+    @dpi.LogicalPosition::LogicalPosition(
+      window_surface_x(window.raw_window_handle).to_double(),
+      window_surface_y(window.raw_window_handle).to_double(),
+    ).to_physical(window.scale_factor())
+  })
 }
 
 ///|
-fn Window::inner_position_on_main(self : Window) -> @dpi.PhysicalPosition {
-  self.surface_position()
+pub fn Window::inner_position(self : Window) -> @dpi.PhysicalPosition {
+  self.maybe_wait_on_main(fn(window) { window.surface_position() })
 }
 
 ///|
-fn Window::safe_area_on_main(self : Window) -> @dpi.PhysicalInsets {
-  let scale_factor = self.scale_factor()
-  PhysicalInsets(
-    (window_safe_area_top(self.raw_window_handle).to_double() * scale_factor).to_int(),
-    (window_safe_area_left(self.raw_window_handle).to_double() * scale_factor).to_int(),
-    (window_safe_area_bottom(self.raw_window_handle).to_double() * scale_factor).to_int(),
-    (window_safe_area_right(self.raw_window_handle).to_double() * scale_factor).to_int(),
-  )
+pub fn Window::safe_area(self : Window) -> @dpi.PhysicalInsets {
+  self.maybe_wait_on_main(fn(window) {
+    let scale_factor = window.scale_factor()
+    PhysicalInsets(
+      (window_safe_area_top(window.raw_window_handle).to_double() * scale_factor).to_int(),
+      (window_safe_area_left(window.raw_window_handle).to_double() *
+      scale_factor).to_int(),
+      (window_safe_area_bottom(window.raw_window_handle).to_double() *
+      scale_factor).to_int(),
+      (window_safe_area_right(window.raw_window_handle).to_double() *
+      scale_factor).to_int(),
+    )
+  })
 }
 
 ///|
-fn Window::request_surface_size_on_main(
+pub fn Window::request_surface_size(
   self : Window,
   size : @dpi.Size,
 ) -> @dpi.PhysicalSize? {
-  let logical_size = size.to_logical(self.scale_factor())
-  set_surface_size(
-    self.raw_window_handle,
-    logical_size.width().to_int(),
-    logical_size.height().to_int(),
-  )
-  None
+  self.maybe_wait_on_main(fn(window) {
+    let logical_size = size.to_logical(window.scale_factor())
+    set_surface_size(
+      window.raw_window_handle,
+      logical_size.width().to_int(),
+      logical_size.height().to_int(),
+    )
+    None
+  })
 }
 
 ///|
-fn Window::request_inner_size_on_main(
+pub fn Window::request_inner_size(
   self : Window,
   size : @dpi.Size,
 ) -> @dpi.PhysicalSize? {
-  self.request_surface_size(size)
+  self.maybe_wait_on_main(fn(window) { window.request_surface_size(size) })
 }
 
 ///|
-fn Window::set_surface_resize_increments_on_main(
+pub fn Window::set_surface_resize_increments(
   self : Window,
   size : @dpi.Size?,
 ) -> Unit {
-  match size {
-    Some(size) => {
-      let logical_size = size.to_logical(self.scale_factor())
-      set_surface_resize_increments(
-        self.raw_window_handle,
-        logical_size.width().to_int(),
-        logical_size.height().to_int(),
-      )
+  self.maybe_wait_on_main(fn(window) {
+    match size {
+      Some(size) => {
+        let logical_size = size.to_logical(window.scale_factor())
+        set_surface_resize_increments(
+          window.raw_window_handle,
+          logical_size.width().to_int(),
+          logical_size.height().to_int(),
+        )
+      }
+      None => set_surface_resize_increments(window.raw_window_handle, 0, 0)
     }
-    None => set_surface_resize_increments(self.raw_window_handle, 0, 0)
-  }
+  })
 }
 
 ///|
-fn Window::set_resize_increments_on_main(
-  self : Window,
-  size : @dpi.Size?,
-) -> Unit {
-  self.set_surface_resize_increments(size)
+pub fn Window::set_resize_increments(self : Window, size : @dpi.Size?) -> Unit {
+  self.maybe_wait_on_main(fn(window) {
+    window.set_surface_resize_increments(size)
+  })
 }
 
 ///|
-fn Window::surface_resize_increments_on_main(
-  self : Window,
-) -> @dpi.PhysicalSize? {
-  let width = window_resize_increment_width(self.raw_window_handle)
-  let height = window_resize_increment_height(self.raw_window_handle)
-  if width > 0 && height > 0 {
-    Some(
-      @dpi.LogicalSize::LogicalSize(width.to_double(), height.to_double()).to_physical(
-        self.scale_factor(),
-      ),
-    )
-  } else {
-    None
-  }
-}
-
-///|
-fn Window::resize_increments_on_main(self : Window) -> @dpi.PhysicalSize? {
-  self.surface_resize_increments()
-}
-
-///|
-fn Window::set_min_surface_size_on_main(
-  self : Window,
-  size : @dpi.Size?,
-) -> Unit {
-  match size {
-    Some(size) => {
-      let logical_size = size.to_logical(self.scale_factor())
-      set_min_surface_size(
-        self.raw_window_handle,
-        logical_size.width().to_int(),
-        logical_size.height().to_int(),
+pub fn Window::surface_resize_increments(self : Window) -> @dpi.PhysicalSize? {
+  self.maybe_wait_on_main(fn(window) {
+    let width = window_resize_increment_width(window.raw_window_handle)
+    let height = window_resize_increment_height(window.raw_window_handle)
+    if width > 0 && height > 0 {
+      Some(
+        @dpi.LogicalSize::LogicalSize(width.to_double(), height.to_double()).to_physical(
+          window.scale_factor(),
+        ),
       )
+    } else {
+      None
     }
-    None => set_min_surface_size(self.raw_window_handle, 0, 0)
-  }
+  })
 }
 
 ///|
-fn Window::set_min_inner_size_on_main(self : Window, size : @dpi.Size?) -> Unit {
-  self.set_min_surface_size(size)
+pub fn Window::resize_increments(self : Window) -> @dpi.PhysicalSize? {
+  self.maybe_wait_on_main(fn(window) { window.surface_resize_increments() })
 }
 
 ///|
-fn Window::set_max_surface_size_on_main(
-  self : Window,
-  size : @dpi.Size?,
-) -> Unit {
-  match size {
-    Some(size) => {
-      let logical_size = size.to_logical(self.scale_factor())
-      set_max_surface_size(
-        self.raw_window_handle,
-        logical_size.width().to_int(),
-        logical_size.height().to_int(),
+pub fn Window::set_min_surface_size(self : Window, size : @dpi.Size?) -> Unit {
+  self.maybe_wait_on_main(fn(window) {
+    match size {
+      Some(size) => {
+        let logical_size = size.to_logical(window.scale_factor())
+        set_min_surface_size(
+          window.raw_window_handle,
+          logical_size.width().to_int(),
+          logical_size.height().to_int(),
+        )
+      }
+      None => set_min_surface_size(window.raw_window_handle, 0, 0)
+    }
+  })
+}
+
+///|
+pub fn Window::set_min_inner_size(self : Window, size : @dpi.Size?) -> Unit {
+  self.maybe_wait_on_main(fn(window) { window.set_min_surface_size(size) })
+}
+
+///|
+pub fn Window::set_max_surface_size(self : Window, size : @dpi.Size?) -> Unit {
+  self.maybe_wait_on_main(fn(window) {
+    match size {
+      Some(size) => {
+        let logical_size = size.to_logical(window.scale_factor())
+        set_max_surface_size(
+          window.raw_window_handle,
+          logical_size.width().to_int(),
+          logical_size.height().to_int(),
+        )
+      }
+      None => set_max_surface_size(window.raw_window_handle, 0, 0)
+    }
+  })
+}
+
+///|
+pub fn Window::set_max_inner_size(self : Window, size : @dpi.Size?) -> Unit {
+  self.maybe_wait_on_main(fn(window) { window.set_max_surface_size(size) })
+}
+
+///|
+pub fn Window::min_surface_size(self : Window) -> @dpi.PhysicalSize? {
+  self.maybe_wait_on_main(fn(window) {
+    let width = window_min_surface_width(window.raw_window_handle)
+    let height = window_min_surface_height(window.raw_window_handle)
+    if width > 0 && height > 0 {
+      Some(
+        @dpi.LogicalSize::LogicalSize(width.to_double(), height.to_double()).to_physical(
+          window.scale_factor(),
+        ),
       )
+    } else {
+      None
     }
-    None => set_max_surface_size(self.raw_window_handle, 0, 0)
-  }
+  })
 }
 
 ///|
-fn Window::set_max_inner_size_on_main(self : Window, size : @dpi.Size?) -> Unit {
-  self.set_max_surface_size(size)
+pub fn Window::min_inner_size(self : Window) -> @dpi.PhysicalSize? {
+  self.maybe_wait_on_main(fn(window) { window.min_surface_size() })
 }
 
 ///|
-fn Window::min_surface_size_on_main(self : Window) -> @dpi.PhysicalSize? {
-  let width = window_min_surface_width(self.raw_window_handle)
-  let height = window_min_surface_height(self.raw_window_handle)
-  if width > 0 && height > 0 {
-    Some(
-      @dpi.LogicalSize::LogicalSize(width.to_double(), height.to_double()).to_physical(
-        self.scale_factor(),
-      ),
-    )
-  } else {
-    None
-  }
+pub fn Window::max_surface_size(self : Window) -> @dpi.PhysicalSize? {
+  self.maybe_wait_on_main(fn(window) {
+    let width = window_max_surface_width(window.raw_window_handle)
+    let height = window_max_surface_height(window.raw_window_handle)
+    if width > 0 && height > 0 {
+      Some(
+        @dpi.LogicalSize::LogicalSize(width.to_double(), height.to_double()).to_physical(
+          window.scale_factor(),
+        ),
+      )
+    } else {
+      None
+    }
+  })
 }
 
 ///|
-fn Window::min_inner_size_on_main(self : Window) -> @dpi.PhysicalSize? {
-  self.min_surface_size()
+pub fn Window::max_inner_size(self : Window) -> @dpi.PhysicalSize? {
+  self.maybe_wait_on_main(fn(window) { window.max_surface_size() })
 }
 
 ///|
-fn Window::max_surface_size_on_main(self : Window) -> @dpi.PhysicalSize? {
-  let width = window_max_surface_width(self.raw_window_handle)
-  let height = window_max_surface_height(self.raw_window_handle)
-  if width > 0 && height > 0 {
-    Some(
-      @dpi.LogicalSize::LogicalSize(width.to_double(), height.to_double()).to_physical(
-        self.scale_factor(),
-      ),
-    )
-  } else {
-    None
-  }
-}
-
-///|
-fn Window::max_inner_size_on_main(self : Window) -> @dpi.PhysicalSize? {
-  self.max_surface_size()
-}
-
-///|
-fn Window::outer_position_on_main(
+pub fn Window::outer_position(
   self : Window,
 ) -> @dpi.PhysicalPosition raise @core.RequestError {
-  let raw_id = self.raw_window_handle
-  if native_window_objc_handle(raw_id) == (0 : Int).to_uint64() {
-    raise Ignored
-  }
-  @dpi.LogicalPosition::LogicalPosition(
-    window_x(raw_id).to_double(),
-    window_y(raw_id).to_double(),
-  ).to_physical(self.scale_factor())
+  self.maybe_wait_on_main_result(fn(
+    window,
+  ) -> @dpi.PhysicalPosition raise @core.RequestError {
+    let raw_id = window.raw_window_handle
+    if native_window_objc_handle(raw_id) == (0 : Int).to_uint64() {
+      raise Ignored
+    }
+    @dpi.LogicalPosition::LogicalPosition(
+      window_x(raw_id).to_double(),
+      window_y(raw_id).to_double(),
+    ).to_physical(window.scale_factor())
+  })
 }
 
 ///|
-fn Window::set_outer_position_on_main(
+pub fn Window::set_outer_position(
   self : Window,
   position : @dpi.Position,
 ) -> Unit {
-  let logical_position = window_position_to_logical(
-    position,
-    self.scale_factor(),
-  )
-  set_window_position(
-    self.raw_window_handle,
-    logical_position.x().to_int(),
-    logical_position.y().to_int(),
-  )
+  self.maybe_wait_on_main(fn(window) {
+    let logical_position = window_position_to_logical(
+      position,
+      window.scale_factor(),
+    )
+    set_window_position(
+      window.raw_window_handle,
+      logical_position.x().to_int(),
+      logical_position.y().to_int(),
+    )
+  })
 }
 
 ///|
-fn Window::focus_window_on_main(self : Window) -> Unit {
-  let raw_id = self.raw_window_handle
-  let is_minimized = window_minimized(raw_id)
-  let is_visible = window_visible(raw_id)
-  if is_minimized == false && is_visible {
-    focus_window(raw_id)
-  }
+pub fn Window::focus_window(self : Window) -> Unit {
+  self.maybe_wait_on_main(fn(window) {
+    let raw_id = window.raw_window_handle
+    let is_minimized = window_minimized(raw_id)
+    let is_visible = window_visible(raw_id)
+    if is_minimized == false && is_visible {
+      focus_window(raw_id)
+    }
+  })
 }
 
 ///|
-fn Window::has_focus_on_main(self : Window) -> Bool {
-  window_has_focus(self.raw_window_handle)
+pub fn Window::has_focus(self : Window) -> Bool {
+  self.maybe_wait_on_main(fn(window) {
+    window_has_focus(window.raw_window_handle)
+  })
 }
 
 ///|
-fn Window::set_minimized_on_main(self : Window, minimized : Bool) -> Unit {
-  set_window_minimized(self.raw_window_handle, minimized)
+pub fn Window::set_minimized(self : Window, minimized : Bool) -> Unit {
+  self.maybe_wait_on_main(fn(window) {
+    set_window_minimized(window.raw_window_handle, minimized)
+  })
 }
 
 ///|
-fn Window::is_minimized_on_main(self : Window) -> Bool? {
-  Some(window_minimized(self.raw_window_handle))
+pub fn Window::is_minimized(self : Window) -> Bool? {
+  self.maybe_wait_on_main(fn(window) {
+    Some(window_minimized(window.raw_window_handle))
+  })
 }
 
 ///|
-fn Window::set_maximized_on_main(self : Window, maximized : Bool) -> Unit {
-  set_window_maximized(self.raw_window_handle, maximized)
+pub fn Window::set_maximized(self : Window, maximized : Bool) -> Unit {
+  self.maybe_wait_on_main(fn(window) {
+    set_window_maximized(window.raw_window_handle, maximized)
+  })
 }
 
 ///|
-fn Window::is_maximized_on_main(self : Window) -> Bool {
-  window_maximized(self.raw_window_handle)
+pub fn Window::is_maximized(self : Window) -> Bool {
+  self.maybe_wait_on_main(fn(window) {
+    window_maximized(window.raw_window_handle)
+  })
 }
 
 ///|
-fn Window::is_decorated_on_main(self : Window) -> Bool {
-  window_decorated(self.raw_window_handle)
+pub fn Window::is_decorated(self : Window) -> Bool {
+  self.maybe_wait_on_main(fn(window) {
+    window_decorated(window.raw_window_handle)
+  })
 }
 
 ///|
-fn Window::enabled_buttons_on_main(self : Window) -> @core.WindowButtons {
-  window_enabled_buttons(self.raw_window_handle)
+pub fn Window::enabled_buttons(self : Window) -> @core.WindowButtons {
+  self.maybe_wait_on_main(fn(window) {
+    window_enabled_buttons(window.raw_window_handle)
+  })
 }
 
 ///|
-fn Window::is_blurred_on_main(self : Window) -> Bool {
-  self.blur_state
+pub fn Window::is_blurred(self : Window) -> Bool {
+  self.maybe_wait_on_main(fn(window) { window.blur_state })
 }
 
 ///|
-fn Window::set_transparent_on_main(self : Window, transparent : Bool) -> Unit {
-  set_window_transparent(self.raw_window_handle, transparent)
+pub fn Window::set_transparent(self : Window, transparent : Bool) -> Unit {
+  self.maybe_wait_on_main(fn(window) {
+    set_window_transparent(window.raw_window_handle, transparent)
+  })
 }
 
 ///|
-fn Window::is_transparent_on_main(self : Window) -> Bool {
-  window_transparent(self.raw_window_handle)
+pub fn Window::is_transparent(self : Window) -> Bool {
+  self.maybe_wait_on_main(fn(window) {
+    window_transparent(window.raw_window_handle)
+  })
 }
 
 ///|
-fn Window::set_window_level_on_main(
+pub fn Window::set_window_level(
   self : Window,
   level : @core.WindowLevel,
 ) -> Unit {
-  set_window_level(
-    self.raw_window_handle,
-    normalize_window_level_native(window_level_to_native(level)),
-  )
+  self.maybe_wait_on_main(fn(window) {
+    set_window_level(
+      window.raw_window_handle,
+      normalize_window_level_native(window_level_to_native(level)),
+    )
+  })
 }
 
 ///|
-fn Window::window_level_on_main(self : Window) -> @core.WindowLevel {
-  window_level_value(self.raw_window_handle)
+pub fn Window::window_level(self : Window) -> @core.WindowLevel {
+  self.maybe_wait_on_main(fn(window) {
+    window_level_value(window.raw_window_handle)
+  })
 }
 
 ///|
-fn Window::scale_factor_on_main(self : Window) -> Double {
-  if self.disallow_hidpi_state {
-    1.0
-  } else {
-    native_window_scale_factor(self.raw_window_handle)
-  }
+pub fn Window::scale_factor(self : Window) -> Double {
+  self.maybe_wait_on_main(fn(window) {
+    if window.disallow_hidpi_state {
+      1.0
+    } else {
+      native_window_scale_factor(window.raw_window_handle)
+    }
+  })
 }
 
 ///|
-fn Window::request_redraw_on_main(self : Window) -> Unit {
-  app_state_queue_redraw(self.id.into_raw())
+pub fn Window::request_redraw(self : Window) -> Unit {
+  self.maybe_wait_on_main(fn(window) {
+    app_state_queue_redraw(window.id.into_raw())
+  })
 }
 
 ///|
-fn Window::pre_present_notify_on_main(_self : Window) -> Unit {
-  ()
+pub fn Window::pre_present_notify(self : Window) -> Unit {
+  self.maybe_wait_on_main(fn(_window) { () })
 }
 
 ///|
-fn Window::reset_dead_keys_on_main(_self : Window) -> Unit {
-  ()
+pub fn Window::reset_dead_keys(self : Window) -> Unit {
+  self.maybe_wait_on_main(fn(_window) { () })
 }
 
 ///|
-fn Window::set_title_on_main(self : Window, title : String) -> Unit {
-  set_title(self.raw_window_handle, title)
+pub fn Window::set_title(self : Window, title : String) -> Unit {
+  self.maybe_wait_on_main(fn(window) {
+    set_title(window.raw_window_handle, title)
+  })
 }
 
 ///|
-fn Window::title_on_main(self : Window) -> String {
-  window_title(self.raw_window_handle)
+pub fn Window::title(self : Window) -> String {
+  self.maybe_wait_on_main(fn(window) { window_title(window.raw_window_handle) })
 }
 
 ///|
-fn Window::set_window_icon_on_main(
-  _self : Window,
+pub fn Window::set_window_icon(
+  self : Window,
   _window_icon : @core.Icon?,
 ) -> Unit {
-  ()
+  self.maybe_wait_on_main(fn(_window) { () })
 }
 
 ///|
-fn Window::set_content_protected_on_main(
+pub fn Window::set_content_protected(
   self : Window,
   content_protected : Bool,
 ) -> Unit {
-  set_window_content_protected(self.raw_window_handle, content_protected)
+  self.maybe_wait_on_main(fn(window) {
+    set_window_content_protected(window.raw_window_handle, content_protected)
+  })
 }
 
 ///|
-fn Window::set_visible_on_main(self : Window, visible : Bool) -> Unit {
-  native_set_visible(self.raw_window_handle, visible)
+pub fn Window::set_visible(self : Window, visible : Bool) -> Unit {
+  self.maybe_wait_on_main(fn(window) {
+    native_set_visible(window.raw_window_handle, visible)
+  })
 }
 
 ///|
-fn Window::is_visible_on_main(self : Window) -> Bool? {
-  Some(window_visible(self.raw_window_handle))
+pub fn Window::is_visible(self : Window) -> Bool? {
+  self.maybe_wait_on_main(fn(window) {
+    Some(window_visible(window.raw_window_handle))
+  })
 }
 
 ///|
-fn Window::set_resizable_on_main(self : Window, resizable : Bool) -> Unit {
-  native_set_resizable(self.raw_window_handle, resizable)
+pub fn Window::set_resizable(self : Window, resizable : Bool) -> Unit {
+  self.maybe_wait_on_main(fn(window) {
+    native_set_resizable(window.raw_window_handle, resizable)
+  })
 }
 
 ///|
-fn Window::is_resizable_on_main(self : Window) -> Bool {
-  window_resizable(self.raw_window_handle)
+pub fn Window::is_resizable(self : Window) -> Bool {
+  self.maybe_wait_on_main(fn(window) {
+    window_resizable(window.raw_window_handle)
+  })
 }
 
 ///|
-fn Window::is_content_protected_on_main(self : Window) -> Bool {
-  window_content_protected(self.raw_window_handle)
+pub fn Window::is_content_protected(self : Window) -> Bool {
+  self.maybe_wait_on_main(fn(window) {
+    window_content_protected(window.raw_window_handle)
+  })
 }
 
 ///|
-fn Window::is_document_edited_on_main(self : Window) -> Bool {
-  window_document_edited(self.raw_window_handle)
+pub fn Window::is_document_edited(self : Window) -> Bool {
+  self.maybe_wait_on_main(fn(window) {
+    window_document_edited(window.raw_window_handle)
+  })
 }
 
 ///|
-fn Window::set_document_edited_on_main(self : Window, edited : Bool) -> Unit {
-  set_window_document_edited(self.raw_window_handle, edited)
+pub fn Window::set_document_edited(self : Window, edited : Bool) -> Unit {
+  self.maybe_wait_on_main(fn(window) {
+    set_window_document_edited(window.raw_window_handle, edited)
+  })
 }
 
 ///|
-fn Window::set_option_as_alt_on_main(
+pub fn Window::set_option_as_alt(
   self : Window,
   option_as_alt : @core.OptionAsAlt,
 ) -> Unit {
-  set_window_option_as_alt(
-    self.raw_window_handle,
-    normalize_option_as_alt_native(option_as_alt_to_native(option_as_alt)),
-  )
+  self.maybe_wait_on_main(fn(window) {
+    set_window_option_as_alt(
+      window.raw_window_handle,
+      normalize_option_as_alt_native(option_as_alt_to_native(option_as_alt)),
+    )
+  })
 }
 
 ///|
-fn Window::option_as_alt_on_main(self : Window) -> @core.OptionAsAlt {
-  window_option_as_alt(self.raw_window_handle)
+pub fn Window::option_as_alt(self : Window) -> @core.OptionAsAlt {
+  self.maybe_wait_on_main(fn(window) {
+    window_option_as_alt(window.raw_window_handle)
+  })
 }
 
 ///|
-fn Window::set_prefers_home_indicator_hidden_on_main(
+pub fn Window::set_prefers_home_indicator_hidden(
   self : Window,
   hidden : Bool,
 ) -> Unit {
-  // AppKit has no home-indicator API; keep state for cross-platform parity.
-  self.prefers_home_indicator_hidden_state = hidden
+  self.maybe_wait_on_main(fn(window) {
+    // AppKit has no home-indicator API; keep state for cross-platform parity.
+    window.prefers_home_indicator_hidden_state = hidden
+  })
 }
 
 ///|
-fn Window::set_prefers_status_bar_hidden_on_main(
+pub fn Window::set_prefers_status_bar_hidden(
   self : Window,
   hidden : Bool,
 ) -> Unit {
-  // AppKit has no status-bar API; keep state for cross-platform parity.
-  self.prefers_status_bar_hidden_state = hidden
+  self.maybe_wait_on_main(fn(window) {
+    // AppKit has no status-bar API; keep state for cross-platform parity.
+    window.prefers_status_bar_hidden_state = hidden
+  })
 }
 
 ///|
-fn Window::set_preferred_screen_edges_deferring_system_gestures_on_main(
+pub fn Window::set_preferred_screen_edges_deferring_system_gestures(
   self : Window,
   edges : @core.ScreenEdge,
 ) -> Unit {
-  // AppKit has no system-gesture deferral API; keep state for parity.
-  self.preferred_screen_edges_deferring_system_gestures_state = edges
+  self.maybe_wait_on_main(fn(window) {
+    // AppKit has no system-gesture deferral API; keep state for parity.
+    window.preferred_screen_edges_deferring_system_gestures_state = edges
+  })
 }
 
 ///|
-fn Window::request_user_attention_on_main(
+pub fn Window::request_user_attention(
   self : Window,
   request_type : @core.UserAttentionType?,
 ) -> Unit {
-  request_user_attention(
-    self.raw_window_handle,
-    user_attention_type_to_native(request_type),
-  )
+  self.maybe_wait_on_main(fn(window) {
+    request_user_attention(
+      window.raw_window_handle,
+      user_attention_type_to_native(request_type),
+    )
+  })
 }
 
 ///|
-fn Window::current_monitor_on_main(self : Window) -> @core.MonitorHandle? {
-  let monitor_id = window_current_monitor_id(self.raw_window_handle)
-  if monitor_id == (0 : Int).to_uint64() {
-    None
-  } else {
-    monitor_from_native_id(monitor_id)
-  }
+pub fn Window::current_monitor(self : Window) -> @core.MonitorHandle? {
+  self.maybe_wait_on_main(fn(window) {
+    let monitor_id = window_current_monitor_id(window.raw_window_handle)
+    if monitor_id == (0 : Int).to_uint64() {
+      None
+    } else {
+      monitor_from_native_id(monitor_id)
+    }
+  })
 }
 
 ///|
-fn Window::available_monitors_on_main(
-  self : Window,
-) -> Array[@core.MonitorHandle] {
-  let _ = self
-  available_monitors()
+pub fn Window::available_monitors(self : Window) -> Array[@core.MonitorHandle] {
+  self.maybe_wait_on_main(fn(window) {
+    let _ = window
+    available_monitors()
+  })
 }
 
 ///|
-fn Window::primary_monitor_on_main(self : Window) -> @core.MonitorHandle? {
-  let _ = self
-  Some(primary_monitor())
+pub fn Window::primary_monitor(self : Window) -> @core.MonitorHandle? {
+  self.maybe_wait_on_main(fn(window) {
+    let _ = window
+    Some(primary_monitor())
+  })
 }
 
 ///|
-fn Window::set_fullscreen_on_main(
+pub fn Window::set_fullscreen(
   self : Window,
   fullscreen : @core.Fullscreen?,
 ) -> Unit {
-  if self.simple_fullscreen() {
-    ()
-  } else {
-    self.fullscreen_state = fullscreen
-    let raw_id = self.raw_window_handle
-    match fullscreen {
-      None =>
-        if self.exclusive_fullscreen_state {
-          ignore(self.exit_exclusive_fullscreen())
-        } else {
-          set_window_fullscreen(raw_id, false)
-        }
-      Some(Borderless(target_monitor)) => {
-        if self.exclusive_fullscreen_state {
-          ignore(self.exit_exclusive_fullscreen())
-        }
-        match target_monitor {
-          Some(monitor) => {
-            let logical_position = monitor_position_to_logical(monitor)
-            set_window_position(
-              raw_id,
-              logical_position.x().to_int(),
-              logical_position.y().to_int(),
-            )
+  self.maybe_wait_on_main(fn(window) {
+    if window.simple_fullscreen() {
+      ()
+    } else {
+      window.fullscreen_state = fullscreen
+      let raw_id = window.raw_window_handle
+      match fullscreen {
+        None =>
+          if window.exclusive_fullscreen_state {
+            ignore(window.exit_exclusive_fullscreen())
+          } else {
+            set_window_fullscreen(raw_id, false)
           }
-          None => ()
-        }
-        set_window_fullscreen(raw_id, true)
-      }
-      Some(Exclusive(target_monitor, video_mode)) => {
-        if self.exclusive_fullscreen_state {
-          ignore(self.exit_exclusive_fullscreen())
-        }
-        if window_fullscreen(raw_id) && !self.exclusive_fullscreen_state {
-          set_window_fullscreen(raw_id, false)
-        }
-        ignore(self.enter_exclusive_fullscreen(target_monitor, video_mode))
-      }
-    }
-  }
-}
-
-///|
-fn Window::fullscreen_on_main(self : Window) -> @core.Fullscreen? {
-  let raw_id = self.raw_window_handle
-  if self.exclusive_fullscreen_state {
-    match self.fullscreen_state {
-      Some(fullscreen) => Some(fullscreen)
-      None => None
-    }
-  } else if window_fullscreen(raw_id) {
-    match self.fullscreen_state {
-      Some(fullscreen) => Some(fullscreen)
-      None => Some(Borderless(self.current_monitor()))
-    }
-  } else {
-    self.fullscreen_state = None
-    None
-  }
-}
-
-///|
-fn Window::is_fullscreen_on_main(self : Window) -> Bool {
-  if self.exclusive_fullscreen_state {
-    true
-  } else {
-    window_fullscreen(self.raw_window_handle)
-  }
-}
-
-///|
-fn Window::simple_fullscreen_on_main(self : Window) -> Bool {
-  self.simple_fullscreen_state
-}
-
-///|
-fn Window::set_simple_fullscreen_on_main(
-  self : Window,
-  fullscreen : Bool,
-) -> Bool {
-  let raw_id = self.raw_window_handle
-  if self.is_fullscreen() {
-    return false
-  }
-  if fullscreen == self.simple_fullscreen_state {
-    return false
-  }
-  if fullscreen {
-    let outer_position = Some(self.outer_position()) catch { _ => None }
-    let current_monitor = self.current_monitor()
-    match outer_position {
-      Some(saved_outer_position) =>
-        match current_monitor {
-          Some(monitor) => {
-            let logical_position = monitor_position_to_logical(monitor)
-            self.simple_fullscreen_saved_style_mask_state = Some(
-              window_style_mask_bits(raw_id),
-            )
-            self.simple_fullscreen_saved_presentation_options_state = Some(
-              application_presentation_options(),
-            )
-            self.simple_fullscreen_saved_outer_position_state = Some(
-              saved_outer_position,
-            )
-            self.simple_fullscreen_saved_outer_size_state = Some(
-              self.outer_size(),
-            )
-            self.simple_fullscreen_state = true
-            set_application_presentation_options(
-              simple_fullscreen_presentation_options(self.borderless_game_state),
-            )
-            clear_window_style_mask_bits(
-              raw_id,
-              fullscreen_removed_style_bits(),
-            )
-            set_window_position(
-              raw_id,
-              logical_position.x().to_int(),
-              logical_position.y().to_int(),
-            )
-            set_window_outer_size(
-              raw_id,
-              monitor.surface_size().width(),
-              monitor.surface_size().height(),
-            )
-            set_window_movable(raw_id, false)
-            true
+        Some(Borderless(target_monitor)) => {
+          if window.exclusive_fullscreen_state {
+            ignore(window.exit_exclusive_fullscreen())
           }
-          None => false
+          match target_monitor {
+            Some(monitor) => {
+              let logical_position = monitor_position_to_logical(monitor)
+              set_window_position(
+                raw_id,
+                logical_position.x().to_int(),
+                logical_position.y().to_int(),
+              )
+            }
+            None => ()
+          }
+          set_window_fullscreen(raw_id, true)
         }
-      None => false
-    }
-  } else {
-    let saved_style_mask = self.simple_fullscreen_saved_style_mask_state
-    let saved_presentation_options = self.simple_fullscreen_saved_presentation_options_state
-    let saved_outer_position = self.simple_fullscreen_saved_outer_position_state
-    let saved_outer_size = self.simple_fullscreen_saved_outer_size_state
-    self.simple_fullscreen_state = false
-    self.simple_fullscreen_saved_style_mask_state = None
-    self.simple_fullscreen_saved_presentation_options_state = None
-    self.simple_fullscreen_saved_outer_position_state = None
-    self.simple_fullscreen_saved_outer_size_state = None
-    match saved_presentation_options {
-      Some(options) => set_application_presentation_options(options)
-      None => ()
-    }
-    match saved_outer_position {
-      Some(position) => {
-        let logical_position = physical_outer_position_to_logical(
-          position,
-          self.scale_factor(),
-        )
-        set_window_position(
-          raw_id,
-          logical_position.x().to_int(),
-          logical_position.y().to_int(),
-        )
+        Some(Exclusive(target_monitor, video_mode)) => {
+          if window.exclusive_fullscreen_state {
+            ignore(window.exit_exclusive_fullscreen())
+          }
+          if window_fullscreen(raw_id) && !window.exclusive_fullscreen_state {
+            set_window_fullscreen(raw_id, false)
+          }
+          ignore(window.enter_exclusive_fullscreen(target_monitor, video_mode))
+        }
       }
-      None => ()
     }
-    match saved_outer_size {
-      Some(size) => set_window_outer_size(raw_id, size.width(), size.height())
-      None => ()
+  })
+}
+
+///|
+pub fn Window::fullscreen(self : Window) -> @core.Fullscreen? {
+  self.maybe_wait_on_main(fn(window) {
+    let raw_id = window.raw_window_handle
+    if window.exclusive_fullscreen_state {
+      match window.fullscreen_state {
+        Some(fullscreen) => Some(fullscreen)
+        None => None
+      }
+    } else if window_fullscreen(raw_id) {
+      match window.fullscreen_state {
+        Some(fullscreen) => Some(fullscreen)
+        None => Some(Borderless(window.current_monitor()))
+      }
+    } else {
+      window.fullscreen_state = None
+      None
     }
-    set_window_movable(raw_id, true)
-    match saved_style_mask {
-      Some(style_mask) => set_window_style_mask_bits(raw_id, style_mask)
-      None => ()
+  })
+}
+
+///|
+pub fn Window::is_fullscreen(self : Window) -> Bool {
+  self.maybe_wait_on_main(fn(window) {
+    if window.exclusive_fullscreen_state {
+      true
+    } else {
+      window_fullscreen(window.raw_window_handle)
     }
-    true
-  }
+  })
+}
+
+///|
+pub fn Window::simple_fullscreen(self : Window) -> Bool {
+  self.maybe_wait_on_main(fn(window) { window.simple_fullscreen_state })
+}
+
+///|
+pub fn Window::set_simple_fullscreen(self : Window, fullscreen : Bool) -> Bool {
+  self.maybe_wait_on_main(fn(window) {
+    let raw_id = window.raw_window_handle
+    if window.is_fullscreen() {
+      return false
+    }
+    if fullscreen == window.simple_fullscreen_state {
+      return false
+    }
+    if fullscreen {
+      let outer_position = Some(window.outer_position()) catch { _ => None }
+      let current_monitor = window.current_monitor()
+      match outer_position {
+        Some(saved_outer_position) =>
+          match current_monitor {
+            Some(monitor) => {
+              let logical_position = monitor_position_to_logical(monitor)
+              window.simple_fullscreen_saved_style_mask_state = Some(
+                window_style_mask_bits(raw_id),
+              )
+              window.simple_fullscreen_saved_presentation_options_state = Some(
+                application_presentation_options(),
+              )
+              window.simple_fullscreen_saved_outer_position_state = Some(
+                saved_outer_position,
+              )
+              window.simple_fullscreen_saved_outer_size_state = Some(
+                window.outer_size(),
+              )
+              window.simple_fullscreen_state = true
+              set_application_presentation_options(
+                simple_fullscreen_presentation_options(
+                  window.borderless_game_state,
+                ),
+              )
+              clear_window_style_mask_bits(
+                raw_id,
+                fullscreen_removed_style_bits(),
+              )
+              set_window_position(
+                raw_id,
+                logical_position.x().to_int(),
+                logical_position.y().to_int(),
+              )
+              set_window_outer_size(
+                raw_id,
+                monitor.surface_size().width(),
+                monitor.surface_size().height(),
+              )
+              set_window_movable(raw_id, false)
+              true
+            }
+            None => false
+          }
+        None => false
+      }
+    } else {
+      let saved_style_mask = window.simple_fullscreen_saved_style_mask_state
+      let saved_presentation_options = window.simple_fullscreen_saved_presentation_options_state
+      let saved_outer_position = window.simple_fullscreen_saved_outer_position_state
+      let saved_outer_size = window.simple_fullscreen_saved_outer_size_state
+      window.simple_fullscreen_state = false
+      window.simple_fullscreen_saved_style_mask_state = None
+      window.simple_fullscreen_saved_presentation_options_state = None
+      window.simple_fullscreen_saved_outer_position_state = None
+      window.simple_fullscreen_saved_outer_size_state = None
+      match saved_presentation_options {
+        Some(options) => set_application_presentation_options(options)
+        None => ()
+      }
+      match saved_outer_position {
+        Some(position) => {
+          let logical_position = physical_outer_position_to_logical(
+            position,
+            window.scale_factor(),
+          )
+          set_window_position(
+            raw_id,
+            logical_position.x().to_int(),
+            logical_position.y().to_int(),
+          )
+        }
+        None => ()
+      }
+      match saved_outer_size {
+        Some(size) => set_window_outer_size(raw_id, size.width(), size.height())
+        None => ()
+      }
+      set_window_movable(raw_id, true)
+      match saved_style_mask {
+        Some(style_mask) => set_window_style_mask_bits(raw_id, style_mask)
+        None => ()
+      }
+      true
+    }
+  })
 }
 
 ///|
@@ -4149,76 +4240,94 @@ fn simple_fullscreen_presentation_options(borderless_game : Bool) -> UInt64 {
 }
 
 ///|
-fn Window::set_borderless_game_on_main(
+pub fn Window::set_borderless_game(
   self : Window,
   borderless_game : Bool,
 ) -> Unit {
-  self.borderless_game_state = borderless_game
-  set_window_borderless_game(self.raw_window_handle, borderless_game)
-  if self.simple_fullscreen_state {
-    set_application_presentation_options(
-      simple_fullscreen_presentation_options(borderless_game),
-    )
-  }
+  self.maybe_wait_on_main(fn(window) {
+    window.borderless_game_state = borderless_game
+    set_window_borderless_game(window.raw_window_handle, borderless_game)
+    if window.simple_fullscreen_state {
+      set_application_presentation_options(
+        simple_fullscreen_presentation_options(borderless_game),
+      )
+    }
+  })
 }
 
 ///|
-fn Window::is_borderless_game_on_main(self : Window) -> Bool {
-  self.borderless_game_state
+pub fn Window::is_borderless_game(self : Window) -> Bool {
+  self.maybe_wait_on_main(fn(window) { window.borderless_game_state })
 }
 
 ///|
-fn Window::set_unified_titlebar_on_main(
+pub fn Window::set_unified_titlebar(
   self : Window,
   unified_titlebar : Bool,
 ) -> Unit {
-  self.unified_titlebar_state = unified_titlebar
-  set_window_unified_titlebar(self.raw_window_handle, unified_titlebar)
+  self.maybe_wait_on_main(fn(window) {
+    window.unified_titlebar_state = unified_titlebar
+    set_window_unified_titlebar(window.raw_window_handle, unified_titlebar)
+  })
 }
 
 ///|
-fn Window::unified_titlebar_on_main(self : Window) -> Bool {
-  self.unified_titlebar_state
+pub fn Window::unified_titlebar(self : Window) -> Bool {
+  self.maybe_wait_on_main(fn(window) { window.unified_titlebar_state })
 }
 
 ///|
-fn Window::set_tabbing_identifier_on_main(
+pub fn Window::set_tabbing_identifier(
   self : Window,
   identifier : String,
 ) -> Unit {
-  set_window_tabbing_identifier(self.raw_window_handle, identifier)
+  self.maybe_wait_on_main(fn(window) {
+    set_window_tabbing_identifier(window.raw_window_handle, identifier)
+  })
 }
 
 ///|
-fn Window::tabbing_identifier_on_main(self : Window) -> String {
-  window_tabbing_identifier(self.raw_window_handle)
+pub fn Window::tabbing_identifier(self : Window) -> String {
+  self.maybe_wait_on_main(fn(window) {
+    window_tabbing_identifier(window.raw_window_handle)
+  })
 }
 
 ///|
-fn Window::select_next_tab_on_main(self : Window) -> Unit {
-  select_window_next_tab(self.raw_window_handle)
+pub fn Window::select_next_tab(self : Window) -> Unit {
+  self.maybe_wait_on_main(fn(window) {
+    select_window_next_tab(window.raw_window_handle)
+  })
 }
 
 ///|
-fn Window::select_previous_tab_on_main(self : Window) -> Unit {
-  select_window_previous_tab(self.raw_window_handle)
+pub fn Window::select_previous_tab(self : Window) -> Unit {
+  self.maybe_wait_on_main(fn(window) {
+    select_window_previous_tab(window.raw_window_handle)
+  })
 }
 
 ///|
-fn Window::select_tab_at_index_on_main(self : Window, index : Int) -> Unit {
-  if index >= 0 {
-    select_window_tab_at_index(self.raw_window_handle, index)
-  }
+pub fn Window::select_tab_at_index(self : Window, index : Int) -> Unit {
+  self.maybe_wait_on_main(fn(window) {
+    if index >= 0 {
+      select_window_tab_at_index(window.raw_window_handle, index)
+    }
+  })
 }
 
 ///|
-fn Window::num_tabs_on_main(self : Window) -> Int {
-  window_num_tabs(self.raw_window_handle)
+pub fn Window::num_tabs(self : Window) -> Int {
+  self.maybe_wait_on_main(fn(window) {
+    window_num_tabs(window.raw_window_handle)
+  })
 }
 
 ///|
-fn Window::set_decorations_on_main(self : Window, decorations : Bool) -> Unit {
-  self.toggle_window_decorations(decorations)
+pub fn Window::set_decorations(self : Window, decorations : Bool) -> Unit {
+  self.maybe_wait_on_main(fn(window) {
+    window.toggle_window_decorations(decorations)
+  })
 }
 
 ///|
@@ -4227,47 +4336,61 @@ fn Window::toggle_window_decorations(self : Window, decorations : Bool) -> Unit 
 }
 
 ///|
-fn Window::set_enabled_buttons_on_main(
+pub fn Window::set_enabled_buttons(
   self : Window,
   buttons : @core.WindowButtons,
 ) -> Unit {
-  set_window_enabled_buttons(
-    self.raw_window_handle,
-    buttons.close(),
-    buttons.minimize(),
-    buttons.maximize(),
-  )
+  self.maybe_wait_on_main(fn(window) {
+    set_window_enabled_buttons(
+      window.raw_window_handle,
+      buttons.close(),
+      buttons.minimize(),
+      buttons.maximize(),
+    )
+  })
 }
 
 ///|
-fn Window::set_blur_on_main(self : Window, blur : Bool) -> Unit {
-  self.blur_state = blur
-  set_window_blur(self.raw_window_handle, blur)
+pub fn Window::set_blur(self : Window, blur : Bool) -> Unit {
+  self.maybe_wait_on_main(fn(window) {
+    window.blur_state = blur
+    set_window_blur(window.raw_window_handle, blur)
+  })
 }
 
 ///|
-fn Window::has_shadow_on_main(self : Window) -> Bool {
-  window_has_shadow(self.raw_window_handle)
+pub fn Window::has_shadow(self : Window) -> Bool {
+  self.maybe_wait_on_main(fn(window) {
+    window_has_shadow(window.raw_window_handle)
+  })
 }
 
 ///|
-fn Window::set_has_shadow_on_main(self : Window, has_shadow : Bool) -> Unit {
-  set_window_has_shadow(self.raw_window_handle, has_shadow)
+pub fn Window::set_has_shadow(self : Window, has_shadow : Bool) -> Unit {
+  self.maybe_wait_on_main(fn(window) {
+    set_window_has_shadow(window.raw_window_handle, has_shadow)
+  })
 }
 
 ///|
-fn Window::set_theme_on_main(self : Window, theme : @core.Theme?) -> Unit {
-  set_window_theme(self.raw_window_handle, theme_to_appearance(theme))
+pub fn Window::set_theme(self : Window, theme : @core.Theme?) -> Unit {
+  self.maybe_wait_on_main(fn(window) {
+    set_window_theme(window.raw_window_handle, theme_to_appearance(theme))
+  })
 }
 
 ///|
-fn Window::theme_on_main(self : Window) -> @core.Theme? {
-  appearance_to_theme(window_appearance(self.raw_window_handle))
+pub fn Window::theme(self : Window) -> @core.Theme? {
+  self.maybe_wait_on_main(fn(window) {
+    appearance_to_theme(window_appearance(window.raw_window_handle))
+  })
 }
 
 ///|
-fn Window::is_occluded_on_main(self : Window) -> Bool {
-  window_occluded(self.raw_window_handle)
+pub fn Window::is_occluded(self : Window) -> Bool {
+  self.maybe_wait_on_main(fn(window) {
+    window_occluded(window.raw_window_handle)
+  })
 }
 
 ///|

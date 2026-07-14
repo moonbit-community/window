@@ -2,32 +2,36 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-FACADE="$ROOT/macos/window_threading.mbt"
-WINDOW="$ROOT/macos/window.mbt"
 NATIVE="$ROOT/macos/native_appkit_main_thread.m"
 FFI="$ROOT/macos/ffi.mbt"
 
-unexpected_files="$(rg -n '^pub fn Window::' "$ROOT/macos" -g '*.mbt' \
-  -g '!window_threading.mbt' -g '!window.mbt' || true)"
-if [[ -n "$unexpected_files" ]]; then
-  echo "public Window methods must use the main-thread facade:" >&2
-  echo "$unexpected_files" >&2
+if [[ -e "$ROOT/macos/window_threading.mbt" ]]; then
+  echo "Window methods must keep dispatch and implementation in one definition" >&2
   exit 1
 fi
 
-unexpected_window="$(rg -n '^pub fn Window::' "$WINDOW" \
-  | grep -Ev 'Window::(Window|id|rwh_06_display_handle|display_handle)\(' || true)"
-if [[ -n "$unexpected_window" ]]; then
-  echo "thread-bound Window methods must move behind window_threading.mbt:" >&2
-  echo "$unexpected_window" >&2
+mirrored_methods="$(rg -n '^(pub )?fn Window::[A-Za-z0-9_]+_on_main\(' \
+  "$ROOT/macos" -g '*.mbt' || true)"
+if [[ -n "$mirrored_methods" ]]; then
+  echo "Window methods must not use one-to-one _on_main mirrors:" >&2
+  echo "$mirrored_methods" >&2
   exit 1
 fi
 
-public_count="$(rg -c '^pub fn Window::' "$FACADE")"
-dispatch_count="$(rg -c 'self\.maybe_wait_on_main(_result)?\(' "$FACADE")"
-if [[ "$public_count" != "$dispatch_count" ]]; then
-  echo "every public Window facade method must synchronously dispatch to main" >&2
-  echo "public methods: $public_count, dispatch calls: $dispatch_count" >&2
+dispatch_violations="$(perl -0777 -ne '
+  while (m{(^///\|.*?)(?=^///\||\z)}msg) {
+    $block = $1;
+    next unless $block =~ /^pub fn Window::([A-Za-z0-9_]+)/m;
+    $name = $1;
+    next if $name =~ /^(Window|id|rwh_06_display_handle|display_handle)$/;
+    $count = () = $block =~ /self\.maybe_wait_on_main(?:_result)?\(/g;
+    print "$ARGV: Window::$name has $count main-thread dispatch calls\n"
+      unless $count == 1;
+  }
+' "$ROOT"/macos/*.mbt)"
+if [[ -n "$dispatch_violations" ]]; then
+  echo "every thread-bound public Window method must dispatch exactly once:" >&2
+  echo "$dispatch_violations" >&2
   exit 1
 fi
 
