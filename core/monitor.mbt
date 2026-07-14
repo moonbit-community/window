@@ -34,15 +34,112 @@ pub fn VideoMode::refresh_rate_millihertz(self : VideoMode) -> Int? {
 }
 
 ///|
+/// Backend operations used by `MonitorHandle`.
+pub(open) trait MonitorHandleProvider {
+  fn id(Self) -> (UInt64, UInt64)
+  fn native_id(Self) -> UInt64
+  fn name(Self) -> String?
+  fn position(Self) -> @dpi.PhysicalPosition
+  fn surface_size(Self) -> @dpi.PhysicalSize
+  fn scale_factor(Self) -> Double
+  fn current_video_mode(Self) -> VideoMode?
+  fn video_modes(Self) -> Array[VideoMode]
+}
+
+///|
+priv struct SnapshotMonitorHandleProvider {
+  current_video_mode_ : VideoMode?
+  name_ : String?
+  native_id_ : UInt64
+  position_ : @dpi.PhysicalPosition
+  surface_size_ : @dpi.PhysicalSize
+  scale_factor_ : Double
+  video_modes_ : Array[VideoMode]
+}
+
+///|
+impl MonitorHandleProvider for SnapshotMonitorHandleProvider with fn id(self) {
+  (0, self.native_id_)
+}
+
+///|
+impl MonitorHandleProvider for SnapshotMonitorHandleProvider with fn native_id(
+  self,
+) {
+  self.native_id_
+}
+
+///|
+impl MonitorHandleProvider for SnapshotMonitorHandleProvider with fn name(self) {
+  self.name_
+}
+
+///|
+impl MonitorHandleProvider for SnapshotMonitorHandleProvider with fn position(
+  self,
+) {
+  self.position_
+}
+
+///|
+impl MonitorHandleProvider for SnapshotMonitorHandleProvider with fn surface_size(
+  self,
+) {
+  self.surface_size_
+}
+
+///|
+impl MonitorHandleProvider for SnapshotMonitorHandleProvider with fn scale_factor(
+  self,
+) {
+  self.scale_factor_
+}
+
+///|
+impl MonitorHandleProvider for SnapshotMonitorHandleProvider with fn current_video_mode(
+  self,
+) {
+  self.current_video_mode_
+}
+
+///|
+impl MonitorHandleProvider for SnapshotMonitorHandleProvider with fn video_modes(
+  self,
+) {
+  self.video_modes_
+}
+
+///|
 pub struct MonitorHandle {
-  priv current_video_mode_ : VideoMode?
-  priv name_ : String?
-  priv native_id_ : UInt64
-  priv position_ : @dpi.PhysicalPosition
-  priv surface_size_ : @dpi.PhysicalSize
-  priv scale_factor_ : Double
-  priv video_modes_ : Array[VideoMode]
-} derive(Eq, Debug)
+  priv provider : &MonitorHandleProvider
+}
+
+///|
+pub impl Eq for MonitorHandle with fn equal(self, other) {
+  self.provider.id() == other.provider.id()
+}
+
+///|
+pub impl Eq for MonitorHandle with fn not_equal(self, other) {
+  self.provider.id() != other.provider.id()
+}
+
+///|
+pub impl Debug for MonitorHandle with fn to_repr(self) {
+  let (high, low) = self.provider.id()
+  Repr::opaque_(
+    "MonitorHandle",
+    Repr::literal(high.to_string() + ":" + low.to_string()),
+  )
+}
+
+///|
+/// Construct a monitor handle from a backend provider.
+pub fn MonitorHandle::from_provider(
+  provider : &MonitorHandleProvider,
+) -> MonitorHandle {
+  { provider, }
+}
 
 ///|
 pub fn MonitorHandle::MonitorHandle(
@@ -54,52 +151,55 @@ pub fn MonitorHandle::MonitorHandle(
   current_video_mode : VideoMode?,
   video_modes : Array[VideoMode],
 ) -> MonitorHandle {
-  {
-    current_video_mode_: current_video_mode,
-    name_: name,
-    native_id_: native_id,
-    position_: position,
-    surface_size_: surface_size,
-    scale_factor_: if scale_factor > 0.0 {
-      scale_factor
-    } else {
-      1.0
-    },
-    video_modes_: video_modes,
-  }
+  MonitorHandle::from_provider(
+    {
+      current_video_mode_: current_video_mode,
+      name_: name,
+      native_id_: native_id,
+      position_: position,
+      surface_size_: surface_size,
+      scale_factor_: if scale_factor > 0.0 {
+        scale_factor
+      } else {
+        1.0
+      },
+      video_modes_: video_modes,
+    }
+    as &MonitorHandleProvider,
+  )
 }
 
 ///|
 pub fn MonitorHandle::native_id(self : MonitorHandle) -> UInt64 {
-  self.native_id_
+  self.provider.native_id()
 }
 
 ///|
 pub fn MonitorHandle::name(self : MonitorHandle) -> String? {
-  self.name_
+  self.provider.name()
 }
 
 ///|
 pub fn MonitorHandle::position(self : MonitorHandle) -> @dpi.PhysicalPosition {
-  self.position_
+  self.provider.position()
 }
 
 ///|
 pub fn MonitorHandle::surface_size(self : MonitorHandle) -> @dpi.PhysicalSize {
-  self.surface_size_
+  self.provider.surface_size()
 }
 
 ///|
 pub fn MonitorHandle::scale_factor(self : MonitorHandle) -> Double {
-  self.scale_factor_
+  self.provider.scale_factor()
 }
 
 ///|
 pub fn MonitorHandle::current_video_mode(self : MonitorHandle) -> VideoMode? {
-  self.current_video_mode_
+  self.provider.current_video_mode()
 }
 
 ///|
 pub fn MonitorHandle::video_modes(self : MonitorHandle) -> Array[VideoMode] {
-  self.video_modes_
+  self.provider.video_modes()
 }

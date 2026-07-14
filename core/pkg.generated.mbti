@@ -709,16 +709,19 @@ pub impl Show for ModifiersState
 
 pub struct MonitorHandle {
   // private fields
-} derive(Eq, @debug.Debug)
+}
 pub fn MonitorHandle::MonitorHandle(UInt64, String?, @dpi.PhysicalPosition, @dpi.PhysicalSize, Double, VideoMode?, Array[VideoMode]) -> Self
 pub fn MonitorHandle::current_video_mode(Self) -> VideoMode?
+pub fn MonitorHandle::from_provider(&MonitorHandleProvider) -> Self
 pub fn MonitorHandle::name(Self) -> String?
 pub fn MonitorHandle::native_id(Self) -> UInt64
 pub fn MonitorHandle::position(Self) -> @dpi.PhysicalPosition
 pub fn MonitorHandle::scale_factor(Self) -> Double
 pub fn MonitorHandle::surface_size(Self) -> @dpi.PhysicalSize
 pub fn MonitorHandle::video_modes(Self) -> Array[VideoMode]
+pub impl Eq for MonitorHandle
 pub impl Show for MonitorHandle
+pub impl @debug.Debug for MonitorHandle
 
 pub(all) enum MouseButton {
   Left
@@ -1519,6 +1522,17 @@ pub impl Show for WinitWindowEvent
 // Type aliases
 
 // Traits
+pub(open) trait MonitorHandleProvider {
+  fn id(Self) -> (UInt64, UInt64)
+  fn native_id(Self) -> UInt64
+  fn name(Self) -> String?
+  fn position(Self) -> @dpi.PhysicalPosition
+  fn surface_size(Self) -> @dpi.PhysicalSize
+  fn scale_factor(Self) -> Double
+  fn current_video_mode(Self) -> VideoMode?
+  fn video_modes(Self) -> Array[VideoMode]
+}
+
 pub(open) trait WindowCursorHittest {
   fn set_cursor_hittest(Self, Bool) -> Unit raise RequestError
 }

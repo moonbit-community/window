@@ -251,7 +251,7 @@ type NativeWindow
 type NotificationObserver
 
 ///|
-impl Debug for NotificationObserver with to_repr(_self) {
+impl Debug for NotificationObserver with fn to_repr(_self) {
   Repr::opaque_("NotificationObserver", Repr::literal("<appkit>"))
 }
 
@@ -259,12 +259,15 @@ impl Debug for NotificationObserver with to_repr(_self) {
 type MainRunLoopObserver
 
 ///|
-impl Debug for MainRunLoopObserver with to_repr(_self) {
+impl Debug for MainRunLoopObserver with fn to_repr(_self) {
   Repr::opaque_("MainRunLoopObserver", Repr::literal("<appkit>"))
 }
 
 ///|
 type NativeDisplayMode
+
+///|
+priv type NativeDisplayModeList
 
 ///|
 priv type NativeCfObject
@@ -273,19 +276,19 @@ priv type NativeCfObject
 priv type NativeObjcObject
 
 ///|
-impl Eq for NativeDisplayMode with equal(self, other) {
+impl Eq for NativeDisplayMode with fn equal(self, other) {
   native_monitor_display_mode_identity(self) ==
   native_monitor_display_mode_identity(other)
 }
 
 ///|
-impl Eq for NativeDisplayMode with not_equal(self, other) {
+impl Eq for NativeDisplayMode with fn not_equal(self, other) {
   native_monitor_display_mode_identity(self) !=
   native_monitor_display_mode_identity(other)
 }
 
 ///|
-impl Debug for NativeDisplayMode with to_repr(self) {
+impl Debug for NativeDisplayMode with fn to_repr(self) {
   Repr::opaque_(
     "NativeDisplayMode",
     Repr::literal("0x" + native_monitor_display_mode_identity(self).to_string()),
@@ -293,17 +296,17 @@ impl Debug for NativeDisplayMode with to_repr(self) {
 }
 
 ///|
-impl Eq for NativeWindow with equal(self, other) {
+impl Eq for NativeWindow with fn equal(self, other) {
   appkit_window_identity(self) == appkit_window_identity(other)
 }
 
 ///|
-impl Eq for NativeWindow with not_equal(self, other) {
+impl Eq for NativeWindow with fn not_equal(self, other) {
   appkit_window_identity(self) != appkit_window_identity(other)
 }
 
 ///|
-impl Debug for NativeWindow with to_repr(self) {
+impl Debug for NativeWindow with fn to_repr(self) {
   Repr::opaque_(
     "NativeWindow",
     Repr::literal("0x" + appkit_window_identity(self).to_string()),
@@ -618,13 +621,28 @@ extern "C" fn native_monitor_copy_current_display_mode_handle(
 ) -> NativeDisplayMode = "mbw_copy_current_display_mode_handle"
 
 ///|
-extern "C" fn native_monitor_copy_display_mode_count(monitor_id : UInt) -> Int = "mbw_copy_display_mode_count"
+extern "C" fn native_monitor_copy_display_mode_list(
+  monitor_id : UInt,
+) -> NativeDisplayModeList = "mbw_copy_display_mode_list"
 
 ///|
-extern "C" fn native_monitor_copy_display_mode_handle_at(
-  monitor_id : UInt,
+#borrow(mode_list)
+extern "C" fn native_monitor_display_mode_list_count(
+  mode_list : NativeDisplayModeList,
+) -> Int = "mbw_display_mode_list_count"
+
+///|
+#borrow(mode_list)
+extern "C" fn native_monitor_display_mode_list_mode_at(
+  mode_list : NativeDisplayModeList,
   index : Int,
-) -> NativeDisplayMode = "mbw_copy_display_mode_handle_at"
+) -> NativeDisplayMode = "mbw_display_mode_list_mode_at"
+
+///|
+#borrow(mode_list)
+extern "C" fn native_monitor_release_display_mode_list(
+  mode_list : NativeDisplayModeList,
+) -> Unit = "mbw_release_display_mode_list"
 
 ///|
 #borrow(mode_handle)
@@ -689,6 +707,14 @@ extern "C" fn native_cg_display_create_uuid_from_display_id(
 ///|
 #borrow(handle)
 extern "C" fn native_cf_object_handle(handle : NativeCfObject) -> UInt64 = "mbw_cf_object_handle"
+
+///|
+#borrow(handle)
+extern "C" fn native_cf_uuid_high(handle : NativeCfObject) -> UInt64 = "mbw_cf_uuid_high"
+
+///|
+#borrow(handle)
+extern "C" fn native_cf_uuid_low(handle : NativeCfObject) -> UInt64 = "mbw_cf_uuid_low"
 
 ///|
 #borrow(handle)

@@ -47,6 +47,35 @@ void mbw_cf_object_release(MBWCfObjectHandle *handle) {
   mbw_cf_object_handle_release_object(handle);
 }
 
+static uint64_t mbw_cf_uuid_half(MBWCfObjectHandle *handle, int32_t offset) {
+  if (handle == NULL || handle->object == NULL ||
+      CFGetTypeID(handle->object) != CFUUIDGetTypeID()) {
+    return 0;
+  }
+  CFUUIDBytes bytes = CFUUIDGetUUIDBytes((CFUUIDRef)handle->object);
+  const uint8_t values[16] = {
+      bytes.byte0,  bytes.byte1,  bytes.byte2,  bytes.byte3,
+      bytes.byte4,  bytes.byte5,  bytes.byte6,  bytes.byte7,
+      bytes.byte8,  bytes.byte9,  bytes.byte10, bytes.byte11,
+      bytes.byte12, bytes.byte13, bytes.byte14, bytes.byte15,
+  };
+  uint64_t value = 0;
+  for (int32_t index = offset; index < offset + 8; index++) {
+    value = (value << 8) | values[index];
+  }
+  return value;
+}
+
+MOONBIT_FFI_EXPORT
+uint64_t mbw_cf_uuid_high(MBWCfObjectHandle *handle) {
+  return mbw_cf_uuid_half(handle, 0);
+}
+
+MOONBIT_FFI_EXPORT
+uint64_t mbw_cf_uuid_low(MBWCfObjectHandle *handle) {
+  return mbw_cf_uuid_half(handle, 8);
+}
+
 int32_t mbw_cg_active_display_count(void) {
   uint32_t count = 0;
   CGError err = CGGetActiveDisplayList(0, NULL, &count);
@@ -126,6 +155,10 @@ typedef struct {
   CGDisplayModeRef mode;
 } MBWDisplayModeHandle;
 
+typedef struct {
+  CFArrayRef modes;
+} MBWDisplayModeListHandle;
+
 static void mbw_display_mode_handle_release_mode(MBWDisplayModeHandle *handle) {
   if (handle == NULL || handle->mode == NULL) {
     return;
@@ -142,6 +175,26 @@ static MBWDisplayModeHandle *mbw_display_mode_handle_create(CGDisplayModeRef mod
   MBWDisplayModeHandle *handle = (MBWDisplayModeHandle *)moonbit_make_external_object(
       mbw_display_mode_handle_finalize, sizeof(MBWDisplayModeHandle));
   handle->mode = mode;
+  return handle;
+}
+
+static void mbw_display_mode_list_release_modes(MBWDisplayModeListHandle *handle) {
+  if (handle == NULL || handle->modes == NULL) {
+    return;
+  }
+  CFRelease(handle->modes);
+  handle->modes = NULL;
+}
+
+static void mbw_display_mode_list_finalize(void *ptr) {
+  mbw_display_mode_list_release_modes((MBWDisplayModeListHandle *)ptr);
+}
+
+static MBWDisplayModeListHandle *mbw_display_mode_list_create(CFArrayRef modes) {
+  MBWDisplayModeListHandle *handle =
+      (MBWDisplayModeListHandle *)moonbit_make_external_object(
+          mbw_display_mode_list_finalize, sizeof(MBWDisplayModeListHandle));
+  handle->modes = modes;
   return handle;
 }
 
@@ -209,16 +262,19 @@ MBWDisplayModeHandle *mbw_copy_current_display_mode_handle(uint32_t display_id) 
   return mbw_display_mode_handle_create(mode);
 }
 
-int32_t mbw_copy_display_mode_count(uint32_t display_id) {
-  if (display_id == 0) {
+MBWDisplayModeListHandle *mbw_copy_display_mode_list(uint32_t display_id) {
+  CFArrayRef modes = NULL;
+  if (display_id != 0) {
+    modes = CGDisplayCopyAllDisplayModes((CGDirectDisplayID)display_id, NULL);
+  }
+  return mbw_display_mode_list_create(modes);
+}
+
+int32_t mbw_display_mode_list_count(MBWDisplayModeListHandle *handle) {
+  if (handle == NULL || handle->modes == NULL) {
     return 0;
   }
-  CFArrayRef modes = CGDisplayCopyAllDisplayModes((CGDirectDisplayID)display_id, NULL);
-  if (modes == NULL) {
-    return 0;
-  }
-  CFIndex count = CFArrayGetCount(modes);
-  CFRelease(modes);
+  CFIndex count = CFArrayGetCount(handle->modes);
   if (count <= 0) {
     return 0;
   }
@@ -228,25 +284,25 @@ int32_t mbw_copy_display_mode_count(uint32_t display_id) {
   return (int32_t)count;
 }
 
-MBWDisplayModeHandle *mbw_copy_display_mode_handle_at(uint32_t display_id, int32_t index) {
-  if (display_id == 0 || index < 0) {
+MBWDisplayModeHandle *mbw_display_mode_list_mode_at(
+    MBWDisplayModeListHandle *handle, int32_t index) {
+  if (handle == NULL || handle->modes == NULL || index < 0) {
     return mbw_display_mode_handle_create(NULL);
   }
-  CFArrayRef modes = CGDisplayCopyAllDisplayModes((CGDirectDisplayID)display_id, NULL);
-  if (modes == NULL) {
-    return mbw_display_mode_handle_create(NULL);
-  }
-  CFIndex count = CFArrayGetCount(modes);
+  CFIndex count = CFArrayGetCount(handle->modes);
   if ((CFIndex)index >= count) {
-    CFRelease(modes);
     return mbw_display_mode_handle_create(NULL);
   }
-  CGDisplayModeRef mode = (CGDisplayModeRef)CFArrayGetValueAtIndex(modes, (CFIndex)index);
+  CGDisplayModeRef mode =
+      (CGDisplayModeRef)CFArrayGetValueAtIndex(handle->modes, (CFIndex)index);
   if (mode != NULL) {
     CFRetain(mode);
   }
-  CFRelease(modes);
   return mbw_display_mode_handle_create(mode);
+}
+
+void mbw_release_display_mode_list(MBWDisplayModeListHandle *handle) {
+  mbw_display_mode_list_release_modes(handle);
 }
 
 uint64_t mbw_display_mode_identity(MBWDisplayModeHandle *mode_handle) {

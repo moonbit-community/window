@@ -82,3 +82,34 @@ test "primary_monitor_has_ns_screen_handle" {
     None => ()
   }
 }
+
+///|
+test "primary monitor video modes remain available on demand" {
+  match primary_monitor_for_test() {
+    Some(monitor) => {
+      let modes = monitor.video_modes()
+      assert_false(modes.is_empty())
+      match monitor.current_video_mode() {
+        Some(current_mode) =>
+          assert_true(modes.search_by(mode => mode == current_mode) is Some(_))
+        None => ()
+      }
+    }
+    None => fail("primary monitor unavailable")
+  }
+}
+
+///|
+test "available monitor handles remain stable across 90 syncs" {
+  let baseline = available_monitors()
+  assert_false(baseline.is_empty())
+  for _ in 0..<90 {
+    let current = available_monitors()
+    assert_eq(current.length(), baseline.length())
+    for monitor in current {
+      assert_true(
+        baseline.search_by(existing => existing == monitor) is Some(_),
+      )
+    }
+  }
+}
