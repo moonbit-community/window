@@ -568,6 +568,27 @@ fn event_loop_creation_thread_error(
 }
 
 ///|
+fn event_loop_run_thread_error(on_main_thread : Bool) -> @core.EventLoopError? {
+  if !on_main_thread {
+    Some(
+      @core.EventLoopError::os(
+        "On macOS, EventLoop must be run on the main thread",
+      ),
+    )
+  } else {
+    None
+  }
+}
+
+///|
+fn ensure_event_loop_run_thread() -> Unit raise @core.EventLoopError {
+  match event_loop_run_thread_error(is_main_thread()) {
+    Some(error) => raise error
+    None => ()
+  }
+}
+
+///|
 pub fn EventLoop::try_new_with_platform_attributes(
   attributes : @core.PlatformEventLoopAttributes,
 ) -> EventLoop raise @core.EventLoopError {
@@ -744,6 +765,7 @@ pub fn[A : ApplicationHandler] EventLoop::try_run_app_on_demand(
   self : EventLoop,
   app : A,
 ) -> Unit raise @core.EventLoopError {
+  ensure_event_loop_run_thread()
   if app_state_is_running() {
     raise RecreationAttempt
   }
@@ -791,16 +813,18 @@ pub fn[A : ApplicationHandler] EventLoop::pump_app_events(
   timeout_ms : Int?,
   app : A,
 ) -> @core.PumpStatus {
-  self.try_pump_app_events(timeout_ms, app)
+  try! self.try_pump_app_events(timeout_ms, app)
 }
 
 ///|
-/// See `pump_app_events()`.
+/// See `pump_app_events()`. Returns an `EventLoopError` when called outside the
+/// process main thread.
 pub fn[A : ApplicationHandler] EventLoop::try_pump_app_events(
   self : EventLoop,
   timeout_ms : Int?,
   app : A,
-) -> @core.PumpStatus {
+) -> @core.PumpStatus raise @core.EventLoopError {
+  ensure_event_loop_run_thread()
   app_state_set_dispatch_handler(app, self.as_active())
   let result = (fn() -> @core.PumpStatus {
     app_state_set_handler_in_use(false)
@@ -840,6 +864,7 @@ pub fn[A : ApplicationHandler] EventLoop::try_run_app(
   self : EventLoop,
   app : A,
 ) -> Unit raise @core.EventLoopError {
+  ensure_event_loop_run_thread()
   app_state_set_dispatch_handler(app, self.as_active())
   let result = (fn() -> Unit raise @core.EventLoopError {
     self.try_start_running()

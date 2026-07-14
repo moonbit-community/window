@@ -101,9 +101,11 @@ Current control:
 
 - macOS, core, and dpi tests execute through `moon test --release` in
   `scripts/check_ci.sh`.
-- Event-loop construction checks the process main thread before initializing
-  `NSApplication`, observers, or run-loop state. The cross-platform
-  `with_any_thread` preference cannot bypass this AppKit requirement.
+- Event-loop construction and every run entry point check the process main
+  thread before initializing or running `NSApplication`, observers, or run-loop
+  state. The cross-platform `with_any_thread` preference cannot bypass this
+  AppKit requirement. `scripts/check_event_loop_thread_boundary.sh` keeps all
+  three run entry points behind the shared runtime guard.
 - Public `Window` methods that touch AppKit or mutable window state keep their
   implementation and synchronous main-thread dispatch in one definition at the
   relevant domain implementation site. `dispatch_sync_f` transfers the complete

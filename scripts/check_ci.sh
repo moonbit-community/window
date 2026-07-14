@@ -11,6 +11,7 @@ moon test --release
 moon build
 scripts/check_examples_build.sh
 scripts/check_ffi_surface.sh
+scripts/check_event_loop_thread_boundary.sh
 scripts/check_monitor_thread_boundary.sh
 scripts/check_window_thread_boundary.sh
 
