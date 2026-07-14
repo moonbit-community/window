@@ -40,12 +40,12 @@ static void mbw_query_monitor_scale_factor(void *raw_context) {
 double mbw_monitor_backing_scale_factor(uint32_t display_id) {
   MBWMonitorScaleFactorContext context = {
       .display_id = (CGDirectDisplayID)display_id,
-      .scale_factor = 1.0,
+      .scale_factor = 0.0,
   };
   if (pthread_main_np() != 0) {
     mbw_query_monitor_scale_factor(&context);
   } else {
     dispatch_sync_f(dispatch_get_main_queue(), &context, mbw_query_monitor_scale_factor);
   }
-  return context.scale_factor > 0.0 ? context.scale_factor : 1.0;
+  return context.scale_factor;
 }

@@ -3,6 +3,7 @@
 #include <CoreVideo/CoreVideo.h>
 #include <ApplicationServices/ApplicationServices.h>
 #include <moonbit.h>
+#include <pthread.h>
 #include <stdint.h>
 #include <stdlib.h>
 
@@ -378,6 +379,37 @@ int32_t mbw_display_refresh_rate_millihertz(uint32_t display_id) {
     return INT32_MAX;
   }
   return (int32_t)(refresh_rate * 1000);
+}
+
+typedef struct {
+  uint32_t display_id;
+  int32_t completed;
+  int32_t ran_off_main_thread;
+} MBWDisplayRefreshRateThreadProbe;
+
+// White-box test hook; MoonBit callbacks must not run on a foreign thread.
+static void *mbw_probe_display_refresh_rate_off_main(void *raw_probe) {
+  MBWDisplayRefreshRateThreadProbe *probe = (MBWDisplayRefreshRateThreadProbe *)raw_probe;
+  probe->ran_off_main_thread = pthread_main_np() == 0;
+  (void)mbw_display_refresh_rate_millihertz(probe->display_id);
+  probe->completed = 1;
+  return NULL;
+}
+
+int32_t mbw_test_display_refresh_rate_off_main(uint32_t display_id) {
+  MBWDisplayRefreshRateThreadProbe probe = {
+      .display_id = display_id,
+      .completed = 0,
+      .ran_off_main_thread = 0,
+  };
+  pthread_t thread;
+  if (pthread_create(&thread, NULL, mbw_probe_display_refresh_rate_off_main, &probe) != 0) {
+    return 0;
+  }
+  if (pthread_join(thread, NULL) != 0) {
+    return 0;
+  }
+  return probe.completed && probe.ran_off_main_thread;
 }
 
 void mbw_release_display_mode_handle(MBWDisplayModeHandle *mode_handle) {

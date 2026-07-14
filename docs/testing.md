@@ -14,6 +14,7 @@ The gate runs:
 - `moon build`
 - `scripts/check_examples_build.sh`
 - `scripts/check_ffi_surface.sh`
+- `scripts/check_monitor_thread_boundary.sh`
 
 `moon test --release` is intentional for this repository. On macOS, the default
 debug test runner can still execute generated native tests through a `tcc -run`

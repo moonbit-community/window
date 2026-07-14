@@ -4,6 +4,11 @@ fn primary_monitor_for_test() -> @core.MonitorHandle? {
 }
 
 ///|
+extern "C" fn native_test_display_refresh_rate_off_main(
+  monitor_id : UInt,
+) -> Int = "mbw_test_display_refresh_rate_off_main"
+
+///|
 test "uuid_stable" {
   let primary_id = cg_main_display_id()
   assert_true(primary_id > (0 : Int).to_uint64())
@@ -84,11 +89,29 @@ test "primary_monitor_has_ns_screen_handle" {
 }
 
 ///|
-test "primary monitor has a positive AppKit backing scale factor" {
+test "primary monitor resolves its AppKit backing scale factor" {
+  assert_eq(
+    native_monitor_backing_scale_factor((10000 : Int).reinterpret_as_uint()),
+    0.0,
+  )
   match primary_monitor_for_test() {
-    Some(monitor) => assert_true(monitor.scale_factor() > 0.0)
+    Some(monitor) => {
+      let native_scale = native_monitor_backing_scale_factor(
+        monitor.native_id().to_uint(),
+      )
+      assert_true(native_scale > 0.0)
+      assert_eq(monitor.scale_factor(), native_scale)
+    }
     None => fail("primary monitor unavailable")
   }
+}
+
+///|
+test "display refresh fallback completes off the main thread" {
+  assert_eq(
+    native_test_display_refresh_rate_off_main(cg_main_display_id().to_uint()),
+    1,
+  )
 }
 
 ///|
