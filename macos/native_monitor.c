@@ -78,6 +78,7 @@ uint64_t mbw_cf_uuid_low(MBWCfObjectHandle *handle) {
   return mbw_cf_uuid_half(handle, 8);
 }
 
+MOONBIT_FFI_EXPORT
 int32_t mbw_cg_active_display_count(void) {
   uint32_t count = 0;
   CGError err = CGGetActiveDisplayList(0, NULL, &count);
@@ -90,6 +91,7 @@ int32_t mbw_cg_active_display_count(void) {
   return (int32_t)count;
 }
 
+MOONBIT_FFI_EXPORT
 uint32_t mbw_cg_active_display_id_at(int32_t index) {
   if (index < 0) {
     return 0;
@@ -117,16 +119,19 @@ uint32_t mbw_cg_active_display_id_at(int32_t index) {
   return display_id;
 }
 
+MOONBIT_FFI_EXPORT
 int32_t mbw_cg_display_bounds_x(uint32_t display_id) {
   CGRect bounds = CGDisplayBounds((CGDirectDisplayID)display_id);
   return (int32_t)bounds.origin.x;
 }
 
+MOONBIT_FFI_EXPORT
 int32_t mbw_cg_display_bounds_y(uint32_t display_id) {
   CGRect bounds = CGDisplayBounds((CGDirectDisplayID)display_id);
   return (int32_t)bounds.origin.y;
 }
 
+MOONBIT_FFI_EXPORT
 double mbw_cg_display_bounds_height(uint32_t display_id) {
   CGRect bounds = CGDisplayBounds((CGDirectDisplayID)display_id);
   return (double)bounds.size.height;
@@ -187,6 +192,7 @@ static MBWDisplayModeListHandle *mbw_display_mode_list_create(CFArrayRef modes) 
   return handle;
 }
 
+MOONBIT_FFI_EXPORT
 MBWDisplayModeHandle *mbw_find_display_mode_handle(uint32_t display_id, int32_t width,
                                                    int32_t height, int32_t bit_depth,
                                                    int32_t refresh_rate_millihertz) {
@@ -242,6 +248,7 @@ MBWDisplayModeHandle *mbw_find_display_mode_handle(uint32_t display_id, int32_t 
   return mbw_display_mode_handle_create(matched);
 }
 
+MOONBIT_FFI_EXPORT
 MBWDisplayModeHandle *mbw_copy_current_display_mode_handle(uint32_t display_id) {
   if (display_id == 0) {
     return mbw_display_mode_handle_create(NULL);
@@ -251,6 +258,7 @@ MBWDisplayModeHandle *mbw_copy_current_display_mode_handle(uint32_t display_id) 
   return mbw_display_mode_handle_create(mode);
 }
 
+MOONBIT_FFI_EXPORT
 MBWDisplayModeListHandle *mbw_copy_display_mode_list(uint32_t display_id) {
   CFArrayRef modes = NULL;
   if (display_id != 0) {
@@ -259,6 +267,7 @@ MBWDisplayModeListHandle *mbw_copy_display_mode_list(uint32_t display_id) {
   return mbw_display_mode_list_create(modes);
 }
 
+MOONBIT_FFI_EXPORT
 int32_t mbw_display_mode_list_count(MBWDisplayModeListHandle *handle) {
   if (handle == NULL || handle->modes == NULL) {
     return 0;
@@ -273,6 +282,7 @@ int32_t mbw_display_mode_list_count(MBWDisplayModeListHandle *handle) {
   return (int32_t)count;
 }
 
+MOONBIT_FFI_EXPORT
 MBWDisplayModeHandle *mbw_display_mode_list_mode_at(
     MBWDisplayModeListHandle *handle, int32_t index) {
   if (handle == NULL || handle->modes == NULL || index < 0) {
@@ -290,10 +300,12 @@ MBWDisplayModeHandle *mbw_display_mode_list_mode_at(
   return mbw_display_mode_handle_create(mode);
 }
 
+MOONBIT_FFI_EXPORT
 void mbw_release_display_mode_list(MBWDisplayModeListHandle *handle) {
   mbw_display_mode_list_release_modes(handle);
 }
 
+MOONBIT_FFI_EXPORT
 uint64_t mbw_display_mode_identity(MBWDisplayModeHandle *mode_handle) {
   if (mode_handle == NULL || mode_handle->mode == NULL) {
     return 0;
@@ -301,10 +313,12 @@ uint64_t mbw_display_mode_identity(MBWDisplayModeHandle *mode_handle) {
   return (uint64_t)(uintptr_t)mode_handle->mode;
 }
 
+MOONBIT_FFI_EXPORT
 int32_t mbw_display_mode_is_valid(MBWDisplayModeHandle *mode_handle) {
   return mode_handle != NULL && mode_handle->mode != NULL ? 1 : 0;
 }
 
+MOONBIT_FFI_EXPORT
 int32_t mbw_display_mode_width(MBWDisplayModeHandle *mode_handle) {
   if (mode_handle == NULL || mode_handle->mode == NULL) {
     return 0;
@@ -316,6 +330,7 @@ int32_t mbw_display_mode_width(MBWDisplayModeHandle *mode_handle) {
   return (int32_t)width;
 }
 
+MOONBIT_FFI_EXPORT
 int32_t mbw_display_mode_height(MBWDisplayModeHandle *mode_handle) {
   if (mode_handle == NULL || mode_handle->mode == NULL) {
     return 0;
@@ -327,6 +342,7 @@ int32_t mbw_display_mode_height(MBWDisplayModeHandle *mode_handle) {
   return (int32_t)height;
 }
 
+MOONBIT_FFI_EXPORT
 int32_t mbw_display_mode_bit_depth(MBWDisplayModeHandle *mode_handle) {
   if (mode_handle == NULL || mode_handle->mode == NULL) {
     return 0;
@@ -334,6 +350,7 @@ int32_t mbw_display_mode_bit_depth(MBWDisplayModeHandle *mode_handle) {
   return mbw_display_mode_bit_depth_ref(mode_handle->mode);
 }
 
+MOONBIT_FFI_EXPORT
 int32_t mbw_display_mode_refresh_rate_millihertz(MBWDisplayModeHandle *mode_handle) {
   if (mode_handle == NULL || mode_handle->mode == NULL) {
     return 0;
@@ -370,11 +387,13 @@ static int32_t mbw_refresh_rate_millihertz_from_cvtime(int32_t time_scale,
   return (int32_t)millihertz;
 }
 
+MOONBIT_FFI_EXPORT
 int32_t mbw_test_refresh_rate_millihertz_from_cvtime(int32_t time_scale,
                                                       int32_t time_value) {
   return mbw_refresh_rate_millihertz_from_cvtime(time_scale, time_value);
 }
 
+MOONBIT_FFI_EXPORT
 int32_t mbw_display_refresh_rate_millihertz(uint32_t display_id) {
   if (display_id == 0) {
     return 0;
@@ -415,6 +434,7 @@ static void *mbw_probe_display_refresh_rate_off_main(void *raw_probe) {
   return NULL;
 }
 
+MOONBIT_FFI_EXPORT
 int32_t mbw_test_display_refresh_rate_off_main(uint32_t display_id) {
   MBWDisplayRefreshRateThreadProbe probe = {
       .display_id = display_id,
@@ -431,10 +451,12 @@ int32_t mbw_test_display_refresh_rate_off_main(uint32_t display_id) {
   return probe.completed && probe.ran_off_main_thread;
 }
 
+MOONBIT_FFI_EXPORT
 void mbw_release_display_mode_handle(MBWDisplayModeHandle *mode_handle) {
   mbw_display_mode_handle_release_mode(mode_handle);
 }
 
+MOONBIT_FFI_EXPORT
 int32_t mbw_capture_display(uint32_t display_id) {
   if (display_id == 0) {
     return 0;
@@ -443,6 +465,7 @@ int32_t mbw_capture_display(uint32_t display_id) {
   return err == kCGErrorSuccess ? 1 : 0;
 }
 
+MOONBIT_FFI_EXPORT
 int32_t mbw_set_display_mode_handle(uint32_t display_id, MBWDisplayModeHandle *mode_handle) {
   if (display_id == 0 || mode_handle == NULL || mode_handle->mode == NULL) {
     return 0;
@@ -451,6 +474,7 @@ int32_t mbw_set_display_mode_handle(uint32_t display_id, MBWDisplayModeHandle *m
   return err == kCGErrorSuccess ? 1 : 0;
 }
 
+MOONBIT_FFI_EXPORT
 int32_t mbw_release_display_capture(uint32_t display_id) {
   if (display_id == 0) {
     return 0;

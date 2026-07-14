@@ -54,6 +54,7 @@ uint64_t mbw_appkit_window_level(int32_t kind) {
   }
 }
 
+MOONBIT_FFI_EXPORT
 int32_t mbw_cgs_set_window_background_blur_radius(int32_t window_number, int32_t radius) {
   typedef int32_t (*mbw_cgs_main_connection_id_t)(void);
   typedef int32_t (*mbw_cgs_set_blur_t)(int32_t, int32_t, int32_t);
@@ -319,6 +320,7 @@ uint64_t mbw_objc_msg_send_u64(uint64_t target_handle, uint64_t selector_handle)
   return send_fn(target, selector);
 }
 
+MOONBIT_FFI_EXPORT
 uint64_t mbw_objc_msg_send_u64_bytes(uint64_t target_handle, uint64_t selector_handle,
                                      const char *arg0) {
   if (target_handle == 0 || selector_handle == 0) {
@@ -344,6 +346,7 @@ uint64_t mbw_objc_msg_send_u64_u64(uint64_t target_handle, uint64_t selector_han
   return send_fn(target, selector, arg0);
 }
 
+MOONBIT_FFI_EXPORT
 uint64_t mbw_objc_msg_send_u64_u64_u64(uint64_t target_handle, uint64_t selector_handle,
                                        uint64_t arg0, uint64_t arg1) {
   if (target_handle == 0 || selector_handle == 0) {

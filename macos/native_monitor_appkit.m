@@ -59,6 +59,7 @@ static void mbw_copy_monitor_ns_screen(void *raw_context) {
   }
 }
 
+MOONBIT_FFI_EXPORT
 double mbw_monitor_backing_scale_factor(uint32_t display_id) {
   MBWMonitorScaleFactorContext context = {
       .display_id = (CGDirectDisplayID)display_id,

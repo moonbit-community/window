@@ -26,6 +26,18 @@ extract_exports() {
 }
 
 current_exports="$(extract_exports)"
+linked_symbols="$({
+  rg -o --no-filename '"mbw_[A-Za-z0-9_]+"' "$ROOT"/macos/*.mbt
+} | tr -d '"' | sort -u)"
+
+missing_linked_exports="$(
+  comm -23 <(printf '%s\n' "$linked_symbols") <(printf '%s\n' "$current_exports") || true
+)"
+if [[ -n "$missing_linked_exports" ]]; then
+  echo "MoonBit bindings reference native symbols without MOONBIT_FFI_EXPORT:" >&2
+  printf '%s\n' "$missing_linked_exports" >&2
+  exit 1
+fi
 
 if printf '%s\n' "$current_exports" | rg -q '^mbw_input_event_payload_'; then
   echo "found forbidden payload export symbol(s):" >&2
