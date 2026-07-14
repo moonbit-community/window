@@ -18,7 +18,6 @@ mbw_copy_display_mode_list
 mbw_copy_utf8_cstr_bytes
 mbw_create_window
 mbw_custom_cursor_create_rgba
-mbw_custom_cursor_create_webkit
 mbw_custom_cursor_objc_handle
 mbw_display_mode_bit_depth
 mbw_display_mode_height

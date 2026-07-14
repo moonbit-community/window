@@ -272,43 +272,6 @@ MBWCustomCursorHandle *mbw_custom_cursor_create_rgba(const uint8_t *rgba, int32_
 }
 
 MOONBIT_FFI_EXPORT
-MBWCustomCursorHandle *mbw_custom_cursor_create_webkit(const uint8_t *name,
-                                                       int32_t name_len) {
-  if (name == NULL || name_len <= 0) {
-    return mbw_custom_cursor_handle_create(nil);
-  }
-
-  @autoreleasepool {
-    NSString *cursor_name = [[[NSString alloc]
-        initWithBytes:name
-               length:(NSUInteger)name_len
-             encoding:NSUTF8StringEncoding] autorelease];
-    if (cursor_name == nil) {
-      return mbw_custom_cursor_handle_create(nil);
-    }
-
-    NSString *root = @"/System/Library/Frameworks/ApplicationServices.framework/Versions/A/Frameworks/"
-                     @"HIServices.framework/Versions/A/Resources/cursors";
-    NSString *cursor_path = [root stringByAppendingPathComponent:cursor_name];
-    NSString *pdf_path = [cursor_path stringByAppendingPathComponent:@"cursor.pdf"];
-    NSImage *image = [[NSImage alloc] initByReferencingFile:pdf_path];
-    if (image == nil) {
-      return mbw_custom_cursor_handle_create(nil);
-    }
-
-    NSString *info_path = [cursor_path stringByAppendingPathComponent:@"info.plist"];
-    NSDictionary *info = [NSDictionary dictionaryWithContentsOfFile:info_path];
-    CGFloat hotspot_x = [[info objectForKey:@"hotx"] doubleValue];
-    CGFloat hotspot_y = [[info objectForKey:@"hoty"] doubleValue];
-    NSCursor *cursor = [[NSCursor alloc]
-        initWithImage:image
-              hotSpot:NSMakePoint(hotspot_x, hotspot_y)];
-    [image release];
-    return mbw_custom_cursor_handle_create(cursor);
-  }
-}
-
-MOONBIT_FFI_EXPORT
 uint64_t mbw_custom_cursor_objc_handle(MBWCustomCursorHandle *cursor_handle) {
   if (cursor_handle == NULL || cursor_handle->cursor == nil) {
     return 0;

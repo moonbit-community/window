@@ -348,13 +348,6 @@ extern "C" fn appkit_custom_cursor_create_rgba(
 ) -> @core.CustomCursorHandle = "mbw_custom_cursor_create_rgba"
 
 ///|
-#borrow(name)
-extern "C" fn appkit_custom_cursor_create_webkit(
-  name : Bytes,
-  name_len : Int,
-) -> @core.CustomCursorHandle = "mbw_custom_cursor_create_webkit"
-
-///|
 #borrow(cursor_handle)
 extern "C" fn appkit_custom_cursor_objc_handle(
   cursor_handle : @core.CustomCursorHandle,

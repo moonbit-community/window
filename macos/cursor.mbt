@@ -176,48 +176,6 @@ fn native_cursor_fallback(cursor : UInt64, cursor_class : UInt64) -> UInt64 {
 }
 
 ///|
-let webkit_move_cursor_handle : Ref[@core.CustomCursorHandle?] = Ref(None)
-
-///|
-let webkit_cell_cursor_handle : Ref[@core.CustomCursorHandle?] = Ref(None)
-
-///|
-fn cached_webkit_cursor(
-  cache : Ref[@core.CustomCursorHandle?],
-  name : String,
-) -> UInt64 {
-  match cache.val {
-    Some(cached) => {
-      let cached_obj = appkit_custom_cursor_objc_handle(cached)
-      if cached_obj != (0 : Int).to_uint64() {
-        return cached_obj
-      }
-    }
-    None => ()
-  }
-  let name_bytes = @utf8.encode(name[:], bom=false)
-  let cursor_handle = appkit_custom_cursor_create_webkit(
-    name_bytes,
-    name_bytes.length(),
-  )
-  let cursor = appkit_custom_cursor_objc_handle(cursor_handle)
-  if cursor != (0 : Int).to_uint64() {
-    cache.val = Some(cursor_handle)
-  }
-  cursor
-}
-
-///|
-fn webkit_move_cursor() -> UInt64 {
-  cached_webkit_cursor(webkit_move_cursor_handle, "move")
-}
-
-///|
-fn webkit_cell_cursor() -> UInt64 {
-  cached_webkit_cursor(webkit_cell_cursor_handle, "cell")
-}
-
-///|
 fn cursor_from_icon(cursor : @core.CursorIcon) -> UInt64 {
   let ns_cursor_class = objc_runtime_class_handle("NSCursor")
   if ns_cursor_class == (0 : Int).to_uint64() {
@@ -241,7 +199,8 @@ fn cursor_from_icon(cursor : @core.CursorIcon) -> UInt64 {
       resolved = native_cursor_class_cursor(
         ns_cursor_class, "busyButClickableCursor",
       )
-    Cell => resolved = webkit_cell_cursor()
+    Cell =>
+      resolved = native_cursor_class_cursor(ns_cursor_class, "crosshairCursor")
     VerticalText => {
       resolved = native_cursor_class_cursor(
         ns_cursor_class, "IBeamCursorForVerticalLayout",
@@ -442,7 +401,8 @@ fn cursor_from_icon(cursor : @core.CursorIcon) -> UInt64 {
       resolved = native_cursor_class_cursor(ns_cursor_class, "IBeamCursor")
     Crosshair =>
       resolved = native_cursor_class_cursor(ns_cursor_class, "crosshairCursor")
-    AllScroll | Move => resolved = webkit_move_cursor()
+    AllScroll | Move =>
+      resolved = native_cursor_class_cursor(ns_cursor_class, "openHandCursor")
     NotAllowed =>
       resolved = native_cursor_class_cursor(
         ns_cursor_class, "operationNotAllowedCursor",

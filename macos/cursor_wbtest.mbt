@@ -88,6 +88,19 @@ test "all system cursor icons resolve to AppKit cursors" {
 }
 
 ///|
+test "move and cell cursors use public AppKit fallbacks" {
+  ignore(native_application_shared_handle())
+  let cursor_class = objc_runtime_class_handle("NSCursor")
+  let open_hand = native_cursor_class_cursor(cursor_class, "openHandCursor")
+  let crosshair = native_cursor_class_cursor(cursor_class, "crosshairCursor")
+  assert_true(open_hand != (0 : Int).to_uint64())
+  assert_true(crosshair != (0 : Int).to_uint64())
+  assert_eq(cursor_from_icon(Move), open_hand)
+  assert_eq(cursor_from_icon(AllScroll), open_hand)
+  assert_eq(cursor_from_icon(Cell), crosshair)
+}
+
+///|
 test "invisible cursor is cached" {
   ignore(native_application_shared_handle())
   let first = invisible_cursor()
