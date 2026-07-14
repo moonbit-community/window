@@ -502,6 +502,10 @@ pub fn EventLoopBuilder::with_activate_ignoring_other_apps(
 }
 
 ///|
+/// Set the cross-platform any-thread preference.
+///
+/// macOS does not support creating or running an AppKit event loop off the
+/// process main thread. Setting this to `true` does not relax that requirement.
 pub fn EventLoopBuilder::with_any_thread(
   self : EventLoopBuilder,
   any_thread : Bool,
@@ -547,13 +551,29 @@ pub fn EventLoop::new_with_platform_attributes(
 }
 
 ///|
+fn event_loop_creation_thread_error(
+  attributes : @core.PlatformEventLoopAttributes,
+  on_main_thread : Bool,
+) -> @core.EventLoopError? {
+  ignore(attributes)
+  if !on_main_thread {
+    Some(
+      @core.EventLoopError::os(
+        "On macOS, EventLoop creation must happen on the main thread",
+      ),
+    )
+  } else {
+    None
+  }
+}
+
+///|
 pub fn EventLoop::try_new_with_platform_attributes(
   attributes : @core.PlatformEventLoopAttributes,
 ) -> EventLoop raise @core.EventLoopError {
-  if !attributes.any_thread() && is_main_thread() == false {
-    raise @core.EventLoopError::os(
-      "EventLoop creation must happen on the main thread when any_thread=false",
-    )
+  match event_loop_creation_thread_error(attributes, is_main_thread()) {
+    Some(error) => raise error
+    None => ()
   }
   if event_loop_global_created.val {
     raise RecreationAttempt

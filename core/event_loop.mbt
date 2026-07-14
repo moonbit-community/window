@@ -129,6 +129,11 @@ pub fn PlatformEventLoopAttributes::activate_ignoring_other_apps(
 }
 
 ///|
+/// Set whether a backend may create its event loop away from the main thread.
+///
+/// Backends with a mandatory main-thread UI model may ignore this preference.
+/// In particular, macOS always requires `EventLoop` creation on the process
+/// main thread.
 pub fn PlatformEventLoopAttributes::with_any_thread(
   self : PlatformEventLoopAttributes,
   any_thread : Bool,

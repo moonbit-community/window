@@ -97,6 +97,9 @@ Current control:
 
 - macOS, core, and dpi tests execute through `moon test --release` in
   `scripts/check_ci.sh`.
+- Event-loop construction checks the process main thread before initializing
+  `NSApplication`, observers, or run-loop state. The cross-platform
+  `with_any_thread` preference cannot bypass this AppKit requirement.
 - Deferred callback queue mutation is isolated in
   `macos/app_state_deferred_queue.mbt`; AppState dispatch code uses the queue
   seam instead of directly pushing, searching, or removing deferred callbacks.

@@ -1,6 +1,6 @@
 # macOS Issue Tracker
 
-Last updated: 2026-06-30
+Last updated: 2026-07-14
 
 This tracker records macOS-only gaps and fix progress in this repository.
 
@@ -53,6 +53,7 @@ This tracker records macOS-only gaps and fix progress in this repository.
 | MBW-MAC-044 | Local architecture risk | Default-menu and unified-titlebar construction still moved owned `NSMenu`/`NSMenuItem`/`NSToolbar` objects through MoonBit as plain `UInt64` values with manual release discipline. | DONE | Added private `NativeObjcObject` external objects for short-lived owned Objective-C menu/toolbar objects; code now projects borrowed raw handles only for selector calls and uses idempotent release/finalizer cleanup |
 | MBW-MAC-045 | Local architecture risk | `CGDisplayCreateUUIDFromDisplayID` returned an owned `CFUUIDRef` to MoonBit as `UInt64`, relying on manual `CFRelease` discipline. | DONE | Added private `NativeCfObject` external object wrapper; `normalize_display_id` now borrows the raw `CFUUIDRef` only for `CGDisplayGetDisplayIDFromUUID` and releases the wrapper idempotently |
 | MBW-MAC-046 | GitHub issue #15 | macOS `keyDown:` stored pending IME key snapshots with `kind=26`, but native keyboard payload extraction only handled `kind=7`, so pressed keyboard events were dropped after IME forwarding. | DONE | `kind=26` now shares the `kind=7` keyboard payload extraction path in `native_appkit_window.m`; added a whitebox regression test that pending key snapshots forward `KeyboardInput(... Pressed ...)` |
+| MBW-MAC-047 | Local thread-safety audit / upstream parity | `with_any_thread(true)` bypassed the macOS event-loop creation guard, allowing background-thread `NSApplication`, observer, and run-loop initialization despite AppKit's main-thread requirement. | DONE | Event-loop construction now rejects every non-main thread before AppKit setup, regardless of `with_any_thread`; policy wbtests and an actual pthread worker-thread probe pass, matching the pinned winit backend's unconditional main-thread gate |
 | MBW-MAC-005 | GitHub issue #4 | `with_inner_size` not applied on window creation. | DONE | `with_inner_size` maps to `with_surface_size`, and creation path reads `attributes.surface_size()` |
 | MBW-MAC-006 | GitHub issue #2 | `flagsChanged` path crash due invalid character extraction. | DONE | Current path handles modifier events without unsafe text extraction in `flagsChanged` |
 | MBW-MAC-011 | GitHub issue #1 | `rwh_06_window_handle` should expose `NSView*` semantics instead of `NSWindow*`. | DONE | `Window::rwh_06_window_handle()` returns `raw_view_handle` first and only falls back to window handle |
