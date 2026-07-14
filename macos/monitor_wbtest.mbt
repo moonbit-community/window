@@ -103,7 +103,16 @@ test "primary_monitor_has_ns_screen_handle" {
   let monitor = primary_monitor_for_test()
   assert_true(monitor is Some(_))
   match monitor {
-    Some(monitor) => assert_true(monitor_ns_screen(monitor) is Some(_))
+    Some(monitor) =>
+      match monitor_ns_screen(monitor) {
+        Some(screen) => {
+          assert_true(screen.objc_handle() != (0 : Int).to_uint64())
+          screen.drop()
+          assert_eq(screen.objc_handle(), (0 : Int).to_uint64())
+          screen.drop()
+        }
+        None => fail("primary monitor NSScreen unavailable")
+      }
     None => ()
   }
 }

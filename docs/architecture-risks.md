@@ -157,8 +157,11 @@ Current control:
 
 - Public renderer integration uses explicit `Window::content_view_handle()`
   documentation.
-- Raw display/window/content-view/`NSScreen` accessors document that returned
-  handles are borrowed and must not be released by callers.
+- Raw display/window/content-view accessors document that returned handles are
+  borrowed and must not be released by callers. `monitor_ns_screen` instead
+  resolves on the AppKit main thread and returns a retained `NSScreenHandle`
+  snapshot whose external owner releases on the main thread; its raw pointer
+  projection is valid only while that handle remains alive.
 - Internal high-traffic registered AppKit window lookup has a
   `BorrowedObjcHandle` adapter at the cursor hittest seam. Owned native
   resources still use external objects with finalizers instead of plain
@@ -168,6 +171,8 @@ Required direction:
 
 - Keep raw handle APIs narrow and document whether a handle is borrowed,
   retained, stable, or only valid during a callback.
+- Treat `NSScreenHandle` as a display-configuration snapshot and resolve a new
+  handle after monitor reconfiguration rather than caching its raw pointer.
 - Do not represent owned native resources as plain `UInt64`; use external
   objects with finalizers and expose borrowed raw pointers only at the API edge.
 - Do not expose internal selectors such as `rawId` as renderer integration API.

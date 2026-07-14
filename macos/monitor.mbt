@@ -4,16 +4,6 @@
 // 1. We build monitor handles from CoreGraphics display IDs.
 // 2. Active displays are enumerated through small native primitives.
 
-fn normalize_display_id(display_id : UInt64) -> UInt64 {
-  let uuid = cg_display_create_uuid_from_display_id(display_id)
-  if !cf_object_valid(uuid) {
-    return (0 : Int).to_uint64()
-  }
-  let normalized = cg_display_get_display_id_from_uuid(cf_object_handle(uuid))
-  cf_object_release(uuid)
-  normalized
-}
-
 ///|
 fn native_find_display_mode_handle(
   monitor_id : UInt64,
@@ -144,67 +134,16 @@ fn native_release_display_capture(monitor_id : UInt64) -> Bool {
 }
 
 ///|
-fn native_monitor_ns_screen(monitor_id : UInt64) -> UInt64 {
+fn native_monitor_ns_screen(monitor_id : UInt64) -> NSScreenHandle? {
   if monitor_id == (0 : Int).to_uint64() {
-    return (0 : Int).to_uint64()
+    return None
   }
-  let normalized_monitor_id = normalize_display_id(monitor_id)
-  if normalized_monitor_id == (0 : Int).to_uint64() {
-    return (0 : Int).to_uint64()
+  let raw_screen = native_monitor_copy_ns_screen(monitor_id.to_uint())
+  if raw_screen == (0 : Int).to_uint64() {
+    None
+  } else {
+    Some({ object: appkit_objc_wrap_owned_object(raw_screen) })
   }
-  let ns_screen_class = objc_runtime_class_handle("NSScreen")
-  if ns_screen_class == (0 : Int).to_uint64() {
-    return (0 : Int).to_uint64()
-  }
-  let screens = appkit_objc_msg_send_u64(
-    ns_screen_class,
-    objc_runtime_selector_handle("screens"),
-  )
-  if screens == (0 : Int).to_uint64() {
-    return (0 : Int).to_uint64()
-  }
-  let count = appkit_objc_msg_send_i64(
-    screens,
-    objc_runtime_selector_handle("count"),
-  ).to_int()
-  if count <= 0 {
-    return (0 : Int).to_uint64()
-  }
-  let key = objc_nsstring_from_string("NSScreenNumber")
-  if key == (0 : Int).to_uint64() {
-    return (0 : Int).to_uint64()
-  }
-  let object_at_index = objc_runtime_selector_handle("objectAtIndex:")
-  let device_description = objc_runtime_selector_handle("deviceDescription")
-  let object_for_key = objc_runtime_selector_handle("objectForKey:")
-  let unsigned_int_value = objc_runtime_selector_handle("unsignedIntValue")
-  let mut index = 0
-  while index < count {
-    let screen = appkit_objc_msg_send_u64_u64(
-      screens,
-      object_at_index,
-      index.to_uint64(),
-    )
-    if screen != (0 : Int).to_uint64() {
-      let description = appkit_objc_msg_send_u64(screen, device_description)
-      if description != (0 : Int).to_uint64() {
-        let number = appkit_objc_msg_send_u64_u64(
-          description, object_for_key, key,
-        )
-        if number != (0 : Int).to_uint64() {
-          let screen_display_id = appkit_objc_msg_send_u64(
-            number, unsigned_int_value,
-          )
-          let normalized_screen_id = normalize_display_id(screen_display_id)
-          if normalized_screen_id == normalized_monitor_id {
-            return screen
-          }
-        }
-      }
-    }
-    index = index + 1
-  }
-  (0 : Int).to_uint64()
 }
 
 ///|
@@ -492,15 +431,45 @@ fn available_monitors() -> Array[@core.MonitorHandle] {
 // MoonBit adaptation: foreign type extension methods are not allowed, so expose a free function.
 
 ///|
-/// Return the borrowed `NSScreen` handle for this monitor when available.
+/// A retained snapshot of the `NSScreen` matched to a monitor.
 ///
-/// The returned Objective-C object is owned by AppKit. Callers must not release
-/// it or assume this integer represents an owned/retained object.
-pub fn monitor_ns_screen(monitor : @core.MonitorHandle) -> UInt64? {
-  let screen = native_monitor_ns_screen(monitor.native_id())
-  if screen == (0 : Int).to_uint64() {
-    None
-  } else {
-    Some(screen)
-  }
+/// Display reconfiguration can change which `NSScreen` corresponds to a
+/// monitor. Existing handles remain memory-valid, but callers should resolve a
+/// new handle after a reconfiguration event instead of treating this snapshot
+/// as the current screen indefinitely.
+pub struct NSScreenHandle {
+  priv object : NativeObjcObject
+}
+
+///|
+pub impl Debug for NSScreenHandle with fn to_repr(self) {
+  Repr::opaque_(
+    "NSScreenHandle",
+    Repr::literal("0x" + self.objc_handle().to_string()),
+  )
+}
+
+///|
+/// Borrow the underlying `NSScreen*`.
+///
+/// The pointer remains valid only while this `NSScreenHandle` is alive and has
+/// not been dropped. Keep the handle strongly reachable for every native call
+/// that uses the pointer, and do not release the pointer directly.
+pub fn NSScreenHandle::objc_handle(self : NSScreenHandle) -> UInt64 {
+  appkit_objc_owned_object_handle(self.object)
+}
+
+///|
+/// Release the retained `NSScreen` promptly. Repeated calls are safe.
+pub fn NSScreenHandle::drop(self : NSScreenHandle) -> Unit {
+  appkit_objc_release_object(self.object)
+}
+
+///|
+/// Resolve and retain the current `NSScreen` matched to this monitor.
+///
+/// Resolution always runs on the AppKit main thread. The returned handle owns
+/// a snapshot reference; call again after display reconfiguration.
+pub fn monitor_ns_screen(monitor : @core.MonitorHandle) -> NSScreenHandle? {
+  native_monitor_ns_screen(monitor.native_id())
 }

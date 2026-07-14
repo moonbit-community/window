@@ -8,7 +8,7 @@ import {
 }
 
 // Values
-pub fn monitor_ns_screen(@core.MonitorHandle) -> UInt64?
+pub fn monitor_ns_screen(@core.MonitorHandle) -> NSScreenHandle?
 
 // Errors
 
@@ -120,6 +120,13 @@ pub(all) struct MenuItemDescriptor {
   key_equivalent : KeyEquivalent?
 } derive(Eq, @debug.Debug)
 pub impl Show for MenuItemDescriptor
+
+pub struct NSScreenHandle {
+  // private fields
+}
+pub fn NSScreenHandle::drop(Self) -> Unit
+pub fn NSScreenHandle::objc_handle(Self) -> UInt64
+pub impl @debug.Debug for NSScreenHandle
 
 type NativeDisplayMode
 

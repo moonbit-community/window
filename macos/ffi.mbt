@@ -700,6 +700,9 @@ extern "C" fn native_monitor_display_refresh_rate_millihertz(
 extern "C" fn native_monitor_backing_scale_factor(monitor_id : UInt) -> Double = "mbw_monitor_backing_scale_factor"
 
 ///|
+extern "C" fn native_monitor_copy_ns_screen(monitor_id : UInt) -> UInt64 = "mbw_monitor_copy_ns_screen"
+
+///|
 #borrow(mode_handle)
 extern "C" fn native_monitor_release_display_mode_handle(
   mode_handle : NativeDisplayMode,

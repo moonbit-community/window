@@ -103,6 +103,9 @@ This library follows MoonBit `raise`-based error handling (typed errors), not
   AppKit-backed operations synchronously execute on the process main thread,
   matching winit's macOS behavior. Do not block the main thread while waiting
   for a worker that is calling a `Window` method.
+- `monitor_ns_screen(...)` returns a retained `NSScreenHandle` snapshot. Keep
+  that handle alive while using `objc_handle()`, and resolve it again after a
+  display reconfiguration.
 - `EventLoop::pump_app_events(...)` is for host-loop integration, not frame-by-frame rendering.
   For frame-driven apps, prefer `run_app()` with `ControlFlow::Poll` or `ControlFlow::WaitUntil`.
 - `Window::set_cursor_grab(@core.CursorGrabMode::Confined)` raises `@core.RequestError::NotSupported`.
