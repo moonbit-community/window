@@ -1,5 +1,6 @@
 #include <CoreGraphics/CoreGraphics.h>
 #include <CoreFoundation/CoreFoundation.h>
+#include <CoreVideo/CoreVideo.h>
 #include <ApplicationServices/ApplicationServices.h>
 #include <moonbit.h>
 #include <stdint.h>
@@ -128,19 +129,6 @@ int32_t mbw_cg_display_bounds_y(uint32_t display_id) {
 double mbw_cg_display_bounds_height(uint32_t display_id) {
   CGRect bounds = CGDisplayBounds((CGDirectDisplayID)display_id);
   return (double)bounds.size.height;
-}
-
-double mbw_cg_display_scale_factor(uint32_t display_id) {
-  CGRect bounds = CGDisplayBounds((CGDirectDisplayID)display_id);
-  double width = bounds.size.width;
-  if (width <= 0.0) {
-    return 1.0;
-  }
-  size_t pixel_width = CGDisplayPixelsWide((CGDirectDisplayID)display_id);
-  if (pixel_width == 0) {
-    return 1.0;
-  }
-  return ((double)pixel_width) / width;
 }
 
 static int32_t mbw_display_mode_bit_depth_ref(CGDisplayModeRef mode) {
@@ -358,6 +346,38 @@ int32_t mbw_display_mode_refresh_rate_millihertz(MBWDisplayModeHandle *mode_hand
     return INT32_MAX;
   }
   return (int32_t)(millihertz + 0.5);
+}
+
+int32_t mbw_display_refresh_rate_millihertz(uint32_t display_id) {
+  if (display_id == 0) {
+    return 0;
+  }
+
+  CVDisplayLinkRef display_link = NULL;
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+  CVReturn result =
+      CVDisplayLinkCreateWithCGDisplay((CGDirectDisplayID)display_id, &display_link);
+  if (result != kCVReturnSuccess || display_link == NULL) {
+    return 0;
+  }
+
+  CVTime time = CVDisplayLinkGetNominalOutputVideoRefreshPeriod(display_link);
+  CVDisplayLinkRelease(display_link);
+#pragma clang diagnostic pop
+
+  if ((time.flags & kCVTimeIsIndefinite) != 0 || time.timeScale <= 0 || time.timeValue <= 0) {
+    return 0;
+  }
+
+  int64_t refresh_rate = time.timeScale / time.timeValue;
+  if (refresh_rate <= 0) {
+    return 0;
+  }
+  if (refresh_rate > INT32_MAX / 1000) {
+    return INT32_MAX;
+  }
+  return (int32_t)(refresh_rate * 1000);
 }
 
 void mbw_release_display_mode_handle(MBWDisplayModeHandle *mode_handle) {

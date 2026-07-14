@@ -64,9 +64,6 @@ extern "C" fn native_cg_display_bounds_y(display : UInt) -> Int = "mbw_cg_displa
 extern "C" fn native_cg_display_bounds_height(display : UInt) -> Double = "mbw_cg_display_bounds_height"
 
 ///|
-extern "C" fn native_cg_display_scale_factor(display : UInt) -> Double = "mbw_cg_display_scale_factor"
-
-///|
 #borrow(call_closure)
 #owned(callback)
 extern "C" fn native_install_window_event_callback(
@@ -679,6 +676,14 @@ extern "C" fn native_monitor_display_mode_bit_depth(
 extern "C" fn native_monitor_display_mode_refresh_rate_millihertz(
   mode_handle : NativeDisplayMode,
 ) -> Int = "mbw_display_mode_refresh_rate_millihertz"
+
+///|
+extern "C" fn native_monitor_display_refresh_rate_millihertz(
+  monitor_id : UInt,
+) -> Int = "mbw_display_refresh_rate_millihertz"
+
+///|
+extern "C" fn native_monitor_backing_scale_factor(monitor_id : UInt) -> Double = "mbw_monitor_backing_scale_factor"
 
 ///|
 #borrow(mode_handle)

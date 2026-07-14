@@ -84,6 +84,14 @@ test "primary_monitor_has_ns_screen_handle" {
 }
 
 ///|
+test "primary monitor has a positive AppKit backing scale factor" {
+  match primary_monitor_for_test() {
+    Some(monitor) => assert_true(monitor.scale_factor() > 0.0)
+    None => fail("primary monitor unavailable")
+  }
+}
+
+///|
 test "primary monitor video modes remain available on demand" {
   match primary_monitor_for_test() {
     Some(monitor) => {

@@ -117,40 +117,7 @@ fn native_display_mode_refresh_rate_millihertz(
 
 ///|
 fn native_display_refresh_rate_millihertz(monitor_id : UInt64) -> Int {
-  let maximum_frames_per_second = objc_runtime_selector_handle(
-    "maximumFramesPerSecond",
-  )
-  let mut screen = native_monitor_ns_screen(monitor_id)
-  if screen == (0 : Int).to_uint64() {
-    let ns_screen_class = objc_runtime_class_handle("NSScreen")
-    if ns_screen_class == (0 : Int).to_uint64() {
-      return 0
-    }
-    screen = appkit_objc_msg_send_u64(
-      ns_screen_class,
-      objc_runtime_selector_handle("mainScreen"),
-    )
-  }
-  if screen == (0 : Int).to_uint64() ||
-    appkit_objc_msg_send_bool_u64(
-      screen,
-      objc_runtime_selector_handle("respondsToSelector:"),
-      maximum_frames_per_second,
-    ) ==
-    false {
-    return 0
-  }
-  let frames_per_second = appkit_objc_msg_send_i64(
-    screen, maximum_frames_per_second,
-  ).to_int()
-  if frames_per_second <= 0 {
-    return 0
-  }
-  if frames_per_second > 2_147_483 {
-    2_147_483_647
-  } else {
-    frames_per_second * 1000
-  }
+  native_monitor_display_refresh_rate_millihertz(monitor_id.to_uint())
 }
 
 ///|
@@ -355,7 +322,7 @@ fn current_display_video_mode(display_id : UInt64) -> @core.VideoMode? {
 
 ///|
 fn clamped_scale_factor(display_id : UInt64) -> Double {
-  let scale = cg_display_scale_factor(display_id)
+  let scale = native_monitor_backing_scale_factor(display_id.to_uint())
   if scale > 0.0 {
     scale
   } else {

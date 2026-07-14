@@ -9,6 +9,7 @@ supported_targets = "native"
 options(
   "native-stub": [
     "native_monitor.c",
+    "native_monitor_appkit.m",
     "native_appkit_callbacks.m",
     "native_appkit_observers.m",
     "native_appkit_window.m",

@@ -100,16 +100,6 @@ fn cg_main_display_bounds_height() -> Double {
 }
 
 ///|
-fn cg_display_scale_factor(display_id : UInt64) -> Double {
-  let factor = native_cg_display_scale_factor(display_id.to_uint())
-  if factor > 0.0 {
-    factor
-  } else {
-    1.0
-  }
-}
-
-///|
 fn objc_runtime_class_handle(name : String) -> UInt64 {
   appkit_objc_get_class(@utf8.encode(name[:], bom=false))
 }
