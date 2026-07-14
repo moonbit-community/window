@@ -23,27 +23,5 @@ jobs:
           moon version --all
           moon update
 
-      - name: Check formatting
-        run: moon fmt --check
-
-      - name: Type check (native)
-        run: moon check --target native
-
-      - name: Build library (native)
-        run: moon build --target native
-
-      - name: Build examples (native)
-        run: |
-          for pkg in \
-            examples/application \
-            examples/child_window \
-            examples/control_flow \
-            examples/dnd \
-            examples/ime \
-            examples/pump_events \
-            examples/run_on_demand \
-            examples/window \
-            examples/x11_embed
-          do
-            moon build "$pkg" --target native
-          done
+      - name: Run repository gate
+        run: scripts/check_ci.sh

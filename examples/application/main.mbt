@@ -1243,7 +1243,7 @@ fn Application::window_state(
 }
 
 ///|
-pub impl @macos.ApplicationHandler for Application with can_create_surfaces(
+pub impl @macos.ApplicationHandler for Application with fn can_create_surfaces(
   self,
   event_loop,
 ) {
@@ -1254,7 +1254,7 @@ pub impl @macos.ApplicationHandler for Application with can_create_surfaces(
 }
 
 ///|
-pub impl @macos.ApplicationHandler for Application with proxy_wake_up(
+pub impl @macos.ApplicationHandler for Application with fn proxy_wake_up(
   self,
   event_loop,
 ) {
@@ -1265,7 +1265,7 @@ pub impl @macos.ApplicationHandler for Application with proxy_wake_up(
 }
 
 ///|
-pub impl @macos.ApplicationHandler for Application with about_to_wait(
+pub impl @macos.ApplicationHandler for Application with fn about_to_wait(
   self,
   event_loop,
 ) {
@@ -1291,7 +1291,7 @@ pub impl @macos.ApplicationHandler for Application with about_to_wait(
 }
 
 ///|
-pub impl @macos.ApplicationHandler for Application with device_event(
+pub impl @macos.ApplicationHandler for Application with fn device_event(
   _self,
   _event_loop,
   device_id,
@@ -1303,7 +1303,7 @@ pub impl @macos.ApplicationHandler for Application with device_event(
 }
 
 ///|
-pub impl @macos.ApplicationHandler for Application with window_event(
+pub impl @macos.ApplicationHandler for Application with fn window_event(
   self,
   event_loop,
   window_id,
@@ -1443,7 +1443,7 @@ pub impl @macos.ApplicationHandler for Application with window_event(
 }
 
 ///|
-pub impl @macos.ApplicationHandler for Application with standard_key_binding(
+pub impl @macos.ApplicationHandler for Application with fn standard_key_binding(
   _self,
   _event_loop,
   window_id,

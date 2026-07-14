@@ -7,7 +7,7 @@ struct App {
 }
 
 ///|
-pub impl @macos.ApplicationHandler for App with can_create_surfaces(
+pub impl @macos.ApplicationHandler for App with fn can_create_surfaces(
   self,
   event_loop,
 ) {
@@ -21,7 +21,10 @@ pub impl @macos.ApplicationHandler for App with can_create_surfaces(
 }
 
 ///|
-pub impl @macos.ApplicationHandler for App with about_to_wait(self, _event_loop) {
+pub impl @macos.ApplicationHandler for App with fn about_to_wait(
+  self,
+  _event_loop,
+) {
   match self.window {
     Some(window) => window.request_redraw()
     None => ()
@@ -29,7 +32,7 @@ pub impl @macos.ApplicationHandler for App with about_to_wait(self, _event_loop)
 }
 
 ///|
-pub impl @macos.ApplicationHandler for App with window_event(
+pub impl @macos.ApplicationHandler for App with fn window_event(
   self,
   event_loop,
   window_id,

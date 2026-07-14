@@ -272,7 +272,7 @@ pub fn RequestError::os(
 // Backend-agnostic capability aligned with winit's window API:
 // all backend windows should support set_cursor_hittest.
 pub(open) trait WindowCursorHittest {
-  set_cursor_hittest(Self, Bool) -> Unit raise RequestError
+  fn set_cursor_hittest(Self, Bool) -> Unit raise RequestError
 }
 
 ///|
@@ -369,7 +369,7 @@ pub(all) enum CursorIcon {
 pub(all) type CustomCursorHandle
 
 ///|
-pub impl Debug for CustomCursorHandle with to_repr(_self) {
+pub impl Debug for CustomCursorHandle with fn to_repr(_self) {
   Repr::opaque_("CustomCursorHandle", Repr::literal("<native>"))
 }
 
@@ -380,17 +380,17 @@ pub struct CustomCursor {
 }
 
 ///|
-pub impl Eq for CustomCursor with equal(self, other) {
+pub impl Eq for CustomCursor with fn equal(self, other) {
   self.raw == other.raw
 }
 
 ///|
-pub impl Eq for CustomCursor with not_equal(self, other) {
+pub impl Eq for CustomCursor with fn not_equal(self, other) {
   self.raw != other.raw
 }
 
 ///|
-pub impl Debug for CustomCursor with to_repr(self) {
+pub impl Debug for CustomCursor with fn to_repr(self) {
   let _ = self.handle
   Repr::opaque_("CustomCursor", Repr::literal("0x" + self.raw.to_string()))
 }

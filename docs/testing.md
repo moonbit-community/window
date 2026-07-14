@@ -8,6 +8,7 @@ scripts/check_ci.sh
 
 The gate runs:
 
+- `moon fmt --check`
 - `moon check`
 - `moon check --warn-list +73`
 - `moon test --release`

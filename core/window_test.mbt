@@ -110,7 +110,7 @@ struct DummyCursorHittestWindow {
 }
 
 ///|
-impl WindowCursorHittest for DummyCursorHittestWindow with set_cursor_hittest(
+impl WindowCursorHittest for DummyCursorHittestWindow with fn set_cursor_hittest(
   self,
   hittest,
 ) {

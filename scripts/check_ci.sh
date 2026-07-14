@@ -4,6 +4,7 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
+moon fmt --check
 moon check
 moon check --warn-list +73
 moon test --release

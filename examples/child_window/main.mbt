@@ -85,7 +85,7 @@ fn App::spawn_child_window(
 }
 
 ///|
-pub impl @macos.ApplicationHandler for App with can_create_surfaces(
+pub impl @macos.ApplicationHandler for App with fn can_create_surfaces(
   self,
   event_loop,
 ) {
@@ -103,7 +103,7 @@ pub impl @macos.ApplicationHandler for App with can_create_surfaces(
 }
 
 ///|
-pub impl @macos.ApplicationHandler for App with window_event(
+pub impl @macos.ApplicationHandler for App with fn window_event(
   self,
   event_loop,
   window_id,
@@ -146,7 +146,7 @@ pub impl @macos.ApplicationHandler for App with window_event(
 }
 
 ///|
-pub impl @macos.ApplicationHandler for App with about_to_wait(
+pub impl @macos.ApplicationHandler for App with fn about_to_wait(
   _self,
   _event_loop,
 ) {
