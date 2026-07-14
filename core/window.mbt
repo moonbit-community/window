@@ -449,12 +449,7 @@ pub fn CustomCursorSource::from_rgba(
   hotspot_y : Int,
 ) -> CustomCursorSource raise BadCustomCursorSource {
   if width <= 0 || height <= 0 {
-    raise DimensionsVsPixelCount(
-      width,
-      height,
-      width * height,
-      rgba.length() / 4,
-    )
+    raise DimensionsVsPixelCount(width, height, 0, rgba.length() / 4)
   }
   if width > 2048 || height > 2048 {
     raise TooLarge(width, height)

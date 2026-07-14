@@ -175,15 +175,62 @@ static MBWCustomCursorHandle *mbw_custom_cursor_handle_create(NSCursor *cursor) 
   return handle;
 }
 
+enum {
+  MBW_CUSTOM_CURSOR_MAX_DIMENSION = 2048,
+  MBW_CUSTOM_CURSOR_BYTES_PER_PIXEL = 4,
+};
+
+static BOOL mbw_custom_cursor_rgba_layout_is_valid(
+    int32_t rgba_len, int32_t width, int32_t height, int32_t hotspot_x,
+    int32_t hotspot_y, size_t *expected_len, NSInteger *bytes_per_row) {
+  if (rgba_len < 0 || width <= 0 || height <= 0 ||
+      width > MBW_CUSTOM_CURSOR_MAX_DIMENSION ||
+      height > MBW_CUSTOM_CURSOR_MAX_DIMENSION || hotspot_x < 0 ||
+      hotspot_x >= width || hotspot_y < 0 || hotspot_y >= height) {
+    return NO;
+  }
+
+  size_t width_size = (size_t)width;
+  size_t height_size = (size_t)height;
+  if (width_size > SIZE_MAX / MBW_CUSTOM_CURSOR_BYTES_PER_PIXEL) {
+    return NO;
+  }
+  size_t row_size = width_size * MBW_CUSTOM_CURSOR_BYTES_PER_PIXEL;
+  if (row_size > (size_t)INTPTR_MAX || height_size > SIZE_MAX / row_size) {
+    return NO;
+  }
+  size_t total_size = row_size * height_size;
+  if (total_size > INT32_MAX || (size_t)rgba_len != total_size) {
+    return NO;
+  }
+
+  *expected_len = total_size;
+  *bytes_per_row = (NSInteger)row_size;
+  return YES;
+}
+
+MOONBIT_FFI_EXPORT
+int32_t mbw_test_custom_cursor_rgba_layout_is_valid(
+    int32_t rgba_len, int32_t width, int32_t height, int32_t hotspot_x,
+    int32_t hotspot_y) {
+  size_t expected_len = 0;
+  NSInteger bytes_per_row = 0;
+  return mbw_custom_cursor_rgba_layout_is_valid(
+             rgba_len, width, height, hotspot_x, hotspot_y, &expected_len,
+             &bytes_per_row)
+             ? 1
+             : 0;
+}
+
 MOONBIT_FFI_EXPORT
 MBWCustomCursorHandle *mbw_custom_cursor_create_rgba(const uint8_t *rgba, int32_t rgba_len,
                                                     int32_t width, int32_t height,
                                                     int32_t hotspot_x, int32_t hotspot_y) {
-  if (rgba == NULL || width <= 0 || height <= 0 || hotspot_x < 0 || hotspot_y < 0) {
-    return mbw_custom_cursor_handle_create(nil);
-  }
-  int32_t expected_len = width * height * 4;
-  if (expected_len <= 0 || rgba_len < expected_len) {
+  size_t expected_len = 0;
+  NSInteger bytes_per_row = 0;
+  if (rgba == NULL || !mbw_custom_cursor_rgba_layout_is_valid(
+                          rgba_len, width, height, hotspot_x, hotspot_y,
+                          &expected_len, &bytes_per_row)) {
     return mbw_custom_cursor_handle_create(nil);
   }
 
@@ -197,13 +244,13 @@ MBWCustomCursorHandle *mbw_custom_cursor_create_rgba(const uint8_t *rgba, int32_
                                                  isPlanar:NO
                                            colorSpaceName:NSDeviceRGBColorSpace
                                              bitmapFormat:0
-                                              bytesPerRow:width * 4
+                                              bytesPerRow:bytes_per_row
                                              bitsPerPixel:32];
   if (rep == nil || [rep bitmapData] == NULL) {
     [rep release];
     return mbw_custom_cursor_handle_create(nil);
   }
-  memcpy([rep bitmapData], rgba, (size_t)expected_len);
+  memcpy([rep bitmapData], rgba, expected_len);
 
   NSImage *image = [[NSImage alloc] initWithSize:NSMakeSize((CGFloat)width, (CGFloat)height)];
   if (image == nil) {

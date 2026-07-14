@@ -1,4 +1,26 @@
 ///|
+test "custom cursor rejects extreme negative dimensions without overflow" {
+  let min_int = -2147483647 - 1
+  let rejected_safely = try {
+    ignore(
+      CustomCursorSource::from_rgba(
+        Bytes::make(4, (0 : Int).to_byte()),
+        min_int,
+        -1,
+        0,
+        0,
+      ),
+    )
+    false
+  } catch {
+    DimensionsVsPixelCount(width, height, expected, actual) =>
+      width == min_int && height == -1 && expected == 0 && actual == 1
+    _ => false
+  }
+  assert_true(rejected_safely)
+}
+
+///|
 fn is_cursor_bad_position(text : String, cursor : Int, anchor : Int) -> Bool {
   try {
     ignore(ImeSurroundingText::ImeSurroundingText(text, cursor, anchor))
