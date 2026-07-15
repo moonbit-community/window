@@ -20,21 +20,6 @@ fn native_set_resizable(window_handle : NativeWindow, resizable : Bool) -> Unit 
 }
 
 ///|
-fn window_visible(window_handle : NativeWindow) -> Bool {
-  native_window_is_visible(window_handle)
-}
-
-///|
-fn window_resizable(window_handle : NativeWindow) -> Bool {
-  native_window_is_resizable(window_handle)
-}
-
-///|
-fn window_decorated(window_handle : NativeWindow) -> Bool {
-  native_window_is_decorated(window_handle)
-}
-
-///|
 fn set_title(window_handle : NativeWindow, title : String) -> Unit {
   if registered_native_handle(window_handle) != (0 : Int).to_uint64() {
     native_window_set_title(window_handle, title)
@@ -192,7 +177,7 @@ fn set_window_decorations(
     // Borderless
     (0 : Int).to_uint64()
   }
-  if window_resizable(window_handle) {
+  if native_window_is_resizable(window_handle) {
     // Resizable
     style_mask = style_mask | (8 : Int).to_uint64()
   }
@@ -387,14 +372,6 @@ fn set_window_cursor(
 }
 
 ///|
-fn set_window_custom_cursor(
-  window_handle : NativeWindow,
-  custom_cursor : UInt64,
-) -> Bool {
-  native_window_set_custom_cursor(window_handle, custom_cursor)
-}
-
-///|
 fn set_window_cursor_visible(
   window_handle : NativeWindow,
   visible : Bool,
@@ -413,31 +390,6 @@ fn window_cursor_visible(window_handle : NativeWindow) -> Bool {
   } else {
     native_window_cursor_visible(window_handle)
   }
-}
-
-///|
-fn set_cursor_position(window_handle : NativeWindow, x : Int, y : Int) -> Int {
-  native_window_set_cursor_position(window_handle, x, y)
-}
-
-///|
-fn set_cursor_grab(window_handle : NativeWindow, mode : Int) -> Int {
-  native_window_set_cursor_grab(window_handle, mode)
-}
-
-///|
-fn drag_window(window_handle : NativeWindow) -> Int {
-  native_window_drag_window(window_handle)
-}
-
-///|
-fn drag_resize_window(window_handle : NativeWindow, direction : Int) -> Bool {
-  native_window_drag_resize_window(window_handle, direction)
-}
-
-///|
-fn show_window_menu(window_handle : NativeWindow, x : Int, y : Int) -> Bool {
-  native_window_show_window_menu(window_handle, x, y)
 }
 
 ///|
@@ -510,7 +462,7 @@ fn window_ime_cursor_height(window_handle : NativeWindow) -> Int {
 }
 
 ///|
-fn native_window_width(window_handle : NativeWindow) -> Int {
+fn window_surface_width(window_handle : NativeWindow) -> Int {
   let native_handle = registered_native_handle(window_handle)
   if native_handle == (0 : Int).to_uint64() {
     800
@@ -520,7 +472,7 @@ fn native_window_width(window_handle : NativeWindow) -> Int {
 }
 
 ///|
-fn native_window_height(window_handle : NativeWindow) -> Int {
+fn window_surface_height(window_handle : NativeWindow) -> Int {
   let native_handle = registered_native_handle(window_handle)
   if native_handle == (0 : Int).to_uint64() {
     600
@@ -573,7 +525,7 @@ fn window_max_surface_height(window_handle : NativeWindow) -> Int {
 fn window_outer_width(window_handle : NativeWindow) -> Int {
   let native_handle = registered_native_handle(window_handle)
   if native_handle == (0 : Int).to_uint64() {
-    native_window_width(window_handle)
+    window_surface_width(window_handle)
   } else {
     native_window_outer_width(window_handle)
   }
@@ -583,7 +535,7 @@ fn window_outer_width(window_handle : NativeWindow) -> Int {
 fn window_outer_height(window_handle : NativeWindow) -> Int {
   let native_handle = registered_native_handle(window_handle)
   if native_handle == (0 : Int).to_uint64() {
-    native_window_height(window_handle)
+    window_surface_height(window_handle)
   } else {
     native_window_outer_height(window_handle)
   }
@@ -871,8 +823,8 @@ fn window_current_monitor_id(window_handle : NativeWindow) -> UInt64 {
 pub fn Window::surface_size(self : Window) -> @dpi.PhysicalSize {
   self.maybe_wait_on_main(fn(window) {
     @dpi.LogicalSize::LogicalSize(
-      native_window_width(window.raw_window_handle).to_double(),
-      native_window_height(window.raw_window_handle).to_double(),
+      window_surface_width(window.raw_window_handle).to_double(),
+      window_surface_height(window.raw_window_handle).to_double(),
     ).to_physical(window.scale_factor())
   })
 }
@@ -1125,7 +1077,7 @@ pub fn Window::focus_window(self : Window) -> Unit {
   self.maybe_wait_on_main(fn(window) {
     let raw_id = window.raw_window_handle
     let is_minimized = window_minimized(raw_id)
-    let is_visible = window_visible(raw_id)
+    let is_visible = native_window_is_visible(raw_id)
     if is_minimized == false && is_visible {
       focus_window(raw_id)
     }
@@ -1170,7 +1122,7 @@ pub fn Window::is_maximized(self : Window) -> Bool {
 ///|
 pub fn Window::is_decorated(self : Window) -> Bool {
   self.maybe_wait_on_main(fn(window) {
-    window_decorated(window.raw_window_handle)
+    native_window_is_decorated(window.raw_window_handle)
   })
 }
 
@@ -1288,7 +1240,7 @@ pub fn Window::set_visible(self : Window, visible : Bool) -> Unit {
 ///|
 pub fn Window::is_visible(self : Window) -> Bool? {
   self.maybe_wait_on_main(fn(window) {
-    Some(window_visible(window.raw_window_handle))
+    Some(native_window_is_visible(window.raw_window_handle))
   })
 }
 
@@ -1302,7 +1254,7 @@ pub fn Window::set_resizable(self : Window, resizable : Bool) -> Unit {
 ///|
 pub fn Window::is_resizable(self : Window) -> Bool {
   self.maybe_wait_on_main(fn(window) {
-    window_resizable(window.raw_window_handle)
+    native_window_is_resizable(window.raw_window_handle)
   })
 }
 
@@ -1536,14 +1488,14 @@ pub fn Window::set_has_shadow(self : Window, has_shadow : Bool) -> Unit {
 ///|
 pub fn Window::set_theme(self : Window, theme : @core.Theme?) -> Unit {
   self.maybe_wait_on_main(fn(window) {
-    set_window_theme(window.raw_window_handle, theme_to_appearance(theme))
+    set_window_theme(window.raw_window_handle, theme_to_native(theme))
   })
 }
 
 ///|
 pub fn Window::theme(self : Window) -> @core.Theme? {
   self.maybe_wait_on_main(fn(window) {
-    appearance_to_theme(window_appearance(window.raw_window_handle))
+    theme_from_native(window_theme(window.raw_window_handle))
   })
 }
 
@@ -1552,25 +1504,4 @@ pub fn Window::is_occluded(self : Window) -> Bool {
   self.maybe_wait_on_main(fn(window) {
     window_occluded(window.raw_window_handle)
   })
-}
-
-///|
-fn window_appearance(window_handle : NativeWindow) -> Int {
-  window_theme(window_handle)
-}
-
-///|
-fn theme_to_appearance(theme : @core.Theme?) -> Int {
-  theme_to_native(theme)
-}
-
-///|
-fn dark_appearance_name() -> String {
-  "Dark"
-}
-
-///|
-fn appearance_to_theme(appearance : Int) -> @core.Theme? {
-  let _ = dark_appearance_name()
-  theme_from_native(appearance)
 }

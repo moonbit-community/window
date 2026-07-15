@@ -159,7 +159,7 @@ pub fn Window::set_cursor(self : Window, cursor : @core.Cursor) -> Unit {
       }
       Custom(custom_cursor) =>
         if cursor_visible {
-          if set_window_custom_cursor(
+          if native_window_set_custom_cursor(
               window.raw_window_handle,
               custom_cursor.into_raw(),
             ) {
@@ -241,7 +241,7 @@ pub fn Window::set_cursor_position(
       window.scale_factor(),
     )
     raise_request_error_from_native_status(
-      set_cursor_position(
+      native_window_set_cursor_position(
         window.raw_window_handle,
         logical_position.x().to_int(),
         logical_position.y().to_int(),
@@ -263,7 +263,7 @@ pub fn Window::set_cursor_grab(
       )
     }
     raise_request_error_from_native_status(
-      set_cursor_grab(
+      native_window_set_cursor_grab(
         window.raw_window_handle,
         cursor_grab_mode_to_native(mode),
       ),
@@ -276,7 +276,7 @@ pub fn Window::set_cursor_grab(
 pub fn Window::drag_window(self : Window) -> Unit raise @core.RequestError {
   self.maybe_wait_on_main_result(fn(window) -> Unit raise @core.RequestError {
     raise_request_error_from_drag_window_status(
-      drag_window(window.raw_window_handle),
+      native_window_drag_window(window.raw_window_handle),
     )
   })
 }
@@ -288,7 +288,7 @@ pub fn Window::drag_resize_window(
 ) -> Unit raise @core.RequestError {
   self.maybe_wait_on_main_result(fn(window) -> Unit raise @core.RequestError {
     raise_request_error_from_drag_resize_result(
-      drag_resize_window(
+      native_window_drag_resize_window(
         window.raw_window_handle,
         resize_direction_to_native(direction),
       ),
@@ -303,7 +303,7 @@ pub fn Window::show_window_menu(
 ) -> Unit {
   self.maybe_wait_on_main(fn(window) {
     let physical_position = position.to_physical(window.scale_factor())
-    let _ = show_window_menu(
+    let _ = native_window_show_window_menu(
       window.raw_window_handle,
       physical_position.x(),
       physical_position.y(),

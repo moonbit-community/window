@@ -183,7 +183,10 @@ fn new_window(
   match attributes.cursor() {
     Icon(icon) => set_window_cursor(raw_window_handle, icon)
     Custom(custom_cursor) =>
-      if set_window_custom_cursor(raw_window_handle, custom_cursor.into_raw()) ==
+      if native_window_set_custom_cursor(
+          raw_window_handle,
+          custom_cursor.into_raw(),
+        ) ==
         false {
         set_window_cursor(raw_window_handle, Default)
         cursor_state = Icon(Default)

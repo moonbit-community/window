@@ -4,6 +4,46 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 NATIVE="$ROOT/macos/native_appkit_main_thread.m"
 FFI="$ROOT/macos/ffi.mbt"
+WINDOW_APPKIT="$ROOT/macos/window_appkit.mbt"
+WINDOW_HIGH_LEVEL=(
+  "$ROOT/macos/window.mbt"
+  "$ROOT/macos/window_creation.mbt"
+  "$ROOT/macos/window_delegate.mbt"
+  "$ROOT/macos/window_fullscreen.mbt"
+)
+
+for seam in "$WINDOW_APPKIT" \
+  "$ROOT/macos/window_creation.mbt" \
+  "$ROOT/macos/window_fullscreen.mbt"; do
+  if [[ ! -f "$seam" ]]; then
+    echo "required Window architecture seam is missing: $seam" >&2
+    exit 1
+  fi
+done
+
+raw_objc_violations="$(rg -n \
+  'appkit_objc_msg_send|objc_runtime_selector_handle' \
+  "${WINDOW_HIGH_LEVEL[@]}" || true)"
+if [[ -n "$raw_objc_violations" ]]; then
+  echo "high-level Window modules must not send raw Objective-C messages:" >&2
+  echo "$raw_objc_violations" >&2
+  exit 1
+fi
+
+native_adapter_violations="$(rg -n '^fn native_window_' \
+  "${WINDOW_HIGH_LEVEL[@]}" || true)"
+if [[ -n "$native_adapter_violations" ]]; then
+  echo "native_window adapters must remain in window_appkit.mbt:" >&2
+  echo "$native_adapter_violations" >&2
+  exit 1
+fi
+
+public_adapter_violations="$(rg -n '^pub fn ' "$WINDOW_APPKIT" || true)"
+if [[ -n "$public_adapter_violations" ]]; then
+  echo "window_appkit.mbt must remain an internal adapter:" >&2
+  echo "$public_adapter_violations" >&2
+  exit 1
+fi
 
 if [[ -e "$ROOT/macos/window_threading.mbt" ]]; then
   echo "Window methods must keep dispatch and implementation in one definition" >&2

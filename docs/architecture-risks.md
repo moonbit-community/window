@@ -187,9 +187,8 @@ Required direction:
 
 ## Backend File Size And Responsibility Split
 
-Risk: `macos/window_delegate.mbt` remains a large coordination point for window
-state, AppKit dispatch, cursor behavior, fullscreen behavior, and event
-translation.
+Risk: window behavior can regress into one coordination file that mixes raw
+AppKit dispatch, creation policy, fullscreen transitions, and public methods.
 
 Current control:
 
@@ -210,10 +209,21 @@ Current control:
   model instead of leaking delayed requests into global application state.
 - Drag-and-drop native payload conversion lives as a pure function in
   `macos/event.mbt`; callback sites only enqueue the resulting window event.
+- Raw window selector and Objective-C ABI composition lives in the internal
+  `macos/window_appkit.mbt` adapter.
+- Initial attribute, size, monitor, and positioning policy lives in
+  `macos/window_creation.mbt`.
+- Borderless, simple, and exclusive fullscreen behavior lives in
+  `macos/window_fullscreen.mbt`; transition storage remains in the focused
+  `macos/window_fullscreen_state.mbt` module.
+- `scripts/check_window_thread_boundary.sh` rejects raw Objective-C calls in
+  high-level window modules, native adapter leakage, public adapter methods,
+  `_on_main` mirrors, and missing responsibility seams.
 
 Required direction:
 
-- Split by responsibility only when a behavior change or test requires touching
-  the area. Avoid mechanical churn without better ownership boundaries.
-- Good future seams are fullscreen positioning restore behavior and other
-  native payload conversions that can be tested independently of AppKit.
+- Keep the current dependency direction: FFI primitives feed the internal
+  AppKit adapter, which feeds creation/fullscreen/window behavior.
+- Split further only when a behavior change or test identifies another coherent
+  seam. Do not reintroduce one-to-one forwarding facades or line-count-driven
+  file churn.
