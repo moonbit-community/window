@@ -24,4 +24,4 @@ jobs:
           moon update
 
       - name: Run repository gate
-        run: scripts/check_ci.sh
+        run: RUN_ASAN=1 scripts/check_ci.sh

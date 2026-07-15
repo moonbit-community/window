@@ -15,6 +15,10 @@ scripts/check_event_loop_thread_boundary.sh
 scripts/check_monitor_thread_boundary.sh
 scripts/check_window_thread_boundary.sh
 
+if [[ "${RUN_ASAN:-0}" == "1" ]]; then
+  scripts/check_asan.py
+fi
+
 if [[ "${RUN_EXAMPLE_TRANSCRIPTS:-0}" == "1" ]]; then
   scripts/check_example_transcripts.sh
 fi
