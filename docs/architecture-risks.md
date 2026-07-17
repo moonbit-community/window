@@ -3,6 +3,9 @@
 This document tracks macOS architecture risks that should remain explicit during
 future parity work.
 
+Window module paths in this document, such as `macos/window.mbt`, are relative
+to `modules/window`.
+
 ## Native Lifecycle And Callback Bridge
 
 Risk: `macos/native_appkit.m` owns AppKit object lifetimes and calls back into
@@ -42,7 +45,9 @@ Current control:
   object whose finalizer destroys the `MBWWindowBox`; `Window::drop` explicitly
   calls the same native destroy path for prompt teardown. If the finalizer runs
   off the AppKit main thread, teardown is transferred back to the main thread.
-  Public raw handle getters still return borrowed `UInt64` AppKit pointers.
+  Public generic window/display handle getters return structured
+  `Milky2018/windowing` handles whose provider objects keep the originating
+  window or event loop reachable.
 - Native callback trampolines retain MoonBit closures for the duration of each
   invocation, so callback-driven teardown or observer removal cannot release a
   closure while it is still being invoked.
@@ -156,20 +161,27 @@ Required direction:
 
 ## Opaque Native Handles
 
-Risk: AppKit handles cross the MoonBit/native boundary as `UInt64`. This is
-necessary at the raw FFI boundary, but leaking raw handles broadly makes
+Risk: AppKit handles still cross the final MoonBit/native FFI edge as integers.
+Leaking those integers into generic APIs would erase backend identity and make
 ownership and lifetime contracts ambiguous.
 
 Current control:
 
-- Public renderer integration uses explicit `Window::content_view_handle()`
-  documentation.
-- Raw display/window/content-view accessors document that returned handles are
-  borrowed and must not be released by callers. `monitor_ns_screen` instead
-  resolves on the AppKit main thread and creates its external-object owner
-  before returning across FFI. MoonBit receives that owner directly inside a
-  retained `NSScreenHandle` snapshot; its raw pointer projection is valid only
-  while that handle remains alive.
+- The repository is a two-module workspace. `modules/windowing` contains
+  `Milky2018/windowing`, which defines backend-neutral
+  `RawWindowHandle`/`RawDisplayHandle` variants and provider traits without
+  depending on the `Milky2018/window` module in `modules/window`.
+- `WindowHandle` and `DisplayHandle` keep a provider trait object, so the
+  originating window/event-loop owner remains reachable while a handle exists.
+- The public AppKit window handle is `RawWindowHandle::AppKit` containing an
+  `AppKitWindowHandle`; the `NSView*` integer is exposed only after an explicit
+  platform match. A handle obtained before `Window::drop()` subsequently
+  returns `HandleError::Unavailable` rather than a cached dangling pointer.
+- `Window::content_view_handle()` remains a documented platform-specific escape
+  hatch. `monitor_ns_screen` instead resolves on the AppKit main thread and
+  creates its external-object owner before returning across FFI. MoonBit
+  receives that owner directly inside a retained `NSScreenHandle` snapshot;
+  its raw pointer projection is valid only while that handle remains alive.
 - Internal high-traffic registered AppKit window lookup has a
   `BorrowedObjcHandle` adapter at the cursor hittest seam. Owned native
   resources still use external objects with finalizers instead of plain
@@ -179,6 +191,9 @@ Required direction:
 
 - Keep raw handle APIs narrow and document whether a handle is borrowed,
   retained, stable, or only valid during a callback.
+- Keep `windowing` independent of concrete window and renderer modules.
+- Renderer modules should consume `HasWindowHandle`/`HasDisplayHandle` instead
+  of depending on `macos.Window` or accepting an untyped integer.
 - Treat `NSScreenHandle` as a display-configuration snapshot and resolve a new
   handle after monitor reconfiguration rather than caching its raw pointer.
 - Do not represent owned native resources as plain `UInt64`; use external

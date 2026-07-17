@@ -2,6 +2,7 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+WINDOW_ROOT="$ROOT/modules/window"
 UPSTREAM_ROOT="$ROOT/winit-reference"
 OUT_DIR="${OUT_DIR:-$ROOT/_build/example-transcripts}"
 TIMEOUT_SECS="${TIMEOUT_SECS:-12}"
@@ -60,7 +61,7 @@ for example in "${examples[@]}"; do
   diff_out="$OUT_DIR/diff/$example.diff"
 
   run_capture "cd \"$UPSTREAM_ROOT\" && cargo run -p winit --example \"$example\"" "$upstream_raw"
-  run_capture "cd \"$ROOT\" && moon run \"examples/$example\" --target native" "$moon_raw"
+  run_capture "cd \"$WINDOW_ROOT\" && moon run \"examples/$example\" --target native" "$moon_raw"
 
   normalize_transcript "$upstream_raw" "$upstream_norm"
   normalize_transcript "$moon_raw" "$moon_norm"

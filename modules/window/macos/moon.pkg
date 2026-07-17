@@ -2,6 +2,7 @@ import {
   "moonbitlang/core/encoding/utf8",
   "Milky2018/window/core",
   "Milky2018/window/dpi",
+  "Milky2018/windowing",
 }
 
 supported_targets = "native"

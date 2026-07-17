@@ -1,6 +1,7 @@
 import {
   "moonbitlang/core/math",
   "Milky2018/window/macos",
+  "Milky2018/windowing",
 }
 
 supported_targets = "native"

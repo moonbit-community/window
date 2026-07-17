@@ -1,0 +1,130 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "Milky2018/windowing"
+
+import {
+  "moonbitlang/core/debug",
+}
+
+// Values
+
+// Errors
+pub(all) suberror HandleError {
+  Unavailable
+} derive(Eq, @debug.Debug)
+pub impl Show for HandleError
+
+// Types and methods
+pub struct AppKitDisplayHandle {
+  // private fields
+} derive(Eq, @debug.Debug)
+pub fn AppKitDisplayHandle::new() -> Self
+
+pub struct AppKitWindowHandle {
+  // private fields
+} derive(Eq, @debug.Debug)
+pub fn AppKitWindowHandle::new(UInt64) -> Self raise HandleError
+pub fn AppKitWindowHandle::ns_view(Self) -> UInt64
+
+pub struct DisplayHandle {
+  // private fields
+}
+pub fn DisplayHandle::as_raw(Self) -> RawDisplayHandle raise HandleError
+pub fn DisplayHandle::from_provider(&DisplayHandleProvider) -> Self
+pub impl @debug.Debug for DisplayHandle
+
+pub(all) enum RawDisplayHandle {
+  AppKit(AppKitDisplayHandle)
+  Windows(WindowsDisplayHandle)
+  Wayland(WaylandDisplayHandle)
+  Xlib(XlibDisplayHandle)
+  Xcb(XcbDisplayHandle)
+} derive(Eq, @debug.Debug)
+pub impl Show for RawDisplayHandle
+
+pub(all) enum RawWindowHandle {
+  AppKit(AppKitWindowHandle)
+  Win32(Win32WindowHandle)
+  Wayland(WaylandWindowHandle)
+  Xlib(XlibWindowHandle)
+  Xcb(XcbWindowHandle)
+} derive(Eq, @debug.Debug)
+pub impl Show for RawWindowHandle
+
+pub struct WaylandDisplayHandle {
+  // private fields
+} derive(Eq, @debug.Debug)
+pub fn WaylandDisplayHandle::display(Self) -> UInt64
+pub fn WaylandDisplayHandle::new(UInt64) -> Self raise HandleError
+
+pub struct WaylandWindowHandle {
+  // private fields
+} derive(Eq, @debug.Debug)
+pub fn WaylandWindowHandle::new(UInt64) -> Self raise HandleError
+pub fn WaylandWindowHandle::surface(Self) -> UInt64
+
+pub struct Win32WindowHandle {
+  // private fields
+} derive(Eq, @debug.Debug)
+pub fn Win32WindowHandle::hinstance(Self) -> UInt64?
+pub fn Win32WindowHandle::hwnd(Self) -> UInt64
+pub fn Win32WindowHandle::new(UInt64, hinstance? : UInt64) -> Self raise HandleError
+
+pub struct WindowHandle {
+  // private fields
+}
+pub fn WindowHandle::as_raw(Self) -> RawWindowHandle raise HandleError
+pub fn WindowHandle::from_provider(&WindowHandleProvider) -> Self
+pub impl @debug.Debug for WindowHandle
+
+pub struct WindowsDisplayHandle {
+  // private fields
+} derive(Eq, @debug.Debug)
+pub fn WindowsDisplayHandle::new() -> Self
+
+pub struct XcbDisplayHandle {
+  // private fields
+} derive(Eq, @debug.Debug)
+pub fn XcbDisplayHandle::connection(Self) -> UInt64?
+pub fn XcbDisplayHandle::new(UInt64?, Int) -> Self
+pub fn XcbDisplayHandle::screen(Self) -> Int
+
+pub struct XcbWindowHandle {
+  // private fields
+} derive(Eq, @debug.Debug)
+pub fn XcbWindowHandle::new(UInt, visual_id? : UInt) -> Self raise HandleError
+pub fn XcbWindowHandle::visual_id(Self) -> UInt?
+pub fn XcbWindowHandle::window(Self) -> UInt
+
+pub struct XlibDisplayHandle {
+  // private fields
+} derive(Eq, @debug.Debug)
+pub fn XlibDisplayHandle::display(Self) -> UInt64?
+pub fn XlibDisplayHandle::new(UInt64?, Int) -> Self
+pub fn XlibDisplayHandle::screen(Self) -> Int
+
+pub struct XlibWindowHandle {
+  // private fields
+} derive(Eq, @debug.Debug)
+pub fn XlibWindowHandle::new(UInt64, visual_id? : UInt64) -> Self raise HandleError
+pub fn XlibWindowHandle::visual_id(Self) -> UInt64
+pub fn XlibWindowHandle::window(Self) -> UInt64
+
+// Type aliases
+
+// Traits
+pub(open) trait DisplayHandleProvider {
+  fn raw_display_handle(Self) -> RawDisplayHandle raise HandleError
+}
+
+pub(open) trait HasDisplayHandle {
+  fn display_handle(Self) -> DisplayHandle raise HandleError
+}
+
+pub(open) trait HasWindowHandle {
+  fn window_handle(Self) -> WindowHandle raise HandleError
+}
+
+pub(open) trait WindowHandleProvider {
+  fn raw_window_handle(Self) -> RawWindowHandle raise HandleError
+}
+

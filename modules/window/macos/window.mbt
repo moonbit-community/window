@@ -5,7 +5,6 @@
 pub struct Window {
   priv id : @core.WindowId
   priv raw_window_handle : NativeWindow
-  priv raw_view_handle : UInt64
   priv mut cursor_state : @core.Cursor
   priv mut fullscreen_state : @core.Fullscreen?
   priv mut ime_capabilities_state : @core.ImeCapabilities?
@@ -48,59 +47,57 @@ pub fn Window::id(self : Window) -> @core.WindowId {
 }
 
 ///|
-/// Return the CoreGraphics display id used by raw-window-handle 0.6.
-///
-/// This is a borrowed platform identifier, not an owned object. Callers must
-/// not release it or treat it as a retained CoreFoundation/AppKit object.
-pub fn Window::rwh_06_display_handle(self : Window) -> UInt64 {
+fn Window::raw_display_handle(self : Window) -> @windowing.RawDisplayHandle {
   let _ = self
-  cg_main_display_id()
+  AppKit(@windowing.AppKitDisplayHandle::new())
 }
 
 ///|
-/// Return the AppKit content view/window handle used by raw-window-handle 0.6.
-///
-/// This is a borrowed AppKit/Objective-C handle. It is only valid while the
-/// window and the underlying AppKit object stay alive; callers must not retain
-/// ownership assumptions from this integer or release it.
-pub fn Window::rwh_06_window_handle(self : Window) -> UInt64 {
-  self.maybe_wait_on_main(fn(window) {
-    if window.raw_view_handle != (0 : Int).to_uint64() {
-      window.raw_view_handle
-    } else {
-      native_window_objc_handle(window.raw_window_handle)
-    }
+fn Window::raw_window_handle(
+  self : Window,
+) -> @windowing.RawWindowHandle raise @windowing.HandleError {
+  let raw_view = self.maybe_wait_on_main(fn(window) {
+    native_window_content_view_objc_handle(window.raw_window_handle)
   })
+  AppKit(@windowing.AppKitWindowHandle::new(raw_view))
 }
 
 ///|
-// Port target: window.rs::raw_display_handle_rwh_06
-fn Window::raw_display_handle_rwh_06(self : Window) -> UInt64 {
-  self.rwh_06_display_handle()
+pub impl @windowing.DisplayHandleProvider for Window with fn raw_display_handle(
+  self,
+) {
+  self.raw_display_handle()
 }
 
 ///|
-// Port target: window.rs::raw_window_handle_rwh_06
-fn Window::raw_window_handle_rwh_06(self : Window) -> UInt64 {
-  self.rwh_06_window_handle()
+pub impl @windowing.WindowHandleProvider for Window with fn raw_window_handle(
+  self,
+) {
+  self.raw_window_handle()
 }
 
 ///|
-/// Return the raw display handle for this window.
-///
-/// The returned value is a borrowed CoreGraphics display id, not an owned
-/// CoreFoundation/AppKit object.
-pub fn Window::display_handle(self : Window) -> UInt64 {
-  self.raw_display_handle_rwh_06()
+pub fn Window::display_handle(self : Window) -> @windowing.DisplayHandle {
+  @windowing.DisplayHandle::from_provider(
+    self as &@windowing.DisplayHandleProvider,
+  )
 }
 
 ///|
-/// Return the raw AppKit window/view handle for this window.
-///
-/// The returned value is borrowed from AppKit and remains owned by the windowing
-/// backend. Do not release it.
-pub fn Window::window_handle(self : Window) -> UInt64 {
-  self.maybe_wait_on_main(fn(window) { window.raw_window_handle_rwh_06() })
+pub impl @windowing.HasDisplayHandle for Window with fn display_handle(self) {
+  self.display_handle()
+}
+
+///|
+pub fn Window::window_handle(self : Window) -> @windowing.WindowHandle {
+  @windowing.WindowHandle::from_provider(
+    self as &@windowing.WindowHandleProvider,
+  )
+}
+
+///|
+pub impl @windowing.HasWindowHandle for Window with fn window_handle(self) {
+  self.window_handle()
 }
 
 ///|

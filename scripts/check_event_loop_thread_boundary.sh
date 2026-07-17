@@ -2,7 +2,8 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-EVENT_LOOP="$ROOT/macos/event_loop.mbt"
+WINDOW_ROOT="$ROOT/modules/window"
+EVENT_LOOP="$WINDOW_ROOT/macos/event_loop.mbt"
 
 entry_count="$(rg -c '^pub fn\[A : ApplicationHandler\] EventLoop::(try_run_app_on_demand|try_pump_app_events|try_run_app)\b' "$EVENT_LOOP")"
 if [[ "$entry_count" != "3" ]]; then

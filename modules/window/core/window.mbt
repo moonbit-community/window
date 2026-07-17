@@ -938,16 +938,25 @@ pub fn WindowId::into_raw(self : WindowId) -> Int {
 
 ///|
 pub struct ParentWindow {
-  priv raw : UInt64
+  priv raw : @windowing.RawWindowHandle
 } derive(Eq, Debug)
 
 ///|
-pub fn ParentWindow::from_raw(raw : UInt64) -> ParentWindow {
+pub fn ParentWindow::from_raw(raw : @windowing.RawWindowHandle) -> ParentWindow {
   { raw, }
 }
 
 ///|
-pub fn ParentWindow::into_raw(self : ParentWindow) -> UInt64 {
+pub fn ParentWindow::from_window_handle(
+  handle : @windowing.WindowHandle,
+) -> ParentWindow raise @windowing.HandleError {
+  { raw: handle.as_raw() }
+}
+
+///|
+pub fn ParentWindow::into_raw(
+  self : ParentWindow,
+) -> @windowing.RawWindowHandle {
   self.raw
 }
 

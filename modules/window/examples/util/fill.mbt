@@ -27,8 +27,18 @@ pub fn now_millis() -> Int64 {
 }
 
 ///|
+fn appkit_view_handle(window : @macos.Window) -> UInt64 {
+  let handle = window.window_handle()
+  let raw = try! handle.as_raw()
+  match raw {
+    AppKit(handle) => handle.ns_view()
+    _ => abort("example renderer requires an AppKit window handle")
+  }
+}
+
+///|
 fn fill_window_with_argb(window : @macos.Window, color : UInt64) -> Unit {
-  native_fill_window_with_color(window.window_handle(), color)
+  native_fill_window_with_color(appkit_view_handle(window), color)
 }
 
 ///|
@@ -51,7 +61,7 @@ pub fn fill_window_with_safe_area_colors(
   let insets = window.safe_area()
   let size = window.surface_size()
   native_fill_window_with_safe_area(
-    window.window_handle(),
+    appkit_view_handle(window),
     inner_color.to_int64().reinterpret_as_uint64(),
     outer_color.to_int64().reinterpret_as_uint64(),
     insets.left(),
@@ -83,7 +93,7 @@ pub fn fill_window_with_animated_color(
 // Port target: winit-reference/winit/examples/util/fill.rs::cleanup_window
 pub fn cleanup_window(window : @macos.Window) -> Unit {
   native_fill_window_with_color(
-    window.window_handle(),
+    appkit_view_handle(window),
     0L.reinterpret_as_uint64(),
   )
 }

@@ -2,6 +2,10 @@ name = "Milky2018/window"
 
 version = "0.5.4"
 
+import {
+  "Milky2018/windowing@0.1.0",
+}
+
 preferred_target = "native"
 
 readme = "README.mbt.md"

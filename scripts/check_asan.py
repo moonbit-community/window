@@ -113,7 +113,8 @@ def verify_build(build: Path) -> tuple[int, int]:
     executables = [
         path
         for path in build.rglob("*.exe")
-        if "test/macos" in path.as_posix()
+        if "test" in path.parts
+        and path.parent.name == "macos"
         and not any(part.endswith(".dSYM") for part in path.parts)
         and os.access(path, os.X_OK)
     ]
@@ -173,7 +174,7 @@ def main() -> None:
                 "native",
                 "--target-dir",
                 str(build),
-                "macos",
+                "modules/window/macos",
             ],
             cwd=repository,
             env=environment,

@@ -35,3 +35,8 @@ test "macOS event loop run rejects a worker thread" {
 test "macOS event loop run accepts the main thread" {
   assert_true(event_loop_run_thread_error(true) is None)
 }
+
+///|
+test "AppKit event loops expose an AppKit display handle" {
+  assert_true(appkit_raw_display_handle() is AppKit(_))
+}

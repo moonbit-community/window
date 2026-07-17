@@ -99,7 +99,16 @@ fn new_window(
   }
   match attributes.parent_window() {
     Some(parent_window) => {
-      guard set_parent_window(raw_window_handle, parent_window.into_raw()) else {
+      let parent_view = match parent_window.into_raw() {
+        AppKit(handle) => handle.ns_view()
+        _ => {
+          close_window(raw_window_handle)
+          raise @core.RequestError::not_supported(
+            "The parent window handle is not an AppKit handle",
+          )
+        }
+      }
+      guard set_parent_window(raw_window_handle, parent_view) else {
         close_window(raw_window_handle)
         raise @core.RequestError::os(
           "Failed to attach native parent window handle",
@@ -295,13 +304,9 @@ fn new_window(
   if attributes.maximized() {
     set_window_maximized(raw_window_handle, true)
   }
-  let raw_view_handle = native_window_content_view_objc_handle(
-    raw_window_handle,
-  )
   let window : Window = {
     id: @core.WindowId::from_raw(raw_id),
     raw_window_handle,
-    raw_view_handle,
     cursor_state,
     fullscreen_state: initial_fullscreen_state(attributes),
     ime_capabilities_state: None,

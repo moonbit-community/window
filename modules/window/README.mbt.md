@@ -1,12 +1,17 @@
 # Milky2018/window
 
-`Milky2018/window` is a MoonBit windowing library modeled after `winit`.
-It currently targets **native macOS (AppKit)**.
+This repository is a MoonBit workspace containing:
+
+- `modules/window`: the `Milky2018/window` library modeled after `winit`
+- `modules/windowing`: the backend-neutral `Milky2018/windowing` handle module
+
+The window backend currently targets **native macOS (AppKit)**.
 
 ## Platform Support
 
 - Supported: `native` target on macOS
-- Not supported yet: Linux, Windows, Web backends
+- Placeholder handle types: Windows, Wayland, Xlib, and Xcb
+- Not supported yet: Linux, Windows, and Web window backends
 
 ## Install
 
@@ -119,11 +124,31 @@ This library follows MoonBit `raise`-based error handling (typed errors), not
 
 ## macOS Renderer Integration
 
-`@macos.Window::window_handle()` follows the AppKit raw-window-handle contract
-and returns the window content view (`NSView*`) as an opaque `UInt64`.
-For renderer integrations that need this boundary explicitly,
-`@macos.Window::content_view_handle()` returns the same stable content-view
-handle and raises `@core.RequestError` if the handle is unavailable.
+`@macos.Window` implements the `Milky2018/windowing` `HasWindowHandle` and
+`HasDisplayHandle` contracts. `Window::window_handle()` returns a structured
+`WindowHandle` whose provider keeps the window owner reachable. Resolve the
+platform handle only at the renderer boundary. Renderer packages should import
+`"Milky2018/windowing"` in their `moon.pkg`:
+
+```moonbit
+let raw = try! window.window_handle().as_raw()
+match raw {
+  @windowing.RawWindowHandle::AppKit(handle) => {
+    let ns_view = handle.ns_view()
+    // Create the renderer surface from ns_view.
+  }
+  _ => abort("renderer does not support this window backend")
+}
+```
+
+The AppKit variant contains the window content view (`NSView*`). It is borrowed:
+do not release it or retain it beyond the lifetime of the `WindowHandle`.
+Explicitly dropping the underlying window invalidates subsequent `as_raw()`
+calls with `HandleError::Unavailable`.
+
+For platform-specific integrations that cannot consume `windowing`,
+`Window::content_view_handle()` remains an AppKit escape hatch and raises
+`@core.RequestError` if the handle is unavailable.
 
 The window package owns the AppKit window/content-view lookup. Renderer
 packages such as `wgpu_mbt` should own Metal or `wgpu` surface setup on top of
@@ -149,6 +174,7 @@ Import only the subpackages you need:
 - `@Milky2018/window/macos`: macOS runtime API (`EventLoop`, `ActiveEventLoop`,
   `Window`, `EventLoopProxy`, `ApplicationHandler`)
 - `@Milky2018/window/dpi`: logical/physical size and position types
+- `@Milky2018/windowing`: structured raw handles and provider traits
 
 `WindowEvent::into_winit_events()` is available when you want a
 `winit`-style compatibility projection.
@@ -178,10 +204,11 @@ pub impl @macos.ApplicationHandler for App with window_event(
 
 ## Repository Examples
 
-The repository includes runnable examples under `examples/*`.
+The window module includes runnable examples under `modules/window/examples/*`.
+From the repository root, run:
 
 ```bash
-moon run examples/window --target native
+moon run modules/window/examples/window --target native
 ```
 
 ## Validation
@@ -198,5 +225,5 @@ For the slower upstream-vs-MoonBit example transcript comparison:
 RUN_EXAMPLE_TRANSCRIPTS=1 scripts/check_ci.sh
 ```
 
-See `docs/testing.md` for why the local gate uses `moon test --release` for
-framework-linked macOS tests.
+See the repository's `docs/testing.md` for why the local gate uses
+`moon test --release` for framework-linked macOS tests.

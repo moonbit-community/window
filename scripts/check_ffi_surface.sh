@@ -2,6 +2,7 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+WINDOW_ROOT="$ROOT/modules/window"
 ALLOWLIST="$ROOT/docs/ffi-export-allowlist.txt"
 WRAPPER_ALLOWLIST="$ROOT/docs/ffi-native-wrapper-allowlist.txt"
 
@@ -22,12 +23,12 @@ extract_exports() {
       next if /^\s*$/;
       if(/(mbw_[A-Za-z0-9_]+)\s*\(/){print "$1\n"; $w=0}
     }
-  ' "$ROOT"/macos/native_*.m "$ROOT"/macos/native_*.c | sort -u
+  ' "$WINDOW_ROOT"/macos/native_*.m "$WINDOW_ROOT"/macos/native_*.c | sort -u
 }
 
 current_exports="$(extract_exports)"
 linked_symbols="$({
-  rg -o --no-filename '"mbw_[A-Za-z0-9_]+"' "$ROOT"/macos/*.mbt
+  rg -o --no-filename '"mbw_[A-Za-z0-9_]+"' "$WINDOW_ROOT"/macos/*.mbt
 } | tr -d '"' | sort -u)"
 
 missing_linked_exports="$(
@@ -45,9 +46,9 @@ if printf '%s\n' "$current_exports" | rg -q '^mbw_input_event_payload_'; then
   exit 1
 fi
 
-if rg -q 'native_input_event_payload_' "$ROOT/macos/ffi.mbt"; then
+if rg -q 'native_input_event_payload_' "$WINDOW_ROOT/macos/ffi.mbt"; then
   echo "found forbidden payload binding(s) in macos/ffi.mbt" >&2
-  rg -n 'native_input_event_payload_' "$ROOT/macos/ffi.mbt" >&2
+  rg -n 'native_input_event_payload_' "$WINDOW_ROOT/macos/ffi.mbt" >&2
   exit 1
 fi
 
@@ -69,7 +70,7 @@ fi
 
 current_wrappers="$(
   perl -ne 'print "$1\n" if /^fn (native_[A-Za-z0-9_]+)\s*\(/' \
-    "$ROOT/macos/ffi.mbt" | sort -u
+    "$WINDOW_ROOT/macos/ffi.mbt" | sort -u
 )"
 
 new_wrappers="$(comm -13 "$WRAPPER_ALLOWLIST" <(printf '%s\n' "$current_wrappers") || true)"

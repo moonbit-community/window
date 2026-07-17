@@ -2,9 +2,10 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-MONITOR="$ROOT/macos/monitor.mbt"
-FFI="$ROOT/macos/ffi.mbt"
-NATIVE_APPKIT="$ROOT/macos/native_monitor_appkit.m"
+WINDOW_ROOT="$ROOT/modules/window"
+MONITOR="$WINDOW_ROOT/macos/monitor.mbt"
+FFI="$WINDOW_ROOT/macos/ffi.mbt"
+NATIVE_APPKIT="$WINDOW_ROOT/macos/native_monitor_appkit.m"
 
 extract_block() {
   local pattern="$1"

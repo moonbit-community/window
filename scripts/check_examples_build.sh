@@ -2,6 +2,7 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+WINDOW_ROOT="$ROOT/modules/window"
 cd "$ROOT"
 
 while IFS= read -r pkg; do
@@ -9,4 +10,4 @@ while IFS= read -r pkg; do
   if rg -q '"is-main"[[:space:]]*:[[:space:]]*true' "$pkg"; then
     moon run --build-only "$example" --target native
   fi
-done < <(find examples -name moon.pkg -maxdepth 2 -print | sort)
+done < <(find "$WINDOW_ROOT/examples" -name moon.pkg -maxdepth 2 -print | sort)

@@ -1,8 +1,9 @@
 # macOS Issue Tracker
 
-Last updated: 2026-07-15
+Last updated: 2026-07-17
 
 This tracker records macOS-only gaps and fix progress in this repository.
+Window module paths are relative to `modules/window`.
 
 ## Status Legend
 
@@ -62,9 +63,11 @@ This tracker records macOS-only gaps and fix progress in this repository.
 | MBW-MAC-053 | Local architecture audit | `window_threading.mbt` duplicated every public `Window` method as a shallow forwarding facade over a matching `_on_main` implementation, forcing every API addition to modify two methods. | DONE | Deleted the facade and consolidated all 111 thread-bound public methods with their implementations at the existing domain sites; the architecture gate now rejects `_on_main` mirrors and verifies exactly one synchronous dispatch per method block. Public `.mbti` output is unchanged and the full release gate passes. |
 | MBW-MAC-054 | Local thread-safety audit | Event-loop construction enforced main-thread affinity, but `try_run_app_on_demand`, `try_pump_app_events`, and `try_run_app` could still execute AppKit after the `EventLoop` was moved to a worker thread. | DONE | All three entry points now call the same runtime guard before touching AppState or AppKit and return a structured `EventLoopError` off-main. `try_pump_app_events` is now explicitly fallible, policy wbtests cover both branches, and CI enforces exactly three guarded run entry points. Full release gate passes with 140/140 tests. |
 | MBW-MAC-055 | Local validation audit | The generic C-binding ASan helper instrumented native stubs but omitted `-fsanitize=address` from final MoonBit test links, producing unresolved `___asan_*` symbols and no usable memory-safety evidence. | DONE | Repository runner instruments every compiler invocation, removes mimalloc through an isolated Moon home, and verifies archive instrumentation plus runtime linkage. Dynamic validation with Xcode 26.6 passed 109/109 macOS tests, one instrumented archive, and three ASan-linked test executables without mimalloc; the ordinary repository gate also passed 140/140 tests and every FFI/thread-boundary check. |
+| MBW-MAC-056 | Local interoperability architecture | Public raw-window-handle compatibility methods returned untyped `UInt64` values, so renderers could not distinguish AppKit/Win32/Linux handles or keep the originating owner reachable. | DONE | Converted the repository to a two-module workspace; added independent `Milky2018/windowing` structured handle/provider contracts with Windows/Linux placeholders; migrated `Window`, `EventLoop`, `ActiveEventLoop`, and parent-window handling to those contracts; added invalidation and architecture-gate coverage. |
+| MBW-MAC-057 | Local workspace layout | The original `Milky2018/window` module still occupied the workspace root while `Milky2018/windowing` used a different top-level layout. | DONE | Moved both modules under `modules/window` and `modules/windowing`; the repository root now owns only workspace, CI, tracker, and repository-level files; updated path-sensitive gates and verified both modules package independently. |
 | MBW-MAC-005 | GitHub issue #4 | `with_inner_size` not applied on window creation. | DONE | `with_inner_size` maps to `with_surface_size`, and creation path reads `attributes.surface_size()` |
 | MBW-MAC-006 | GitHub issue #2 | `flagsChanged` path crash due invalid character extraction. | DONE | Current path handles modifier events without unsafe text extraction in `flagsChanged` |
-| MBW-MAC-011 | GitHub issue #1 | `rwh_06_window_handle` should expose `NSView*` semantics instead of `NSWindow*`. | DONE | `Window::rwh_06_window_handle()` returns `raw_view_handle` first and only falls back to window handle |
+| MBW-MAC-011 | GitHub issue #1 | The AppKit raw window handle should expose `NSView*` semantics instead of `NSWindow*`. | DONE | `Window::window_handle().as_raw()` returns `RawWindowHandle::AppKit(AppKitWindowHandle)` whose `ns_view()` is the content view |
 | MBW-MAC-012 | GitHub issue #5 | Intermittent invalid memory access around callback bridge object lifetimes. | DONE | Reworked native callback bridge to retain MoonBit closures during invocation and snapshot AppKit callback-scoped event/drag objects before crossing into MoonBit |
 | MBW-MAC-007 | API parity gap | `CursorGrabMode::Confined` is not implemented on macOS. | DONE | Matches upstream winit (`window_delegate.rs`: `CursorGrabMode::Confined => Err(NotSupportedError)`) |
 | MBW-MAC-008 | API parity gap | `drag_resize_window` and `show_window_menu` are stubs that do not perform native behavior. | DONE | Matches upstream winit (`drag_resize_window` returns `NotSupported`; `show_window_menu` is no-op) |

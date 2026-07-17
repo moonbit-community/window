@@ -127,6 +127,14 @@ test "window_attributes_name_skip_taskbar_clip_children" {
 }
 
 ///|
+test "parent windows preserve structured raw handles" {
+  let appkit = try! @windowing.AppKitWindowHandle::new(42UL)
+  let raw : @windowing.RawWindowHandle = AppKit(appkit)
+  let parent = ParentWindow::from_raw(raw)
+  assert_eq(parent.into_raw(), raw)
+}
+
+///|
 struct DummyCursorHittestWindow {
   mut hittest : Bool
 }

@@ -24,4 +24,24 @@ test "set_decorations_true_preserves_traffic_lights" {
   if window.is_resizable() {
     assert_true(second.maximize())
   }
+
+  let handle = window.window_handle()
+  let raw = try! handle.as_raw()
+  guard raw is AppKit(appkit) else { fail("expected an AppKit window handle") }
+  let content_view = try! window.content_view_handle()
+  assert_eq(content_view, appkit.ns_view())
+  let display = window.display_handle()
+  let raw_display = try! display.as_raw()
+  guard raw_display is AppKit(_) else {
+    fail("expected an AppKit display handle")
+  }
+
+  window.drop()
+  let unavailable = try {
+    ignore(handle.as_raw())
+    false
+  } catch {
+    _ => true
+  }
+  assert_true(unavailable)
 }

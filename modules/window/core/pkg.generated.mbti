@@ -3,6 +3,7 @@ package "Milky2018/window/core"
 
 import {
   "Milky2018/window/dpi",
+  "Milky2018/windowing",
   "moonbitlang/core/debug",
   "moonbitlang/core/ref",
 }
@@ -1128,8 +1129,9 @@ pub impl Show for OsError
 pub struct ParentWindow {
   // private fields
 } derive(Eq, @debug.Debug)
-pub fn ParentWindow::from_raw(UInt64) -> Self
-pub fn ParentWindow::into_raw(Self) -> UInt64
+pub fn ParentWindow::from_raw(@windowing.RawWindowHandle) -> Self
+pub fn ParentWindow::from_window_handle(@windowing.WindowHandle) -> Self raise @windowing.HandleError
+pub fn ParentWindow::into_raw(Self) -> @windowing.RawWindowHandle
 pub impl Show for ParentWindow
 
 pub(all) enum PhysicalKey {

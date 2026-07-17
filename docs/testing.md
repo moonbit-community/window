@@ -1,6 +1,8 @@
 # Testing
 
 This repository uses `scripts/check_ci.sh` as the default local validation gate.
+Run every command in this document from the workspace root. The two MoonBit
+modules live in `modules/window` and `modules/windowing`.
 
 ```bash
 scripts/check_ci.sh
@@ -18,6 +20,7 @@ The gate runs:
 - `scripts/check_event_loop_thread_boundary.sh`
 - `scripts/check_monitor_thread_boundary.sh`
 - `scripts/check_window_thread_boundary.sh`
+- `scripts/check_workspace_architecture.sh`
 
 `moon test --release` is intentional for this repository. On macOS, the default
 debug test runner can still execute generated native tests through a `tcc -run`
