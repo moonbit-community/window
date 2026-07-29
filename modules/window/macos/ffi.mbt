@@ -99,6 +99,23 @@ extern "C" fn appkit_notification_center_remove_observer(
 ///|
 #borrow(call_closure)
 #owned(callback)
+extern "C" fn native_install_menu_action_callback(
+  call_closure : FuncRef[((Int) -> Unit, Int) -> Unit],
+  callback : (Int) -> Unit,
+) -> Unit = "mbw_install_menu_action_callback"
+
+///|
+extern "C" fn native_create_menu_action_target() -> UInt64 = "mbw_create_menu_action_target"
+
+///|
+extern "C" fn native_set_menu_item_action_id(
+  item_handle : UInt64,
+  action_id : Int,
+) -> Unit = "mbw_set_menu_item_action_id"
+
+///|
+#borrow(call_closure)
+#owned(callback)
 extern "C" fn native_main_run_loop_add_observer(
   call_closure : FuncRef[((Int) -> Unit, Int) -> Unit],
   callback : (Int) -> Unit,
