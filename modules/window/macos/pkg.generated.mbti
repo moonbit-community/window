@@ -11,6 +11,10 @@ import {
 // Values
 pub fn monitor_ns_screen(@core.MonitorHandle) -> NSScreenHandle?
 
+pub fn set_system_menu_action_handler((Int) -> Unit) -> Unit
+
+pub fn set_system_menus(Array[SystemMenuDescriptor]) -> Unit
+
 // Errors
 
 // Types and methods
@@ -136,6 +140,21 @@ type NativeDisplayMode
 type NativeWindow
 
 type NotificationObserver
+
+pub struct SystemMenuDescriptor {
+  title : String
+  items : Array[SystemMenuItemDescriptor]
+} derive(@debug.Debug)
+pub fn SystemMenuDescriptor::new(title~ : String, items~ : Array[SystemMenuItemDescriptor]) -> Self
+
+pub struct SystemMenuItemDescriptor {
+  title : String
+  action_id : Int
+  key_equivalent : String
+  key_modifier_mask : Int
+  separator : Bool
+} derive(@debug.Debug)
+pub fn SystemMenuItemDescriptor::new(title~ : String, action_id~ : Int, key_equivalent~ : String, key_modifier_mask~ : Int, separator~ : Bool) -> Self
 
 pub struct Window {
   // private fields
