@@ -277,4 +277,3 @@ pub(open) trait ApplicationHandler {
   fn memory_warning(Self, ActiveEventLoop) -> Unit = _
   fn standard_key_binding(Self, ActiveEventLoop, @core.WindowId, String) -> Unit = _
 }
-

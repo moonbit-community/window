@@ -6,7 +6,7 @@ cd "$ROOT"
 
 moon fmt --check
 moon check
-moon check --warn-list +73
+moon check --warn-list +73 --deny-warn
 moon test --release
 moon build
 scripts/check_examples_build.sh

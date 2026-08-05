@@ -20,4 +20,3 @@ type Mode derive(Eq, @debug.Debug)
 // Type aliases
 
 // Traits
-

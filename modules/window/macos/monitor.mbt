@@ -300,7 +300,7 @@ impl @core.MonitorHandleProvider for MacosMonitorHandleProvider with fn native_i
 impl @core.MonitorHandleProvider for MacosMonitorHandleProvider with fn name(
   self,
 ) {
-  let display_id = self.native_id()
+  let display_id = @core.MonitorHandleProvider::native_id(self)
   if display_id == (0 : Int).to_uint64() {
     None
   } else {
@@ -312,7 +312,7 @@ impl @core.MonitorHandleProvider for MacosMonitorHandleProvider with fn name(
 impl @core.MonitorHandleProvider for MacosMonitorHandleProvider with fn position(
   self,
 ) {
-  let display_id = self.native_id()
+  let display_id = @core.MonitorHandleProvider::native_id(self)
   if display_id == (0 : Int).to_uint64() {
     PhysicalPosition(0, 0)
   } else {
@@ -324,7 +324,7 @@ impl @core.MonitorHandleProvider for MacosMonitorHandleProvider with fn position
 impl @core.MonitorHandleProvider for MacosMonitorHandleProvider with fn surface_size(
   self,
 ) {
-  let display_id = self.native_id()
+  let display_id = @core.MonitorHandleProvider::native_id(self)
   if display_id == (0 : Int).to_uint64() {
     PhysicalSize(1, 1)
   } else {
@@ -339,14 +339,14 @@ impl @core.MonitorHandleProvider for MacosMonitorHandleProvider with fn surface_
 impl @core.MonitorHandleProvider for MacosMonitorHandleProvider with fn scale_factor(
   self,
 ) {
-  clamped_scale_factor(self.native_id())
+  clamped_scale_factor(@core.MonitorHandleProvider::native_id(self))
 }
 
 ///|
 impl @core.MonitorHandleProvider for MacosMonitorHandleProvider with fn current_video_mode(
   self,
 ) {
-  let display_id = self.native_id()
+  let display_id = @core.MonitorHandleProvider::native_id(self)
   if display_id == (0 : Int).to_uint64() {
     None
   } else {
@@ -358,7 +358,7 @@ impl @core.MonitorHandleProvider for MacosMonitorHandleProvider with fn current_
 impl @core.MonitorHandleProvider for MacosMonitorHandleProvider with fn video_modes(
   self,
 ) {
-  let display_id = self.native_id()
+  let display_id = @core.MonitorHandleProvider::native_id(self)
   if display_id == (0 : Int).to_uint64() {
     []
   } else {

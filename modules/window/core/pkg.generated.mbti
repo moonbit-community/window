@@ -1538,4 +1538,3 @@ pub(open) trait MonitorHandleProvider {
 pub(open) trait WindowCursorHittest {
   fn set_cursor_hittest(Self, Bool) -> Unit raise RequestError
 }
-

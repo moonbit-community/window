@@ -17,4 +17,3 @@ pub impl @macos.ApplicationHandler for PumpDemo
 // Type aliases
 
 // Traits
-

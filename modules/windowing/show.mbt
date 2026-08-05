@@ -1,6 +1,6 @@
 ///|
 fn[T : Debug] debug_output(value : T, logger : &Logger) -> Unit {
-  logger.write_object(to_repr(value))
+  logger.write_object(Repr(value))
 }
 
 ///|

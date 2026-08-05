@@ -17,4 +17,3 @@ pub impl @macos.ApplicationHandler for App
 // Type aliases
 
 // Traits
-

@@ -1297,8 +1297,8 @@ pub impl @macos.ApplicationHandler for Application with fn device_event(
   device_id,
   event,
 ) {
-  let device_id_debug = to_repr(device_id).to_string()
-  let event_debug = to_repr(event).to_string()
+  let device_id_debug = Repr(device_id).to_string()
+  let event_debug = Repr(event).to_string()
   println("Device \{device_id_debug} event: \{event_debug}")
 }
 

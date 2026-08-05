@@ -1,6 +1,6 @@
 name = "Milky2018/window"
 
-version = "0.5.4"
+version = "0.6.0"
 
 import {
   "Milky2018/windowing@0.1.0",

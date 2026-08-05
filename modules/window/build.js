@@ -20,7 +20,7 @@ const moduleName = readModuleName();
 const macosPackageName = `${moduleName}/macos`;
 const examplesUtilPackageName = `${moduleName}/examples/util`;
 const macosFrameworkFlags =
-  "-framework AppKit -framework Foundation -framework CoreGraphics -framework CoreVideo -framework ApplicationServices -lobjc";
+  "-framework AppKit -framework Foundation -framework CoreGraphics -framework CoreVideo -framework ApplicationServices";
 
 console.log(
   JSON.stringify({

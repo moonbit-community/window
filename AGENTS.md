@@ -33,6 +33,8 @@ You can browse and install extra skills here:
 - `moon ide` provides project navigation helpers like `peek-def`, `outline`, and
   `find-references`. See $moonbit-agent-guide for details.
 
+- `moon check --warn-list +73 --deny-warn` is the warning gate used by CI.
+
 - `moon info` is used to update the generated interface of the package, each
   package has a generated interface file `.mbti`, it is a brief formal
   description of the package. If nothing in `.mbti` changes, this means your
