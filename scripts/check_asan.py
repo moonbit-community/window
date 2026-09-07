@@ -102,9 +102,12 @@ def create_compiler_wrapper(path: Path) -> None:
 
 
 def verify_build(build: Path) -> tuple[int, int]:
-    archives = list(build.rglob("libmacos.a"))
+    archives = [
+        path for path in build.rglob("libmacos*.a")
+        if path.parent.name == "macos"
+    ]
     if not archives:
-        raise RuntimeError("ASan build did not produce libmacos.a")
+        raise RuntimeError("ASan build did not produce the macos native archive")
     for archive in archives:
         symbols = command_output(["nm", "-u", str(archive)], os.environ.copy())
         if "asan_init" not in symbols:
