@@ -6,7 +6,7 @@ struct PumpDemo {
 
 ///|
 fn PumpDemo::PumpDemo() -> PumpDemo {
-  { window: None }
+  { window: None, }
 }
 
 ///|

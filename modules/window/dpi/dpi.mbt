@@ -17,7 +17,7 @@ pub struct LogicalSize {
 
 ///|
 pub fn LogicalSize::LogicalSize(width : Double, height : Double) -> LogicalSize {
-  { width, height }
+  { width, height, }
 }
 
 ///|
@@ -52,7 +52,7 @@ pub struct PhysicalSize {
 
 ///|
 pub fn PhysicalSize::PhysicalSize(width : Int, height : Int) -> PhysicalSize {
-  { width, height }
+  { width, height, }
 }
 
 ///|
@@ -90,7 +90,7 @@ pub fn LogicalPosition::LogicalPosition(
   x : Double,
   y : Double,
 ) -> LogicalPosition {
-  { x, y }
+  { x, y, }
 }
 
 ///|
@@ -130,7 +130,7 @@ pub struct PhysicalPosition {
 
 ///|
 pub fn PhysicalPosition::PhysicalPosition(x : Int, y : Int) -> PhysicalPosition {
-  { x, y }
+  { x, y, }
 }
 
 ///|
@@ -173,7 +173,7 @@ pub fn PhysicalPositionF64::PhysicalPositionF64(
   x : Double,
   y : Double,
 ) -> PhysicalPositionF64 {
-  { x, y }
+  { x, y, }
 }
 
 ///|
@@ -239,7 +239,7 @@ pub fn PhysicalInsets::PhysicalInsets(
   bottom : Int,
   right : Int,
 ) -> PhysicalInsets {
-  { top, left, bottom, right }
+  { top, left, bottom, right, }
 }
 
 ///|
@@ -303,3 +303,51 @@ pub fn Size::to_logical(self : Size, scale_factor : Double) -> LogicalSize {
     Physical(size) => size.to_logical(scale_factor)
   }
 }
+
+///|
+pub extend LogicalPosition with Debug::{to_repr}
+
+///|
+pub extend LogicalPosition with Eq::{not_equal, equal}
+
+///|
+pub extend LogicalSize with Debug::{to_repr}
+
+///|
+pub extend LogicalSize with Eq::{not_equal, equal}
+
+///|
+pub extend PhysicalInsets with Debug::{to_repr}
+
+///|
+pub extend PhysicalInsets with Eq::{not_equal, equal}
+
+///|
+pub extend PhysicalPosition with Debug::{to_repr}
+
+///|
+pub extend PhysicalPosition with Eq::{not_equal, equal}
+
+///|
+pub extend PhysicalPositionF64 with Debug::{to_repr}
+
+///|
+pub extend PhysicalPositionF64 with Eq::{not_equal, equal}
+
+///|
+pub extend PhysicalSize with Debug::{to_repr}
+
+///|
+pub extend PhysicalSize with Eq::{not_equal, equal}
+
+///|
+pub extend Position with Debug::{to_repr}
+
+///|
+pub extend Position with Eq::{not_equal, equal}
+
+///|
+pub extend Size with Debug::{to_repr}
+
+///|
+pub extend Size with Eq::{not_equal, equal}

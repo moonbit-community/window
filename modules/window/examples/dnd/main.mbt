@@ -6,7 +6,7 @@ struct Application {
 
 ///|
 fn Application::Application() -> Application {
-  { window: None }
+  { window: None, }
 }
 
 ///|

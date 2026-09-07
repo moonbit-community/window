@@ -717,3 +717,51 @@ pub fn KeyEvent::text(self : KeyEvent) -> String? {
 pub fn KeyEvent::text_with_all_modifiers(self : KeyEvent) -> String? {
   self.text_with_all_modifiers
 }
+
+///|
+pub extend Key with Debug::{to_repr}
+
+///|
+pub extend Key with Eq::{not_equal, equal}
+
+///|
+pub extend KeyCode with Debug::{to_repr}
+
+///|
+pub extend KeyCode with Eq::{not_equal, equal}
+
+///|
+pub extend KeyEvent with Debug::{to_repr}
+
+///|
+pub extend KeyEvent with Eq::{not_equal, equal}
+
+///|
+pub extend KeyLocation with Debug::{to_repr}
+
+///|
+pub extend KeyLocation with Eq::{not_equal, equal}
+
+///|
+pub extend NamedKey with Debug::{to_repr}
+
+///|
+pub extend NamedKey with Eq::{not_equal, equal}
+
+///|
+pub extend NativeKey with Debug::{to_repr}
+
+///|
+pub extend NativeKey with Eq::{not_equal, equal}
+
+///|
+pub extend NativeKeyCode with Debug::{to_repr}
+
+///|
+pub extend NativeKeyCode with Eq::{not_equal, equal}
+
+///|
+pub extend PhysicalKey with Debug::{to_repr}
+
+///|
+pub extend PhysicalKey with Eq::{not_equal, equal}

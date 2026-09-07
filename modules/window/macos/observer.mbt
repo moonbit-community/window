@@ -77,7 +77,7 @@ priv struct EventLoopWaker {
 
 ///|
 fn EventLoopWaker::EventLoopWaker() -> EventLoopWaker {
-  { next_fire_date_ms: None }
+  { next_fire_date_ms: None, }
 }
 
 ///|

@@ -7,7 +7,7 @@ pub struct SurfaceSizeWriter {
 pub fn SurfaceSizeWriter::SurfaceSizeWriter(
   size : @dpi.PhysicalSize,
 ) -> SurfaceSizeWriter {
-  { size: Ref(size) }
+  { size: Ref(size), }
 }
 
 ///|
@@ -232,7 +232,7 @@ pub fn TabletToolData::TabletToolData(
   tilt : TabletToolTilt?,
   angle : TabletToolAngle?,
 ) -> TabletToolData {
-  { force, tangential_force, twist, tilt, angle }
+  { force, tangential_force, twist, tilt, angle, }
 }
 
 ///|
@@ -282,7 +282,7 @@ pub struct TabletToolTilt {
 
 ///|
 pub fn TabletToolTilt::TabletToolTilt(x : Int, y : Int) -> TabletToolTilt {
-  { x, y }
+  { x, y, }
 }
 
 ///|
@@ -347,12 +347,12 @@ pub fn TabletToolAngle::TabletToolAngle(
   altitude : Double,
   azimuth : Double,
 ) -> TabletToolAngle {
-  { altitude, azimuth }
+  { altitude, azimuth, }
 }
 
 ///|
 pub fn TabletToolAngle::default() -> TabletToolAngle {
-  { altitude: 2.0 / @math.PI, azimuth: 0.0 }
+  { altitude: 2.0 / @math.PI, azimuth: 0.0, }
 }
 
 ///|
@@ -495,7 +495,7 @@ pub struct ImeCursorRange {
 
 ///|
 pub fn ImeCursorRange::ImeCursorRange(start : Int, end : Int) -> ImeCursorRange {
-  { start, end }
+  { start, end, }
 }
 
 ///|
@@ -543,7 +543,7 @@ pub fn RawKeyEvent::RawKeyEvent(
   physical_key : PhysicalKey,
   state : ElementState,
 ) -> RawKeyEvent {
-  { physical_key, state }
+  { physical_key, state, }
 }
 
 ///|
@@ -707,3 +707,150 @@ pub fn WindowEvent::into_winit_events(
     RedrawRequested => [RedrawRequested]
   }
 }
+
+///|
+pub extend AxisId with Debug::{to_repr}
+
+///|
+pub extend AxisId with Eq::{not_equal, equal}
+
+///|
+pub extend ButtonId with Debug::{to_repr}
+
+///|
+pub extend ButtonId with Eq::{not_equal, equal}
+
+///|
+pub extend ButtonSource with Debug::{to_repr}
+
+///|
+pub extend ButtonSource with Eq::{not_equal, equal}
+
+///|
+pub extend DeviceEvent with Debug::{to_repr}
+
+///|
+pub extend DeviceEvent with Eq::{not_equal, equal}
+
+///|
+pub extend DeviceId with Debug::{to_repr}
+
+///|
+pub extend DeviceId with Eq::{not_equal, equal}
+
+///|
+pub extend ElementState with Debug::{to_repr}
+
+///|
+pub extend ElementState with Eq::{not_equal, equal}
+
+///|
+pub extend FingerId with Debug::{to_repr}
+
+///|
+pub extend FingerId with Eq::{not_equal, equal}
+
+///|
+pub extend Force with Debug::{to_repr}
+
+///|
+pub extend Force with Eq::{not_equal, equal}
+
+///|
+pub extend Ime with Debug::{to_repr}
+
+///|
+pub extend Ime with Eq::{not_equal, equal}
+
+///|
+pub extend ImeCursorRange with Debug::{to_repr}
+
+///|
+pub extend ImeCursorRange with Eq::{not_equal, equal}
+
+///|
+pub extend MouseButton with Debug::{to_repr}
+
+///|
+pub extend MouseButton with Eq::{not_equal, equal}
+
+///|
+pub extend MouseScrollDelta with Debug::{to_repr}
+
+///|
+pub extend MouseScrollDelta with Eq::{not_equal, equal}
+
+///|
+pub extend PointerKind with Debug::{to_repr}
+
+///|
+pub extend PointerKind with Eq::{not_equal, equal}
+
+///|
+pub extend PointerSource with Debug::{to_repr}
+
+///|
+pub extend PointerSource with Eq::{not_equal, equal}
+
+///|
+pub extend RawKeyEvent with Debug::{to_repr}
+
+///|
+pub extend RawKeyEvent with Eq::{not_equal, equal}
+
+///|
+pub extend StartCause with Debug::{to_repr}
+
+///|
+pub extend StartCause with Eq::{not_equal, equal}
+
+///|
+pub extend SurfaceSizeWriter with Debug::{to_repr}
+
+///|
+pub extend TabletToolAngle with Debug::{to_repr}
+
+///|
+pub extend TabletToolAngle with Eq::{not_equal, equal}
+
+///|
+pub extend TabletToolButton with Debug::{to_repr}
+
+///|
+pub extend TabletToolButton with Eq::{not_equal, equal}
+
+///|
+pub extend TabletToolData with Debug::{to_repr}
+
+///|
+pub extend TabletToolData with Eq::{not_equal, equal}
+
+///|
+pub extend TabletToolKind with Debug::{to_repr}
+
+///|
+pub extend TabletToolKind with Eq::{not_equal, equal}
+
+///|
+pub extend TabletToolTilt with Debug::{to_repr}
+
+///|
+pub extend TabletToolTilt with Eq::{not_equal, equal}
+
+///|
+pub extend TouchPhase with Debug::{to_repr}
+
+///|
+pub extend TouchPhase with Eq::{not_equal, equal}
+
+///|
+pub extend WindowEvent with Debug::{to_repr}
+
+///|
+pub extend WinitDeviceEvent with Debug::{to_repr}
+
+///|
+pub extend WinitDeviceEvent with Eq::{not_equal, equal}
+
+///|
+pub extend WinitWindowEvent with Debug::{to_repr}

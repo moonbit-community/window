@@ -100,7 +100,7 @@ fn native_input_keyboard_text_payload(
     }
     text_without_modifiers = text_ignoring_modifiers
   }
-  { text_with_all_modifiers, text_ignoring_modifiers, text_without_modifiers }
+  { text_with_all_modifiers, text_ignoring_modifiers, text_without_modifiers, }
 }
 
 ///|

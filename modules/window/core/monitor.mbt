@@ -203,3 +203,15 @@ pub fn MonitorHandle::current_video_mode(self : MonitorHandle) -> VideoMode? {
 pub fn MonitorHandle::video_modes(self : MonitorHandle) -> Array[VideoMode] {
   self.provider.video_modes()
 }
+
+///|
+pub extend MonitorHandle with Debug::{to_repr}
+
+///|
+pub extend MonitorHandle with Eq::{not_equal, equal}
+
+///|
+pub extend VideoMode with Debug::{to_repr}
+
+///|
+pub extend VideoMode with Eq::{not_equal, equal}

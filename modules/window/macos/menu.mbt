@@ -31,7 +31,7 @@ fn menu_item_descriptor(
   action : MenuAction,
   key_equivalent : KeyEquivalent?,
 ) -> MenuItemDescriptor {
-  { title, action, key_equivalent }
+  { title, action, key_equivalent, }
 }
 
 ///|
@@ -55,11 +55,11 @@ fn default_menu_descriptors(process_name : String) -> Array[MenuItemDescriptor] 
     menu_item("About " + process_name, About, None),
     menu_item("", Separator, None),
     menu_item("Services", Services, None),
-    menu_item("Hide " + process_name, Hide, Some({ key: "h", masks: None })),
-    menu_item("Hide Others", HideOthers, Some({ key: "h", masks: Some(3) })),
+    menu_item("Hide " + process_name, Hide, Some({ key: "h", masks: None, })),
+    menu_item("Hide Others", HideOthers, Some({ key: "h", masks: Some(3), })),
     menu_item("Show All", ShowAll, None),
     menu_item("", Separator, None),
-    menu_item("Quit " + process_name, Quit, Some({ key: "q", masks: None })),
+    menu_item("Quit " + process_name, Quit, Some({ key: "q", masks: None, })),
   ]
 }
 
@@ -374,3 +374,21 @@ fn initialize_default_menu(enabled : Bool) -> Unit {
   }
   native_application_initialize_default_menu(enabled)
 }
+
+///|
+pub extend KeyEquivalent with Debug::{to_repr}
+
+///|
+pub extend KeyEquivalent with Eq::{not_equal, equal}
+
+///|
+pub extend MenuAction with Debug::{to_repr}
+
+///|
+pub extend MenuAction with Eq::{not_equal, equal}
+
+///|
+pub extend MenuItemDescriptor with Debug::{to_repr}
+
+///|
+pub extend MenuItemDescriptor with Eq::{not_equal, equal}

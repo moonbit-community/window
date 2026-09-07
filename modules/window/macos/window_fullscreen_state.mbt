@@ -49,10 +49,10 @@ fn set_maximized_standard_frame_state(
   width : Double,
   height : Double,
 ) -> Unit {
-  let frame = { x, y, width, height }
+  let frame = { x, y, width, height, }
   match maximized_standard_frame_index(window_handle) {
     Some(index) => maximized_standard_frame_entries.val[index].frame = frame
-    None => maximized_standard_frame_entries.val.push({ window_handle, frame })
+    None => maximized_standard_frame_entries.val.push({ window_handle, frame, })
   }
 }
 

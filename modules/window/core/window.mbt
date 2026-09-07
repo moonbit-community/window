@@ -26,62 +26,62 @@ pub struct ImeHint {
 
 ///|
 pub fn ImeHint::none() -> ImeHint {
-  { bits: 0 }
+  { bits: 0, }
 }
 
 ///|
 pub fn ImeHint::completion() -> ImeHint {
-  { bits: 1 }
+  { bits: 1, }
 }
 
 ///|
 pub fn ImeHint::spellcheck() -> ImeHint {
-  { bits: 2 }
+  { bits: 2, }
 }
 
 ///|
 pub fn ImeHint::auto_capitalization() -> ImeHint {
-  { bits: 4 }
+  { bits: 4, }
 }
 
 ///|
 pub fn ImeHint::lowercase() -> ImeHint {
-  { bits: 8 }
+  { bits: 8, }
 }
 
 ///|
 pub fn ImeHint::uppercase() -> ImeHint {
-  { bits: 16 }
+  { bits: 16, }
 }
 
 ///|
 pub fn ImeHint::titlecase() -> ImeHint {
-  { bits: 32 }
+  { bits: 32, }
 }
 
 ///|
 pub fn ImeHint::hidden_text() -> ImeHint {
-  { bits: 64 }
+  { bits: 64, }
 }
 
 ///|
 pub fn ImeHint::sensitive_data() -> ImeHint {
-  { bits: 128 }
+  { bits: 128, }
 }
 
 ///|
 pub fn ImeHint::latin() -> ImeHint {
-  { bits: 256 }
+  { bits: 256, }
 }
 
 ///|
 pub fn ImeHint::multiline() -> ImeHint {
-  { bits: 512 }
+  { bits: 512, }
 }
 
 ///|
 pub fn ImeHint::union(self : ImeHint, other : ImeHint) -> ImeHint {
-  { bits: self.bits | other.bits }
+  { bits: self.bits | other.bits, }
 }
 
 ///|
@@ -91,7 +91,7 @@ pub fn ImeHint::contains(self : ImeHint, other : ImeHint) -> Bool {
 
 ///|
 pub fn ImeHint::from_bits(bits : Int) -> ImeHint {
-  { bits: bits & 1023 }
+  { bits: bits & 1023, }
 }
 
 ///|
@@ -136,7 +136,7 @@ pub fn ImeSurroundingText::ImeSurroundingText(
   let _ = @utf8.decode(utf8_bytes[:anchor], ignore_bom=false) catch {
     _ => raise AnchorBadPosition
   }
-  { text, cursor, anchor }
+  { text, cursor, anchor, }
 }
 
 ///|
@@ -167,7 +167,7 @@ pub fn ImeCapabilities::ImeCapabilities(
   cursor_area : Bool,
   surrounding_text : Bool,
 ) -> ImeCapabilities {
-  { hint_and_purpose, cursor_area, surrounding_text }
+  { hint_and_purpose, cursor_area, surrounding_text, }
 }
 
 ///|
@@ -229,7 +229,7 @@ pub fn OsError::OsError(
   code : Int?,
   domain : String?,
 ) -> OsError {
-  { message, code, domain }
+  { message, code, domain, }
 }
 
 ///|
@@ -397,7 +397,7 @@ pub impl Debug for CustomCursor with fn to_repr(self) {
 
 ///|
 pub fn CustomCursor::from_raw(raw : UInt64) -> CustomCursor {
-  { raw, handle: None }
+  { raw, handle: None, }
 }
 
 ///|
@@ -405,7 +405,7 @@ pub fn CustomCursor::from_native(
   raw : UInt64,
   handle : CustomCursorHandle,
 ) -> CustomCursor {
-  { raw, handle: Some(handle) }
+  { raw, handle: Some(handle), }
 }
 
 ///|
@@ -508,37 +508,37 @@ pub struct ScreenEdge {
 
 ///|
 pub fn ScreenEdge::none() -> ScreenEdge {
-  { bits: 0 }
+  { bits: 0, }
 }
 
 ///|
 pub fn ScreenEdge::top() -> ScreenEdge {
-  { bits: 1 }
+  { bits: 1, }
 }
 
 ///|
 pub fn ScreenEdge::left() -> ScreenEdge {
-  { bits: 2 }
+  { bits: 2, }
 }
 
 ///|
 pub fn ScreenEdge::bottom() -> ScreenEdge {
-  { bits: 4 }
+  { bits: 4, }
 }
 
 ///|
 pub fn ScreenEdge::right() -> ScreenEdge {
-  { bits: 8 }
+  { bits: 8, }
 }
 
 ///|
 pub fn ScreenEdge::all() -> ScreenEdge {
-  { bits: 15 }
+  { bits: 15, }
 }
 
 ///|
 pub fn ScreenEdge::union(self : ScreenEdge, other : ScreenEdge) -> ScreenEdge {
-  { bits: self.bits | other.bits }
+  { bits: self.bits | other.bits, }
 }
 
 ///|
@@ -548,7 +548,7 @@ pub fn ScreenEdge::contains(self : ScreenEdge, other : ScreenEdge) -> Bool {
 
 ///|
 pub fn ScreenEdge::from_bits(bits : Int) -> ScreenEdge {
-  { bits: bits & 15 }
+  { bits: bits & 15, }
 }
 
 ///|
@@ -843,7 +843,7 @@ pub fn Icon::Icon(
   if width <= 0 || height <= 0 || pixel_count != width_x_height {
     raise DimensionsVsPixelCount(width, height, width_x_height, pixel_count)
   } else {
-    { width, height, rgba }
+    { width, height, rgba, }
   }
 }
 
@@ -871,12 +871,12 @@ pub struct WindowButtons {
 
 ///|
 pub fn WindowButtons::all() -> WindowButtons {
-  { close: true, maximize: true, minimize: true }
+  { close: true, maximize: true, minimize: true, }
 }
 
 ///|
 pub fn WindowButtons::none() -> WindowButtons {
-  { close: false, maximize: false, minimize: false }
+  { close: false, maximize: false, minimize: false, }
 }
 
 ///|
@@ -950,7 +950,7 @@ pub fn ParentWindow::from_raw(raw : @windowing.RawWindowHandle) -> ParentWindow 
 pub fn ParentWindow::from_window_handle(
   handle : @windowing.WindowHandle,
 ) -> ParentWindow raise @windowing.HandleError {
-  { raw: handle.as_raw() }
+  { raw: handle.as_raw(), }
 }
 
 ///|
@@ -1507,3 +1507,180 @@ pub fn WindowAttributes::visible(self : WindowAttributes) -> Bool {
 pub fn WindowAttributes::resizable(self : WindowAttributes) -> Bool {
   self.resizable
 }
+
+///|
+pub extend ActivationToken with Debug::{to_repr}
+
+///|
+pub extend ActivationToken with Eq::{not_equal, equal}
+
+///|
+pub extend BadCustomCursorAnimation with Debug::{to_repr}
+
+///|
+pub extend BadCustomCursorSource with Debug::{to_repr}
+
+///|
+pub extend BadIcon with Debug::{to_repr}
+
+///|
+pub extend Cursor with Debug::{to_repr}
+
+///|
+pub extend Cursor with Eq::{not_equal, equal}
+
+///|
+pub extend CursorGrabMode with Debug::{to_repr}
+
+///|
+pub extend CursorGrabMode with Eq::{not_equal, equal}
+
+///|
+pub extend CursorIcon with Debug::{to_repr}
+
+///|
+pub extend CursorIcon with Eq::{not_equal, equal}
+
+///|
+pub extend CustomCursor with Debug::{to_repr}
+
+///|
+pub extend CustomCursor with Eq::{not_equal, equal}
+
+///|
+pub extend CustomCursorHandle with Debug::{to_repr}
+
+///|
+pub extend CustomCursorSource with Debug::{to_repr}
+
+///|
+pub extend CustomCursorSource with Eq::{not_equal, equal}
+
+///|
+pub extend Fullscreen with Debug::{to_repr}
+
+///|
+pub extend Fullscreen with Eq::{not_equal, equal}
+
+///|
+pub extend Icon with Debug::{to_repr}
+
+///|
+pub extend Icon with Eq::{not_equal, equal}
+
+///|
+pub extend ImeCapabilities with Debug::{to_repr}
+
+///|
+pub extend ImeCapabilities with Eq::{not_equal, equal}
+
+///|
+pub extend ImeHint with Debug::{to_repr}
+
+///|
+pub extend ImeHint with Eq::{not_equal, equal}
+
+///|
+pub extend ImePurpose with Debug::{to_repr}
+
+///|
+pub extend ImePurpose with Eq::{not_equal, equal}
+
+///|
+pub extend ImeRequest with Debug::{to_repr}
+
+///|
+pub extend ImeRequest with Eq::{not_equal, equal}
+
+///|
+pub extend ImeRequestError with Debug::{to_repr}
+
+///|
+pub extend ImeSurroundingText with Debug::{to_repr}
+
+///|
+pub extend ImeSurroundingText with Eq::{not_equal, equal}
+
+///|
+pub extend ImeSurroundingTextError with Debug::{to_repr}
+
+///|
+pub extend NotSupportedError with Debug::{to_repr}
+
+///|
+pub extend NotSupportedError with Eq::{not_equal, equal}
+
+///|
+pub extend OptionAsAlt with Debug::{to_repr}
+
+///|
+pub extend OptionAsAlt with Eq::{not_equal, equal}
+
+///|
+pub extend OsError with Debug::{to_repr}
+
+///|
+pub extend OsError with Eq::{not_equal, equal}
+
+///|
+pub extend ParentWindow with Debug::{to_repr}
+
+///|
+pub extend ParentWindow with Eq::{not_equal, equal}
+
+///|
+pub extend PlatformWindowAttributes with Debug::{to_repr}
+
+///|
+pub extend PlatformWindowAttributes with Eq::{not_equal, equal}
+
+///|
+pub extend RequestError with Debug::{to_repr}
+
+///|
+pub extend ResizeDirection with Debug::{to_repr}
+
+///|
+pub extend ResizeDirection with Eq::{not_equal, equal}
+
+///|
+pub extend ScreenEdge with Debug::{to_repr}
+
+///|
+pub extend ScreenEdge with Eq::{not_equal, equal}
+
+///|
+pub extend Theme with Debug::{to_repr}
+
+///|
+pub extend Theme with Eq::{not_equal, equal}
+
+///|
+pub extend UserAttentionType with Debug::{to_repr}
+
+///|
+pub extend UserAttentionType with Eq::{not_equal, equal}
+
+///|
+pub extend WindowAttributes with Debug::{to_repr}
+
+///|
+pub extend WindowAttributes with Eq::{not_equal, equal}
+
+///|
+pub extend WindowButtons with Debug::{to_repr}
+
+///|
+pub extend WindowButtons with Eq::{not_equal, equal}
+
+///|
+pub extend WindowId with Debug::{to_repr}
+
+///|
+pub extend WindowId with Eq::{not_equal, equal}
+
+///|
+pub extend WindowLevel with Debug::{to_repr}
+
+///|
+pub extend WindowLevel with Eq::{not_equal, equal}

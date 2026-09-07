@@ -142,7 +142,7 @@ fn native_monitor_ns_screen(monitor_id : UInt64) -> NSScreenHandle? {
   if appkit_objc_owned_object_handle(screen_owner) == (0 : Int).to_uint64() {
     None
   } else {
-    Some({ object: screen_owner })
+    Some({ object: screen_owner, })
   }
 }
 
@@ -473,3 +473,6 @@ pub fn NSScreenHandle::drop(self : NSScreenHandle) -> Unit {
 pub fn monitor_ns_screen(monitor : @core.MonitorHandle) -> NSScreenHandle? {
   native_monitor_ns_screen(monitor.native_id())
 }
+
+///|
+pub extend NSScreenHandle with Debug::{to_repr}

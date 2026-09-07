@@ -16,8 +16,13 @@ pub struct LogicalPosition {
   y : Double
 } derive(Eq, @debug.Debug)
 pub fn LogicalPosition::LogicalPosition(Double, Double) -> Self
+pub fn LogicalPosition::equal(Self, Self) -> Bool
 pub fn LogicalPosition::into_position(Self) -> Position
+pub fn LogicalPosition::not_equal(Self, Self) -> Bool
+pub fn LogicalPosition::output(Self, &Logger) -> Unit
 pub fn LogicalPosition::to_physical(Self, Double) -> PhysicalPosition
+pub fn LogicalPosition::to_repr(Self) -> @debug.Repr
+pub fn LogicalPosition::to_string(Self) -> String
 pub fn LogicalPosition::x(Self) -> Double
 pub fn LogicalPosition::y(Self) -> Double
 pub impl Show for LogicalPosition
@@ -27,9 +32,14 @@ pub struct LogicalSize {
   height : Double
 } derive(Eq, @debug.Debug)
 pub fn LogicalSize::LogicalSize(Double, Double) -> Self
+pub fn LogicalSize::equal(Self, Self) -> Bool
 pub fn LogicalSize::height(Self) -> Double
 pub fn LogicalSize::into_size(Self) -> Size
+pub fn LogicalSize::not_equal(Self, Self) -> Bool
+pub fn LogicalSize::output(Self, &Logger) -> Unit
 pub fn LogicalSize::to_physical(Self, Double) -> PhysicalSize
+pub fn LogicalSize::to_repr(Self) -> @debug.Repr
+pub fn LogicalSize::to_string(Self) -> String
 pub fn LogicalSize::width(Self) -> Double
 pub impl Show for LogicalSize
 
@@ -41,8 +51,13 @@ pub struct PhysicalInsets {
 } derive(Eq, @debug.Debug)
 pub fn PhysicalInsets::PhysicalInsets(Int, Int, Int, Int) -> Self
 pub fn PhysicalInsets::bottom(Self) -> Int
+pub fn PhysicalInsets::equal(Self, Self) -> Bool
 pub fn PhysicalInsets::left(Self) -> Int
+pub fn PhysicalInsets::not_equal(Self, Self) -> Bool
+pub fn PhysicalInsets::output(Self, &Logger) -> Unit
 pub fn PhysicalInsets::right(Self) -> Int
+pub fn PhysicalInsets::to_repr(Self) -> @debug.Repr
+pub fn PhysicalInsets::to_string(Self) -> String
 pub fn PhysicalInsets::top(Self) -> Int
 pub impl Show for PhysicalInsets
 
@@ -51,8 +66,13 @@ pub struct PhysicalPosition {
   y : Int
 } derive(Eq, @debug.Debug)
 pub fn PhysicalPosition::PhysicalPosition(Int, Int) -> Self
+pub fn PhysicalPosition::equal(Self, Self) -> Bool
 pub fn PhysicalPosition::into_position(Self) -> Position
+pub fn PhysicalPosition::not_equal(Self, Self) -> Bool
+pub fn PhysicalPosition::output(Self, &Logger) -> Unit
 pub fn PhysicalPosition::to_logical(Self, Double) -> LogicalPosition
+pub fn PhysicalPosition::to_repr(Self) -> @debug.Repr
+pub fn PhysicalPosition::to_string(Self) -> String
 pub fn PhysicalPosition::x(Self) -> Int
 pub fn PhysicalPosition::y(Self) -> Int
 pub impl Show for PhysicalPosition
@@ -62,6 +82,11 @@ pub struct PhysicalPositionF64 {
   y : Double
 } derive(Eq, @debug.Debug)
 pub fn PhysicalPositionF64::PhysicalPositionF64(Double, Double) -> Self
+pub fn PhysicalPositionF64::equal(Self, Self) -> Bool
+pub fn PhysicalPositionF64::not_equal(Self, Self) -> Bool
+pub fn PhysicalPositionF64::output(Self, &Logger) -> Unit
+pub fn PhysicalPositionF64::to_repr(Self) -> @debug.Repr
+pub fn PhysicalPositionF64::to_string(Self) -> String
 pub fn PhysicalPositionF64::x(Self) -> Double
 pub fn PhysicalPositionF64::y(Self) -> Double
 pub impl Show for PhysicalPositionF64
@@ -71,9 +96,14 @@ pub struct PhysicalSize {
   height : Int
 } derive(Eq, @debug.Debug)
 pub fn PhysicalSize::PhysicalSize(Int, Int) -> Self
+pub fn PhysicalSize::equal(Self, Self) -> Bool
 pub fn PhysicalSize::height(Self) -> Int
 pub fn PhysicalSize::into_size(Self) -> Size
+pub fn PhysicalSize::not_equal(Self, Self) -> Bool
+pub fn PhysicalSize::output(Self, &Logger) -> Unit
 pub fn PhysicalSize::to_logical(Self, Double) -> LogicalSize
+pub fn PhysicalSize::to_repr(Self) -> @debug.Repr
+pub fn PhysicalSize::to_string(Self) -> String
 pub fn PhysicalSize::width(Self) -> Int
 pub impl Show for PhysicalSize
 
@@ -81,20 +111,30 @@ pub(all) enum Position {
   Logical(LogicalPosition)
   Physical(PhysicalPosition)
 } derive(Eq, @debug.Debug)
+pub fn Position::equal(Self, Self) -> Bool
 pub fn Position::from_logical(LogicalPosition) -> Self
 pub fn Position::from_physical(PhysicalPosition) -> Self
+pub fn Position::not_equal(Self, Self) -> Bool
+pub fn Position::output(Self, &Logger) -> Unit
 pub fn Position::to_logical(Self, Double) -> LogicalPosition
 pub fn Position::to_physical(Self, Double) -> PhysicalPosition
+pub fn Position::to_repr(Self) -> @debug.Repr
+pub fn Position::to_string(Self) -> String
 pub impl Show for Position
 
 pub(all) enum Size {
   Logical(LogicalSize)
   Physical(PhysicalSize)
 } derive(Eq, @debug.Debug)
+pub fn Size::equal(Self, Self) -> Bool
 pub fn Size::from_logical(LogicalSize) -> Self
 pub fn Size::from_physical(PhysicalSize) -> Self
+pub fn Size::not_equal(Self, Self) -> Bool
+pub fn Size::output(Self, &Logger) -> Unit
 pub fn Size::to_logical(Self, Double) -> LogicalSize
 pub fn Size::to_physical(Self, Double) -> PhysicalSize
+pub fn Size::to_repr(Self) -> @debug.Repr
+pub fn Size::to_string(Self) -> String
 pub impl Show for Size
 
 // Type aliases

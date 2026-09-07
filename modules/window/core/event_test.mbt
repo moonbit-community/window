@@ -91,12 +91,15 @@ test "test_tilt_angle_conversions" {
   }
 
   let angle_to_tilt = [
-    { angle: TabletToolAngle(0.0, 0.0), expected_tilt: TabletToolTilt(90, 0) },
+    { angle: TabletToolAngle(0.0, 0.0), expected_tilt: TabletToolTilt(90, 0), },
     {
       angle: TabletToolAngle(pi_0_25, 0.0),
       expected_tilt: TabletToolTilt(45, 0),
     },
-    { angle: TabletToolAngle(pi_0_5, 0.0), expected_tilt: TabletToolTilt(0, 0) },
+    {
+      angle: TabletToolAngle(pi_0_5, 0.0),
+      expected_tilt: TabletToolTilt(0, 0),
+    },
     {
       angle: TabletToolAngle(0.0, pi_0_5),
       expected_tilt: TabletToolTilt(0, 90),
@@ -105,7 +108,7 @@ test "test_tilt_angle_conversions" {
       angle: TabletToolAngle(pi_0_25, pi_0_5),
       expected_tilt: TabletToolTilt(0, 45),
     },
-    { angle: TabletToolAngle(0.0, pi), expected_tilt: TabletToolTilt(-90, 0) },
+    { angle: TabletToolAngle(0.0, pi), expected_tilt: TabletToolTilt(-90, 0), },
     {
       angle: TabletToolAngle(pi_0_25, pi),
       expected_tilt: TabletToolTilt(-45, 0),

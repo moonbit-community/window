@@ -353,7 +353,7 @@ test "did_finish_launching_and_dispatch_runs_init_before_stop_on_launch" {
   app_state_set_stop_on_launch(true)
 
   app_state_did_finish_launching_and_dispatch(
-    LaunchInitCallbacksApp::{  },
+    LaunchInitCallbacksApp::{ },
     active_event_loop_for_test(),
   )
 
@@ -445,7 +445,7 @@ test "queue_did_finish_launching_dispatches_init_when_handler_registered" {
   launch_init_callback_order_for_test.val = []
   launch_init_stop_flag_seen_for_test.val = []
   app_state_set_dispatch_handler(
-    LaunchInitCallbacksApp::{  },
+    LaunchInitCallbacksApp::{ },
     active_event_loop_for_test(),
   )
 
@@ -631,4 +631,19 @@ test "moved_event_is_queued_again_when_position_changes" {
     app_state_deferred_callback_names_for_test() ==
     ["window_event", "window_event"],
   )
+}
+
+///|
+pub extend LaunchInitCallbacksApp with ApplicationHandler::{
+  standard_key_binding,
+  suspended,
+  new_events,
+  memory_warning,
+  device_event,
+  destroy_surfaces,
+  can_create_surfaces,
+  resumed,
+  window_event,
+  about_to_wait,
+  proxy_wake_up,
 }

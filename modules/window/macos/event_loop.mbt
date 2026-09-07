@@ -302,7 +302,7 @@ pub fn EventLoop::drop(self : EventLoop) -> Unit {
 
 ///|
 fn EventLoop::as_active(self : EventLoop) -> ActiveEventLoop {
-  { inner: self }
+  { inner: self, }
 }
 
 ///|
@@ -451,7 +451,7 @@ pub fn ActiveEventLoop::owned_display_handle(
 
 ///|
 pub fn EventLoopBuilder::EventLoopBuilder() -> EventLoopBuilder {
-  { platform_attributes_: @core.PlatformEventLoopAttributes::default() }
+  { platform_attributes_: @core.PlatformEventLoopAttributes::default(), }
 }
 
 ///|
@@ -661,7 +661,7 @@ pub fn EventLoop::control_flow(self : EventLoop) -> @core.ControlFlow {
 
 ///|
 pub fn EventLoop::create_proxy(_self : EventLoop) -> EventLoopProxy {
-  { _unit: () }
+  { _unit: (), }
 }
 
 ///|
@@ -873,7 +873,8 @@ pub fn[A : ApplicationHandler] EventLoop::try_run_app(
 ) -> Unit raise @core.EventLoopError {
   ensure_event_loop_run_thread()
   app_state_set_dispatch_handler(app, self.as_active())
-  let result = (fn() -> Unit raise @core.EventLoopError {
+  defer app_state_clear_dispatch_handler()
+  (fn() -> Unit raise @core.EventLoopError {
     self.try_start_running()
     if app_state_is_launched() {
       app_state_dispatch_init_events(app, self.as_active())
@@ -881,12 +882,33 @@ pub fn[A : ApplicationHandler] EventLoop::try_run_app(
     native_application_run()
     self.dispatch_window_events(app)
     app_state_internal_exit()
-  })() catch {
-    err => {
-      app_state_clear_dispatch_handler()
-      raise err
-    }
-  }
-  app_state_clear_dispatch_handler()
-  result
+  })()
 }
+
+///|
+pub extend ActiveEventLoop with @Milky2018/windowing.DisplayHandleProvider::{
+  raw_display_handle,
+}
+
+///|
+pub extend ActiveEventLoop with Debug::{to_repr}
+
+///|
+pub extend EventLoop with @Milky2018/windowing.DisplayHandleProvider::{
+  raw_display_handle,
+}
+
+///|
+pub extend EventLoop with Debug::{to_repr}
+
+///|
+pub extend EventLoopBuilder with Debug::{to_repr}
+
+///|
+pub extend EventLoopBuilder with Eq::{not_equal, equal}
+
+///|
+pub extend EventLoopProxy with Debug::{to_repr}
+
+///|
+pub extend EventLoopProxy with Eq::{not_equal, equal}

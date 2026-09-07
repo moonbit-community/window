@@ -47,13 +47,13 @@ pub fn Window::id(self : Window) -> @core.WindowId {
 }
 
 ///|
-fn Window::raw_display_handle(self : Window) -> @windowing.RawDisplayHandle {
+pub fn Window::raw_display_handle(self : Window) -> @windowing.RawDisplayHandle {
   let _ = self
   AppKit(@windowing.AppKitDisplayHandle::new())
 }
 
 ///|
-fn Window::raw_window_handle(
+pub fn Window::raw_window_handle(
   self : Window,
 ) -> @windowing.RawWindowHandle raise @windowing.HandleError {
   let raw_view = self.maybe_wait_on_main(fn(window) {
@@ -575,3 +575,9 @@ fn Window::ime_supports_cursor_area(self : Window) -> Bool {
     None => false
   }
 }
+
+///|
+pub extend Window with Debug::{to_repr}
+
+///|
+pub extend Window with Eq::{not_equal, equal}

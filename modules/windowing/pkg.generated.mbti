@@ -11,25 +11,37 @@ import {
 pub(all) suberror HandleError {
   Unavailable
 } derive(Eq, @debug.Debug)
+pub fn HandleError::equal(Self, Self) -> Bool
+pub fn HandleError::not_equal(Self, Self) -> Bool
+pub fn HandleError::output(Self, &Logger) -> Unit
+pub fn HandleError::to_repr(Self) -> @debug.Repr
+pub fn HandleError::to_string(Self) -> String
 pub impl Show for HandleError
 
 // Types and methods
 pub struct AppKitDisplayHandle {
   // private fields
 } derive(Eq, @debug.Debug)
+pub fn AppKitDisplayHandle::equal(Self, Self) -> Bool
 pub fn AppKitDisplayHandle::new() -> Self
+pub fn AppKitDisplayHandle::not_equal(Self, Self) -> Bool
+pub fn AppKitDisplayHandle::to_repr(Self) -> @debug.Repr
 
 pub struct AppKitWindowHandle {
   // private fields
 } derive(Eq, @debug.Debug)
+pub fn AppKitWindowHandle::equal(Self, Self) -> Bool
 pub fn AppKitWindowHandle::new(UInt64) -> Self raise HandleError
+pub fn AppKitWindowHandle::not_equal(Self, Self) -> Bool
 pub fn AppKitWindowHandle::ns_view(Self) -> UInt64
+pub fn AppKitWindowHandle::to_repr(Self) -> @debug.Repr
 
 pub struct DisplayHandle {
   // private fields
 }
 pub fn DisplayHandle::as_raw(Self) -> RawDisplayHandle raise HandleError
 pub fn DisplayHandle::from_provider(&DisplayHandleProvider) -> Self
+pub fn DisplayHandle::to_repr(Self) -> @debug.Repr
 pub impl @debug.Debug for DisplayHandle
 
 pub(all) enum RawDisplayHandle {
@@ -39,6 +51,11 @@ pub(all) enum RawDisplayHandle {
   Xlib(XlibDisplayHandle)
   Xcb(XcbDisplayHandle)
 } derive(Eq, @debug.Debug)
+pub fn RawDisplayHandle::equal(Self, Self) -> Bool
+pub fn RawDisplayHandle::not_equal(Self, Self) -> Bool
+pub fn RawDisplayHandle::output(Self, &Logger) -> Unit
+pub fn RawDisplayHandle::to_repr(Self) -> @debug.Repr
+pub fn RawDisplayHandle::to_string(Self) -> String
 pub impl Show for RawDisplayHandle
 
 pub(all) enum RawWindowHandle {
@@ -48,50 +65,74 @@ pub(all) enum RawWindowHandle {
   Xlib(XlibWindowHandle)
   Xcb(XcbWindowHandle)
 } derive(Eq, @debug.Debug)
+pub fn RawWindowHandle::equal(Self, Self) -> Bool
+pub fn RawWindowHandle::not_equal(Self, Self) -> Bool
+pub fn RawWindowHandle::output(Self, &Logger) -> Unit
+pub fn RawWindowHandle::to_repr(Self) -> @debug.Repr
+pub fn RawWindowHandle::to_string(Self) -> String
 pub impl Show for RawWindowHandle
 
 pub struct WaylandDisplayHandle {
   // private fields
 } derive(Eq, @debug.Debug)
 pub fn WaylandDisplayHandle::display(Self) -> UInt64
+pub fn WaylandDisplayHandle::equal(Self, Self) -> Bool
 pub fn WaylandDisplayHandle::new(UInt64) -> Self raise HandleError
+pub fn WaylandDisplayHandle::not_equal(Self, Self) -> Bool
+pub fn WaylandDisplayHandle::to_repr(Self) -> @debug.Repr
 
 pub struct WaylandWindowHandle {
   // private fields
 } derive(Eq, @debug.Debug)
+pub fn WaylandWindowHandle::equal(Self, Self) -> Bool
 pub fn WaylandWindowHandle::new(UInt64) -> Self raise HandleError
+pub fn WaylandWindowHandle::not_equal(Self, Self) -> Bool
 pub fn WaylandWindowHandle::surface(Self) -> UInt64
+pub fn WaylandWindowHandle::to_repr(Self) -> @debug.Repr
 
 pub struct Win32WindowHandle {
   // private fields
 } derive(Eq, @debug.Debug)
+pub fn Win32WindowHandle::equal(Self, Self) -> Bool
 pub fn Win32WindowHandle::hinstance(Self) -> UInt64?
 pub fn Win32WindowHandle::hwnd(Self) -> UInt64
 pub fn Win32WindowHandle::new(UInt64, hinstance? : UInt64) -> Self raise HandleError
+pub fn Win32WindowHandle::not_equal(Self, Self) -> Bool
+pub fn Win32WindowHandle::to_repr(Self) -> @debug.Repr
 
 pub struct WindowHandle {
   // private fields
 }
 pub fn WindowHandle::as_raw(Self) -> RawWindowHandle raise HandleError
 pub fn WindowHandle::from_provider(&WindowHandleProvider) -> Self
+pub fn WindowHandle::to_repr(Self) -> @debug.Repr
 pub impl @debug.Debug for WindowHandle
 
 pub struct WindowsDisplayHandle {
   // private fields
 } derive(Eq, @debug.Debug)
+pub fn WindowsDisplayHandle::equal(Self, Self) -> Bool
 pub fn WindowsDisplayHandle::new() -> Self
+pub fn WindowsDisplayHandle::not_equal(Self, Self) -> Bool
+pub fn WindowsDisplayHandle::to_repr(Self) -> @debug.Repr
 
 pub struct XcbDisplayHandle {
   // private fields
 } derive(Eq, @debug.Debug)
 pub fn XcbDisplayHandle::connection(Self) -> UInt64?
+pub fn XcbDisplayHandle::equal(Self, Self) -> Bool
 pub fn XcbDisplayHandle::new(UInt64?, Int) -> Self
+pub fn XcbDisplayHandle::not_equal(Self, Self) -> Bool
 pub fn XcbDisplayHandle::screen(Self) -> Int
+pub fn XcbDisplayHandle::to_repr(Self) -> @debug.Repr
 
 pub struct XcbWindowHandle {
   // private fields
 } derive(Eq, @debug.Debug)
+pub fn XcbWindowHandle::equal(Self, Self) -> Bool
 pub fn XcbWindowHandle::new(UInt, visual_id? : UInt) -> Self raise HandleError
+pub fn XcbWindowHandle::not_equal(Self, Self) -> Bool
+pub fn XcbWindowHandle::to_repr(Self) -> @debug.Repr
 pub fn XcbWindowHandle::visual_id(Self) -> UInt?
 pub fn XcbWindowHandle::window(Self) -> UInt
 
@@ -99,13 +140,19 @@ pub struct XlibDisplayHandle {
   // private fields
 } derive(Eq, @debug.Debug)
 pub fn XlibDisplayHandle::display(Self) -> UInt64?
+pub fn XlibDisplayHandle::equal(Self, Self) -> Bool
 pub fn XlibDisplayHandle::new(UInt64?, Int) -> Self
+pub fn XlibDisplayHandle::not_equal(Self, Self) -> Bool
 pub fn XlibDisplayHandle::screen(Self) -> Int
+pub fn XlibDisplayHandle::to_repr(Self) -> @debug.Repr
 
 pub struct XlibWindowHandle {
   // private fields
 } derive(Eq, @debug.Debug)
+pub fn XlibWindowHandle::equal(Self, Self) -> Bool
 pub fn XlibWindowHandle::new(UInt64, visual_id? : UInt64) -> Self raise HandleError
+pub fn XlibWindowHandle::not_equal(Self, Self) -> Bool
+pub fn XlibWindowHandle::to_repr(Self) -> @debug.Repr
 pub fn XlibWindowHandle::visual_id(Self) -> UInt64
 pub fn XlibWindowHandle::window(Self) -> UInt64
 

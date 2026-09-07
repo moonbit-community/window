@@ -70,3 +70,15 @@ pub fn DisplayHandle::as_raw(
 pub impl Debug for DisplayHandle with fn to_repr(_self) {
   Repr::opaque_("DisplayHandle", Repr::literal("borrowed"))
 }
+
+///|
+pub extend DisplayHandle with Debug::{to_repr}
+
+///|
+pub extend HandleError with Debug::{to_repr}
+
+///|
+pub extend HandleError with Eq::{not_equal, equal}
+
+///|
+pub extend WindowHandle with Debug::{to_repr}

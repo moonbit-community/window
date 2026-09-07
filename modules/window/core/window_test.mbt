@@ -157,7 +157,7 @@ fn[T : WindowCursorHittest] set_cursor_hittest_generic(
 
 ///|
 test "window_cursor_hittest_trait_usage" {
-  let window = { hittest: false }
+  let window = { hittest: false, }
   let _ = set_cursor_hittest_generic(window, true) catch {
     _ => fail("DummyCursorHittestWindow should not raise RequestError")
   }

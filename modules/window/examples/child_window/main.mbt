@@ -13,7 +13,7 @@ struct WindowData {
 
 ///|
 fn App::App() -> App {
-  { parent_window_id: None, windows: [] }
+  { parent_window_id: None, windows: [], }
 }
 
 ///|
@@ -99,7 +99,7 @@ pub impl @macos.ApplicationHandler for App with fn can_create_surfaces(
   let parent_window = event_loop.create_window(parent_attrs)
   let parent_window_id = parent_window.id()
   self.parent_window_id = Some(parent_window_id)
-  self.windows.push({ window: parent_window, color: 0xffbbbbbb })
+  self.windows.push({ window: parent_window, color: 0xffbbbbbb, })
   println("Parent window id: \{parent_window_id}")
 }
 

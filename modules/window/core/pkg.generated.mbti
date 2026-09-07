@@ -15,6 +15,9 @@ pub(all) suberror BadCustomCursorAnimation {
   Empty
   NonPositiveFrameDuration(Int)
 } derive(@debug.Debug)
+pub fn BadCustomCursorAnimation::output(Self, &Logger) -> Unit
+pub fn BadCustomCursorAnimation::to_repr(Self) -> @debug.Repr
+pub fn BadCustomCursorAnimation::to_string(Self) -> String
 pub impl Show for BadCustomCursorAnimation
 
 pub(all) suberror BadCustomCursorSource {
@@ -23,12 +26,18 @@ pub(all) suberror BadCustomCursorSource {
   DimensionsVsPixelCount(Int, Int, Int, Int)
   HotspotOutOfBounds(Int, Int, Int, Int)
 } derive(@debug.Debug)
+pub fn BadCustomCursorSource::output(Self, &Logger) -> Unit
+pub fn BadCustomCursorSource::to_repr(Self) -> @debug.Repr
+pub fn BadCustomCursorSource::to_string(Self) -> String
 pub impl Show for BadCustomCursorSource
 
 pub(all) suberror BadIcon {
   ByteCountNotDivisibleBy4(Int)
   DimensionsVsPixelCount(Int, Int, Int, Int)
 } derive(@debug.Debug)
+pub fn BadIcon::output(Self, &Logger) -> Unit
+pub fn BadIcon::to_repr(Self) -> @debug.Repr
+pub fn BadIcon::to_string(Self) -> String
 pub impl Show for BadIcon
 
 pub(all) suberror EventLoopError {
@@ -37,8 +46,13 @@ pub(all) suberror EventLoopError {
   NotSupported(NotSupportedError)
   Os(OsError)
 } derive(Eq, @debug.Debug)
+pub fn EventLoopError::equal(Self, Self) -> Bool
+pub fn EventLoopError::not_equal(Self, Self) -> Bool
 pub fn EventLoopError::not_supported(String) -> Self
 pub fn EventLoopError::os(String, code? : Int, domain? : String) -> Self
+pub fn EventLoopError::output(Self, &Logger) -> Unit
+pub fn EventLoopError::to_repr(Self) -> @debug.Repr
+pub fn EventLoopError::to_string(Self) -> String
 pub impl Show for EventLoopError
 
 pub(all) suberror ImeRequestError {
@@ -46,6 +60,9 @@ pub(all) suberror ImeRequestError {
   AlreadyEnabled
   NotSupported
 } derive(@debug.Debug)
+pub fn ImeRequestError::output(Self, &Logger) -> Unit
+pub fn ImeRequestError::to_repr(Self) -> @debug.Repr
+pub fn ImeRequestError::to_string(Self) -> String
 pub impl Show for ImeRequestError
 
 pub(all) suberror ImeSurroundingTextError {
@@ -53,6 +70,9 @@ pub(all) suberror ImeSurroundingTextError {
   CursorBadPosition
   AnchorBadPosition
 } derive(@debug.Debug)
+pub fn ImeSurroundingTextError::output(Self, &Logger) -> Unit
+pub fn ImeSurroundingTextError::to_repr(Self) -> @debug.Repr
+pub fn ImeSurroundingTextError::to_string(Self) -> String
 pub impl Show for ImeSurroundingTextError
 
 pub(all) suberror RequestError {
@@ -62,6 +82,9 @@ pub(all) suberror RequestError {
 } derive(@debug.Debug)
 pub fn RequestError::not_supported(String) -> Self
 pub fn RequestError::os(String, code? : Int, domain? : String) -> Self
+pub fn RequestError::output(Self, &Logger) -> Unit
+pub fn RequestError::to_repr(Self) -> @debug.Repr
+pub fn RequestError::to_string(Self) -> String
 pub impl Show for RequestError
 
 // Types and methods
@@ -71,36 +94,61 @@ pub(all) enum ActivationPolicy {
   Prohibited
 } derive(Eq, @debug.Debug)
 pub fn ActivationPolicy::default() -> Self
+pub fn ActivationPolicy::equal(Self, Self) -> Bool
+pub fn ActivationPolicy::not_equal(Self, Self) -> Bool
+pub fn ActivationPolicy::output(Self, &Logger) -> Unit
+pub fn ActivationPolicy::to_repr(Self) -> @debug.Repr
+pub fn ActivationPolicy::to_string(Self) -> String
 pub impl Show for ActivationPolicy
 
 pub struct ActivationToken {
   // private fields
 } derive(Eq, @debug.Debug)
 pub fn ActivationToken::as_raw(Self) -> String
+pub fn ActivationToken::equal(Self, Self) -> Bool
 pub fn ActivationToken::from_raw(String) -> Self
 pub fn ActivationToken::into_raw(Self) -> String
+pub fn ActivationToken::not_equal(Self, Self) -> Bool
+pub fn ActivationToken::output(Self, &Logger) -> Unit
+pub fn ActivationToken::to_repr(Self) -> @debug.Repr
+pub fn ActivationToken::to_string(Self) -> String
 pub impl Show for ActivationToken
 
 pub struct AsyncRequestSerial {
   raw : Int
 } derive(Eq, @debug.Debug)
+pub fn AsyncRequestSerial::equal(Self, Self) -> Bool
 pub fn AsyncRequestSerial::from_raw(Int) -> Self
 pub fn AsyncRequestSerial::get() -> Self
 pub fn AsyncRequestSerial::into_raw(Self) -> Int
+pub fn AsyncRequestSerial::not_equal(Self, Self) -> Bool
+pub fn AsyncRequestSerial::output(Self, &Logger) -> Unit
+pub fn AsyncRequestSerial::to_repr(Self) -> @debug.Repr
+pub fn AsyncRequestSerial::to_string(Self) -> String
 pub impl Show for AsyncRequestSerial
 
 pub struct AxisId {
   raw : Int
 } derive(Eq, @debug.Debug)
+pub fn AxisId::equal(Self, Self) -> Bool
 pub fn AxisId::from_raw(Int) -> Self
 pub fn AxisId::into_raw(Self) -> Int
+pub fn AxisId::not_equal(Self, Self) -> Bool
+pub fn AxisId::output(Self, &Logger) -> Unit
+pub fn AxisId::to_repr(Self) -> @debug.Repr
+pub fn AxisId::to_string(Self) -> String
 pub impl Show for AxisId
 
 pub struct ButtonId {
   raw : Int
 } derive(Eq, @debug.Debug)
+pub fn ButtonId::equal(Self, Self) -> Bool
 pub fn ButtonId::from_raw(Int) -> Self
 pub fn ButtonId::into_raw(Self) -> Int
+pub fn ButtonId::not_equal(Self, Self) -> Bool
+pub fn ButtonId::output(Self, &Logger) -> Unit
+pub fn ButtonId::to_repr(Self) -> @debug.Repr
+pub fn ButtonId::to_string(Self) -> String
 pub impl Show for ButtonId
 
 pub(all) enum ButtonSource {
@@ -109,7 +157,12 @@ pub(all) enum ButtonSource {
   TabletTool(TabletToolKind, TabletToolButton, TabletToolData)
   Unknown(Int)
 } derive(Eq, @debug.Debug)
+pub fn ButtonSource::equal(Self, Self) -> Bool
 pub fn ButtonSource::mouse_button(Self) -> MouseButton?
+pub fn ButtonSource::not_equal(Self, Self) -> Bool
+pub fn ButtonSource::output(Self, &Logger) -> Unit
+pub fn ButtonSource::to_repr(Self) -> @debug.Repr
+pub fn ButtonSource::to_string(Self) -> String
 pub impl Show for ButtonSource
 
 pub(all) enum ControlFlow {
@@ -118,6 +171,11 @@ pub(all) enum ControlFlow {
   WaitUntil(Int64)
 } derive(Eq, @debug.Debug)
 pub fn ControlFlow::default() -> Self
+pub fn ControlFlow::equal(Self, Self) -> Bool
+pub fn ControlFlow::not_equal(Self, Self) -> Bool
+pub fn ControlFlow::output(Self, &Logger) -> Unit
+pub fn ControlFlow::to_repr(Self) -> @debug.Repr
+pub fn ControlFlow::to_string(Self) -> String
 pub fn ControlFlow::wait_duration(Int64, Int) -> Self
 pub fn ControlFlow::wait_until(Int64) -> Self
 pub impl Show for ControlFlow
@@ -126,6 +184,11 @@ pub(all) enum Cursor {
   Icon(CursorIcon)
   Custom(CustomCursor)
 } derive(Eq, @debug.Debug)
+pub fn Cursor::equal(Self, Self) -> Bool
+pub fn Cursor::not_equal(Self, Self) -> Bool
+pub fn Cursor::output(Self, &Logger) -> Unit
+pub fn Cursor::to_repr(Self) -> @debug.Repr
+pub fn Cursor::to_string(Self) -> String
 pub impl Show for Cursor
 
 pub(all) enum CursorGrabMode {
@@ -133,6 +196,11 @@ pub(all) enum CursorGrabMode {
   Locked
   Confined
 } derive(Eq, @debug.Debug)
+pub fn CursorGrabMode::equal(Self, Self) -> Bool
+pub fn CursorGrabMode::not_equal(Self, Self) -> Bool
+pub fn CursorGrabMode::output(Self, &Logger) -> Unit
+pub fn CursorGrabMode::to_repr(Self) -> @debug.Repr
+pub fn CursorGrabMode::to_string(Self) -> String
 pub impl Show for CursorGrabMode
 
 pub(all) enum CursorIcon {
@@ -171,19 +239,30 @@ pub(all) enum CursorIcon {
   Move
   NotAllowed
 } derive(Eq, @debug.Debug)
+pub fn CursorIcon::equal(Self, Self) -> Bool
+pub fn CursorIcon::not_equal(Self, Self) -> Bool
+pub fn CursorIcon::output(Self, &Logger) -> Unit
+pub fn CursorIcon::to_repr(Self) -> @debug.Repr
+pub fn CursorIcon::to_string(Self) -> String
 pub impl Show for CursorIcon
 
 pub struct CustomCursor {
   // private fields
 }
+pub fn CustomCursor::equal(Self, Self) -> Bool
 pub fn CustomCursor::from_native(UInt64, CustomCursorHandle) -> Self
 pub fn CustomCursor::from_raw(UInt64) -> Self
 pub fn CustomCursor::into_raw(Self) -> UInt64
+pub fn CustomCursor::not_equal(Self, Self) -> Bool
+pub fn CustomCursor::output(Self, &Logger) -> Unit
+pub fn CustomCursor::to_repr(Self) -> @debug.Repr
+pub fn CustomCursor::to_string(Self) -> String
 pub impl Eq for CustomCursor
 pub impl Show for CustomCursor
 pub impl @debug.Debug for CustomCursor
 
 pub(all) type CustomCursorHandle
+pub fn CustomCursorHandle::to_repr(Self) -> @debug.Repr
 pub impl @debug.Debug for CustomCursorHandle
 
 pub(all) enum CustomCursorSource {
@@ -191,8 +270,13 @@ pub(all) enum CustomCursorSource {
   Url(String, Int, Int)
   Animation(Int, Array[CustomCursor])
 } derive(Eq, @debug.Debug)
+pub fn CustomCursorSource::equal(Self, Self) -> Bool
 pub fn CustomCursorSource::from_animation(Int, Array[CustomCursor]) -> Self raise BadCustomCursorAnimation
 pub fn CustomCursorSource::from_rgba(Bytes, Int, Int, Int, Int) -> Self raise BadCustomCursorSource
+pub fn CustomCursorSource::not_equal(Self, Self) -> Bool
+pub fn CustomCursorSource::output(Self, &Logger) -> Unit
+pub fn CustomCursorSource::to_repr(Self) -> @debug.Repr
+pub fn CustomCursorSource::to_string(Self) -> String
 pub impl Show for CustomCursorSource
 
 pub(all) enum DeviceEvent {
@@ -201,7 +285,12 @@ pub(all) enum DeviceEvent {
   Button(ButtonId, ElementState)
   Key(RawKeyEvent)
 } derive(Eq, @debug.Debug)
+pub fn DeviceEvent::equal(Self, Self) -> Bool
 pub fn DeviceEvent::into_winit_event(Self) -> WinitDeviceEvent
+pub fn DeviceEvent::not_equal(Self, Self) -> Bool
+pub fn DeviceEvent::output(Self, &Logger) -> Unit
+pub fn DeviceEvent::to_repr(Self) -> @debug.Repr
+pub fn DeviceEvent::to_string(Self) -> String
 pub impl Show for DeviceEvent
 
 pub(all) enum DeviceEvents {
@@ -210,48 +299,83 @@ pub(all) enum DeviceEvents {
   Never
 } derive(Eq, @debug.Debug)
 pub fn DeviceEvents::default() -> Self
+pub fn DeviceEvents::equal(Self, Self) -> Bool
+pub fn DeviceEvents::not_equal(Self, Self) -> Bool
+pub fn DeviceEvents::output(Self, &Logger) -> Unit
+pub fn DeviceEvents::to_repr(Self) -> @debug.Repr
+pub fn DeviceEvents::to_string(Self) -> String
 pub impl Show for DeviceEvents
 
 pub struct DeviceId {
   raw : Int64
 } derive(Eq, @debug.Debug)
+pub fn DeviceId::equal(Self, Self) -> Bool
 pub fn DeviceId::from_raw(Int64) -> Self
 pub fn DeviceId::into_raw(Self) -> Int64
+pub fn DeviceId::not_equal(Self, Self) -> Bool
+pub fn DeviceId::output(Self, &Logger) -> Unit
+pub fn DeviceId::to_repr(Self) -> @debug.Repr
+pub fn DeviceId::to_string(Self) -> String
 pub impl Show for DeviceId
 
 pub(all) enum ElementState {
   Pressed
   Released
 } derive(Eq, @debug.Debug)
+pub fn ElementState::equal(Self, Self) -> Bool
 pub fn ElementState::is_pressed(Self) -> Bool
+pub fn ElementState::not_equal(Self, Self) -> Bool
+pub fn ElementState::output(Self, &Logger) -> Unit
+pub fn ElementState::to_repr(Self) -> @debug.Repr
+pub fn ElementState::to_string(Self) -> String
 pub impl Show for ElementState
 
 pub struct FingerId {
   raw : Int
 } derive(Eq, @debug.Debug)
+pub fn FingerId::equal(Self, Self) -> Bool
 pub fn FingerId::from_raw(Int) -> Self
 pub fn FingerId::into_raw(Self) -> Int
+pub fn FingerId::not_equal(Self, Self) -> Bool
+pub fn FingerId::output(Self, &Logger) -> Unit
+pub fn FingerId::to_repr(Self) -> @debug.Repr
+pub fn FingerId::to_string(Self) -> String
 pub impl Show for FingerId
 
 pub(all) enum Force {
   Calibrated(Double, Double)
   Normalized(Double)
 } derive(Eq, @debug.Debug)
+pub fn Force::equal(Self, Self) -> Bool
 pub fn Force::normalized(Self, TabletToolAngle?) -> Double
+pub fn Force::not_equal(Self, Self) -> Bool
+pub fn Force::output(Self, &Logger) -> Unit
+pub fn Force::to_repr(Self) -> @debug.Repr
+pub fn Force::to_string(Self) -> String
 pub impl Show for Force
 
 pub(all) enum Fullscreen {
   Borderless(MonitorHandle?)
   Exclusive(MonitorHandle, VideoMode)
 } derive(Eq, @debug.Debug)
+pub fn Fullscreen::equal(Self, Self) -> Bool
+pub fn Fullscreen::not_equal(Self, Self) -> Bool
+pub fn Fullscreen::output(Self, &Logger) -> Unit
+pub fn Fullscreen::to_repr(Self) -> @debug.Repr
+pub fn Fullscreen::to_string(Self) -> String
 pub impl Show for Fullscreen
 
 pub struct Icon {
   // private fields
 } derive(Eq, @debug.Debug)
 pub fn Icon::Icon(Bytes, Int, Int) -> Self raise BadIcon
+pub fn Icon::equal(Self, Self) -> Bool
 pub fn Icon::height(Self) -> Int
+pub fn Icon::not_equal(Self, Self) -> Bool
+pub fn Icon::output(Self, &Logger) -> Unit
 pub fn Icon::rgba(Self) -> Bytes
+pub fn Icon::to_repr(Self) -> @debug.Repr
+pub fn Icon::to_string(Self) -> String
 pub fn Icon::width(Self) -> Int
 pub impl Show for Icon
 
@@ -262,6 +386,11 @@ pub(all) enum Ime {
   DeleteSurrounding(Int, Int)
   Disabled
 } derive(Eq, @debug.Debug)
+pub fn Ime::equal(Self, Self) -> Bool
+pub fn Ime::not_equal(Self, Self) -> Bool
+pub fn Ime::output(Self, &Logger) -> Unit
+pub fn Ime::to_repr(Self) -> @debug.Repr
+pub fn Ime::to_string(Self) -> String
 pub impl Show for Ime
 
 pub struct ImeCapabilities {
@@ -271,8 +400,13 @@ pub fn ImeCapabilities::ImeCapabilities(Bool, Bool, Bool) -> Self
 pub fn ImeCapabilities::all() -> Self
 pub fn ImeCapabilities::cursor_area(Self) -> Bool
 pub fn ImeCapabilities::default() -> Self
+pub fn ImeCapabilities::equal(Self, Self) -> Bool
 pub fn ImeCapabilities::hint_and_purpose(Self) -> Bool
+pub fn ImeCapabilities::not_equal(Self, Self) -> Bool
+pub fn ImeCapabilities::output(Self, &Logger) -> Unit
 pub fn ImeCapabilities::surrounding_text(Self) -> Bool
+pub fn ImeCapabilities::to_repr(Self) -> @debug.Repr
+pub fn ImeCapabilities::to_string(Self) -> String
 pub fn ImeCapabilities::with_cursor_area(Self) -> Self
 pub fn ImeCapabilities::with_hint_and_purpose(Self) -> Self
 pub fn ImeCapabilities::with_surrounding_text(Self) -> Self
@@ -287,17 +421,27 @@ pub struct ImeCursorRange {
 } derive(Eq, @debug.Debug)
 pub fn ImeCursorRange::ImeCursorRange(Int, Int) -> Self
 pub fn ImeCursorRange::end(Self) -> Int
+pub fn ImeCursorRange::equal(Self, Self) -> Bool
+pub fn ImeCursorRange::not_equal(Self, Self) -> Bool
+pub fn ImeCursorRange::output(Self, &Logger) -> Unit
 pub fn ImeCursorRange::start(Self) -> Int
+pub fn ImeCursorRange::to_repr(Self) -> @debug.Repr
+pub fn ImeCursorRange::to_string(Self) -> String
 pub impl Show for ImeCursorRange
 
 pub struct ImeEnableRequest {
   // private fields
 } derive(Eq, @debug.Debug)
 pub fn ImeEnableRequest::capabilities(Self) -> ImeCapabilities
+pub fn ImeEnableRequest::equal(Self, Self) -> Bool
 pub fn ImeEnableRequest::from_capabilities(ImeCapabilities, ImeRequestData) -> Self?
 pub fn ImeEnableRequest::into_raw(Self) -> (ImeCapabilities, ImeRequestData)
 pub fn ImeEnableRequest::into_request(Self) -> ImeRequest
+pub fn ImeEnableRequest::not_equal(Self, Self) -> Bool
+pub fn ImeEnableRequest::output(Self, &Logger) -> Unit
 pub fn ImeEnableRequest::request_data(Self) -> ImeRequestData
+pub fn ImeEnableRequest::to_repr(Self) -> @debug.Repr
+pub fn ImeEnableRequest::to_string(Self) -> String
 pub impl Show for ImeEnableRequest
 
 pub struct ImeHint {
@@ -307,15 +451,20 @@ pub fn ImeHint::auto_capitalization() -> Self
 pub fn ImeHint::bits(Self) -> Int
 pub fn ImeHint::completion() -> Self
 pub fn ImeHint::contains(Self, Self) -> Bool
+pub fn ImeHint::equal(Self, Self) -> Bool
 pub fn ImeHint::from_bits(Int) -> Self
 pub fn ImeHint::hidden_text() -> Self
 pub fn ImeHint::latin() -> Self
 pub fn ImeHint::lowercase() -> Self
 pub fn ImeHint::multiline() -> Self
 pub fn ImeHint::none() -> Self
+pub fn ImeHint::not_equal(Self, Self) -> Bool
+pub fn ImeHint::output(Self, &Logger) -> Unit
 pub fn ImeHint::sensitive_data() -> Self
 pub fn ImeHint::spellcheck() -> Self
 pub fn ImeHint::titlecase() -> Self
+pub fn ImeHint::to_repr(Self) -> @debug.Repr
+pub fn ImeHint::to_string(Self) -> String
 pub fn ImeHint::union(Self, Self) -> Self
 pub fn ImeHint::uppercase() -> Self
 pub impl Show for ImeHint
@@ -333,6 +482,11 @@ pub(all) enum ImePurpose {
   Time
   DateTime
 } derive(Eq, @debug.Debug)
+pub fn ImePurpose::equal(Self, Self) -> Bool
+pub fn ImePurpose::not_equal(Self, Self) -> Bool
+pub fn ImePurpose::output(Self, &Logger) -> Unit
+pub fn ImePurpose::to_repr(Self) -> @debug.Repr
+pub fn ImePurpose::to_string(Self) -> String
 pub impl Show for ImePurpose
 
 pub(all) enum ImeRequest {
@@ -340,6 +494,11 @@ pub(all) enum ImeRequest {
   Update(ImeRequestData)
   Disable
 } derive(Eq, @debug.Debug)
+pub fn ImeRequest::equal(Self, Self) -> Bool
+pub fn ImeRequest::not_equal(Self, Self) -> Bool
+pub fn ImeRequest::output(Self, &Logger) -> Unit
+pub fn ImeRequest::to_repr(Self) -> @debug.Repr
+pub fn ImeRequest::to_string(Self) -> String
 pub impl Show for ImeRequest
 
 pub struct ImeRequestData {
@@ -349,6 +508,7 @@ pub fn ImeRequestData::cursor_area(Self) -> (@dpi.Position, @dpi.Size)?
 pub fn ImeRequestData::cursor_area_position(Self) -> @dpi.Position?
 pub fn ImeRequestData::cursor_area_size(Self) -> @dpi.Size?
 pub fn ImeRequestData::default() -> Self
+pub fn ImeRequestData::equal(Self, Self) -> Bool
 pub fn ImeRequestData::has_cursor_area(Self) -> Bool
 pub fn ImeRequestData::has_hint_and_purpose(Self) -> Bool
 pub fn ImeRequestData::has_surrounding_text(Self) -> Bool
@@ -356,8 +516,12 @@ pub fn ImeRequestData::hint(Self) -> ImeHint?
 pub fn ImeRequestData::hint_and_purpose(Self) -> (ImeHint, ImePurpose)?
 pub fn ImeRequestData::into_request(Self) -> ImeRequest
 pub fn ImeRequestData::is_empty(Self) -> Bool
+pub fn ImeRequestData::not_equal(Self, Self) -> Bool
+pub fn ImeRequestData::output(Self, &Logger) -> Unit
 pub fn ImeRequestData::purpose(Self) -> ImePurpose?
 pub fn ImeRequestData::surrounding_text(Self) -> ImeSurroundingText?
+pub fn ImeRequestData::to_repr(Self) -> @debug.Repr
+pub fn ImeRequestData::to_string(Self) -> String
 pub fn ImeRequestData::with_cursor_area(Self, @dpi.Position, @dpi.Size) -> Self
 pub fn ImeRequestData::with_hint_and_purpose(Self, ImeHint, ImePurpose) -> Self
 pub fn ImeRequestData::with_surrounding_text(Self, ImeSurroundingText) -> Self
@@ -372,9 +536,14 @@ pub struct ImeSurroundingText {
 pub fn ImeSurroundingText::ImeSurroundingText(String, Int, Int) -> Self raise ImeSurroundingTextError
 pub fn ImeSurroundingText::anchor(Self) -> Int
 pub fn ImeSurroundingText::cursor(Self) -> Int
+pub fn ImeSurroundingText::equal(Self, Self) -> Bool
 pub fn ImeSurroundingText::into_text(Self) -> String
 pub fn ImeSurroundingText::max_text_bytes() -> Int
+pub fn ImeSurroundingText::not_equal(Self, Self) -> Bool
+pub fn ImeSurroundingText::output(Self, &Logger) -> Unit
 pub fn ImeSurroundingText::text(Self) -> String
+pub fn ImeSurroundingText::to_repr(Self) -> @debug.Repr
+pub fn ImeSurroundingText::to_string(Self) -> String
 pub impl Show for ImeSurroundingText
 
 pub(all) enum Key {
@@ -384,8 +553,13 @@ pub(all) enum Key {
   Unidentified(NativeKey)
 } derive(Eq, @debug.Debug)
 pub fn Key::character(Self) -> String?
+pub fn Key::equal(Self, Self) -> Bool
 pub fn Key::from_named(NamedKey) -> Self
 pub fn Key::from_native(NativeKey) -> Self
+pub fn Key::not_equal(Self, Self) -> Bool
+pub fn Key::output(Self, &Logger) -> Unit
+pub fn Key::to_repr(Self) -> @debug.Repr
+pub fn Key::to_string(Self) -> String
 pub fn Key::to_text(Self) -> String?
 pub impl Show for Key
 
@@ -609,6 +783,11 @@ pub(all) enum KeyCode {
   Power
 } derive(Eq, @debug.Debug)
 pub fn KeyCode::default() -> Self
+pub fn KeyCode::equal(Self, Self) -> Bool
+pub fn KeyCode::not_equal(Self, Self) -> Bool
+pub fn KeyCode::output(Self, &Logger) -> Unit
+pub fn KeyCode::to_repr(Self) -> @debug.Repr
+pub fn KeyCode::to_string(Self) -> String
 pub impl Show for KeyCode
 
 pub struct KeyEvent {
@@ -622,14 +801,19 @@ pub struct KeyEvent {
   text_with_all_modifiers : String?
 } derive(Eq, @debug.Debug)
 pub fn KeyEvent::KeyEvent(PhysicalKey, Key, Key, KeyLocation, ElementState, Bool, String?, String?) -> Self
+pub fn KeyEvent::equal(Self, Self) -> Bool
 pub fn KeyEvent::key_without_modifiers(Self) -> Key
 pub fn KeyEvent::location(Self) -> KeyLocation
 pub fn KeyEvent::logical_key(Self) -> Key
+pub fn KeyEvent::not_equal(Self, Self) -> Bool
+pub fn KeyEvent::output(Self, &Logger) -> Unit
 pub fn KeyEvent::physical_key(Self) -> PhysicalKey
 pub fn KeyEvent::repeat(Self) -> Bool
 pub fn KeyEvent::state(Self) -> ElementState
 pub fn KeyEvent::text(Self) -> String?
 pub fn KeyEvent::text_with_all_modifiers(Self) -> String?
+pub fn KeyEvent::to_repr(Self) -> @debug.Repr
+pub fn KeyEvent::to_string(Self) -> String
 pub impl Show for KeyEvent
 
 pub(all) enum KeyLocation {
@@ -638,6 +822,11 @@ pub(all) enum KeyLocation {
   Right
   Numpad
 } derive(Eq, @debug.Debug)
+pub fn KeyLocation::equal(Self, Self) -> Bool
+pub fn KeyLocation::not_equal(Self, Self) -> Bool
+pub fn KeyLocation::output(Self, &Logger) -> Unit
+pub fn KeyLocation::to_repr(Self) -> @debug.Repr
+pub fn KeyLocation::to_string(Self) -> String
 pub impl Show for KeyLocation
 
 pub struct Modifiers {
@@ -647,6 +836,7 @@ pub fn Modifiers::Modifiers(Bool, Bool, Bool, Bool) -> Self
 pub fn Modifiers::alt_key(Self) -> Bool
 pub fn Modifiers::control_key(Self) -> Bool
 pub fn Modifiers::default() -> Self
+pub fn Modifiers::equal(Self, Self) -> Bool
 pub fn Modifiers::from_state(ModifiersState, ModifiersKeys) -> Self
 pub fn Modifiers::is_empty(Self) -> Bool
 pub fn Modifiers::lalt_state(Self) -> ModifiersKeyState
@@ -654,6 +844,8 @@ pub fn Modifiers::lcontrol_state(Self) -> ModifiersKeyState
 pub fn Modifiers::lshift_state(Self) -> ModifiersKeyState
 pub fn Modifiers::lsuper_state(Self) -> ModifiersKeyState
 pub fn Modifiers::meta_key(Self) -> Bool
+pub fn Modifiers::not_equal(Self, Self) -> Bool
+pub fn Modifiers::output(Self, &Logger) -> Unit
 pub fn Modifiers::pressed_mods(Self) -> ModifiersKeys
 pub fn Modifiers::ralt_state(Self) -> ModifiersKeyState
 pub fn Modifiers::rcontrol_state(Self) -> ModifiersKeyState
@@ -661,12 +853,19 @@ pub fn Modifiers::rshift_state(Self) -> ModifiersKeyState
 pub fn Modifiers::rsuper_state(Self) -> ModifiersKeyState
 pub fn Modifiers::shift_key(Self) -> Bool
 pub fn Modifiers::state(Self) -> ModifiersState
+pub fn Modifiers::to_repr(Self) -> @debug.Repr
+pub fn Modifiers::to_string(Self) -> String
 pub impl Show for Modifiers
 
 pub(all) enum ModifiersKeyState {
   Pressed
   Unknown
 } derive(Eq, @debug.Debug)
+pub fn ModifiersKeyState::equal(Self, Self) -> Bool
+pub fn ModifiersKeyState::not_equal(Self, Self) -> Bool
+pub fn ModifiersKeyState::output(Self, &Logger) -> Unit
+pub fn ModifiersKeyState::to_repr(Self) -> @debug.Repr
+pub fn ModifiersKeyState::to_string(Self) -> String
 pub impl Show for ModifiersKeyState
 
 pub struct ModifiersKeys {
@@ -674,6 +873,7 @@ pub struct ModifiersKeys {
 } derive(Eq, @debug.Debug)
 pub fn ModifiersKeys::bits(Self) -> Int
 pub fn ModifiersKeys::contains(Self, Self) -> Bool
+pub fn ModifiersKeys::equal(Self, Self) -> Bool
 pub fn ModifiersKeys::from_bits(Int) -> Self
 pub fn ModifiersKeys::is_empty(Self) -> Bool
 pub fn ModifiersKeys::lalt() -> Self
@@ -681,10 +881,14 @@ pub fn ModifiersKeys::lcontrol() -> Self
 pub fn ModifiersKeys::lmeta() -> Self
 pub fn ModifiersKeys::lshift() -> Self
 pub fn ModifiersKeys::none() -> Self
+pub fn ModifiersKeys::not_equal(Self, Self) -> Bool
+pub fn ModifiersKeys::output(Self, &Logger) -> Unit
 pub fn ModifiersKeys::ralt() -> Self
 pub fn ModifiersKeys::rcontrol() -> Self
 pub fn ModifiersKeys::rmeta() -> Self
 pub fn ModifiersKeys::rshift() -> Self
+pub fn ModifiersKeys::to_repr(Self) -> @debug.Repr
+pub fn ModifiersKeys::to_string(Self) -> String
 pub fn ModifiersKeys::union(Self, Self) -> Self
 pub fn ModifiersKeys::without(Self, Self) -> Self
 pub impl Show for ModifiersKeys
@@ -698,13 +902,18 @@ pub fn ModifiersState::bits(Self) -> Int
 pub fn ModifiersState::contains(Self, Self) -> Bool
 pub fn ModifiersState::control() -> Self
 pub fn ModifiersState::control_key(Self) -> Bool
+pub fn ModifiersState::equal(Self, Self) -> Bool
 pub fn ModifiersState::from_bits(Int) -> Self
 pub fn ModifiersState::is_empty(Self) -> Bool
 pub fn ModifiersState::meta() -> Self
 pub fn ModifiersState::meta_key(Self) -> Bool
 pub fn ModifiersState::none() -> Self
+pub fn ModifiersState::not_equal(Self, Self) -> Bool
+pub fn ModifiersState::output(Self, &Logger) -> Unit
 pub fn ModifiersState::shift() -> Self
 pub fn ModifiersState::shift_key(Self) -> Bool
+pub fn ModifiersState::to_repr(Self) -> @debug.Repr
+pub fn ModifiersState::to_string(Self) -> String
 pub fn ModifiersState::union(Self, Self) -> Self
 pub impl Show for ModifiersState
 
@@ -713,12 +922,17 @@ pub struct MonitorHandle {
 }
 pub fn MonitorHandle::MonitorHandle(UInt64, String?, @dpi.PhysicalPosition, @dpi.PhysicalSize, Double, VideoMode?, Array[VideoMode]) -> Self
 pub fn MonitorHandle::current_video_mode(Self) -> VideoMode?
+pub fn MonitorHandle::equal(Self, Self) -> Bool
 pub fn MonitorHandle::from_provider(&MonitorHandleProvider) -> Self
 pub fn MonitorHandle::name(Self) -> String?
 pub fn MonitorHandle::native_id(Self) -> UInt64
+pub fn MonitorHandle::not_equal(Self, Self) -> Bool
+pub fn MonitorHandle::output(Self, &Logger) -> Unit
 pub fn MonitorHandle::position(Self) -> @dpi.PhysicalPosition
 pub fn MonitorHandle::scale_factor(Self) -> Double
 pub fn MonitorHandle::surface_size(Self) -> @dpi.PhysicalSize
+pub fn MonitorHandle::to_repr(Self) -> @debug.Repr
+pub fn MonitorHandle::to_string(Self) -> String
 pub fn MonitorHandle::video_modes(Self) -> Array[VideoMode]
 pub impl Eq for MonitorHandle
 pub impl Show for MonitorHandle
@@ -758,6 +972,11 @@ pub(all) enum MouseButton {
   Button31
   Button32
 } derive(Eq, @debug.Debug)
+pub fn MouseButton::equal(Self, Self) -> Bool
+pub fn MouseButton::not_equal(Self, Self) -> Bool
+pub fn MouseButton::output(Self, &Logger) -> Unit
+pub fn MouseButton::to_repr(Self) -> @debug.Repr
+pub fn MouseButton::to_string(Self) -> String
 pub fn MouseButton::try_from_u8(Int) -> Self?
 pub impl Show for MouseButton
 
@@ -765,6 +984,11 @@ pub(all) enum MouseScrollDelta {
   LineDelta(Double, Double)
   PixelDelta(@dpi.PhysicalPositionF64)
 } derive(Eq, @debug.Debug)
+pub fn MouseScrollDelta::equal(Self, Self) -> Bool
+pub fn MouseScrollDelta::not_equal(Self, Self) -> Bool
+pub fn MouseScrollDelta::output(Self, &Logger) -> Unit
+pub fn MouseScrollDelta::to_repr(Self) -> @debug.Repr
+pub fn MouseScrollDelta::to_string(Self) -> String
 pub impl Show for MouseScrollDelta
 
 pub(all) enum NamedKey {
@@ -1077,6 +1301,11 @@ pub(all) enum NamedKey {
   Wink
 } derive(Eq, @debug.Debug)
 pub fn NamedKey::default() -> Self
+pub fn NamedKey::equal(Self, Self) -> Bool
+pub fn NamedKey::not_equal(Self, Self) -> Bool
+pub fn NamedKey::output(Self, &Logger) -> Unit
+pub fn NamedKey::to_repr(Self) -> @debug.Repr
+pub fn NamedKey::to_string(Self) -> String
 pub impl Show for NamedKey
 
 pub(all) enum NativeKey {
@@ -1088,7 +1317,12 @@ pub(all) enum NativeKey {
   Web(String)
   Ohos(Int)
 } derive(Eq, @debug.Debug)
+pub fn NativeKey::equal(Self, Self) -> Bool
 pub fn NativeKey::from_key_code(NativeKeyCode) -> Self
+pub fn NativeKey::not_equal(Self, Self) -> Bool
+pub fn NativeKey::output(Self, &Logger) -> Unit
+pub fn NativeKey::to_repr(Self) -> @debug.Repr
+pub fn NativeKey::to_string(Self) -> String
 pub impl Show for NativeKey
 
 pub(all) enum NativeKeyCode {
@@ -1099,13 +1333,23 @@ pub(all) enum NativeKeyCode {
   Xkb(Int)
   Ohos(Int)
 } derive(Eq, @debug.Debug)
+pub fn NativeKeyCode::equal(Self, Self) -> Bool
+pub fn NativeKeyCode::not_equal(Self, Self) -> Bool
+pub fn NativeKeyCode::output(Self, &Logger) -> Unit
+pub fn NativeKeyCode::to_repr(Self) -> @debug.Repr
+pub fn NativeKeyCode::to_string(Self) -> String
 pub impl Show for NativeKeyCode
 
 pub struct NotSupportedError {
   // private fields
 } derive(Eq, @debug.Debug)
 pub fn NotSupportedError::NotSupportedError(String) -> Self
+pub fn NotSupportedError::equal(Self, Self) -> Bool
+pub fn NotSupportedError::not_equal(Self, Self) -> Bool
+pub fn NotSupportedError::output(Self, &Logger) -> Unit
 pub fn NotSupportedError::reason(Self) -> String
+pub fn NotSupportedError::to_repr(Self) -> @debug.Repr
+pub fn NotSupportedError::to_string(Self) -> String
 pub impl Show for NotSupportedError
 
 pub(all) enum OptionAsAlt {
@@ -1115,6 +1359,11 @@ pub(all) enum OptionAsAlt {
   None
 } derive(Eq, @debug.Debug)
 pub fn OptionAsAlt::default() -> Self
+pub fn OptionAsAlt::equal(Self, Self) -> Bool
+pub fn OptionAsAlt::not_equal(Self, Self) -> Bool
+pub fn OptionAsAlt::output(Self, &Logger) -> Unit
+pub fn OptionAsAlt::to_repr(Self) -> @debug.Repr
+pub fn OptionAsAlt::to_string(Self) -> String
 pub impl Show for OptionAsAlt
 
 pub struct OsError {
@@ -1123,24 +1372,39 @@ pub struct OsError {
 pub fn OsError::OsError(String, Int?, String?) -> Self
 pub fn OsError::code(Self) -> Int?
 pub fn OsError::domain(Self) -> String?
+pub fn OsError::equal(Self, Self) -> Bool
 pub fn OsError::message(Self) -> String
+pub fn OsError::not_equal(Self, Self) -> Bool
+pub fn OsError::output(Self, &Logger) -> Unit
+pub fn OsError::to_repr(Self) -> @debug.Repr
+pub fn OsError::to_string(Self) -> String
 pub impl Show for OsError
 
 pub struct ParentWindow {
   // private fields
 } derive(Eq, @debug.Debug)
+pub fn ParentWindow::equal(Self, Self) -> Bool
 pub fn ParentWindow::from_raw(@windowing.RawWindowHandle) -> Self
 pub fn ParentWindow::from_window_handle(@windowing.WindowHandle) -> Self raise @windowing.HandleError
 pub fn ParentWindow::into_raw(Self) -> @windowing.RawWindowHandle
+pub fn ParentWindow::not_equal(Self, Self) -> Bool
+pub fn ParentWindow::output(Self, &Logger) -> Unit
+pub fn ParentWindow::to_repr(Self) -> @debug.Repr
+pub fn ParentWindow::to_string(Self) -> String
 pub impl Show for ParentWindow
 
 pub(all) enum PhysicalKey {
   Code(KeyCode)
   Unidentified(NativeKeyCode)
 } derive(Eq, @debug.Debug)
+pub fn PhysicalKey::equal(Self, Self) -> Bool
 pub fn PhysicalKey::from_key_code(KeyCode) -> Self
 pub fn PhysicalKey::from_native_key_code(NativeKeyCode) -> Self
 pub fn PhysicalKey::into_key_code(Self) -> KeyCode
+pub fn PhysicalKey::not_equal(Self, Self) -> Bool
+pub fn PhysicalKey::output(Self, &Logger) -> Unit
+pub fn PhysicalKey::to_repr(Self) -> @debug.Repr
+pub fn PhysicalKey::to_string(Self) -> String
 pub impl Show for PhysicalKey
 
 pub struct PlatformEventLoopAttributes {
@@ -1151,6 +1415,11 @@ pub fn PlatformEventLoopAttributes::activation_policy(Self) -> ActivationPolicy?
 pub fn PlatformEventLoopAttributes::any_thread(Self) -> Bool
 pub fn PlatformEventLoopAttributes::default() -> Self
 pub fn PlatformEventLoopAttributes::default_menu(Self) -> Bool
+pub fn PlatformEventLoopAttributes::equal(Self, Self) -> Bool
+pub fn PlatformEventLoopAttributes::not_equal(Self, Self) -> Bool
+pub fn PlatformEventLoopAttributes::output(Self, &Logger) -> Unit
+pub fn PlatformEventLoopAttributes::to_repr(Self) -> @debug.Repr
+pub fn PlatformEventLoopAttributes::to_string(Self) -> String
 pub fn PlatformEventLoopAttributes::with_activate_ignoring_other_apps(Self, Bool) -> Self
 pub fn PlatformEventLoopAttributes::with_activation_policy(Self, ActivationPolicy) -> Self
 pub fn PlatformEventLoopAttributes::with_any_thread(Self, Bool) -> Self
@@ -1164,16 +1433,21 @@ pub fn PlatformWindowAttributes::accepts_first_mouse(Self) -> Bool
 pub fn PlatformWindowAttributes::borderless_game(Self) -> Bool
 pub fn PlatformWindowAttributes::default() -> Self
 pub fn PlatformWindowAttributes::disallow_hidpi(Self) -> Bool
+pub fn PlatformWindowAttributes::equal(Self, Self) -> Bool
 pub fn PlatformWindowAttributes::fullsize_content_view(Self) -> Bool
 pub fn PlatformWindowAttributes::has_shadow(Self) -> Bool
 pub fn PlatformWindowAttributes::movable_by_window_background(Self) -> Bool
+pub fn PlatformWindowAttributes::not_equal(Self, Self) -> Bool
 pub fn PlatformWindowAttributes::option_as_alt(Self) -> OptionAsAlt
+pub fn PlatformWindowAttributes::output(Self, &Logger) -> Unit
 pub fn PlatformWindowAttributes::panel(Self) -> Bool
 pub fn PlatformWindowAttributes::tabbing_identifier(Self) -> String?
 pub fn PlatformWindowAttributes::title_hidden(Self) -> Bool
 pub fn PlatformWindowAttributes::titlebar_buttons_hidden(Self) -> Bool
 pub fn PlatformWindowAttributes::titlebar_hidden(Self) -> Bool
 pub fn PlatformWindowAttributes::titlebar_transparent(Self) -> Bool
+pub fn PlatformWindowAttributes::to_repr(Self) -> @debug.Repr
+pub fn PlatformWindowAttributes::to_string(Self) -> String
 pub fn PlatformWindowAttributes::unified_titlebar(Self) -> Bool
 pub fn PlatformWindowAttributes::with_accepts_first_mouse(Self, Bool) -> Self
 pub fn PlatformWindowAttributes::with_borderless_game(Self, Bool) -> Self
@@ -1197,6 +1471,11 @@ pub(all) enum PointerKind {
   TabletTool(TabletToolKind)
   Unknown
 } derive(Eq, @debug.Debug)
+pub fn PointerKind::equal(Self, Self) -> Bool
+pub fn PointerKind::not_equal(Self, Self) -> Bool
+pub fn PointerKind::output(Self, &Logger) -> Unit
+pub fn PointerKind::to_repr(Self) -> @debug.Repr
+pub fn PointerKind::to_string(Self) -> String
 pub impl Show for PointerKind
 
 pub(all) enum PointerSource {
@@ -1205,12 +1484,22 @@ pub(all) enum PointerSource {
   TabletTool(TabletToolKind, TabletToolData)
   Unknown
 } derive(Eq, @debug.Debug)
+pub fn PointerSource::equal(Self, Self) -> Bool
+pub fn PointerSource::not_equal(Self, Self) -> Bool
+pub fn PointerSource::output(Self, &Logger) -> Unit
+pub fn PointerSource::to_repr(Self) -> @debug.Repr
+pub fn PointerSource::to_string(Self) -> String
 pub impl Show for PointerSource
 
 pub(all) enum PumpStatus {
   Continue
   Exit(Int)
 } derive(Eq, @debug.Debug)
+pub fn PumpStatus::equal(Self, Self) -> Bool
+pub fn PumpStatus::not_equal(Self, Self) -> Bool
+pub fn PumpStatus::output(Self, &Logger) -> Unit
+pub fn PumpStatus::to_repr(Self) -> @debug.Repr
+pub fn PumpStatus::to_string(Self) -> String
 pub impl Show for PumpStatus
 
 pub struct RawKeyEvent {
@@ -1218,8 +1507,13 @@ pub struct RawKeyEvent {
   state : ElementState
 } derive(Eq, @debug.Debug)
 pub fn RawKeyEvent::RawKeyEvent(PhysicalKey, ElementState) -> Self
+pub fn RawKeyEvent::equal(Self, Self) -> Bool
+pub fn RawKeyEvent::not_equal(Self, Self) -> Bool
+pub fn RawKeyEvent::output(Self, &Logger) -> Unit
 pub fn RawKeyEvent::physical_key(Self) -> PhysicalKey
 pub fn RawKeyEvent::state(Self) -> ElementState
+pub fn RawKeyEvent::to_repr(Self) -> @debug.Repr
+pub fn RawKeyEvent::to_string(Self) -> String
 pub impl Show for RawKeyEvent
 
 pub(all) enum ResizeDirection {
@@ -1232,6 +1526,11 @@ pub(all) enum ResizeDirection {
   SouthWest
   West
 } derive(Eq, @debug.Debug)
+pub fn ResizeDirection::equal(Self, Self) -> Bool
+pub fn ResizeDirection::not_equal(Self, Self) -> Bool
+pub fn ResizeDirection::output(Self, &Logger) -> Unit
+pub fn ResizeDirection::to_repr(Self) -> @debug.Repr
+pub fn ResizeDirection::to_string(Self) -> String
 pub impl Show for ResizeDirection
 
 pub struct ScreenEdge {
@@ -1241,10 +1540,15 @@ pub fn ScreenEdge::all() -> Self
 pub fn ScreenEdge::bits(Self) -> Int
 pub fn ScreenEdge::bottom() -> Self
 pub fn ScreenEdge::contains(Self, Self) -> Bool
+pub fn ScreenEdge::equal(Self, Self) -> Bool
 pub fn ScreenEdge::from_bits(Int) -> Self
 pub fn ScreenEdge::left() -> Self
 pub fn ScreenEdge::none() -> Self
+pub fn ScreenEdge::not_equal(Self, Self) -> Bool
+pub fn ScreenEdge::output(Self, &Logger) -> Unit
 pub fn ScreenEdge::right() -> Self
+pub fn ScreenEdge::to_repr(Self) -> @debug.Repr
+pub fn ScreenEdge::to_string(Self) -> String
 pub fn ScreenEdge::top() -> Self
 pub fn ScreenEdge::union(Self, Self) -> Self
 pub impl Show for ScreenEdge
@@ -1255,14 +1559,22 @@ pub(all) enum StartCause {
   WaitCancelled(Int64, Int64?)
   ResumeTimeReached(Int64, Int64)
 } derive(Eq, @debug.Debug)
+pub fn StartCause::equal(Self, Self) -> Bool
+pub fn StartCause::not_equal(Self, Self) -> Bool
+pub fn StartCause::output(Self, &Logger) -> Unit
+pub fn StartCause::to_repr(Self) -> @debug.Repr
+pub fn StartCause::to_string(Self) -> String
 pub impl Show for StartCause
 
 pub struct SurfaceSizeWriter {
   size : @ref.Ref[@dpi.PhysicalSize]
 } derive(@debug.Debug)
 pub fn SurfaceSizeWriter::SurfaceSizeWriter(@dpi.PhysicalSize) -> Self
+pub fn SurfaceSizeWriter::output(Self, &Logger) -> Unit
 pub fn SurfaceSizeWriter::request_surface_size(Self, @dpi.PhysicalSize) -> Unit
 pub fn SurfaceSizeWriter::surface_size(Self) -> @dpi.PhysicalSize
+pub fn SurfaceSizeWriter::to_repr(Self) -> @debug.Repr
+pub fn SurfaceSizeWriter::to_string(Self) -> String
 pub impl Show for SurfaceSizeWriter
 
 pub struct TabletToolAngle {
@@ -1273,7 +1585,12 @@ pub fn TabletToolAngle::TabletToolAngle(Double, Double) -> Self
 pub fn TabletToolAngle::altitude(Self) -> Double
 pub fn TabletToolAngle::azimuth(Self) -> Double
 pub fn TabletToolAngle::default() -> Self
+pub fn TabletToolAngle::equal(Self, Self) -> Bool
+pub fn TabletToolAngle::not_equal(Self, Self) -> Bool
+pub fn TabletToolAngle::output(Self, &Logger) -> Unit
 pub fn TabletToolAngle::tilt(Self) -> TabletToolTilt
+pub fn TabletToolAngle::to_repr(Self) -> @debug.Repr
+pub fn TabletToolAngle::to_string(Self) -> String
 pub impl Show for TabletToolAngle
 
 pub(all) enum TabletToolButton {
@@ -1281,7 +1598,12 @@ pub(all) enum TabletToolButton {
   Barrel
   Other(Int)
 } derive(Eq, @debug.Debug)
+pub fn TabletToolButton::equal(Self, Self) -> Bool
 pub fn TabletToolButton::mouse_button(Self) -> MouseButton?
+pub fn TabletToolButton::not_equal(Self, Self) -> Bool
+pub fn TabletToolButton::output(Self, &Logger) -> Unit
+pub fn TabletToolButton::to_repr(Self) -> @debug.Repr
+pub fn TabletToolButton::to_string(Self) -> String
 pub impl Show for TabletToolButton
 
 pub struct TabletToolData {
@@ -1293,9 +1615,14 @@ pub struct TabletToolData {
 } derive(Eq, @debug.Debug)
 pub fn TabletToolData::TabletToolData(Force?, Double?, Int?, TabletToolTilt?, TabletToolAngle?) -> Self
 pub fn TabletToolData::angle(Self) -> TabletToolAngle?
+pub fn TabletToolData::equal(Self, Self) -> Bool
 pub fn TabletToolData::force(Self) -> Force?
+pub fn TabletToolData::not_equal(Self, Self) -> Bool
+pub fn TabletToolData::output(Self, &Logger) -> Unit
 pub fn TabletToolData::tangential_force(Self) -> Double?
 pub fn TabletToolData::tilt(Self) -> TabletToolTilt?
+pub fn TabletToolData::to_repr(Self) -> @debug.Repr
+pub fn TabletToolData::to_string(Self) -> String
 pub fn TabletToolData::twist(Self) -> Int?
 pub impl Show for TabletToolData
 
@@ -1310,6 +1637,11 @@ pub(all) enum TabletToolKind {
   Lens
 } derive(Eq, @debug.Debug)
 pub fn TabletToolKind::default() -> Self
+pub fn TabletToolKind::equal(Self, Self) -> Bool
+pub fn TabletToolKind::not_equal(Self, Self) -> Bool
+pub fn TabletToolKind::output(Self, &Logger) -> Unit
+pub fn TabletToolKind::to_repr(Self) -> @debug.Repr
+pub fn TabletToolKind::to_string(Self) -> String
 pub impl Show for TabletToolKind
 
 pub struct TabletToolTilt {
@@ -1318,6 +1650,11 @@ pub struct TabletToolTilt {
 } derive(Eq, @debug.Debug)
 pub fn TabletToolTilt::TabletToolTilt(Int, Int) -> Self
 pub fn TabletToolTilt::angle(Self) -> TabletToolAngle
+pub fn TabletToolTilt::equal(Self, Self) -> Bool
+pub fn TabletToolTilt::not_equal(Self, Self) -> Bool
+pub fn TabletToolTilt::output(Self, &Logger) -> Unit
+pub fn TabletToolTilt::to_repr(Self) -> @debug.Repr
+pub fn TabletToolTilt::to_string(Self) -> String
 pub fn TabletToolTilt::x(Self) -> Int
 pub fn TabletToolTilt::y(Self) -> Int
 pub impl Show for TabletToolTilt
@@ -1326,6 +1663,11 @@ pub(all) enum Theme {
   Light
   Dark
 } derive(Eq, @debug.Debug)
+pub fn Theme::equal(Self, Self) -> Bool
+pub fn Theme::not_equal(Self, Self) -> Bool
+pub fn Theme::output(Self, &Logger) -> Unit
+pub fn Theme::to_repr(Self) -> @debug.Repr
+pub fn Theme::to_string(Self) -> String
 pub impl Show for Theme
 
 pub(all) enum TouchPhase {
@@ -1334,12 +1676,22 @@ pub(all) enum TouchPhase {
   Ended
   Cancelled
 } derive(Eq, @debug.Debug)
+pub fn TouchPhase::equal(Self, Self) -> Bool
+pub fn TouchPhase::not_equal(Self, Self) -> Bool
+pub fn TouchPhase::output(Self, &Logger) -> Unit
+pub fn TouchPhase::to_repr(Self) -> @debug.Repr
+pub fn TouchPhase::to_string(Self) -> String
 pub impl Show for TouchPhase
 
 pub(all) enum UserAttentionType {
   Critical
   Informational
 } derive(Eq, @debug.Debug)
+pub fn UserAttentionType::equal(Self, Self) -> Bool
+pub fn UserAttentionType::not_equal(Self, Self) -> Bool
+pub fn UserAttentionType::output(Self, &Logger) -> Unit
+pub fn UserAttentionType::to_repr(Self) -> @debug.Repr
+pub fn UserAttentionType::to_string(Self) -> String
 pub impl Show for UserAttentionType
 
 pub struct VideoMode {
@@ -1347,8 +1699,13 @@ pub struct VideoMode {
 } derive(Eq, @debug.Debug)
 pub fn VideoMode::VideoMode(@dpi.PhysicalSize, Int?, Int?) -> Self
 pub fn VideoMode::bit_depth(Self) -> Int?
+pub fn VideoMode::equal(Self, Self) -> Bool
+pub fn VideoMode::not_equal(Self, Self) -> Bool
+pub fn VideoMode::output(Self, &Logger) -> Unit
 pub fn VideoMode::refresh_rate_millihertz(Self) -> Int?
 pub fn VideoMode::surface_size(Self) -> @dpi.PhysicalSize
+pub fn VideoMode::to_repr(Self) -> @debug.Repr
+pub fn VideoMode::to_string(Self) -> String
 pub impl Show for VideoMode
 
 pub struct WindowAttributes {
@@ -1364,6 +1721,7 @@ pub fn WindowAttributes::cursor_visible(Self) -> Bool
 pub fn WindowAttributes::decorations(Self) -> Bool
 pub fn WindowAttributes::default() -> Self
 pub fn WindowAttributes::enabled_buttons(Self) -> WindowButtons
+pub fn WindowAttributes::equal(Self, Self) -> Bool
 pub fn WindowAttributes::fullscreen(Self) -> Fullscreen?
 pub fn WindowAttributes::ime_hints(Self) -> ImeHint
 pub fn WindowAttributes::ime_purpose(Self) -> ImePurpose
@@ -1374,6 +1732,8 @@ pub fn WindowAttributes::maximized(Self) -> Bool
 pub fn WindowAttributes::min_inner_size(Self) -> @dpi.Size?
 pub fn WindowAttributes::min_surface_size(Self) -> @dpi.Size?
 pub fn WindowAttributes::name(Self) -> String?
+pub fn WindowAttributes::not_equal(Self, Self) -> Bool
+pub fn WindowAttributes::output(Self, &Logger) -> Unit
 pub fn WindowAttributes::parent_window(Self) -> ParentWindow?
 pub fn WindowAttributes::platform_attributes(Self) -> PlatformWindowAttributes
 pub fn WindowAttributes::position(Self) -> @dpi.Position?
@@ -1384,6 +1744,8 @@ pub fn WindowAttributes::surface_resize_increments(Self) -> @dpi.Size?
 pub fn WindowAttributes::surface_size(Self) -> @dpi.Size?
 pub fn WindowAttributes::theme(Self) -> Theme?
 pub fn WindowAttributes::title(Self) -> String
+pub fn WindowAttributes::to_repr(Self) -> @debug.Repr
+pub fn WindowAttributes::to_string(Self) -> String
 pub fn WindowAttributes::transparent(Self) -> Bool
 pub fn WindowAttributes::visible(Self) -> Bool
 pub fn WindowAttributes::window_icon(Self) -> Icon?
@@ -1429,9 +1791,14 @@ pub struct WindowButtons {
 } derive(Eq, @debug.Debug)
 pub fn WindowButtons::all() -> Self
 pub fn WindowButtons::close(Self) -> Bool
+pub fn WindowButtons::equal(Self, Self) -> Bool
 pub fn WindowButtons::maximize(Self) -> Bool
 pub fn WindowButtons::minimize(Self) -> Bool
 pub fn WindowButtons::none() -> Self
+pub fn WindowButtons::not_equal(Self, Self) -> Bool
+pub fn WindowButtons::output(Self, &Logger) -> Unit
+pub fn WindowButtons::to_repr(Self) -> @debug.Repr
+pub fn WindowButtons::to_string(Self) -> String
 pub fn WindowButtons::with_close(Self, Bool) -> Self
 pub fn WindowButtons::with_maximize(Self, Bool) -> Self
 pub fn WindowButtons::with_minimize(Self, Bool) -> Self
@@ -1467,13 +1834,21 @@ pub(all) enum WindowEvent {
   RedrawRequested
 } derive(@debug.Debug)
 pub fn WindowEvent::into_winit_events(Self) -> Array[WinitWindowEvent]
+pub fn WindowEvent::output(Self, &Logger) -> Unit
+pub fn WindowEvent::to_repr(Self) -> @debug.Repr
+pub fn WindowEvent::to_string(Self) -> String
 pub impl Show for WindowEvent
 
 pub struct WindowId {
   // private fields
 } derive(Eq, @debug.Debug)
+pub fn WindowId::equal(Self, Self) -> Bool
 pub fn WindowId::from_raw(Int) -> Self
 pub fn WindowId::into_raw(Self) -> Int
+pub fn WindowId::not_equal(Self, Self) -> Bool
+pub fn WindowId::output(Self, &Logger) -> Unit
+pub fn WindowId::to_repr(Self) -> @debug.Repr
+pub fn WindowId::to_string(Self) -> String
 pub impl Show for WindowId
 
 pub(all) enum WindowLevel {
@@ -1481,6 +1856,11 @@ pub(all) enum WindowLevel {
   AlwaysOnTop
   AlwaysOnBottom
 } derive(Eq, @debug.Debug)
+pub fn WindowLevel::equal(Self, Self) -> Bool
+pub fn WindowLevel::not_equal(Self, Self) -> Bool
+pub fn WindowLevel::output(Self, &Logger) -> Unit
+pub fn WindowLevel::to_repr(Self) -> @debug.Repr
+pub fn WindowLevel::to_string(Self) -> String
 pub impl Show for WindowLevel
 
 pub(all) enum WinitDeviceEvent {
@@ -1489,6 +1869,11 @@ pub(all) enum WinitDeviceEvent {
   Button(ButtonId, ElementState)
   Key(RawKeyEvent)
 } derive(Eq, @debug.Debug)
+pub fn WinitDeviceEvent::equal(Self, Self) -> Bool
+pub fn WinitDeviceEvent::not_equal(Self, Self) -> Bool
+pub fn WinitDeviceEvent::output(Self, &Logger) -> Unit
+pub fn WinitDeviceEvent::to_repr(Self) -> @debug.Repr
+pub fn WinitDeviceEvent::to_string(Self) -> String
 pub impl Show for WinitDeviceEvent
 
 pub(all) enum WinitWindowEvent {
@@ -1519,6 +1904,9 @@ pub(all) enum WinitWindowEvent {
   Occluded(Bool)
   RedrawRequested
 } derive(@debug.Debug)
+pub fn WinitWindowEvent::output(Self, &Logger) -> Unit
+pub fn WinitWindowEvent::to_repr(Self) -> @debug.Repr
+pub fn WinitWindowEvent::to_string(Self) -> String
 pub impl Show for WinitWindowEvent
 
 // Type aliases

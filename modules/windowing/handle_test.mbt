@@ -23,13 +23,13 @@ impl DisplayHandleProvider for TestDisplayProvider with fn raw_display_handle(
 ///|
 test "AppKit handle providers preserve structured handles" {
   let appkit_window = AppKitWindowHandle::new(42UL)
-  let window_provider : TestWindowProvider = { raw: AppKit(appkit_window) }
+  let window_provider : TestWindowProvider = { raw: AppKit(appkit_window), }
   let window = WindowHandle::from_provider(
     window_provider as &WindowHandleProvider,
   )
   assert_eq(window.as_raw(), AppKit(appkit_window))
   let appkit_display = AppKitDisplayHandle::new()
-  let display_provider : TestDisplayProvider = { raw: AppKit(appkit_display) }
+  let display_provider : TestDisplayProvider = { raw: AppKit(appkit_display), }
   let display = DisplayHandle::from_provider(
     display_provider as &DisplayHandleProvider,
   )

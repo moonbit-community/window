@@ -436,3 +436,246 @@ pub impl Show for PlatformEventLoopAttributes with fn output(self, logger) {
 pub impl Show for AsyncRequestSerial with fn output(self, logger) {
   debug_output(self, logger)
 }
+
+///|
+pub extend ActivationPolicy with Show::{to_string, output}
+
+///|
+pub extend ActivationToken with Show::{to_string, output}
+
+///|
+pub extend AsyncRequestSerial with Show::{to_string, output}
+
+///|
+pub extend AxisId with Show::{to_string, output}
+
+///|
+pub extend BadCustomCursorAnimation with Show::{to_string, output}
+
+///|
+pub extend BadCustomCursorSource with Show::{to_string, output}
+
+///|
+pub extend BadIcon with Show::{to_string, output}
+
+///|
+pub extend ButtonId with Show::{to_string, output}
+
+///|
+pub extend ButtonSource with Show::{to_string, output}
+
+///|
+pub extend ControlFlow with Show::{to_string, output}
+
+///|
+pub extend Cursor with Show::{to_string, output}
+
+///|
+pub extend CursorGrabMode with Show::{to_string, output}
+
+///|
+pub extend CursorIcon with Show::{to_string, output}
+
+///|
+pub extend CustomCursor with Show::{to_string, output}
+
+///|
+pub extend CustomCursorSource with Show::{to_string, output}
+
+///|
+pub extend DeviceEvent with Show::{to_string, output}
+
+///|
+pub extend DeviceEvents with Show::{to_string, output}
+
+///|
+pub extend DeviceId with Show::{to_string, output}
+
+///|
+pub extend ElementState with Show::{to_string, output}
+
+///|
+pub extend EventLoopError with Show::{to_string, output}
+
+///|
+pub extend FingerId with Show::{to_string, output}
+
+///|
+pub extend Force with Show::{to_string, output}
+
+///|
+pub extend Fullscreen with Show::{to_string, output}
+
+///|
+pub extend Icon with Show::{to_string, output}
+
+///|
+pub extend Ime with Show::{to_string, output}
+
+///|
+pub extend ImeCapabilities with Show::{to_string, output}
+
+///|
+pub extend ImeCursorRange with Show::{to_string, output}
+
+///|
+pub extend ImeEnableRequest with Show::{to_string, output}
+
+///|
+pub extend ImeHint with Show::{to_string, output}
+
+///|
+pub extend ImePurpose with Show::{to_string, output}
+
+///|
+pub extend ImeRequest with Show::{to_string, output}
+
+///|
+pub extend ImeRequestData with Show::{to_string, output}
+
+///|
+pub extend ImeRequestError with Show::{to_string, output}
+
+///|
+pub extend ImeSurroundingText with Show::{to_string, output}
+
+///|
+pub extend ImeSurroundingTextError with Show::{to_string, output}
+
+///|
+pub extend Key with Show::{to_string, output}
+
+///|
+pub extend KeyCode with Show::{to_string, output}
+
+///|
+pub extend KeyEvent with Show::{to_string, output}
+
+///|
+pub extend KeyLocation with Show::{to_string, output}
+
+///|
+pub extend Modifiers with Show::{to_string, output}
+
+///|
+pub extend ModifiersKeyState with Show::{to_string, output}
+
+///|
+pub extend ModifiersKeys with Show::{to_string, output}
+
+///|
+pub extend ModifiersState with Show::{to_string, output}
+
+///|
+pub extend MonitorHandle with Show::{to_string, output}
+
+///|
+pub extend MouseButton with Show::{to_string, output}
+
+///|
+pub extend MouseScrollDelta with Show::{to_string, output}
+
+///|
+pub extend NamedKey with Show::{to_string, output}
+
+///|
+pub extend NativeKey with Show::{to_string, output}
+
+///|
+pub extend NativeKeyCode with Show::{to_string, output}
+
+///|
+pub extend NotSupportedError with Show::{to_string, output}
+
+///|
+pub extend OptionAsAlt with Show::{to_string, output}
+
+///|
+pub extend OsError with Show::{to_string, output}
+
+///|
+pub extend ParentWindow with Show::{to_string, output}
+
+///|
+pub extend PhysicalKey with Show::{to_string, output}
+
+///|
+pub extend PlatformEventLoopAttributes with Show::{to_string, output}
+
+///|
+pub extend PlatformWindowAttributes with Show::{to_string, output}
+
+///|
+pub extend PointerKind with Show::{to_string, output}
+
+///|
+pub extend PointerSource with Show::{to_string, output}
+
+///|
+pub extend PumpStatus with Show::{to_string, output}
+
+///|
+pub extend RawKeyEvent with Show::{to_string, output}
+
+///|
+pub extend RequestError with Show::{to_string, output}
+
+///|
+pub extend ResizeDirection with Show::{to_string, output}
+
+///|
+pub extend ScreenEdge with Show::{to_string, output}
+
+///|
+pub extend StartCause with Show::{to_string, output}
+
+///|
+pub extend SurfaceSizeWriter with Show::{to_string, output}
+
+///|
+pub extend TabletToolAngle with Show::{to_string, output}
+
+///|
+pub extend TabletToolButton with Show::{to_string, output}
+
+///|
+pub extend TabletToolData with Show::{to_string, output}
+
+///|
+pub extend TabletToolKind with Show::{to_string, output}
+
+///|
+pub extend TabletToolTilt with Show::{to_string, output}
+
+///|
+pub extend Theme with Show::{to_string, output}
+
+///|
+pub extend TouchPhase with Show::{to_string, output}
+
+///|
+pub extend UserAttentionType with Show::{to_string, output}
+
+///|
+pub extend VideoMode with Show::{to_string, output}
+
+///|
+pub extend WindowAttributes with Show::{to_string, output}
+
+///|
+pub extend WindowButtons with Show::{to_string, output}
+
+///|
+pub extend WindowEvent with Show::{to_string, output}
+
+///|
+pub extend WindowId with Show::{to_string, output}
+
+///|
+pub extend WindowLevel with Show::{to_string, output}
+
+///|
+pub extend WinitDeviceEvent with Show::{to_string, output}
+
+///|
+pub extend WinitWindowEvent with Show::{to_string, output}

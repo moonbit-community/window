@@ -42,3 +42,27 @@ pub impl Show for PhysicalInsets with fn output(self, logger) {
 pub impl Show for Size with fn output(self, logger) {
   debug_output(self, logger)
 }
+
+///|
+pub extend LogicalPosition with Show::{to_string, output}
+
+///|
+pub extend LogicalSize with Show::{to_string, output}
+
+///|
+pub extend PhysicalInsets with Show::{to_string, output}
+
+///|
+pub extend PhysicalPosition with Show::{to_string, output}
+
+///|
+pub extend PhysicalPositionF64 with Show::{to_string, output}
+
+///|
+pub extend PhysicalSize with Show::{to_string, output}
+
+///|
+pub extend Position with Show::{to_string, output}
+
+///|
+pub extend Size with Show::{to_string, output}

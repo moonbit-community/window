@@ -1,9 +1,9 @@
 name = "Milky2018/window"
 
-version = "0.6.0"
+version = "0.6.1"
 
 import {
-  "Milky2018/windowing@0.1.0",
+  "Milky2018/windowing@0.1.1",
 }
 
 preferred_target = "native"

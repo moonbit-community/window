@@ -161,7 +161,7 @@ let async_request_serial_counter : Ref[Int] = Ref(0)
 pub fn AsyncRequestSerial::get() -> AsyncRequestSerial {
   let current = async_request_serial_counter.val
   async_request_serial_counter.val = current + 1
-  { raw: current }
+  { raw: current, }
 }
 
 ///|
@@ -190,3 +190,45 @@ pub fn ControlFlow::wait_duration(
     WaitUntil(start_time_ms + timeout_ms.to_int64())
   }
 }
+
+///|
+pub extend ActivationPolicy with Debug::{to_repr}
+
+///|
+pub extend ActivationPolicy with Eq::{not_equal, equal}
+
+///|
+pub extend AsyncRequestSerial with Debug::{to_repr}
+
+///|
+pub extend AsyncRequestSerial with Eq::{not_equal, equal}
+
+///|
+pub extend ControlFlow with Debug::{to_repr}
+
+///|
+pub extend ControlFlow with Eq::{not_equal, equal}
+
+///|
+pub extend DeviceEvents with Debug::{to_repr}
+
+///|
+pub extend DeviceEvents with Eq::{not_equal, equal}
+
+///|
+pub extend EventLoopError with Debug::{to_repr}
+
+///|
+pub extend EventLoopError with Eq::{not_equal, equal}
+
+///|
+pub extend PlatformEventLoopAttributes with Debug::{to_repr}
+
+///|
+pub extend PlatformEventLoopAttributes with Eq::{not_equal, equal}
+
+///|
+pub extend PumpStatus with Debug::{to_repr}
+
+///|
+pub extend PumpStatus with Eq::{not_equal, equal}
