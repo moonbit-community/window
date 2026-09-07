@@ -64,7 +64,8 @@ dispatch_violations="$(perl -0777 -ne '
     $block = $1;
     next unless $block =~ /^pub fn Window::([A-Za-z0-9_]+)/m;
     $name = $1;
-    next if $name =~ /^(Window|id|display_handle|window_handle)$/;
+    # raw_display_handle constructs the stateless AppKit display tag without touching AppKit.
+    next if $name =~ /^(Window|id|display_handle|raw_display_handle|window_handle)$/;
     $count = () = $block =~ /self\.maybe_wait_on_main(?:_result)?\(/g;
     print "$ARGV: Window::$name has $count main-thread dispatch calls\n"
       unless $count == 1;
