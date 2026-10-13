@@ -17,7 +17,7 @@ test "initial_window_position_is_applied_only_without_fullscreen" {
   assert_true(should_apply_initial_window_position(None))
 
   let monitor = @core.MonitorHandle::MonitorHandle(
-    (1 : Int).to_uint64(),
+    (1 : Int32).to_uint64(),
     None,
     PhysicalPosition(0, 0),
     PhysicalSize(1920, 1080),
@@ -76,7 +76,7 @@ test "physical_outer_position_to_logical_converts_physical_input" {
 ///|
 test "monitor_position_to_logical_uses_monitor_scale_factor" {
   let monitor = @core.MonitorHandle::MonitorHandle(
-    (9 : Int).to_uint64(),
+    (9 : Int32).to_uint64(),
     Some("scaled"),
     PhysicalPosition(3840, 0),
     PhysicalSize(3840, 2160),
@@ -90,7 +90,7 @@ test "monitor_position_to_logical_uses_monitor_scale_factor" {
 ///|
 test "fullscreen_target_surface_size_prefers_target_monitor" {
   let primary = @core.MonitorHandle::MonitorHandle(
-    (1 : Int).to_uint64(),
+    (1 : Int32).to_uint64(),
     Some("primary"),
     PhysicalPosition(0, 0),
     PhysicalSize(2560, 1440),
@@ -99,7 +99,7 @@ test "fullscreen_target_surface_size_prefers_target_monitor" {
     [],
   )
   let external = @core.MonitorHandle::MonitorHandle(
-    (2 : Int).to_uint64(),
+    (2 : Int32).to_uint64(),
     Some("external"),
     PhysicalPosition(2560, 0),
     PhysicalSize(3840, 2160),
@@ -132,7 +132,7 @@ test "fullscreen_target_surface_size_prefers_target_monitor" {
 ///|
 test "fullscreen_target_surface_size_falls_back_to_primary_monitor" {
   let primary = @core.MonitorHandle::MonitorHandle(
-    (1 : Int).to_uint64(),
+    (1 : Int32).to_uint64(),
     Some("primary"),
     PhysicalPosition(0, 0),
     PhysicalSize(3000, 2000),

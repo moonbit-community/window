@@ -1,6 +1,6 @@
 ///|
 fn close_window(window_handle : NativeWindow) -> Unit {
-  if native_window_objc_handle(window_handle) == (0 : Int).to_uint64() {
+  if native_window_objc_handle(window_handle) == (0 : Int32).to_uint64() {
     return ()
   }
   native_window_forget_standard_frame(window_handle)
@@ -14,21 +14,21 @@ fn close_window(window_handle : NativeWindow) -> Unit {
 
 ///|
 fn native_set_resizable(window_handle : NativeWindow, resizable : Bool) -> Unit {
-  if registered_native_handle(window_handle) != (0 : Int).to_uint64() {
+  if registered_native_handle(window_handle) != (0 : Int32).to_uint64() {
     native_window_set_resizable(window_handle, resizable)
   }
 }
 
 ///|
 fn set_title(window_handle : NativeWindow, title : String) -> Unit {
-  if registered_native_handle(window_handle) != (0 : Int).to_uint64() {
+  if registered_native_handle(window_handle) != (0 : Int32).to_uint64() {
     native_window_set_title(window_handle, title)
   }
 }
 
 ///|
 fn set_window_name(window_handle : NativeWindow, name : String) -> Unit {
-  if registered_native_handle(window_handle) != (0 : Int).to_uint64() {
+  if registered_native_handle(window_handle) != (0 : Int32).to_uint64() {
     native_window_set_name(window_handle, name)
   }
 }
@@ -38,7 +38,7 @@ fn set_window_skip_taskbar(
   window_handle : NativeWindow,
   skip_taskbar : Bool,
 ) -> Unit {
-  if registered_native_handle(window_handle) != (0 : Int).to_uint64() {
+  if registered_native_handle(window_handle) != (0 : Int32).to_uint64() {
     native_window_set_skip_taskbar(window_handle, skip_taskbar)
   }
 }
@@ -48,7 +48,7 @@ fn set_window_clip_children(
   window_handle : NativeWindow,
   clip_children : Bool,
 ) -> Unit {
-  if registered_native_handle(window_handle) != (0 : Int).to_uint64() {
+  if registered_native_handle(window_handle) != (0 : Int32).to_uint64() {
     native_window_set_clip_children(window_handle, clip_children)
   }
 }
@@ -56,7 +56,7 @@ fn set_window_clip_children(
 ///|
 fn request_user_attention(
   window_handle : NativeWindow,
-  request_type : Int,
+  request_type : Int32,
 ) -> Unit {
   let _ = window_handle
   native_window_request_user_attention(request_type)
@@ -65,7 +65,7 @@ fn request_user_attention(
 ///|
 fn window_native_scale_factor(window_handle : NativeWindow) -> Double {
   let native_handle = registered_native_handle(window_handle)
-  if native_handle == (0 : Int).to_uint64() {
+  if native_handle == (0 : Int32).to_uint64() {
     1.0
   } else {
     native_window_scale_factor(window_handle)
@@ -75,12 +75,12 @@ fn window_native_scale_factor(window_handle : NativeWindow) -> Double {
 ///|
 fn set_surface_size(
   window_handle : NativeWindow,
-  width : Int,
-  height : Int,
+  width : Int32,
+  height : Int32,
 ) -> Unit {
   let content_width = clamp_size(width)
   let content_height = clamp_size(height)
-  if registered_native_handle(window_handle) != (0 : Int).to_uint64() {
+  if registered_native_handle(window_handle) != (0 : Int32).to_uint64() {
     native_window_set_content_size(window_handle, content_width, content_height)
   }
 }
@@ -88,12 +88,12 @@ fn set_surface_size(
 ///|
 fn set_surface_resize_increments(
   window_handle : NativeWindow,
-  width : Int,
-  height : Int,
+  width : Int32,
+  height : Int32,
 ) -> Unit {
   let resize_width = if width > 0 { width } else { 0 }
   let resize_height = if height > 0 { height } else { 0 }
-  if registered_native_handle(window_handle) != (0 : Int).to_uint64() {
+  if registered_native_handle(window_handle) != (0 : Int32).to_uint64() {
     native_window_set_resize_increments(
       window_handle, resize_width, resize_height,
     )
@@ -103,12 +103,12 @@ fn set_surface_resize_increments(
 ///|
 fn set_min_surface_size(
   window_handle : NativeWindow,
-  width : Int,
-  height : Int,
+  width : Int32,
+  height : Int32,
 ) -> Unit {
   let min_width = if width > 0 { width } else { 0 }
   let min_height = if height > 0 { height } else { 0 }
-  if registered_native_handle(window_handle) != (0 : Int).to_uint64() {
+  if registered_native_handle(window_handle) != (0 : Int32).to_uint64() {
     native_window_set_min_content_size(window_handle, min_width, min_height)
   }
 }
@@ -116,19 +116,23 @@ fn set_min_surface_size(
 ///|
 fn set_max_surface_size(
   window_handle : NativeWindow,
-  width : Int,
-  height : Int,
+  width : Int32,
+  height : Int32,
 ) -> Unit {
   let max_width = if width > 0 { width } else { 0 }
   let max_height = if height > 0 { height } else { 0 }
-  if registered_native_handle(window_handle) != (0 : Int).to_uint64() {
+  if registered_native_handle(window_handle) != (0 : Int32).to_uint64() {
     native_window_set_max_content_size(window_handle, max_width, max_height)
   }
 }
 
 ///|
-fn set_window_position(window_handle : NativeWindow, x : Int, y : Int) -> Unit {
-  if registered_native_handle(window_handle) != (0 : Int).to_uint64() {
+fn set_window_position(
+  window_handle : NativeWindow,
+  x : Int32,
+  y : Int32,
+) -> Unit {
+  if registered_native_handle(window_handle) != (0 : Int32).to_uint64() {
     native_window_set_position(window_handle, x, y)
   }
 }
@@ -136,8 +140,8 @@ fn set_window_position(window_handle : NativeWindow, x : Int, y : Int) -> Unit {
 ///|
 fn set_window_outer_size(
   window_handle : NativeWindow,
-  width : Int,
-  height : Int,
+  width : Int32,
+  height : Int32,
 ) -> Unit {
   let logical_size = @dpi.PhysicalSize::PhysicalSize(width, height).to_logical(
     window_native_scale_factor(window_handle),
@@ -151,7 +155,7 @@ fn set_window_outer_size(
 
 ///|
 fn set_window_maximized(window_handle : NativeWindow, maximized : Bool) -> Unit {
-  if registered_native_handle(window_handle) != (0 : Int).to_uint64() {
+  if registered_native_handle(window_handle) != (0 : Int32).to_uint64() {
     native_window_set_maximized(window_handle, maximized)
   }
 }
@@ -161,25 +165,25 @@ fn set_window_decorations(
   window_handle : NativeWindow,
   decorated : Bool,
 ) -> Unit {
-  if registered_native_handle(window_handle) == (0 : Int).to_uint64() {
+  if registered_native_handle(window_handle) == (0 : Int32).to_uint64() {
     return ()
   }
   if window_fullscreen(window_handle) {
     return ()
   }
-  let utility_window_mask = (16 : Int).to_uint64()
+  let utility_window_mask = (16 : Int32).to_uint64()
   let utility_window_bits = native_window_style_mask(window_handle) &
     utility_window_mask
   let mut style_mask = if decorated {
     // Titled | Closable | Miniaturizable
-    (7 : Int).to_uint64()
+    (7 : Int32).to_uint64()
   } else {
     // Borderless
-    (0 : Int).to_uint64()
+    (0 : Int32).to_uint64()
   }
   if native_window_is_resizable(window_handle) {
     // Resizable
-    style_mask = style_mask | (8 : Int).to_uint64()
+    style_mask = style_mask | (8 : Int32).to_uint64()
   }
   style_mask = style_mask | utility_window_bits
   native_window_set_style_mask(window_handle, style_mask)
@@ -187,14 +191,14 @@ fn set_window_decorations(
 
 ///|
 fn set_window_panel(window_handle : NativeWindow, panel : Bool) -> Unit {
-  if registered_native_handle(window_handle) == (0 : Int).to_uint64() {
+  if registered_native_handle(window_handle) == (0 : Int32).to_uint64() {
     return ()
   }
-  let utility_window_mask = (16 : Int).to_uint64()
+  let utility_window_mask = (16 : Int32).to_uint64()
   let mut style_mask = native_window_style_mask(window_handle)
   if panel {
     style_mask = style_mask | utility_window_mask
-  } else if (style_mask & utility_window_mask) != (0 : Int).to_uint64() {
+  } else if (style_mask & utility_window_mask) != (0 : Int32).to_uint64() {
     style_mask = style_mask - utility_window_mask
   }
   native_window_set_style_mask(window_handle, style_mask)
@@ -207,7 +211,7 @@ fn set_window_enabled_buttons(
   minimize : Bool,
   maximize : Bool,
 ) -> Unit {
-  if registered_native_handle(window_handle) != (0 : Int).to_uint64() {
+  if registered_native_handle(window_handle) != (0 : Int32).to_uint64() {
     native_window_set_enabled_buttons(window_handle, close, minimize, maximize)
   }
 }
@@ -228,7 +232,7 @@ fn set_window_movable_by_window_background(
   window_handle : NativeWindow,
   movable_by_window_background : Bool,
 ) -> Unit {
-  if registered_native_handle(window_handle) != (0 : Int).to_uint64() {
+  if registered_native_handle(window_handle) != (0 : Int32).to_uint64() {
     native_window_set_movable_by_background(
       window_handle, movable_by_window_background,
     )
@@ -240,7 +244,7 @@ fn set_window_titlebar_hidden(
   window_handle : NativeWindow,
   titlebar_hidden : Bool,
 ) -> Unit {
-  if registered_native_handle(window_handle) == (0 : Int).to_uint64() {
+  if registered_native_handle(window_handle) == (0 : Int32).to_uint64() {
     return ()
   }
   set_window_title_hidden(window_handle, titlebar_hidden)
@@ -253,7 +257,7 @@ fn set_window_titlebar_buttons_hidden(
   window_handle : NativeWindow,
   titlebar_buttons_hidden : Bool,
 ) -> Unit {
-  if registered_native_handle(window_handle) != (0 : Int).to_uint64() {
+  if registered_native_handle(window_handle) != (0 : Int32).to_uint64() {
     native_window_set_titlebar_buttons_hidden(
       window_handle, titlebar_buttons_hidden,
     )
@@ -265,10 +269,10 @@ fn set_window_fullsize_content_view(
   window_handle : NativeWindow,
   fullsize_content_view : Bool,
 ) -> Unit {
-  if registered_native_handle(window_handle) == (0 : Int).to_uint64() {
+  if registered_native_handle(window_handle) == (0 : Int32).to_uint64() {
     return ()
   }
-  let fullsize_mask = (32768 : Int).to_uint64()
+  let fullsize_mask = (32768 : Int32).to_uint64()
   if fullsize_content_view {
     native_window_set_style_mask(
       window_handle,
@@ -284,7 +288,7 @@ fn set_window_has_shadow(
   window_handle : NativeWindow,
   has_shadow : Bool,
 ) -> Unit {
-  if registered_native_handle(window_handle) != (0 : Int).to_uint64() {
+  if registered_native_handle(window_handle) != (0 : Int32).to_uint64() {
     native_window_set_has_shadow(window_handle, has_shadow)
   }
 }
@@ -294,7 +298,7 @@ fn set_window_document_edited(
   window_handle : NativeWindow,
   edited : Bool,
 ) -> Unit {
-  if registered_native_handle(window_handle) != (0 : Int).to_uint64() {
+  if registered_native_handle(window_handle) != (0 : Int32).to_uint64() {
     native_window_set_document_edited(window_handle, edited)
   }
 }
@@ -304,7 +308,7 @@ fn set_window_unified_titlebar(
   window_handle : NativeWindow,
   unified_titlebar : Bool,
 ) -> Unit {
-  if registered_native_handle(window_handle) != (0 : Int).to_uint64() {
+  if registered_native_handle(window_handle) != (0 : Int32).to_uint64() {
     native_window_set_unified_titlebar(window_handle, unified_titlebar)
   }
 }
@@ -314,28 +318,28 @@ fn set_window_tabbing_identifier(
   window_handle : NativeWindow,
   identifier : String,
 ) -> Unit {
-  if registered_native_handle(window_handle) != (0 : Int).to_uint64() {
+  if registered_native_handle(window_handle) != (0 : Int32).to_uint64() {
     native_window_set_tabbing_identifier(window_handle, identifier)
   }
 }
 
 ///|
 fn set_window_tabbing_mode_preferred(window_handle : NativeWindow) -> Unit {
-  if registered_native_handle(window_handle) != (0 : Int).to_uint64() {
+  if registered_native_handle(window_handle) != (0 : Int32).to_uint64() {
     native_window_set_tabbing_mode_preferred(window_handle)
   }
 }
 
 ///|
 fn select_window_next_tab(window_handle : NativeWindow) -> Unit {
-  if registered_native_handle(window_handle) != (0 : Int).to_uint64() {
+  if registered_native_handle(window_handle) != (0 : Int32).to_uint64() {
     native_window_select_next_tab(window_handle)
   }
 }
 
 ///|
 fn select_window_previous_tab(window_handle : NativeWindow) -> Unit {
-  if registered_native_handle(window_handle) != (0 : Int).to_uint64() {
+  if registered_native_handle(window_handle) != (0 : Int32).to_uint64() {
     native_window_select_previous_tab(window_handle)
   }
 }
@@ -343,9 +347,9 @@ fn select_window_previous_tab(window_handle : NativeWindow) -> Unit {
 ///|
 fn select_window_tab_at_index(
   window_handle : NativeWindow,
-  index : Int,
+  index : Int32,
 ) -> Unit {
-  if registered_native_handle(window_handle) != (0 : Int).to_uint64() {
+  if registered_native_handle(window_handle) != (0 : Int32).to_uint64() {
     native_window_select_tab_at_index(window_handle, index)
   }
 }
@@ -353,7 +357,7 @@ fn select_window_tab_at_index(
 ///|
 fn set_window_option_as_alt(
   window_handle : NativeWindow,
-  option_as_alt : Int,
+  option_as_alt : Int32,
 ) -> Unit {
   set_window_option_as_alt_state(
     native_window_identity(window_handle),
@@ -366,7 +370,7 @@ fn set_window_cursor(
   window_handle : NativeWindow,
   cursor : @core.CursorIcon,
 ) -> Unit {
-  if registered_native_handle(window_handle) != (0 : Int).to_uint64() {
+  if registered_native_handle(window_handle) != (0 : Int32).to_uint64() {
     native_window_set_cursor(window_handle, cursor)
   }
 }
@@ -377,7 +381,7 @@ fn set_window_cursor_visible(
   visible : Bool,
 ) -> Unit {
   let native_handle = registered_native_handle(window_handle)
-  if native_handle != (0 : Int).to_uint64() {
+  if native_handle != (0 : Int32).to_uint64() {
     native_window_set_cursor_visible(window_handle, visible)
   }
 }
@@ -385,7 +389,7 @@ fn set_window_cursor_visible(
 ///|
 fn window_cursor_visible(window_handle : NativeWindow) -> Bool {
   let native_handle = registered_native_handle(window_handle)
-  if native_handle == (0 : Int).to_uint64() {
+  if native_handle == (0 : Int32).to_uint64() {
     true
   } else {
     native_window_cursor_visible(window_handle)
@@ -393,15 +397,15 @@ fn window_cursor_visible(window_handle : NativeWindow) -> Bool {
 }
 
 ///|
-fn set_window_level(window_handle : NativeWindow, level : Int) -> Unit {
-  if registered_native_handle(window_handle) != (0 : Int).to_uint64() {
+fn set_window_level(window_handle : NativeWindow, level : Int32) -> Unit {
+  if registered_native_handle(window_handle) != (0 : Int32).to_uint64() {
     native_window_set_level(window_handle, level)
   }
 }
 
 ///|
-fn set_window_theme(window_handle : NativeWindow, theme : Int) -> Unit {
-  if registered_native_handle(window_handle) != (0 : Int).to_uint64() {
+fn set_window_theme(window_handle : NativeWindow, theme : Int32) -> Unit {
+  if registered_native_handle(window_handle) != (0 : Int32).to_uint64() {
     native_window_set_theme(window_handle, theme)
   }
 }
@@ -411,28 +415,28 @@ fn set_window_content_protected(
   window_handle : NativeWindow,
   content_protected : Bool,
 ) -> Unit {
-  if registered_native_handle(window_handle) != (0 : Int).to_uint64() {
+  if registered_native_handle(window_handle) != (0 : Int32).to_uint64() {
     native_window_set_content_protected(window_handle, content_protected)
   }
 }
 
 ///|
-fn set_ime_purpose(window_handle : NativeWindow, purpose : Int) -> Unit {
+fn set_ime_purpose(window_handle : NativeWindow, purpose : Int32) -> Unit {
   set_window_ime_purpose_state(native_window_identity(window_handle), purpose)
 }
 
 ///|
-fn window_ime_purpose(window_handle : NativeWindow) -> Int {
+fn window_ime_purpose(window_handle : NativeWindow) -> Int32 {
   window_ime_purpose_state(native_window_identity(window_handle))
 }
 
 ///|
-fn set_ime_hints(window_handle : NativeWindow, hints : Int) -> Unit {
+fn set_ime_hints(window_handle : NativeWindow, hints : Int32) -> Unit {
   set_window_ime_hints_state(native_window_identity(window_handle), hints)
 }
 
 ///|
-fn window_ime_hints(window_handle : NativeWindow) -> Int {
+fn window_ime_hints(window_handle : NativeWindow) -> Int32 {
   window_ime_hints_state(native_window_identity(window_handle))
 }
 
@@ -442,29 +446,29 @@ fn window_ime_allowed(window_handle : NativeWindow) -> Bool {
 }
 
 ///|
-fn window_ime_cursor_x(window_handle : NativeWindow) -> Int {
+fn window_ime_cursor_x(window_handle : NativeWindow) -> Int32 {
   window_ime_cursor_x_state(native_window_identity(window_handle))
 }
 
 ///|
-fn window_ime_cursor_y(window_handle : NativeWindow) -> Int {
+fn window_ime_cursor_y(window_handle : NativeWindow) -> Int32 {
   window_ime_cursor_y_state(native_window_identity(window_handle))
 }
 
 ///|
-fn window_ime_cursor_width(window_handle : NativeWindow) -> Int {
+fn window_ime_cursor_width(window_handle : NativeWindow) -> Int32 {
   window_ime_cursor_width_state(native_window_identity(window_handle))
 }
 
 ///|
-fn window_ime_cursor_height(window_handle : NativeWindow) -> Int {
+fn window_ime_cursor_height(window_handle : NativeWindow) -> Int32 {
   window_ime_cursor_height_state(native_window_identity(window_handle))
 }
 
 ///|
-fn window_surface_width(window_handle : NativeWindow) -> Int {
+fn window_surface_width(window_handle : NativeWindow) -> Int32 {
   let native_handle = registered_native_handle(window_handle)
-  if native_handle == (0 : Int).to_uint64() {
+  if native_handle == (0 : Int32).to_uint64() {
     800
   } else {
     native_window_content_width(window_handle)
@@ -472,9 +476,9 @@ fn window_surface_width(window_handle : NativeWindow) -> Int {
 }
 
 ///|
-fn window_surface_height(window_handle : NativeWindow) -> Int {
+fn window_surface_height(window_handle : NativeWindow) -> Int32 {
   let native_handle = registered_native_handle(window_handle)
-  if native_handle == (0 : Int).to_uint64() {
+  if native_handle == (0 : Int32).to_uint64() {
     600
   } else {
     native_window_content_height(window_handle)
@@ -482,9 +486,9 @@ fn window_surface_height(window_handle : NativeWindow) -> Int {
 }
 
 ///|
-fn window_min_surface_width(window_handle : NativeWindow) -> Int {
+fn window_min_surface_width(window_handle : NativeWindow) -> Int32 {
   let native_handle = registered_native_handle(window_handle)
-  if native_handle == (0 : Int).to_uint64() {
+  if native_handle == (0 : Int32).to_uint64() {
     0
   } else {
     native_window_min_content_width(window_handle)
@@ -492,9 +496,9 @@ fn window_min_surface_width(window_handle : NativeWindow) -> Int {
 }
 
 ///|
-fn window_min_surface_height(window_handle : NativeWindow) -> Int {
+fn window_min_surface_height(window_handle : NativeWindow) -> Int32 {
   let native_handle = registered_native_handle(window_handle)
-  if native_handle == (0 : Int).to_uint64() {
+  if native_handle == (0 : Int32).to_uint64() {
     0
   } else {
     native_window_min_content_height(window_handle)
@@ -502,9 +506,9 @@ fn window_min_surface_height(window_handle : NativeWindow) -> Int {
 }
 
 ///|
-fn window_max_surface_width(window_handle : NativeWindow) -> Int {
+fn window_max_surface_width(window_handle : NativeWindow) -> Int32 {
   let native_handle = registered_native_handle(window_handle)
-  if native_handle == (0 : Int).to_uint64() {
+  if native_handle == (0 : Int32).to_uint64() {
     0
   } else {
     native_window_max_content_width(window_handle)
@@ -512,9 +516,9 @@ fn window_max_surface_width(window_handle : NativeWindow) -> Int {
 }
 
 ///|
-fn window_max_surface_height(window_handle : NativeWindow) -> Int {
+fn window_max_surface_height(window_handle : NativeWindow) -> Int32 {
   let native_handle = registered_native_handle(window_handle)
-  if native_handle == (0 : Int).to_uint64() {
+  if native_handle == (0 : Int32).to_uint64() {
     0
   } else {
     native_window_max_content_height(window_handle)
@@ -522,9 +526,9 @@ fn window_max_surface_height(window_handle : NativeWindow) -> Int {
 }
 
 ///|
-fn window_outer_width(window_handle : NativeWindow) -> Int {
+fn window_outer_width(window_handle : NativeWindow) -> Int32 {
   let native_handle = registered_native_handle(window_handle)
-  if native_handle == (0 : Int).to_uint64() {
+  if native_handle == (0 : Int32).to_uint64() {
     window_surface_width(window_handle)
   } else {
     native_window_outer_width(window_handle)
@@ -532,9 +536,9 @@ fn window_outer_width(window_handle : NativeWindow) -> Int {
 }
 
 ///|
-fn window_outer_height(window_handle : NativeWindow) -> Int {
+fn window_outer_height(window_handle : NativeWindow) -> Int32 {
   let native_handle = registered_native_handle(window_handle)
-  if native_handle == (0 : Int).to_uint64() {
+  if native_handle == (0 : Int32).to_uint64() {
     window_surface_height(window_handle)
   } else {
     native_window_outer_height(window_handle)
@@ -542,9 +546,9 @@ fn window_outer_height(window_handle : NativeWindow) -> Int {
 }
 
 ///|
-fn window_surface_x(window_handle : NativeWindow) -> Int {
+fn window_surface_x(window_handle : NativeWindow) -> Int32 {
   let native_handle = registered_native_handle(window_handle)
-  if native_handle == (0 : Int).to_uint64() {
+  if native_handle == (0 : Int32).to_uint64() {
     0
   } else {
     native_window_surface_x(window_handle)
@@ -552,9 +556,9 @@ fn window_surface_x(window_handle : NativeWindow) -> Int {
 }
 
 ///|
-fn window_surface_y(window_handle : NativeWindow) -> Int {
+fn window_surface_y(window_handle : NativeWindow) -> Int32 {
   let native_handle = registered_native_handle(window_handle)
-  if native_handle == (0 : Int).to_uint64() {
+  if native_handle == (0 : Int32).to_uint64() {
     0
   } else {
     native_window_surface_y(window_handle)
@@ -562,9 +566,9 @@ fn window_surface_y(window_handle : NativeWindow) -> Int {
 }
 
 ///|
-fn window_safe_area_top(window_handle : NativeWindow) -> Int {
+fn window_safe_area_top(window_handle : NativeWindow) -> Int32 {
   let native_handle = registered_native_handle(window_handle)
-  if native_handle == (0 : Int).to_uint64() {
+  if native_handle == (0 : Int32).to_uint64() {
     0
   } else {
     native_window_safe_area_top(window_handle)
@@ -572,9 +576,9 @@ fn window_safe_area_top(window_handle : NativeWindow) -> Int {
 }
 
 ///|
-fn window_safe_area_left(window_handle : NativeWindow) -> Int {
+fn window_safe_area_left(window_handle : NativeWindow) -> Int32 {
   let native_handle = registered_native_handle(window_handle)
-  if native_handle == (0 : Int).to_uint64() {
+  if native_handle == (0 : Int32).to_uint64() {
     0
   } else {
     native_window_safe_area_left(window_handle)
@@ -582,9 +586,9 @@ fn window_safe_area_left(window_handle : NativeWindow) -> Int {
 }
 
 ///|
-fn window_safe_area_bottom(window_handle : NativeWindow) -> Int {
+fn window_safe_area_bottom(window_handle : NativeWindow) -> Int32 {
   let native_handle = registered_native_handle(window_handle)
-  if native_handle == (0 : Int).to_uint64() {
+  if native_handle == (0 : Int32).to_uint64() {
     0
   } else {
     native_window_safe_area_bottom(window_handle)
@@ -592,9 +596,9 @@ fn window_safe_area_bottom(window_handle : NativeWindow) -> Int {
 }
 
 ///|
-fn window_safe_area_right(window_handle : NativeWindow) -> Int {
+fn window_safe_area_right(window_handle : NativeWindow) -> Int32 {
   let native_handle = registered_native_handle(window_handle)
-  if native_handle == (0 : Int).to_uint64() {
+  if native_handle == (0 : Int32).to_uint64() {
     0
   } else {
     native_window_safe_area_right(window_handle)
@@ -602,9 +606,9 @@ fn window_safe_area_right(window_handle : NativeWindow) -> Int {
 }
 
 ///|
-fn window_resize_increment_width(window_handle : NativeWindow) -> Int {
+fn window_resize_increment_width(window_handle : NativeWindow) -> Int32 {
   let native_handle = registered_native_handle(window_handle)
-  if native_handle == (0 : Int).to_uint64() {
+  if native_handle == (0 : Int32).to_uint64() {
     0
   } else {
     native_window_resize_increment_width(window_handle)
@@ -612,9 +616,9 @@ fn window_resize_increment_width(window_handle : NativeWindow) -> Int {
 }
 
 ///|
-fn window_resize_increment_height(window_handle : NativeWindow) -> Int {
+fn window_resize_increment_height(window_handle : NativeWindow) -> Int32 {
   let native_handle = registered_native_handle(window_handle)
-  if native_handle == (0 : Int).to_uint64() {
+  if native_handle == (0 : Int32).to_uint64() {
     0
   } else {
     native_window_resize_increment_height(window_handle)
@@ -622,9 +626,9 @@ fn window_resize_increment_height(window_handle : NativeWindow) -> Int {
 }
 
 ///|
-fn window_x(window_handle : NativeWindow) -> Int {
+fn window_x(window_handle : NativeWindow) -> Int32 {
   let native_handle = registered_native_handle(window_handle)
-  if native_handle == (0 : Int).to_uint64() {
+  if native_handle == (0 : Int32).to_uint64() {
     0
   } else {
     native_window_x(window_handle)
@@ -632,9 +636,9 @@ fn window_x(window_handle : NativeWindow) -> Int {
 }
 
 ///|
-fn window_y(window_handle : NativeWindow) -> Int {
+fn window_y(window_handle : NativeWindow) -> Int32 {
   let native_handle = registered_native_handle(window_handle)
-  if native_handle == (0 : Int).to_uint64() {
+  if native_handle == (0 : Int32).to_uint64() {
     0
   } else {
     native_window_y(window_handle)
@@ -642,9 +646,9 @@ fn window_y(window_handle : NativeWindow) -> Int {
 }
 
 ///|
-fn window_theme(window_handle : NativeWindow) -> Int {
+fn window_theme(window_handle : NativeWindow) -> Int32 {
   let native_handle = registered_native_handle(window_handle)
-  if native_handle == (0 : Int).to_uint64() {
+  if native_handle == (0 : Int32).to_uint64() {
     0
   } else {
     native_window_theme(window_handle)
@@ -654,7 +658,7 @@ fn window_theme(window_handle : NativeWindow) -> Int {
 ///|
 fn window_has_shadow(window_handle : NativeWindow) -> Bool {
   let native_handle = registered_native_handle(window_handle)
-  if native_handle == (0 : Int).to_uint64() {
+  if native_handle == (0 : Int32).to_uint64() {
     false
   } else {
     native_window_has_shadow(window_handle)
@@ -664,7 +668,7 @@ fn window_has_shadow(window_handle : NativeWindow) -> Bool {
 ///|
 fn window_document_edited(window_handle : NativeWindow) -> Bool {
   let native_handle = registered_native_handle(window_handle)
-  if native_handle == (0 : Int).to_uint64() {
+  if native_handle == (0 : Int32).to_uint64() {
     false
   } else {
     native_window_is_document_edited(window_handle)
@@ -674,7 +678,7 @@ fn window_document_edited(window_handle : NativeWindow) -> Bool {
 ///|
 fn window_level_value(window_handle : NativeWindow) -> @core.WindowLevel {
   let native_handle = registered_native_handle(window_handle)
-  if native_handle == (0 : Int).to_uint64() {
+  if native_handle == (0 : Int32).to_uint64() {
     Normal
   } else {
     window_level_from_native(native_window_level(window_handle))
@@ -691,7 +695,7 @@ fn window_option_as_alt(window_handle : NativeWindow) -> @core.OptionAsAlt {
 ///|
 fn window_enabled_buttons(window_handle : NativeWindow) -> @core.WindowButtons {
   let native_handle = registered_native_handle(window_handle)
-  let bits = if native_handle == (0 : Int).to_uint64() {
+  let bits = if native_handle == (0 : Int32).to_uint64() {
     0
   } else {
     native_window_enabled_buttons_mask(window_handle)
@@ -705,7 +709,7 @@ fn window_enabled_buttons(window_handle : NativeWindow) -> @core.WindowButtons {
 ///|
 fn window_content_protected(window_handle : NativeWindow) -> Bool {
   let native_handle = registered_native_handle(window_handle)
-  if native_handle == (0 : Int).to_uint64() {
+  if native_handle == (0 : Int32).to_uint64() {
     false
   } else {
     native_window_is_content_protected(window_handle)
@@ -715,7 +719,7 @@ fn window_content_protected(window_handle : NativeWindow) -> Bool {
 ///|
 fn window_has_focus(window_handle : NativeWindow) -> Bool {
   let native_handle = registered_native_handle(window_handle)
-  if native_handle == (0 : Int).to_uint64() {
+  if native_handle == (0 : Int32).to_uint64() {
     false
   } else {
     native_window_has_focus(window_handle)
@@ -725,7 +729,7 @@ fn window_has_focus(window_handle : NativeWindow) -> Bool {
 ///|
 fn window_occluded(window_handle : NativeWindow) -> Bool {
   let native_handle = registered_native_handle(window_handle)
-  if native_handle == (0 : Int).to_uint64() {
+  if native_handle == (0 : Int32).to_uint64() {
     false
   } else {
     native_window_is_occluded(window_handle)
@@ -735,7 +739,7 @@ fn window_occluded(window_handle : NativeWindow) -> Bool {
 ///|
 fn window_minimized(window_handle : NativeWindow) -> Bool {
   let native_handle = registered_native_handle(window_handle)
-  if native_handle == (0 : Int).to_uint64() {
+  if native_handle == (0 : Int32).to_uint64() {
     false
   } else {
     native_window_is_minimized(window_handle)
@@ -745,7 +749,7 @@ fn window_minimized(window_handle : NativeWindow) -> Bool {
 ///|
 fn window_maximized(window_handle : NativeWindow) -> Bool {
   let native_handle = registered_native_handle(window_handle)
-  if native_handle == (0 : Int).to_uint64() {
+  if native_handle == (0 : Int32).to_uint64() {
     false
   } else {
     native_window_is_maximized(window_handle)
@@ -755,7 +759,7 @@ fn window_maximized(window_handle : NativeWindow) -> Bool {
 ///|
 fn window_fullscreen(window_handle : NativeWindow) -> Bool {
   let native_handle = registered_native_handle(window_handle)
-  if native_handle == (0 : Int).to_uint64() {
+  if native_handle == (0 : Int32).to_uint64() {
     false
   } else {
     native_window_is_fullscreen(window_handle)
@@ -763,9 +767,9 @@ fn window_fullscreen(window_handle : NativeWindow) -> Bool {
 }
 
 ///|
-fn window_num_tabs(window_handle : NativeWindow) -> Int {
+fn window_num_tabs(window_handle : NativeWindow) -> Int32 {
   let native_handle = registered_native_handle(window_handle)
-  if native_handle == (0 : Int).to_uint64() {
+  if native_handle == (0 : Int32).to_uint64() {
     1
   } else {
     native_window_num_tabs(window_handle)
@@ -775,8 +779,8 @@ fn window_num_tabs(window_handle : NativeWindow) -> Int {
 ///|
 fn window_style_mask_bits(window_handle : NativeWindow) -> UInt64 {
   let native_handle = registered_native_handle(window_handle)
-  if native_handle == (0 : Int).to_uint64() {
-    (0 : Int).to_uint64()
+  if native_handle == (0 : Int32).to_uint64() {
+    (0 : Int32).to_uint64()
   } else {
     native_window_style_mask(window_handle)
   }
@@ -787,7 +791,7 @@ fn set_window_style_mask_bits(
   window_handle : NativeWindow,
   style_mask : UInt64,
 ) -> Unit {
-  if registered_native_handle(window_handle) != (0 : Int).to_uint64() {
+  if registered_native_handle(window_handle) != (0 : Int32).to_uint64() {
     native_window_set_style_mask(window_handle, style_mask)
   }
 }
@@ -797,14 +801,14 @@ fn clear_window_style_mask_bits(
   window_handle : NativeWindow,
   style_mask : UInt64,
 ) -> Unit {
-  if registered_native_handle(window_handle) != (0 : Int).to_uint64() {
+  if registered_native_handle(window_handle) != (0 : Int32).to_uint64() {
     native_window_clear_style_mask_bits(window_handle, style_mask)
   }
 }
 
 ///|
 fn set_window_movable(window_handle : NativeWindow, movable : Bool) -> Unit {
-  if registered_native_handle(window_handle) != (0 : Int).to_uint64() {
+  if registered_native_handle(window_handle) != (0 : Int32).to_uint64() {
     native_window_set_movable(window_handle, movable)
   }
 }
@@ -812,8 +816,8 @@ fn set_window_movable(window_handle : NativeWindow, movable : Bool) -> Unit {
 ///|
 fn window_current_monitor_id(window_handle : NativeWindow) -> UInt64 {
   let native_handle = registered_native_handle(window_handle)
-  if native_handle == (0 : Int).to_uint64() {
-    (0 : Int).to_uint64()
+  if native_handle == (0 : Int32).to_uint64() {
+    (0 : Int32).to_uint64()
   } else {
     native_window_current_monitor_id(window_handle)
   }
@@ -1044,7 +1048,7 @@ pub fn Window::outer_position(
     window,
   ) -> @dpi.PhysicalPosition raise @core.RequestError {
     let raw_id = window.raw_window_handle
-    if native_window_objc_handle(raw_id) == (0 : Int).to_uint64() {
+    if native_window_objc_handle(raw_id) == (0 : Int32).to_uint64() {
       raise Ignored
     }
     @dpi.LogicalPosition::LogicalPosition(
@@ -1349,7 +1353,7 @@ pub fn Window::request_user_attention(
 pub fn Window::current_monitor(self : Window) -> @core.MonitorHandle? {
   self.maybe_wait_on_main(fn(window) {
     let monitor_id = window_current_monitor_id(window.raw_window_handle)
-    if monitor_id == (0 : Int).to_uint64() {
+    if monitor_id == (0 : Int32).to_uint64() {
       None
     } else {
       monitor_from_native_id(monitor_id)
@@ -1421,7 +1425,7 @@ pub fn Window::select_previous_tab(self : Window) -> Unit {
 }
 
 ///|
-pub fn Window::select_tab_at_index(self : Window, index : Int) -> Unit {
+pub fn Window::select_tab_at_index(self : Window, index : Int32) -> Unit {
   self.maybe_wait_on_main(fn(window) {
     if index >= 0 {
       select_window_tab_at_index(window.raw_window_handle, index)
@@ -1430,7 +1434,7 @@ pub fn Window::select_tab_at_index(self : Window, index : Int) -> Unit {
 }
 
 ///|
-pub fn Window::num_tabs(self : Window) -> Int {
+pub fn Window::num_tabs(self : Window) -> Int32 {
   self.maybe_wait_on_main(fn(window) {
     window_num_tabs(window.raw_window_handle)
   })

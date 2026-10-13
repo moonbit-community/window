@@ -7,10 +7,10 @@
 ///|
 fn native_find_display_mode_handle(
   monitor_id : UInt64,
-  width : Int,
-  height : Int,
-  bit_depth : Int,
-  refresh_rate_millihertz : Int,
+  width : Int32,
+  height : Int32,
+  bit_depth : Int32,
+  refresh_rate_millihertz : Int32,
 ) -> NativeDisplayMode {
   native_monitor_find_display_mode_handle(
     monitor_id.to_uint(),
@@ -34,7 +34,7 @@ fn native_copy_display_mode_list(monitor_id : UInt64) -> NativeDisplayModeList {
 }
 
 ///|
-fn native_display_mode_list_count(mode_list : NativeDisplayModeList) -> Int {
+fn native_display_mode_list_count(mode_list : NativeDisplayModeList) -> Int32 {
   let count = native_monitor_display_mode_list_count(mode_list)
   if count > 0 {
     count
@@ -46,7 +46,7 @@ fn native_display_mode_list_count(mode_list : NativeDisplayModeList) -> Int {
 ///|
 fn native_display_mode_list_mode_at(
   mode_list : NativeDisplayModeList,
-  index : Int,
+  index : Int32,
 ) -> NativeDisplayMode {
   native_monitor_display_mode_list_mode_at(mode_list, index)
 }
@@ -62,7 +62,7 @@ fn native_display_mode_valid(mode_handle : NativeDisplayMode) -> Bool {
 }
 
 ///|
-fn native_display_mode_width(mode_handle : NativeDisplayMode) -> Int {
+fn native_display_mode_width(mode_handle : NativeDisplayMode) -> Int32 {
   let width = native_monitor_display_mode_width(mode_handle)
   if width > 0 {
     width
@@ -72,7 +72,7 @@ fn native_display_mode_width(mode_handle : NativeDisplayMode) -> Int {
 }
 
 ///|
-fn native_display_mode_height(mode_handle : NativeDisplayMode) -> Int {
+fn native_display_mode_height(mode_handle : NativeDisplayMode) -> Int32 {
   let height = native_monitor_display_mode_height(mode_handle)
   if height > 0 {
     height
@@ -82,7 +82,7 @@ fn native_display_mode_height(mode_handle : NativeDisplayMode) -> Int {
 }
 
 ///|
-fn native_display_mode_bit_depth(mode_handle : NativeDisplayMode) -> Int {
+fn native_display_mode_bit_depth(mode_handle : NativeDisplayMode) -> Int32 {
   let bit_depth = native_monitor_display_mode_bit_depth(mode_handle)
   if bit_depth > 0 {
     bit_depth
@@ -94,7 +94,7 @@ fn native_display_mode_bit_depth(mode_handle : NativeDisplayMode) -> Int {
 ///|
 fn native_display_mode_refresh_rate_millihertz(
   mode_handle : NativeDisplayMode,
-) -> Int {
+) -> Int32 {
   let refresh_rate_millihertz = native_monitor_display_mode_refresh_rate_millihertz(
     mode_handle,
   )
@@ -106,7 +106,7 @@ fn native_display_mode_refresh_rate_millihertz(
 }
 
 ///|
-fn native_display_refresh_rate_millihertz(monitor_id : UInt64) -> Int {
+fn native_display_refresh_rate_millihertz(monitor_id : UInt64) -> Int32 {
   native_monitor_display_refresh_rate_millihertz(monitor_id.to_uint())
 }
 
@@ -135,11 +135,11 @@ fn native_release_display_capture(monitor_id : UInt64) -> Bool {
 
 ///|
 fn native_monitor_ns_screen(monitor_id : UInt64) -> NSScreenHandle? {
-  if monitor_id == (0 : Int).to_uint64() {
+  if monitor_id == (0 : Int32).to_uint64() {
     return None
   }
   let screen_owner = native_monitor_copy_ns_screen(monitor_id.to_uint())
-  if appkit_objc_owned_object_handle(screen_owner) == (0 : Int).to_uint64() {
+  if appkit_objc_owned_object_handle(screen_owner) == (0 : Int32).to_uint64() {
     None
   } else {
     Some({ object: screen_owner, })
@@ -171,7 +171,7 @@ fn fallback_display_video_mode(display_id : UInt64) -> @core.VideoMode {
 ///|
 fn display_video_mode_from_handle(
   mode_handle : NativeDisplayMode,
-  fallback_refresh_rate_millihertz : Int,
+  fallback_refresh_rate_millihertz : Int32,
 ) -> @core.VideoMode? {
   if native_display_mode_valid(mode_handle) == false {
     return None
@@ -301,7 +301,7 @@ impl @core.MonitorHandleProvider for MacosMonitorHandleProvider with fn name(
   self,
 ) {
   let display_id = @core.MonitorHandleProvider::native_id(self)
-  if display_id == (0 : Int).to_uint64() {
+  if display_id == (0 : Int32).to_uint64() {
     None
   } else {
     Some("Monitor #" + cg_display_model_number(display_id).to_string())
@@ -313,7 +313,7 @@ impl @core.MonitorHandleProvider for MacosMonitorHandleProvider with fn position
   self,
 ) {
   let display_id = @core.MonitorHandleProvider::native_id(self)
-  if display_id == (0 : Int).to_uint64() {
+  if display_id == (0 : Int32).to_uint64() {
     PhysicalPosition(0, 0)
   } else {
     display_position(display_id, clamped_scale_factor(display_id))
@@ -325,7 +325,7 @@ impl @core.MonitorHandleProvider for MacosMonitorHandleProvider with fn surface_
   self,
 ) {
   let display_id = @core.MonitorHandleProvider::native_id(self)
-  if display_id == (0 : Int).to_uint64() {
+  if display_id == (0 : Int32).to_uint64() {
     PhysicalSize(1, 1)
   } else {
     match current_display_video_mode(display_id) {
@@ -347,7 +347,7 @@ impl @core.MonitorHandleProvider for MacosMonitorHandleProvider with fn current_
   self,
 ) {
   let display_id = @core.MonitorHandleProvider::native_id(self)
-  if display_id == (0 : Int).to_uint64() {
+  if display_id == (0 : Int32).to_uint64() {
     None
   } else {
     current_display_video_mode(display_id)
@@ -359,7 +359,7 @@ impl @core.MonitorHandleProvider for MacosMonitorHandleProvider with fn video_mo
   self,
 ) {
   let display_id = @core.MonitorHandleProvider::native_id(self)
-  if display_id == (0 : Int).to_uint64() {
+  if display_id == (0 : Int32).to_uint64() {
     []
   } else {
     let modes = available_display_video_modes(display_id)

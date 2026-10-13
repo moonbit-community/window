@@ -9,12 +9,12 @@ extern "C" fn native_fill_window_with_safe_area(
   raw_view_handle : UInt64,
   inner_color : UInt64,
   outer_color : UInt64,
-  left : Int,
-  top : Int,
-  right : Int,
-  bottom : Int,
-  width : Int,
-  height : Int,
+  left : Int32,
+  top : Int32,
+  right : Int32,
+  bottom : Int32,
+  width : Int32,
+  height : Int32,
   scale_factor : Double,
 ) -> Unit = "mbw_examples_fill_window_with_safe_area"
 
@@ -48,15 +48,15 @@ pub fn fill_window(window : @macos.Window) -> Unit {
 
 ///|
 // Port target: winit-reference/winit/examples/util/fill.rs::fill_window_with_color
-pub fn fill_window_with_color(window : @macos.Window, color : Int) -> Unit {
+pub fn fill_window_with_color(window : @macos.Window, color : Int32) -> Unit {
   fill_window_with_argb(window, color.to_int64().reinterpret_as_uint64())
 }
 
 ///|
 pub fn fill_window_with_safe_area_colors(
   window : @macos.Window,
-  inner_color : Int,
-  outer_color : Int,
+  inner_color : Int32,
+  outer_color : Int32,
 ) -> Unit {
   let insets = window.safe_area()
   let size = window.surface_size()

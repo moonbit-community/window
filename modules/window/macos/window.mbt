@@ -104,7 +104,7 @@ pub impl @windowing.HasWindowHandle for Window with fn window_handle(self) {
 fn content_view_handle_from_raw(
   raw_view_handle : UInt64,
 ) -> UInt64 raise @core.RequestError {
-  guard raw_view_handle != (0 : Int).to_uint64() else {
+  guard raw_view_handle != (0 : Int32).to_uint64() else {
     raise @core.RequestError::os(
       "Window content view handle is unavailable",
       domain=appkit_window_error_domain,

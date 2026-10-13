@@ -40,12 +40,12 @@ fn utf8_bytes(text : String) -> Bytes {
 }
 
 ///|
-fn utf8_len(text : String) -> Int {
+fn utf8_len(text : String) -> Int32 {
   utf8_bytes(text).length()
 }
 
 ///|
-fn bytes_is_char_boundary(bytes : Bytes, index : Int) -> Bool {
+fn bytes_is_char_boundary(bytes : Bytes, index : Int32) -> Bool {
   if index < 0 || index > bytes.length() {
     false
   } else {
@@ -59,12 +59,12 @@ fn bytes_is_char_boundary(bytes : Bytes, index : Int) -> Bool {
 }
 
 ///|
-fn utf8_is_char_boundary(text : String, index : Int) -> Bool {
+fn utf8_is_char_boundary(text : String, index : Int32) -> Bool {
   bytes_is_char_boundary(utf8_bytes(text), index)
 }
 
 ///|
-fn utf8_slice(text : String, start : Int, end : Int) -> String? {
+fn utf8_slice(text : String, start : Int32, end : Int32) -> String? {
   if start < 0 || end < start {
     return None
   }
@@ -82,7 +82,7 @@ fn utf8_slice(text : String, start : Int, end : Int) -> String? {
 }
 
 ///|
-fn min_int(a : Int, b : Int) -> Int {
+fn min_int(a : Int32, b : Int32) -> Int32 {
   if a < b {
     a
   } else {
@@ -91,7 +91,7 @@ fn min_int(a : Int, b : Int) -> Int {
 }
 
 ///|
-fn max_int(a : Int, b : Int) -> Int {
+fn max_int(a : Int32, b : Int32) -> Int32 {
   if a > b {
     a
   } else {
@@ -102,8 +102,8 @@ fn max_int(a : Int, b : Int) -> Int {
 ///|
 fn preedit_with_cursor_checked(
   text : String,
-  cursor : Int,
-  anchor : Int,
+  cursor : Int32,
+  anchor : Int32,
 ) -> String? {
   let first = min_int(cursor, anchor)
   let second = max_int(cursor, anchor)
@@ -135,7 +135,7 @@ fn preedit_with_cursor_checked(
 }
 
 ///|
-fn preedit_with_cursor(text : String, cursor : Int, anchor : Int) -> String {
+fn preedit_with_cursor(text : String, cursor : Int32, anchor : Int32) -> String {
   match preedit_with_cursor_checked(text, cursor, anchor) {
     Some(value) => value
     None => "INVALID: cursor or anchor is not on char boundary"
@@ -145,8 +145,8 @@ fn preedit_with_cursor(text : String, cursor : Int, anchor : Int) -> String {
 ///|
 fn TextInputState::delete_surrounding(
   self : TextInputState,
-  before_bytes : Int,
-  after_bytes : Int,
+  before_bytes : Int32,
+  after_bytes : Int32,
 ) -> Bool {
   let text = self.contents
   let text_len = utf8_len(text)

@@ -1,6 +1,6 @@
 ///|
 test "ime_cursor_area_state_tracks_position_and_clamps_size" {
-  let handle = (91 : Int).to_uint64()
+  let handle = (91 : Int32).to_uint64()
   set_window_ime_cursor_area_state(handle, 12, 34, 0, -5)
 
   assert_eq(window_ime_cursor_x_state(handle), 12)
@@ -11,7 +11,7 @@ test "ime_cursor_area_state_tracks_position_and_clamps_size" {
 
 ///|
 test "ime_cursor_area_state_preserves_positive_size" {
-  let handle = (92 : Int).to_uint64()
+  let handle = (92 : Int32).to_uint64()
   set_window_ime_cursor_area_state(handle, 7, 8, 21, 22)
 
   assert_eq(window_ime_cursor_x_state(handle), 7)
@@ -57,7 +57,7 @@ test "cursor_screen_y_from_content_rect_increases_with_cursor_offset" {
 
 ///|
 test "accepts_first_mouse_state_defaults_to_false_and_tracks_updates" {
-  let handle = (94 : Int).to_uint64()
+  let handle = (94 : Int32).to_uint64()
 
   assert_false(window_accepts_first_mouse_state(handle))
 
@@ -67,7 +67,7 @@ test "accepts_first_mouse_state_defaults_to_false_and_tracks_updates" {
 
 ///|
 test "cursor_visible_state_defaults_to_true_and_tracks_updates" {
-  let handle = (95 : Int).to_uint64()
+  let handle = (95 : Int32).to_uint64()
 
   assert_true(window_cursor_visible_state(handle))
 
@@ -80,7 +80,7 @@ test "cursor_visible_state_defaults_to_true_and_tracks_updates" {
 
 ///|
 test "clear_window_platform_state_resets_cursor_visible_state" {
-  let handle = (96 : Int).to_uint64()
+  let handle = (96 : Int32).to_uint64()
 
   set_window_cursor_visible_state(handle, false)
   assert_false(window_cursor_visible_state(handle))
@@ -92,8 +92,8 @@ test "clear_window_platform_state_resets_cursor_visible_state" {
 ///|
 test "clear_window_platform_state_preserves_other_windows" {
   reset_window_platform_state_for_test()
-  let first = (97 : Int).to_uint64()
-  let second = (98 : Int).to_uint64()
+  let first = (97 : Int32).to_uint64()
+  let second = (98 : Int32).to_uint64()
 
   set_window_ime_allowed_state(first, true)
   set_window_cursor_visible_state(first, false)

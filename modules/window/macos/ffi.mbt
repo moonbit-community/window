@@ -13,40 +13,42 @@ extern "C" fn native_cgfloat_max() -> Double = "mbw_cgfloat_max"
 ///|
 extern "C" fn native_cg_associate_mouse_and_mouse_cursor_position(
   connected : Bool,
-) -> Int = "CGAssociateMouseAndMouseCursorPosition"
+) -> Int32 = "CGAssociateMouseAndMouseCursorPosition"
 
 ///|
 extern "C" fn native_cg_warp_mouse_cursor_position(
   x : Double,
   y : Double,
-) -> Int = "mbw_cg_warp_mouse_cursor_position"
+) -> Int32 = "mbw_cg_warp_mouse_cursor_position"
 
 ///|
 extern "C" fn native_cgs_set_window_background_blur_radius(
-  window_number : Int,
-  radius : Int,
+  window_number : Int32,
+  radius : Int32,
 ) -> Bool = "mbw_cgs_set_window_background_blur_radius"
 
 ///|
-extern "C" fn native_appkit_window_level(kind : Int) -> UInt64 = "mbw_appkit_window_level"
+extern "C" fn native_appkit_window_level(kind : Int32) -> UInt64 = "mbw_appkit_window_level"
 
 ///|
-extern "C" fn native_cg_main_display_id() -> UInt = "CGMainDisplayID"
+extern "C" fn native_cg_main_display_id() -> UInt32 = "CGMainDisplayID"
 
 ///|
-extern "C" fn native_cg_display_model_number(display : UInt) -> UInt = "CGDisplayModelNumber"
+extern "C" fn native_cg_display_model_number(display : UInt32) -> UInt32 = "CGDisplayModelNumber"
 
 ///|
-extern "C" fn native_cg_display_pixels_wide(display : UInt) -> UInt64 = "CGDisplayPixelsWide"
+extern "C" fn native_cg_display_pixels_wide(display : UInt32) -> UInt64 = "CGDisplayPixelsWide"
 
 ///|
-extern "C" fn native_cg_display_pixels_high(display : UInt) -> UInt64 = "CGDisplayPixelsHigh"
+extern "C" fn native_cg_display_pixels_high(display : UInt32) -> UInt64 = "CGDisplayPixelsHigh"
 
 ///|
-extern "C" fn native_cg_display_get_display_id_from_uuid(uuid : UInt64) -> UInt = "CGDisplayGetDisplayIDFromUUID"
+extern "C" fn native_cg_display_get_display_id_from_uuid(
+  uuid : UInt64,
+) -> UInt32 = "CGDisplayGetDisplayIDFromUUID"
 
 ///|
-extern "C" fn native_pthread_main_np() -> Int = "pthread_main_np"
+extern "C" fn native_pthread_main_np() -> Int32 = "pthread_main_np"
 
 ///|
 #borrow(call_closure, callback)
@@ -56,38 +58,46 @@ extern "C" fn native_run_on_main(
 ) -> Unit = "mbw_run_on_main"
 
 ///|
-extern "C" fn native_cg_active_display_count() -> Int = "mbw_cg_active_display_count"
+extern "C" fn native_cg_active_display_count() -> Int32 = "mbw_cg_active_display_count"
 
 ///|
-extern "C" fn native_cg_active_display_id_at(index : Int) -> UInt = "mbw_cg_active_display_id_at"
+extern "C" fn native_cg_active_display_id_at(index : Int32) -> UInt32 = "mbw_cg_active_display_id_at"
 
 ///|
-extern "C" fn native_cg_display_bounds_x(display : UInt) -> Int = "mbw_cg_display_bounds_x"
+extern "C" fn native_cg_display_bounds_x(display : UInt32) -> Int32 = "mbw_cg_display_bounds_x"
 
 ///|
-extern "C" fn native_cg_display_bounds_y(display : UInt) -> Int = "mbw_cg_display_bounds_y"
+extern "C" fn native_cg_display_bounds_y(display : UInt32) -> Int32 = "mbw_cg_display_bounds_y"
 
 ///|
-extern "C" fn native_cg_display_bounds_height(display : UInt) -> Double = "mbw_cg_display_bounds_height"
+extern "C" fn native_cg_display_bounds_height(display : UInt32) -> Double = "mbw_cg_display_bounds_height"
 
 ///|
 #borrow(call_closure)
 #owned(callback)
 extern "C" fn native_install_window_event_callback(
   call_closure : FuncRef[
-    ((Int, Int, Int, Int, Int, Double) -> Unit, Int, Int, Int, Int, Int, Double) -> Unit,
+    (
+      (Int32, Int32, Int32, Int32, Int32, Double) -> Unit,
+      Int32,
+      Int32,
+      Int32,
+      Int32,
+      Int32,
+      Double,
+    ) -> Unit,
   ],
-  callback : (Int, Int, Int, Int, Int, Double) -> Unit,
+  callback : (Int32, Int32, Int32, Int32, Int32, Double) -> Unit,
 ) -> Unit = "mbw_install_window_event_callback"
 
 ///|
 #borrow(call_closure)
 #owned(callback)
 extern "C" fn native_notification_center_add_observer(
-  call_closure : FuncRef[((Int) -> Unit, Int) -> Unit],
-  callback : (Int) -> Unit,
-  notification_kind : Int,
-  callback_kind : Int,
+  call_closure : FuncRef[((Int32) -> Unit, Int32) -> Unit],
+  callback : (Int32) -> Unit,
+  notification_kind : Int32,
+  callback_kind : Int32,
 ) -> NotificationObserver = "mbw_notification_center_add_observer"
 
 ///|
@@ -100,11 +110,11 @@ extern "C" fn appkit_notification_center_remove_observer(
 #borrow(call_closure)
 #owned(callback)
 extern "C" fn native_main_run_loop_add_observer(
-  call_closure : FuncRef[((Int) -> Unit, Int) -> Unit],
-  callback : (Int) -> Unit,
-  activity_kind : Int,
-  callback_kind : Int,
-  order : Int,
+  call_closure : FuncRef[((Int32) -> Unit, Int32) -> Unit],
+  callback : (Int32) -> Unit,
+  activity_kind : Int32,
+  callback_kind : Int32,
+  order : Int32,
 ) -> MainRunLoopObserver = "mbw_main_run_loop_add_observer"
 
 ///|
@@ -120,64 +130,64 @@ extern "C" fn native_install_input_event_callback(
   call_closure : FuncRef[
     (
       (
-        Int,
-        Int,
-        Int,
+        Int32,
+        Int32,
+        Int32,
         Double,
         Double,
-        Int,
-        Int,
-        Int,
-        Int,
-        Int,
-        Int,
-        Int,
-        Int,
+        Int32,
+        Int32,
+        Int32,
+        Int32,
+        Int32,
+        Int32,
+        Int32,
+        Int32,
         Double,
         Double,
-        Int,
+        Int32,
         UInt64,
         UInt64,
         UInt64,
       ) -> Unit,
-      Int,
-      Int,
-      Int,
+      Int32,
+      Int32,
+      Int32,
       Double,
       Double,
-      Int,
-      Int,
-      Int,
-      Int,
-      Int,
-      Int,
-      Int,
-      Int,
+      Int32,
+      Int32,
+      Int32,
+      Int32,
+      Int32,
+      Int32,
+      Int32,
+      Int32,
       Double,
       Double,
-      Int,
+      Int32,
       UInt64,
       UInt64,
       UInt64,
     ) -> Unit,
   ],
   callback : (
-    Int,
-    Int,
-    Int,
+    Int32,
+    Int32,
+    Int32,
     Double,
     Double,
-    Int,
-    Int,
-    Int,
-    Int,
-    Int,
-    Int,
-    Int,
-    Int,
+    Int32,
+    Int32,
+    Int32,
+    Int32,
+    Int32,
+    Int32,
+    Int32,
+    Int32,
     Double,
     Double,
-    Int,
+    Int32,
     UInt64,
     UInt64,
     UInt64,
@@ -196,17 +206,17 @@ extern "C" fn native_copy_utf8_cstr_bytes(cstr_handle : UInt64) -> Bytes = "mbw_
 extern "C" fn native_install_text_input_event_callback(
   call_closure : FuncRef[
     (
-      (Int, Int, Int, UInt64, Int, Int, UInt64) -> Unit,
-      Int,
-      Int,
-      Int,
+      (Int32, Int32, Int32, UInt64, Int32, Int32, UInt64) -> Unit,
+      Int32,
+      Int32,
+      Int32,
       UInt64,
-      Int,
-      Int,
+      Int32,
+      Int32,
       UInt64,
     ) -> Unit,
   ],
-  callback : (Int, Int, Int, UInt64, Int, Int, UInt64) -> Unit,
+  callback : (Int32, Int32, Int32, UInt64, Int32, Int32, UInt64) -> Unit,
 ) -> Unit = "mbw_install_text_input_event_callback"
 
 ///|
@@ -214,9 +224,9 @@ extern "C" fn native_install_text_input_event_callback(
 #owned(callback)
 extern "C" fn native_install_device_event_callback(
   call_closure : FuncRef[
-    ((Int, Int, Double, Double) -> Unit, Int, Int, Double, Double) -> Unit,
+    ((Int32, Int32, Double, Double) -> Unit, Int32, Int32, Double, Double) -> Unit,
   ],
-  callback : (Int, Int, Double, Double) -> Unit,
+  callback : (Int32, Int32, Double, Double) -> Unit,
 ) -> Unit = "mbw_install_device_event_callback"
 
 ///|
@@ -225,24 +235,26 @@ extern "C" fn native_install_device_event_callback(
 extern "C" fn native_install_drag_event_callback(
   call_closure : FuncRef[
     (
-      (Int, Int, Double, Double, Int, UInt64) -> Unit,
-      Int,
-      Int,
+      (Int32, Int32, Double, Double, Int32, UInt64) -> Unit,
+      Int32,
+      Int32,
       Double,
       Double,
-      Int,
+      Int32,
       UInt64,
     ) -> Unit,
   ],
-  callback : (Int, Int, Double, Double, Int, UInt64) -> Unit,
+  callback : (Int32, Int32, Double, Double, Int32, UInt64) -> Unit,
 ) -> Unit = "mbw_install_drag_event_callback"
 
 ///|
 #borrow(call_closure)
 #owned(callback)
 extern "C" fn native_install_sync_query_callback(
-  call_closure : FuncRef[((Int, Int, UInt64) -> Int, Int, Int, UInt64) -> Int],
-  callback : (Int, Int, UInt64) -> Int,
+  call_closure : FuncRef[
+    ((Int32, Int32, UInt64) -> Int32, Int32, Int32, UInt64) -> Int32,
+  ],
+  callback : (Int32, Int32, UInt64) -> Int32,
 ) -> Unit = "mbw_install_sync_query_callback"
 
 ///|
@@ -318,7 +330,10 @@ impl Debug for NativeWindow with fn to_repr(self) {
 }
 
 ///|
-extern "C" fn appkit_create_window(width : Int, height : Int) -> NativeWindow = "mbw_create_window"
+extern "C" fn appkit_create_window(
+  width : Int32,
+  height : Int32,
+) -> NativeWindow = "mbw_create_window"
 
 ///|
 #borrow(window_handle)
@@ -340,11 +355,11 @@ extern "C" fn appkit_window_mark_closing(window_handle : NativeWindow) -> Unit =
 #borrow(rgba)
 extern "C" fn appkit_custom_cursor_create_rgba(
   rgba : Bytes,
-  rgba_len : Int,
-  width : Int,
-  height : Int,
-  hotspot_x : Int,
-  hotspot_y : Int,
+  rgba_len : Int32,
+  width : Int32,
+  height : Int32,
+  hotspot_x : Int32,
+  hotspot_y : Int32,
 ) -> @core.CustomCursorHandle = "mbw_custom_cursor_create_rgba"
 
 ///|
@@ -399,7 +414,7 @@ extern "C" fn appkit_objc_msg_send_void_u64(
 extern "C" fn appkit_objc_msg_send_void_i32(
   target : UInt64,
   selector : UInt64,
-  arg0 : Int,
+  arg0 : Int32,
 ) -> Unit = "mbw_objc_msg_send_void_i32"
 
 ///|
@@ -428,13 +443,13 @@ extern "C" fn appkit_objc_msg_send_void_rect_bool(
 extern "C" fn appkit_objc_msg_send_u64_i32_double_double_i32_u64_i32_i32_u64(
   target : UInt64,
   selector : UInt64,
-  arg0 : Int,
+  arg0 : Int32,
   arg1 : Double,
   arg2 : Double,
-  arg3 : Int,
+  arg3 : Int32,
   arg4 : UInt64,
-  arg5 : Int,
-  arg6 : Int,
+  arg5 : Int32,
+  arg6 : Int32,
   arg7 : UInt64,
 ) -> UInt64 = "mbw_objc_msg_send_u64_i32_double_double_i32_u64_i32_i32_u64"
 
@@ -612,34 +627,34 @@ extern "C" fn appkit_objc_sel_register_name(name : Bytes) -> UInt64 = "mbw_objc_
 
 ///|
 extern "C" fn native_monitor_find_display_mode_handle(
-  monitor_id : UInt,
-  width : Int,
-  height : Int,
-  bit_depth : Int,
-  refresh_rate_millihertz : Int,
+  monitor_id : UInt32,
+  width : Int32,
+  height : Int32,
+  bit_depth : Int32,
+  refresh_rate_millihertz : Int32,
 ) -> NativeDisplayMode = "mbw_find_display_mode_handle"
 
 ///|
 extern "C" fn native_monitor_copy_current_display_mode_handle(
-  monitor_id : UInt,
+  monitor_id : UInt32,
 ) -> NativeDisplayMode = "mbw_copy_current_display_mode_handle"
 
 ///|
 extern "C" fn native_monitor_copy_display_mode_list(
-  monitor_id : UInt,
+  monitor_id : UInt32,
 ) -> NativeDisplayModeList = "mbw_copy_display_mode_list"
 
 ///|
 #borrow(mode_list)
 extern "C" fn native_monitor_display_mode_list_count(
   mode_list : NativeDisplayModeList,
-) -> Int = "mbw_display_mode_list_count"
+) -> Int32 = "mbw_display_mode_list_count"
 
 ///|
 #borrow(mode_list)
 extern "C" fn native_monitor_display_mode_list_mode_at(
   mode_list : NativeDisplayModeList,
-  index : Int,
+  index : Int32,
 ) -> NativeDisplayMode = "mbw_display_mode_list_mode_at"
 
 ///|
@@ -658,43 +673,45 @@ extern "C" fn native_monitor_display_mode_identity(
 #borrow(mode_handle)
 extern "C" fn native_monitor_display_mode_is_valid(
   mode_handle : NativeDisplayMode,
-) -> Int = "mbw_display_mode_is_valid"
+) -> Int32 = "mbw_display_mode_is_valid"
 
 ///|
 #borrow(mode_handle)
 extern "C" fn native_monitor_display_mode_width(
   mode_handle : NativeDisplayMode,
-) -> Int = "mbw_display_mode_width"
+) -> Int32 = "mbw_display_mode_width"
 
 ///|
 #borrow(mode_handle)
 extern "C" fn native_monitor_display_mode_height(
   mode_handle : NativeDisplayMode,
-) -> Int = "mbw_display_mode_height"
+) -> Int32 = "mbw_display_mode_height"
 
 ///|
 #borrow(mode_handle)
 extern "C" fn native_monitor_display_mode_bit_depth(
   mode_handle : NativeDisplayMode,
-) -> Int = "mbw_display_mode_bit_depth"
+) -> Int32 = "mbw_display_mode_bit_depth"
 
 ///|
 #borrow(mode_handle)
 extern "C" fn native_monitor_display_mode_refresh_rate_millihertz(
   mode_handle : NativeDisplayMode,
-) -> Int = "mbw_display_mode_refresh_rate_millihertz"
+) -> Int32 = "mbw_display_mode_refresh_rate_millihertz"
 
 ///|
 extern "C" fn native_monitor_display_refresh_rate_millihertz(
-  monitor_id : UInt,
-) -> Int = "mbw_display_refresh_rate_millihertz"
+  monitor_id : UInt32,
+) -> Int32 = "mbw_display_refresh_rate_millihertz"
 
 ///|
-extern "C" fn native_monitor_backing_scale_factor(monitor_id : UInt) -> Double = "mbw_monitor_backing_scale_factor"
+extern "C" fn native_monitor_backing_scale_factor(
+  monitor_id : UInt32,
+) -> Double = "mbw_monitor_backing_scale_factor"
 
 ///|
 extern "C" fn native_monitor_copy_ns_screen(
-  monitor_id : UInt,
+  monitor_id : UInt32,
 ) -> NativeObjcObject = "mbw_monitor_copy_ns_screen"
 
 ///|
@@ -704,21 +721,23 @@ extern "C" fn native_monitor_release_display_mode_handle(
 ) -> Unit = "mbw_release_display_mode_handle"
 
 ///|
-extern "C" fn native_monitor_capture_display(monitor_id : UInt) -> Int = "mbw_capture_display"
+extern "C" fn native_monitor_capture_display(monitor_id : UInt32) -> Int32 = "mbw_capture_display"
 
 ///|
 #borrow(mode_handle)
 extern "C" fn native_monitor_set_display_mode_handle(
-  monitor_id : UInt,
+  monitor_id : UInt32,
   mode_handle : NativeDisplayMode,
-) -> Int = "mbw_set_display_mode_handle"
+) -> Int32 = "mbw_set_display_mode_handle"
 
 ///|
-extern "C" fn native_monitor_release_display_capture(monitor_id : UInt) -> Int = "mbw_release_display_capture"
+extern "C" fn native_monitor_release_display_capture(
+  monitor_id : UInt32,
+) -> Int32 = "mbw_release_display_capture"
 
 ///|
 extern "C" fn native_cg_display_create_uuid_from_display_id(
-  display : UInt,
+  display : UInt32,
 ) -> NativeCfObject = "mbw_cg_display_create_uuid_from_display_id"
 
 ///|

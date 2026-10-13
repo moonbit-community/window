@@ -14,17 +14,17 @@ fn cg_main_display_id() -> UInt64 {
 }
 
 ///|
-fn cg_display_model_number(display_id : UInt64) -> Int {
+fn cg_display_model_number(display_id : UInt64) -> Int32 {
   native_cg_display_model_number(display_id.to_uint()).reinterpret_as_int()
 }
 
 ///|
-fn cg_display_pixels_wide(display_id : UInt64) -> Int {
+fn cg_display_pixels_wide(display_id : UInt64) -> Int32 {
   native_cg_display_pixels_wide(display_id.to_uint()).to_int()
 }
 
 ///|
-fn cg_display_pixels_high(display_id : UInt64) -> Int {
+fn cg_display_pixels_high(display_id : UInt64) -> Int32 {
   native_cg_display_pixels_high(display_id.to_uint()).to_int()
 }
 
@@ -40,7 +40,7 @@ fn cf_object_handle(handle : NativeCfObject) -> UInt64 {
 
 ///|
 fn cf_object_valid(handle : NativeCfObject) -> Bool {
-  cf_object_handle(handle) != (0 : Int).to_uint64()
+  cf_object_handle(handle) != (0 : Int32).to_uint64()
 }
 
 ///|
@@ -54,7 +54,7 @@ fn pthread_is_main_thread() -> Bool {
 }
 
 ///|
-fn cg_active_display_count() -> Int {
+fn cg_active_display_count() -> Int32 {
   let count = native_cg_active_display_count()
   if count < 0 {
     0
@@ -64,17 +64,17 @@ fn cg_active_display_count() -> Int {
 }
 
 ///|
-fn cg_active_display_id_at(index : Int) -> UInt64 {
+fn cg_active_display_id_at(index : Int32) -> UInt64 {
   native_cg_active_display_id_at(index).to_uint64()
 }
 
 ///|
-fn cg_display_bounds_x(display_id : UInt64) -> Int {
+fn cg_display_bounds_x(display_id : UInt64) -> Int32 {
   native_cg_display_bounds_x(display_id.to_uint())
 }
 
 ///|
-fn cg_display_bounds_y(display_id : UInt64) -> Int {
+fn cg_display_bounds_y(display_id : UInt64) -> Int32 {
   native_cg_display_bounds_y(display_id.to_uint())
 }
 
@@ -111,7 +111,7 @@ fn objc_runtime_selector_handle(name : String) -> UInt64 {
 
 ///|
 fn objc_utf8_bytes_from_object(handle : UInt64) -> Bytes {
-  if handle == (0 : Int).to_uint64() {
+  if handle == (0 : Int32).to_uint64() {
     return b""
   }
   native_objc_copy_utf8_bytes(handle)
@@ -120,8 +120,8 @@ fn objc_utf8_bytes_from_object(handle : UInt64) -> Bytes {
 ///|
 fn objc_nsstring_from_string(value : String) -> UInt64 {
   let ns_string = objc_runtime_class_handle("NSString")
-  if ns_string == (0 : Int).to_uint64() {
-    return (0 : Int).to_uint64()
+  if ns_string == (0 : Int32).to_uint64() {
+    return (0 : Int32).to_uint64()
   }
   appkit_objc_msg_send_u64_bytes(
     ns_string,
@@ -131,15 +131,15 @@ fn objc_nsstring_from_string(value : String) -> UInt64 {
 }
 
 ///|
-fn objc_theme_from_appearance_handle(appearance : UInt64) -> Int {
-  if appearance == (0 : Int).to_uint64() {
+fn objc_theme_from_appearance_handle(appearance : UInt64) -> Int32 {
+  if appearance == (0 : Int32).to_uint64() {
     return 0
   }
   let name_handle = appkit_objc_msg_send_u64(
     appearance,
     objc_runtime_selector_handle("name"),
   )
-  if name_handle == (0 : Int).to_uint64() {
+  if name_handle == (0 : Int32).to_uint64() {
     return 0
   }
   let name = @utf8.decode_lossy(
@@ -162,8 +162,8 @@ fn objc_theme_from_appearance_handle(appearance : UInt64) -> Int {
 ///|
 fn native_application_shared_handle() -> UInt64 {
   let app_class = objc_runtime_class_handle("NSApplication")
-  if app_class == (0 : Int).to_uint64() {
-    return (0 : Int).to_uint64()
+  if app_class == (0 : Int32).to_uint64() {
+    return (0 : Int32).to_uint64()
   }
   appkit_objc_msg_send_u64(
     app_class,
@@ -190,14 +190,14 @@ fn native_window_borrowed_objc_handle(
 
 ///|
 fn native_objc_window_from_raw_handle(handle : UInt64) -> UInt64 {
-  if handle == (0 : Int).to_uint64() {
-    return (0 : Int).to_uint64()
+  if handle == (0 : Int32).to_uint64() {
+    return (0 : Int32).to_uint64()
   }
   let window_or_self = appkit_objc_msg_send_u64(
     handle,
     objc_runtime_selector_handle("window"),
   )
-  if window_or_self == (0 : Int).to_uint64() {
+  if window_or_self == (0 : Int32).to_uint64() {
     handle
   } else {
     window_or_self
@@ -208,7 +208,7 @@ fn native_objc_window_from_raw_handle(handle : UInt64) -> UInt64 {
 fn native_window_content_view_objc_handle(handle : NativeWindow) -> UInt64 {
   let window = native_window_borrowed_objc_handle(handle)
   if window.is_null() {
-    return (0 : Int).to_uint64()
+    return (0 : Int32).to_uint64()
   }
   appkit_objc_msg_send_u64(
     window.raw(),
@@ -220,7 +220,7 @@ fn native_window_content_view_objc_handle(handle : NativeWindow) -> UInt64 {
 fn native_window_delegate_objc_handle(handle : NativeWindow) -> UInt64 {
   let window = native_window_borrowed_objc_handle(handle)
   if window.is_null() {
-    return (0 : Int).to_uint64()
+    return (0 : Int32).to_uint64()
   }
   appkit_objc_msg_send_u64(
     window.raw(),
@@ -229,7 +229,7 @@ fn native_window_delegate_objc_handle(handle : NativeWindow) -> UInt64 {
 }
 
 ///|
-fn normalize_ime_purpose_native(purpose : Int) -> Int {
+fn normalize_ime_purpose_native(purpose : Int32) -> Int32 {
   match purpose {
     1 => 1
     2 => 2
@@ -246,7 +246,7 @@ fn normalize_ime_purpose_native(purpose : Int) -> Int {
 }
 
 ///|
-fn normalize_window_level_native(level : Int) -> Int {
+fn normalize_window_level_native(level : Int32) -> Int32 {
   match level {
     1 => 1
     2 => 2
@@ -255,7 +255,7 @@ fn normalize_window_level_native(level : Int) -> Int {
 }
 
 ///|
-fn normalize_option_as_alt_native(option_as_alt : Int) -> Int {
+fn normalize_option_as_alt_native(option_as_alt : Int32) -> Int32 {
   match option_as_alt {
     1 => 1
     2 => 2
@@ -265,13 +265,13 @@ fn normalize_option_as_alt_native(option_as_alt : Int) -> Int {
 }
 
 ///|
-fn normalize_ime_hints_bits(hints : Int) -> Int {
+fn normalize_ime_hints_bits(hints : Int32) -> Int32 {
   let non_negative = if hints < 0 { 0 } else { hints }
   non_negative & 1023
 }
 
 ///|
-fn theme_from_native(theme : Int) -> @core.Theme? {
+fn theme_from_native(theme : Int32) -> @core.Theme? {
   match theme {
     1 => Some(Light)
     2 => Some(Dark)
@@ -280,7 +280,7 @@ fn theme_from_native(theme : Int) -> @core.Theme? {
 }
 
 ///|
-fn theme_to_native(theme : @core.Theme?) -> Int {
+fn theme_to_native(theme : @core.Theme?) -> Int32 {
   match theme {
     Some(Light) => 1
     Some(Dark) => 2
@@ -316,7 +316,7 @@ fn drag_paths_from_native(bytes : Bytes) -> Array[String] {
 }
 
 ///|
-fn ime_purpose_to_native(purpose : @core.ImePurpose) -> Int {
+fn ime_purpose_to_native(purpose : @core.ImePurpose) -> Int32 {
   match purpose {
     Normal => 0
     Password => 1
@@ -333,7 +333,7 @@ fn ime_purpose_to_native(purpose : @core.ImePurpose) -> Int {
 }
 
 ///|
-fn ime_purpose_from_native(purpose : Int) -> @core.ImePurpose {
+fn ime_purpose_from_native(purpose : Int32) -> @core.ImePurpose {
   match normalize_ime_purpose_native(purpose) {
     1 => Password
     2 => Terminal
@@ -350,7 +350,7 @@ fn ime_purpose_from_native(purpose : Int) -> @core.ImePurpose {
 }
 
 ///|
-fn window_level_to_native(level : @core.WindowLevel) -> Int {
+fn window_level_to_native(level : @core.WindowLevel) -> Int32 {
   match level {
     Normal => 0
     AlwaysOnTop => 1
@@ -359,7 +359,7 @@ fn window_level_to_native(level : @core.WindowLevel) -> Int {
 }
 
 ///|
-fn window_level_from_native(level : Int) -> @core.WindowLevel {
+fn window_level_from_native(level : Int32) -> @core.WindowLevel {
   match normalize_window_level_native(level) {
     1 => AlwaysOnTop
     2 => AlwaysOnBottom
@@ -368,7 +368,7 @@ fn window_level_from_native(level : Int) -> @core.WindowLevel {
 }
 
 ///|
-fn resize_direction_to_native(direction : @core.ResizeDirection) -> Int {
+fn resize_direction_to_native(direction : @core.ResizeDirection) -> Int32 {
   match direction {
     East => 0
     North => 1
@@ -384,7 +384,7 @@ fn resize_direction_to_native(direction : @core.ResizeDirection) -> Int {
 ///|
 fn user_attention_type_to_native(
   request_type : @core.UserAttentionType?,
-) -> Int {
+) -> Int32 {
   match request_type {
     None => 0
     Some(Critical) => 1
@@ -393,7 +393,7 @@ fn user_attention_type_to_native(
 }
 
 ///|
-fn option_as_alt_to_native(option_as_alt : @core.OptionAsAlt) -> Int {
+fn option_as_alt_to_native(option_as_alt : @core.OptionAsAlt) -> Int32 {
   match option_as_alt {
     OnlyLeft => 1
     OnlyRight => 2
@@ -403,7 +403,7 @@ fn option_as_alt_to_native(option_as_alt : @core.OptionAsAlt) -> Int {
 }
 
 ///|
-fn option_as_alt_from_native(option_as_alt : Int) -> @core.OptionAsAlt {
+fn option_as_alt_from_native(option_as_alt : Int32) -> @core.OptionAsAlt {
   match normalize_option_as_alt_native(option_as_alt) {
     1 => OnlyLeft
     2 => OnlyRight

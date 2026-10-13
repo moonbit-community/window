@@ -1,5 +1,5 @@
 ///|
-pub fn ImeSurroundingText::max_text_bytes() -> Int {
+pub fn ImeSurroundingText::max_text_bytes() -> Int32 {
   4000
 }
 

@@ -5,23 +5,23 @@ fn approx_eq(left : Double, right : Double) -> Bool {
 
 ///|
 struct TiltAngleCase {
-  expected_angle : TabletToolAngle
+  expected_angle : @core.TabletToolAngle
   label : String
-  tilt : TabletToolTilt
+  tilt : @core.TabletToolTilt
 }
 
 ///|
 struct AngleTiltCase {
-  angle : TabletToolAngle
-  expected_tilt : TabletToolTilt
+  angle : @core.TabletToolAngle
+  expected_tilt : @core.TabletToolTilt
 }
 
 ///|
 test "test_event_clone" {
   let device_events = [
-    DeviceEvent::PointerMotion(0.0, 0.0),
+    @core.DeviceEvent::PointerMotion(0.0, 0.0),
     MouseWheel(LineDelta(0.0, 0.0)),
-    Button(ButtonId::from_raw(0), Pressed),
+    Button(@core.ButtonId::from_raw(0), Pressed),
   ]
   for event in device_events {
     let event2 = event
@@ -129,13 +129,13 @@ test "test_tilt_angle_conversions" {
 
 ///|
 test "test_force_normalize" {
-  let force = Force::Normalized(0.0)
+  let force = @core.Force::Normalized(0.0)
   assert_true(approx_eq(force.normalized(None), 0.0))
 
-  let force2 = Force::Calibrated(5.0, 2.5)
+  let force2 = @core.Force::Calibrated(5.0, 2.5)
   assert_true(approx_eq(force2.normalized(None), 2.0))
 
-  let force3 = Force::Calibrated(5.0, 2.5)
+  let force3 = @core.Force::Calibrated(5.0, 2.5)
   assert_true(
     approx_eq(
       force3.normalized(Some(TabletToolAngle(@math.PI / 2.0, 0.0))),
@@ -147,7 +147,7 @@ test "test_force_normalize" {
 ///|
 test "ensure_attrs_do_not_panic" {
   let window_events = [
-    WindowEvent::CloseRequested,
+    @core.WindowEvent::CloseRequested,
     Destroyed,
     Focused(true),
     Moved(PhysicalPosition(0, 0)),
@@ -158,7 +158,7 @@ test "ensure_attrs_do_not_panic" {
     DragLeft(Some(PhysicalPositionF64(0.0, 0.0))),
     Ime(Enabled),
     PointerMoved(None, PhysicalPositionF64(0.0, 0.0), true, Mouse),
-    ModifiersChanged(Modifiers::default()),
+    ModifiersChanged(@core.Modifiers::default()),
     PointerEntered(None, PhysicalPositionF64(0.0, 0.0), true, Mouse),
     PointerLeft(None, Some(PhysicalPositionF64(0.0, 0.0)), true, Mouse),
     MouseWheel(None, LineDelta(0.0, 0.0), Started),
@@ -184,18 +184,18 @@ test "ensure_attrs_do_not_panic" {
   }
 
   let device_events = [
-    DeviceEvent::PointerMotion(0.0, 0.0),
+    @core.DeviceEvent::PointerMotion(0.0, 0.0),
     MouseWheel(LineDelta(0.0, 0.0)),
-    Button(ButtonId::from_raw(0), Pressed),
+    Button(@core.ButtonId::from_raw(0), Pressed),
   ]
   for event in device_events {
     let _ = "\{event}"
   }
 
-  let _ = "\{StartCause::Init}"
-  let _ = "\{FingerId::from_raw(0)}"
-  let _ = "\{TouchPhase::Started}"
-  let _ = "\{MouseButton::Left}"
-  let _ = "\{Ime::Enabled}"
-  let _ = "\{Force::Calibrated(0.0, 0.0)}"
+  let _ = "\{@core.StartCause::Init}"
+  let _ = "\{@core.FingerId::from_raw(0)}"
+  let _ = "\{@core.TouchPhase::Started}"
+  let _ = "\{@core.MouseButton::Left}"
+  let _ = "\{@core.Ime::Enabled}"
+  let _ = "\{@core.Force::Calibrated(0.0, 0.0)}"
 }

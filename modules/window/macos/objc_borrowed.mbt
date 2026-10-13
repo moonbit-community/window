@@ -10,7 +10,7 @@ fn BorrowedObjcHandle::BorrowedObjcHandle(raw : UInt64) -> BorrowedObjcHandle {
 
 ///|
 fn BorrowedObjcHandle::null() -> BorrowedObjcHandle {
-  BorrowedObjcHandle((0 : Int).to_uint64())
+  BorrowedObjcHandle((0 : Int32).to_uint64())
 }
 
 ///|
@@ -20,12 +20,12 @@ fn BorrowedObjcHandle::raw(self : BorrowedObjcHandle) -> UInt64 {
 
 ///|
 fn BorrowedObjcHandle::is_null(self : BorrowedObjcHandle) -> Bool {
-  self.raw == (0 : Int).to_uint64()
+  self.raw == (0 : Int32).to_uint64()
 }
 
 ///|
 fn BorrowedObjcHandle::is_non_null(self : BorrowedObjcHandle) -> Bool {
-  self.raw != (0 : Int).to_uint64()
+  self.raw != (0 : Int32).to_uint64()
 }
 
 ///|

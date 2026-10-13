@@ -346,8 +346,8 @@ struct WindowInputState {
   mut modifiers : @core.ModifiersState
   mut theme : @core.Theme
   mut cursor_grab_mode : @core.CursorGrabMode
-  mut cursor_index : Int
-  mut custom_cursor_index : Int
+  mut cursor_index : Int32
+  mut custom_cursor_index : Int32
   mut animated_fill_color : Bool
   mut continuous_redraw : Bool
   mut emit_surface_size : Bool
@@ -477,7 +477,7 @@ fn mouse_button_name(button : @core.MouseButton) -> String {
 }
 
 ///|
-fn make_custom_cursor_source(value : Int) -> @core.CustomCursorSource? {
+fn make_custom_cursor_source(value : Int32) -> @core.CustomCursorSource? {
   let rgba = Bytes::make(4, value.to_byte())
   Some(@core.CustomCursorSource::from_rgba(rgba, 1, 1, 0, 0)) catch {
     _ => None
@@ -485,7 +485,7 @@ fn make_custom_cursor_source(value : Int) -> @core.CustomCursorSource? {
 }
 
 ///|
-fn safe_area_inner_color_for_theme(theme : @core.Theme) -> Int {
+fn safe_area_inner_color_for_theme(theme : @core.Theme) -> Int32 {
   match theme {
     Light => 0xffe8e8e8
     Dark => 0xff525252
@@ -493,7 +493,7 @@ fn safe_area_inner_color_for_theme(theme : @core.Theme) -> Int {
 }
 
 ///|
-fn safe_area_outer_color_for_theme(theme : @core.Theme) -> Int {
+fn safe_area_outer_color_for_theme(theme : @core.Theme) -> Int32 {
   match theme {
     Light => 0xffffffff
     Dark => 0xff181818
@@ -536,7 +536,7 @@ fn Application::Application() -> Application {
     proxy_actions: [],
     custom_cursors: [],
     start_time_ms,
-    next_proxy_wake_ms: start_time_ms + (1000 : Int).to_int64(),
+    next_proxy_wake_ms: start_time_ms + (1000 : Int32).to_int64(),
   }
 }
 
@@ -686,7 +686,7 @@ fn Application::remove_window(
 fn Application::ensure_window_input_state(
   self : Application,
   window_id : @core.WindowId,
-) -> Int {
+) -> Int32 {
   match
     self.window_input_states.search_by(entry => entry.window_id == window_id) {
     Some(index) => index
@@ -1283,7 +1283,7 @@ pub impl @macos.ApplicationHandler for Application with fn about_to_wait(
       }
       None => ()
     }
-    self.next_proxy_wake_ms = now + (1000 : Int).to_int64()
+    self.next_proxy_wake_ms = now + (1000 : Int32).to_int64()
   }
   let remaining_ms = self.next_proxy_wake_ms - now
   let wait_ms = if remaining_ms <= 0 { 1 } else { remaining_ms.to_int() }

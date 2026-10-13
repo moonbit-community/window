@@ -4,7 +4,7 @@ struct CountingMonitorProvider {
   identity_low : UInt64
   native_id : UInt64
   name : String?
-  video_mode_calls : Array[Int]
+  video_mode_calls : Array[Int32]
 }
 
 ///|

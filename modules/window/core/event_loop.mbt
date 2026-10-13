@@ -25,13 +25,13 @@ pub fn DeviceEvents::default() -> DeviceEvents {
 ///|
 pub(all) enum PumpStatus {
   Continue
-  Exit(Int)
+  Exit(Int32)
 } derive(Eq, Debug)
 
 ///|
 pub(all) suberror EventLoopError {
   RecreationAttempt
-  ExitFailure(Int)
+  ExitFailure(Int32)
   NotSupported(NotSupportedError)
   Os(OsError)
 } derive(Eq, Debug)
@@ -44,7 +44,7 @@ pub fn EventLoopError::not_supported(reason : String) -> EventLoopError {
 ///|
 pub fn EventLoopError::os(
   message : String,
-  code? : Int,
+  code? : Int32,
   domain? : String,
 ) -> EventLoopError {
   Os(OsError(message, code, domain))
@@ -151,11 +151,11 @@ pub fn PlatformEventLoopAttributes::any_thread(
 
 ///|
 pub struct AsyncRequestSerial {
-  raw : Int
+  raw : Int32
 } derive(Eq, Debug)
 
 ///|
-let async_request_serial_counter : Ref[Int] = Ref(0)
+let async_request_serial_counter : Ref[Int32] = Ref(0)
 
 ///|
 pub fn AsyncRequestSerial::get() -> AsyncRequestSerial {
@@ -165,12 +165,12 @@ pub fn AsyncRequestSerial::get() -> AsyncRequestSerial {
 }
 
 ///|
-pub fn AsyncRequestSerial::from_raw(raw : Int) -> AsyncRequestSerial {
+pub fn AsyncRequestSerial::from_raw(raw : Int32) -> AsyncRequestSerial {
   { raw, }
 }
 
 ///|
-pub fn AsyncRequestSerial::into_raw(self : AsyncRequestSerial) -> Int {
+pub fn AsyncRequestSerial::into_raw(self : AsyncRequestSerial) -> Int32 {
   self.raw
 }
 
@@ -182,7 +182,7 @@ pub fn ControlFlow::wait_until(resume_time_ms : Int64) -> ControlFlow {
 ///|
 pub fn ControlFlow::wait_duration(
   start_time_ms : Int64,
-  timeout_ms : Int,
+  timeout_ms : Int32,
 ) -> ControlFlow {
   if timeout_ms <= 0 {
     WaitUntil(start_time_ms)

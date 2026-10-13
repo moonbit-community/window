@@ -32,10 +32,10 @@ fn is_animated(_cursor : @core.CustomCursor) -> Bool {
 fn EventLoop::create_custom_cursor_from_rgba_source(
   self : EventLoop,
   rgba : Bytes,
-  width : Int,
-  height : Int,
-  hotspot_x : Int,
-  hotspot_y : Int,
+  width : Int32,
+  height : Int32,
+  hotspot_x : Int32,
+  hotspot_y : Int32,
 ) -> @core.CustomCursor raise @core.RequestError {
   ignore(self)
   cursor_from_image(rgba, width, height, hotspot_x, hotspot_y)
@@ -44,10 +44,10 @@ fn EventLoop::create_custom_cursor_from_rgba_source(
 ///|
 fn native_custom_cursor_create_rgba_handle(
   rgba : Bytes,
-  width : Int,
-  height : Int,
-  hotspot_x : Int,
-  hotspot_y : Int,
+  width : Int32,
+  height : Int32,
+  hotspot_x : Int32,
+  hotspot_y : Int32,
 ) -> @core.CustomCursorHandle {
   appkit_custom_cursor_create_rgba(
     rgba,
@@ -62,10 +62,10 @@ fn native_custom_cursor_create_rgba_handle(
 ///|
 fn validate_rgba_cursor_source(
   rgba : Bytes,
-  width : Int,
-  height : Int,
-  hotspot_x : Int,
-  hotspot_y : Int,
+  width : Int32,
+  height : Int32,
+  hotspot_x : Int32,
+  hotspot_y : Int32,
 ) -> Unit raise @core.RequestError {
   if width <= 0 || height <= 0 {
     raise Ignored
@@ -93,7 +93,7 @@ fn custom_cursor_from_native(
   handle : @core.CustomCursorHandle,
 ) -> @core.CustomCursor raise @core.RequestError {
   let raw = appkit_custom_cursor_objc_handle(handle)
-  if raw == (0 : Int).to_uint64() {
+  if raw == (0 : Int32).to_uint64() {
     raise @core.RequestError::not_supported(
       "Failed to create a native custom cursor from RGBA data",
     )
@@ -108,10 +108,10 @@ fn custom_cursor_from_native(
 // Port target: cursor.rs::cursor_from_image
 fn cursor_from_image(
   rgba : Bytes,
-  width : Int,
-  height : Int,
-  hotspot_x : Int,
-  hotspot_y : Int,
+  width : Int32,
+  height : Int32,
+  hotspot_x : Int32,
+  hotspot_y : Int32,
 ) -> @core.CustomCursor raise @core.RequestError {
   validate_rgba_cursor_source(rgba, width, height, hotspot_x, hotspot_y)
   custom_cursor_from_native(
@@ -126,8 +126,8 @@ fn native_cursor_class_cursor(
   cursor_class : UInt64,
   selector_name : String,
 ) -> UInt64 {
-  if cursor_class == (0 : Int).to_uint64() {
-    return (0 : Int).to_uint64()
+  if cursor_class == (0 : Int32).to_uint64() {
+    return (0 : Int32).to_uint64()
   }
   let selector = objc_runtime_selector_handle(selector_name)
   if appkit_objc_msg_send_bool_u64(
@@ -137,7 +137,7 @@ fn native_cursor_class_cursor(
     ) {
     appkit_objc_msg_send_u64(cursor_class, selector)
   } else {
-    (0 : Int).to_uint64()
+    (0 : Int32).to_uint64()
   }
 }
 
@@ -147,8 +147,8 @@ fn native_cursor_frame_resize(
   position : UInt64,
   directions : UInt64,
 ) -> UInt64 {
-  if cursor_class == (0 : Int).to_uint64() {
-    return (0 : Int).to_uint64()
+  if cursor_class == (0 : Int32).to_uint64() {
+    return (0 : Int32).to_uint64()
   }
   let selector = objc_runtime_selector_handle(
     "frameResizeCursorFromPosition:inDirections:",
@@ -162,13 +162,13 @@ fn native_cursor_frame_resize(
       cursor_class, selector, position, directions,
     )
   } else {
-    (0 : Int).to_uint64()
+    (0 : Int32).to_uint64()
   }
 }
 
 ///|
 fn native_cursor_fallback(cursor : UInt64, cursor_class : UInt64) -> UInt64 {
-  if cursor != (0 : Int).to_uint64() {
+  if cursor != (0 : Int32).to_uint64() {
     cursor
   } else {
     native_cursor_class_cursor(cursor_class, "arrowCursor")
@@ -178,12 +178,12 @@ fn native_cursor_fallback(cursor : UInt64, cursor_class : UInt64) -> UInt64 {
 ///|
 fn cursor_from_icon(cursor : @core.CursorIcon) -> UInt64 {
   let ns_cursor_class = objc_runtime_class_handle("NSCursor")
-  if ns_cursor_class == (0 : Int).to_uint64() {
-    return (0 : Int).to_uint64()
+  if ns_cursor_class == (0 : Int32).to_uint64() {
+    return (0 : Int32).to_uint64()
   }
-  let mut resolved = (0 : Int).to_uint64()
-  let direction_outward = (2 : Int).to_uint64()
-  let direction_all = (3 : Int).to_uint64()
+  let mut resolved = (0 : Int32).to_uint64()
+  let direction_outward = (2 : Int32).to_uint64()
+  let direction_all = (3 : Int32).to_uint64()
   match cursor {
     ContextMenu =>
       resolved = native_cursor_class_cursor(
@@ -205,7 +205,7 @@ fn cursor_from_icon(cursor : @core.CursorIcon) -> UInt64 {
       resolved = native_cursor_class_cursor(
         ns_cursor_class, "IBeamCursorForVerticalLayout",
       )
-      if resolved == (0 : Int).to_uint64() {
+      if resolved == (0 : Int32).to_uint64() {
         resolved = native_cursor_class_cursor(ns_cursor_class, "IBeamCursor")
       }
     }
@@ -224,10 +224,10 @@ fn cursor_from_icon(cursor : @core.CursorIcon) -> UInt64 {
     EResize => {
       resolved = native_cursor_frame_resize(
         ns_cursor_class,
-        (8 : Int).to_uint64(),
+        (8 : Int32).to_uint64(),
         direction_outward,
       )
-      if resolved == (0 : Int).to_uint64() {
+      if resolved == (0 : Int32).to_uint64() {
         resolved = native_cursor_class_cursor(
           ns_cursor_class, "resizeRightCursor",
         )
@@ -236,20 +236,20 @@ fn cursor_from_icon(cursor : @core.CursorIcon) -> UInt64 {
     NResize => {
       resolved = native_cursor_frame_resize(
         ns_cursor_class,
-        (1 : Int).to_uint64(),
+        (1 : Int32).to_uint64(),
         direction_outward,
       )
-      if resolved == (0 : Int).to_uint64() {
+      if resolved == (0 : Int32).to_uint64() {
         resolved = native_cursor_class_cursor(ns_cursor_class, "resizeUpCursor")
       }
     }
     NeResize => {
       resolved = native_cursor_frame_resize(
         ns_cursor_class,
-        (9 : Int).to_uint64(),
+        (9 : Int32).to_uint64(),
         direction_outward,
       )
-      if resolved == (0 : Int).to_uint64() {
+      if resolved == (0 : Int32).to_uint64() {
         resolved = native_cursor_class_cursor(
           ns_cursor_class, "_windowResizeNorthEastCursor",
         )
@@ -258,10 +258,10 @@ fn cursor_from_icon(cursor : @core.CursorIcon) -> UInt64 {
     NwResize => {
       resolved = native_cursor_frame_resize(
         ns_cursor_class,
-        (3 : Int).to_uint64(),
+        (3 : Int32).to_uint64(),
         direction_outward,
       )
-      if resolved == (0 : Int).to_uint64() {
+      if resolved == (0 : Int32).to_uint64() {
         resolved = native_cursor_class_cursor(
           ns_cursor_class, "_windowResizeNorthWestCursor",
         )
@@ -270,10 +270,10 @@ fn cursor_from_icon(cursor : @core.CursorIcon) -> UInt64 {
     SResize => {
       resolved = native_cursor_frame_resize(
         ns_cursor_class,
-        (4 : Int).to_uint64(),
+        (4 : Int32).to_uint64(),
         direction_outward,
       )
-      if resolved == (0 : Int).to_uint64() {
+      if resolved == (0 : Int32).to_uint64() {
         resolved = native_cursor_class_cursor(
           ns_cursor_class, "resizeDownCursor",
         )
@@ -282,10 +282,10 @@ fn cursor_from_icon(cursor : @core.CursorIcon) -> UInt64 {
     SeResize => {
       resolved = native_cursor_frame_resize(
         ns_cursor_class,
-        (12 : Int).to_uint64(),
+        (12 : Int32).to_uint64(),
         direction_outward,
       )
-      if resolved == (0 : Int).to_uint64() {
+      if resolved == (0 : Int32).to_uint64() {
         resolved = native_cursor_class_cursor(
           ns_cursor_class, "_windowResizeSouthEastCursor",
         )
@@ -294,10 +294,10 @@ fn cursor_from_icon(cursor : @core.CursorIcon) -> UInt64 {
     SwResize => {
       resolved = native_cursor_frame_resize(
         ns_cursor_class,
-        (6 : Int).to_uint64(),
+        (6 : Int32).to_uint64(),
         direction_outward,
       )
-      if resolved == (0 : Int).to_uint64() {
+      if resolved == (0 : Int32).to_uint64() {
         resolved = native_cursor_class_cursor(
           ns_cursor_class, "_windowResizeSouthWestCursor",
         )
@@ -306,10 +306,10 @@ fn cursor_from_icon(cursor : @core.CursorIcon) -> UInt64 {
     WResize => {
       resolved = native_cursor_frame_resize(
         ns_cursor_class,
-        (2 : Int).to_uint64(),
+        (2 : Int32).to_uint64(),
         direction_outward,
       )
-      if resolved == (0 : Int).to_uint64() {
+      if resolved == (0 : Int32).to_uint64() {
         resolved = native_cursor_class_cursor(
           ns_cursor_class, "resizeLeftCursor",
         )
@@ -318,10 +318,10 @@ fn cursor_from_icon(cursor : @core.CursorIcon) -> UInt64 {
     EwResize => {
       resolved = native_cursor_frame_resize(
         ns_cursor_class,
-        (8 : Int).to_uint64(),
+        (8 : Int32).to_uint64(),
         direction_all,
       )
-      if resolved == (0 : Int).to_uint64() {
+      if resolved == (0 : Int32).to_uint64() {
         resolved = native_cursor_class_cursor(
           ns_cursor_class, "resizeLeftRightCursor",
         )
@@ -330,10 +330,10 @@ fn cursor_from_icon(cursor : @core.CursorIcon) -> UInt64 {
     NsResize => {
       resolved = native_cursor_frame_resize(
         ns_cursor_class,
-        (1 : Int).to_uint64(),
+        (1 : Int32).to_uint64(),
         direction_all,
       )
-      if resolved == (0 : Int).to_uint64() {
+      if resolved == (0 : Int32).to_uint64() {
         resolved = native_cursor_class_cursor(
           ns_cursor_class, "resizeUpDownCursor",
         )
@@ -342,10 +342,10 @@ fn cursor_from_icon(cursor : @core.CursorIcon) -> UInt64 {
     NeswResize => {
       resolved = native_cursor_frame_resize(
         ns_cursor_class,
-        (9 : Int).to_uint64(),
+        (9 : Int32).to_uint64(),
         direction_all,
       )
-      if resolved == (0 : Int).to_uint64() {
+      if resolved == (0 : Int32).to_uint64() {
         resolved = native_cursor_class_cursor(
           ns_cursor_class, "_windowResizeNorthEastSouthWestCursor",
         )
@@ -354,10 +354,10 @@ fn cursor_from_icon(cursor : @core.CursorIcon) -> UInt64 {
     NwseResize => {
       resolved = native_cursor_frame_resize(
         ns_cursor_class,
-        (3 : Int).to_uint64(),
+        (3 : Int32).to_uint64(),
         direction_all,
       )
-      if resolved == (0 : Int).to_uint64() {
+      if resolved == (0 : Int32).to_uint64() {
         resolved = native_cursor_class_cursor(
           ns_cursor_class, "_windowResizeNorthWestSouthEastCursor",
         )
@@ -367,7 +367,7 @@ fn cursor_from_icon(cursor : @core.CursorIcon) -> UInt64 {
       resolved = native_cursor_class_cursor(
         ns_cursor_class, "columnResizeCursor",
       )
-      if resolved == (0 : Int).to_uint64() {
+      if resolved == (0 : Int32).to_uint64() {
         resolved = native_cursor_class_cursor(
           ns_cursor_class, "resizeLeftRightCursor",
         )
@@ -375,7 +375,7 @@ fn cursor_from_icon(cursor : @core.CursorIcon) -> UInt64 {
     }
     RowResize => {
       resolved = native_cursor_class_cursor(ns_cursor_class, "rowResizeCursor")
-      if resolved == (0 : Int).to_uint64() {
+      if resolved == (0 : Int32).to_uint64() {
         resolved = native_cursor_class_cursor(
           ns_cursor_class, "resizeUpDownCursor",
         )
@@ -383,13 +383,13 @@ fn cursor_from_icon(cursor : @core.CursorIcon) -> UInt64 {
     }
     ZoomIn => {
       resolved = native_cursor_class_cursor(ns_cursor_class, "zoomInCursor")
-      if resolved == (0 : Int).to_uint64() {
+      if resolved == (0 : Int32).to_uint64() {
         resolved = native_cursor_class_cursor(ns_cursor_class, "_zoomInCursor")
       }
     }
     ZoomOut => {
       resolved = native_cursor_class_cursor(ns_cursor_class, "zoomOutCursor")
-      if resolved == (0 : Int).to_uint64() {
+      if resolved == (0 : Int32).to_uint64() {
         resolved = native_cursor_class_cursor(ns_cursor_class, "_zoomOutCursor")
       }
     }
@@ -422,14 +422,14 @@ fn invisible_cursor() -> UInt64 {
   match invisible_cursor_handle.val {
     Some(cached) => {
       let cached_obj = appkit_custom_cursor_objc_handle(cached)
-      if cached_obj != (0 : Int).to_uint64() {
+      if cached_obj != (0 : Int32).to_uint64() {
         return cached_obj
       }
     }
     None => ()
   }
   let cursor_handle = appkit_custom_cursor_create_rgba(
-    Bytes::make(4, (0 : Int).to_byte()),
+    Bytes::make(4, (0 : Int32).to_byte()),
     4,
     1,
     1,
@@ -437,14 +437,14 @@ fn invisible_cursor() -> UInt64 {
     0,
   )
   let cursor = appkit_custom_cursor_objc_handle(cursor_handle)
-  if cursor != (0 : Int).to_uint64() {
+  if cursor != (0 : Int32).to_uint64() {
     invisible_cursor_handle.val = Some(cursor_handle)
   }
   cursor
 }
 
 ///|
-fn cursor_grab_mode_to_native(mode : @core.CursorGrabMode) -> Int {
+fn cursor_grab_mode_to_native(mode : @core.CursorGrabMode) -> Int32 {
   match mode {
     None => 0
     Locked => 1

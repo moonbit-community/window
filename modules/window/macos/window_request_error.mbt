@@ -9,7 +9,7 @@ let appkit_window_error_domain = "AppKit.NSWindow"
 
 ///|
 fn request_error_from_native_status(
-  status : Int,
+  status : Int32,
   operation : String,
 ) -> @core.RequestError {
   if status == invalid_native_window_handle_status {
@@ -29,7 +29,7 @@ fn request_error_from_native_status(
 
 ///|
 fn raise_request_error_from_native_status(
-  status : Int,
+  status : Int32,
   operation : String,
 ) -> Unit raise @core.RequestError {
   if status != 0 {
@@ -46,7 +46,7 @@ fn raise_request_not_supported(
 
 ///|
 fn raise_request_error_from_drag_window_status(
-  status : Int,
+  status : Int32,
 ) -> Unit raise @core.RequestError {
   if status == invalid_native_window_handle_status {
     raise Ignored

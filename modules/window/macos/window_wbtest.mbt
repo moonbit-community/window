@@ -102,7 +102,7 @@ test "drag_resize_false_result_maps_to_not_supported" {
 
 ///|
 test "content_view_handle_from_raw_returns_view_handle" {
-  let handle = (42 : Int).to_uint64()
+  let handle = (42 : Int32).to_uint64()
   let actual = content_view_handle_from_raw(handle) catch {
     _ => fail("expected content view handle")
   }
@@ -112,7 +112,7 @@ test "content_view_handle_from_raw_returns_view_handle" {
 ///|
 test "content_view_handle_from_raw_rejects_null_handle" {
   let raised = try {
-    ignore(content_view_handle_from_raw((0 : Int).to_uint64()))
+    ignore(content_view_handle_from_raw((0 : Int32).to_uint64()))
     false
   } catch {
     Os(os) => {

@@ -1,10 +1,10 @@
 ///|
 extern "C" fn native_test_custom_cursor_rgba_layout_is_valid(
-  rgba_len : Int,
-  width : Int,
-  height : Int,
-  hotspot_x : Int,
-  hotspot_y : Int,
+  rgba_len : Int32,
+  width : Int32,
+  height : Int32,
+  hotspot_x : Int32,
+  hotspot_y : Int32,
 ) -> Bool = "mbw_test_custom_cursor_rgba_layout_is_valid"
 
 ///|
@@ -27,14 +27,14 @@ test "native custom cursor validates RGBA layout without overflow" {
 ///|
 test "native custom cursor creation rejects overflowing RGBA layout" {
   let handle = appkit_custom_cursor_create_rgba(
-    Bytes::make(4, (0 : Int).to_byte()),
+    Bytes::make(4, (0 : Int32).to_byte()),
     4,
     1073741825,
     1,
     0,
     0,
   )
-  assert_eq(appkit_custom_cursor_objc_handle(handle), (0 : Int).to_uint64())
+  assert_eq(appkit_custom_cursor_objc_handle(handle), (0 : Int32).to_uint64())
 }
 
 ///|
@@ -81,7 +81,7 @@ fn system_cursor_icons_for_test() -> Array[@core.CursorIcon] {
 test "all system cursor icons resolve to AppKit cursors" {
   ignore(native_application_shared_handle())
   for icon in system_cursor_icons_for_test() {
-    if cursor_from_icon(icon) == (0 : Int).to_uint64() {
+    if cursor_from_icon(icon) == (0 : Int32).to_uint64() {
       fail("failed to resolve cursor: \{icon}")
     }
   }
@@ -93,8 +93,8 @@ test "move and cell cursors use public AppKit fallbacks" {
   let cursor_class = objc_runtime_class_handle("NSCursor")
   let open_hand = native_cursor_class_cursor(cursor_class, "openHandCursor")
   let crosshair = native_cursor_class_cursor(cursor_class, "crosshairCursor")
-  assert_true(open_hand != (0 : Int).to_uint64())
-  assert_true(crosshair != (0 : Int).to_uint64())
+  assert_true(open_hand != (0 : Int32).to_uint64())
+  assert_true(crosshair != (0 : Int32).to_uint64())
   assert_eq(cursor_from_icon(Move), open_hand)
   assert_eq(cursor_from_icon(AllScroll), open_hand)
   assert_eq(cursor_from_icon(Cell), crosshair)
@@ -104,6 +104,6 @@ test "move and cell cursors use public AppKit fallbacks" {
 test "invisible cursor is cached" {
   ignore(native_application_shared_handle())
   let first = invisible_cursor()
-  assert_true(first != (0 : Int).to_uint64())
+  assert_true(first != (0 : Int32).to_uint64())
   assert_eq(invisible_cursor(), first)
 }

@@ -2,28 +2,28 @@
 // Port target: winit-reference/winit-appkit/src/observer.rs
 
 ///|
-const MAIN_RUN_LOOP_ACTIVITY_BEFORE_WAITING : Int = 1
+const MAIN_RUN_LOOP_ACTIVITY_BEFORE_WAITING : Int32 = 1
 
 ///|
-const MAIN_RUN_LOOP_ACTIVITY_AFTER_WAITING : Int = 2
+const MAIN_RUN_LOOP_ACTIVITY_AFTER_WAITING : Int32 = 2
 
 ///|
-const MAIN_RUN_LOOP_CALLBACK_BEFORE_WAITING : Int = 3
+const MAIN_RUN_LOOP_CALLBACK_BEFORE_WAITING : Int32 = 3
 
 ///|
-const MAIN_RUN_LOOP_CALLBACK_AFTER_WAITING : Int = 4
+const MAIN_RUN_LOOP_CALLBACK_AFTER_WAITING : Int32 = 4
 
 ///|
-const MAIN_RUN_LOOP_ORDER_LOWEST : Int = 2147483647
+const MAIN_RUN_LOOP_ORDER_LOWEST : Int32 = 2147483647
 
 ///|
-const MAIN_RUN_LOOP_ORDER_HIGHEST : Int = -2147483647 - 1
+const MAIN_RUN_LOOP_ORDER_HIGHEST : Int32 = -2147483647 - 1
 
 ///|
 fn create_main_run_loop_observer(
-  activity_kind : Int,
-  callback_kind : Int,
-  order : Int,
+  activity_kind : Int32,
+  callback_kind : Int32,
+  order : Int32,
 ) -> MainRunLoopObserver {
   native_main_run_loop_add_observer(
     fn(callback, kind) { callback(kind) },

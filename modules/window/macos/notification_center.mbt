@@ -2,15 +2,15 @@
 // Port target: winit-reference/winit-appkit/src/notification_center.rs
 
 ///|
-const NOTIFICATION_DID_FINISH_LAUNCHING : Int = 1
+const NOTIFICATION_DID_FINISH_LAUNCHING : Int32 = 1
 
 ///|
-const NOTIFICATION_WILL_TERMINATE : Int = 2
+const NOTIFICATION_WILL_TERMINATE : Int32 = 2
 
 ///|
 fn create_observer(
-  notification_kind : Int,
-  callback_kind : Int,
+  notification_kind : Int32,
+  callback_kind : Int32,
 ) -> NotificationObserver {
   native_notification_center_add_observer(
     fn(callback, kind) { callback(kind) },

@@ -21,7 +21,7 @@ pub(all) enum ImePurpose {
 
 ///|
 pub struct ImeHint {
-  priv bits : Int
+  priv bits : Int32
 } derive(Eq, Debug)
 
 ///|
@@ -90,12 +90,12 @@ pub fn ImeHint::contains(self : ImeHint, other : ImeHint) -> Bool {
 }
 
 ///|
-pub fn ImeHint::from_bits(bits : Int) -> ImeHint {
+pub fn ImeHint::from_bits(bits : Int32) -> ImeHint {
   { bits: bits & 1023, }
 }
 
 ///|
-pub fn ImeHint::bits(self : ImeHint) -> Int {
+pub fn ImeHint::bits(self : ImeHint) -> Int32 {
   self.bits
 }
 
@@ -108,16 +108,16 @@ pub(all) suberror ImeSurroundingTextError {
 
 ///|
 pub struct ImeSurroundingText {
-  priv anchor : Int
-  priv cursor : Int
+  priv anchor : Int32
+  priv cursor : Int32
   priv text : String
 } derive(Eq, Debug)
 
 ///|
 pub fn ImeSurroundingText::ImeSurroundingText(
   text : String,
-  cursor : Int,
-  anchor : Int,
+  cursor : Int32,
+  anchor : Int32,
 ) -> ImeSurroundingText raise ImeSurroundingTextError {
   let utf8_bytes = @utf8.encode(text[:], bom=false)
   let byte_len = utf8_bytes.length()
@@ -145,12 +145,12 @@ pub fn ImeSurroundingText::text(self : ImeSurroundingText) -> String {
 }
 
 ///|
-pub fn ImeSurroundingText::cursor(self : ImeSurroundingText) -> Int {
+pub fn ImeSurroundingText::cursor(self : ImeSurroundingText) -> Int32 {
   self.cursor
 }
 
 ///|
-pub fn ImeSurroundingText::anchor(self : ImeSurroundingText) -> Int {
+pub fn ImeSurroundingText::anchor(self : ImeSurroundingText) -> Int32 {
   self.anchor
 }
 
@@ -219,14 +219,14 @@ pub fn NotSupportedError::reason(self : NotSupportedError) -> String {
 ///|
 pub struct OsError {
   priv message : String
-  priv code : Int?
+  priv code : Int32?
   priv domain : String?
 } derive(Eq, Debug)
 
 ///|
 pub fn OsError::OsError(
   message : String,
-  code : Int?,
+  code : Int32?,
   domain : String?,
 ) -> OsError {
   { message, code, domain, }
@@ -238,7 +238,7 @@ pub fn OsError::message(self : OsError) -> String {
 }
 
 ///|
-pub fn OsError::code(self : OsError) -> Int? {
+pub fn OsError::code(self : OsError) -> Int32? {
   self.code
 }
 
@@ -262,7 +262,7 @@ pub fn RequestError::not_supported(reason : String) -> RequestError {
 ///|
 pub fn RequestError::os(
   message : String,
-  code? : Int,
+  code? : Int32,
   domain? : String,
 ) -> RequestError {
   Os(OsError(message, code, domain))
@@ -421,32 +421,32 @@ pub(all) enum Cursor {
 
 ///|
 pub(all) enum CustomCursorSource {
-  Rgba(Bytes, Int, Int, Int, Int)
-  Url(String, Int, Int)
-  Animation(Int, Array[CustomCursor])
+  Rgba(Bytes, Int32, Int32, Int32, Int32)
+  Url(String, Int32, Int32)
+  Animation(Int32, Array[CustomCursor])
 } derive(Eq, Debug)
 
 ///|
 pub(all) suberror BadCustomCursorSource {
-  TooLarge(Int, Int)
-  ByteCountNotDivisibleBy4(Int)
-  DimensionsVsPixelCount(Int, Int, Int, Int)
-  HotspotOutOfBounds(Int, Int, Int, Int)
+  TooLarge(Int32, Int32)
+  ByteCountNotDivisibleBy4(Int32)
+  DimensionsVsPixelCount(Int32, Int32, Int32, Int32)
+  HotspotOutOfBounds(Int32, Int32, Int32, Int32)
 } derive(Debug)
 
 ///|
 pub(all) suberror BadCustomCursorAnimation {
   Empty
-  NonPositiveFrameDuration(Int)
+  NonPositiveFrameDuration(Int32)
 } derive(Debug)
 
 ///|
 pub fn CustomCursorSource::from_rgba(
   rgba : Bytes,
-  width : Int,
-  height : Int,
-  hotspot_x : Int,
-  hotspot_y : Int,
+  width : Int32,
+  height : Int32,
+  hotspot_x : Int32,
+  hotspot_y : Int32,
 ) -> CustomCursorSource raise BadCustomCursorSource {
   if width <= 0 || height <= 0 {
     raise DimensionsVsPixelCount(width, height, 0, rgba.length() / 4)
@@ -470,7 +470,7 @@ pub fn CustomCursorSource::from_rgba(
 
 ///|
 pub fn CustomCursorSource::from_animation(
-  frame_duration_millis : Int,
+  frame_duration_millis : Int32,
   cursors : Array[CustomCursor],
 ) -> CustomCursorSource raise BadCustomCursorAnimation {
   if frame_duration_millis <= 0 {
@@ -503,7 +503,7 @@ pub fn OptionAsAlt::default() -> OptionAsAlt {
 
 ///|
 pub struct ScreenEdge {
-  priv bits : Int
+  priv bits : Int32
 } derive(Eq, Debug)
 
 ///|
@@ -547,12 +547,12 @@ pub fn ScreenEdge::contains(self : ScreenEdge, other : ScreenEdge) -> Bool {
 }
 
 ///|
-pub fn ScreenEdge::from_bits(bits : Int) -> ScreenEdge {
+pub fn ScreenEdge::from_bits(bits : Int32) -> ScreenEdge {
   { bits: bits & 15, }
 }
 
 ///|
-pub fn ScreenEdge::bits(self : ScreenEdge) -> Int {
+pub fn ScreenEdge::bits(self : ScreenEdge) -> Int32 {
   self.bits
 }
 
@@ -818,22 +818,22 @@ pub fn PlatformWindowAttributes::panel(self : PlatformWindowAttributes) -> Bool 
 
 ///|
 pub(all) suberror BadIcon {
-  ByteCountNotDivisibleBy4(Int)
-  DimensionsVsPixelCount(Int, Int, Int, Int)
+  ByteCountNotDivisibleBy4(Int32)
+  DimensionsVsPixelCount(Int32, Int32, Int32, Int32)
 } derive(Debug)
 
 ///|
 pub struct Icon {
-  priv height : Int
+  priv height : Int32
   priv rgba : Bytes
-  priv width : Int
+  priv width : Int32
 } derive(Eq, Debug)
 
 ///|
 pub fn Icon::Icon(
   rgba : Bytes,
-  width : Int,
-  height : Int,
+  width : Int32,
+  height : Int32,
 ) -> Icon raise BadIcon {
   if rgba.length() % 4 != 0 {
     raise ByteCountNotDivisibleBy4(rgba.length())
@@ -848,12 +848,12 @@ pub fn Icon::Icon(
 }
 
 ///|
-pub fn Icon::width(self : Icon) -> Int {
+pub fn Icon::width(self : Icon) -> Int32 {
   self.width
 }
 
 ///|
-pub fn Icon::height(self : Icon) -> Int {
+pub fn Icon::height(self : Icon) -> Int32 {
   self.height
 }
 
@@ -923,16 +923,16 @@ pub fn WindowButtons::minimize(self : WindowButtons) -> Bool {
 
 ///|
 pub struct WindowId {
-  priv raw : Int
+  priv raw : Int32
 } derive(Eq, Debug)
 
 ///|
-pub fn WindowId::from_raw(raw : Int) -> WindowId {
+pub fn WindowId::from_raw(raw : Int32) -> WindowId {
   { raw, }
 }
 
 ///|
-pub fn WindowId::into_raw(self : WindowId) -> Int {
+pub fn WindowId::into_raw(self : WindowId) -> Int32 {
   self.raw
 }
 

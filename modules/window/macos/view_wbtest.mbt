@@ -21,7 +21,7 @@ test "native view state query reads moonbit ime state" {
   reset_view_state_for_test()
 
   let raw_id = 17
-  let window_handle = (91 : Int).to_uint64()
+  let window_handle = (91 : Int32).to_uint64()
   app_state_register_window_identity_for_test(raw_id, window_handle)
   set_window_ime_allowed_state(window_handle, true)
   set_window_ime_cursor_area_state(window_handle, 12, 34, 0, -5)
@@ -72,7 +72,7 @@ test "native view state query reads accepts first mouse from moonbit" {
   reset_view_state_for_test()
 
   let raw_id = 19
-  let window_handle = (93 : Int).to_uint64()
+  let window_handle = (93 : Int32).to_uint64()
   app_state_register_window_identity_for_test(raw_id, window_handle)
 
   assert_eq(
@@ -150,18 +150,18 @@ test "pending_key_snapshot_forwards_pressed_keyboard_input" {
     0.0,
     0.0,
     0,
-    (0 : Int).to_uint64(),
-    (0 : Int).to_uint64(),
-    (0 : Int).to_uint64(),
+    (0 : Int32).to_uint64(),
+    (0 : Int32).to_uint64(),
+    (0 : Int32).to_uint64(),
   )
   native_callback_text_input_event(
     raw_id,
     21,
     0,
-    (0 : Int).to_uint64(),
+    (0 : Int32).to_uint64(),
     0,
     0,
-    (0 : Int).to_uint64(),
+    (0 : Int32).to_uint64(),
   )
 
   assert_eq(app_state_deferred_callback_count_for_test(), 1)

@@ -7,12 +7,12 @@
 // normal value paths.
 
 ///|
-fn consume_event_loop_proxy(_proxy : EventLoopProxy) -> Unit {
+fn consume_event_loop_proxy(_proxy : @macos.EventLoopProxy) -> Unit {
   ()
 }
 
 ///|
-fn consume_window(_window : Window) -> Unit {
+fn consume_window(_window : @macos.Window) -> Unit {
   ()
 }
 
@@ -48,12 +48,12 @@ fn consume_custom_cursor(_cursor : @core.CustomCursor) -> Unit {
 
 ///|
 test "event_loop_proxy_send" {
-  let _ : (EventLoopProxy) -> Unit = consume_event_loop_proxy
+  let _ : (@macos.EventLoopProxy) -> Unit = consume_event_loop_proxy
 }
 
 ///|
 test "window_send" {
-  let _ : (Window) -> Unit = consume_window
+  let _ : (@macos.Window) -> Unit = consume_window
 }
 
 ///|
@@ -64,31 +64,31 @@ test "window_builder_send" {
 ///|
 test "ids_send" {
   consume_window_id(@core.WindowId::from_raw(1))
-  consume_device_id(@core.DeviceId::from_raw((1 : Int).to_int64()))
+  consume_device_id(@core.DeviceId::from_raw((1 : Int32).to_int64()))
   let _ : (@core.MonitorHandle) -> Unit = consume_monitor_handle
 }
 
 ///|
 test "custom_cursor_send" {
   let source = @core.CustomCursorSource::Rgba(
-    Bytes::make(4, (0 : Int).to_byte()),
+    Bytes::make(4, (0 : Int32).to_byte()),
     1,
     1,
     0,
     0,
   )
   consume_custom_cursor_source(source)
-  consume_custom_cursor(@core.CustomCursor::from_raw((1 : Int).to_uint64()))
+  consume_custom_cursor(@core.CustomCursor::from_raw((1 : Int32).to_uint64()))
 }
 
 ///|
 test "event_loop_proxy_sync" {
-  let _ : (EventLoopProxy) -> Unit = consume_event_loop_proxy
+  let _ : (@macos.EventLoopProxy) -> Unit = consume_event_loop_proxy
 }
 
 ///|
 test "window_sync" {
-  let _ : (Window) -> Unit = consume_window
+  let _ : (@macos.Window) -> Unit = consume_window
 }
 
 ///|
@@ -99,12 +99,12 @@ test "window_builder_sync" {
 ///|
 test "custom_cursor_sync" {
   let source = @core.CustomCursorSource::Rgba(
-    Bytes::make(4, (0 : Int).to_byte()),
+    Bytes::make(4, (0 : Int32).to_byte()),
     1,
     1,
     0,
     0,
   )
   consume_custom_cursor_source(source)
-  consume_custom_cursor(@core.CustomCursor::from_raw((1 : Int).to_uint64()))
+  consume_custom_cursor(@core.CustomCursor::from_raw((1 : Int32).to_uint64()))
 }

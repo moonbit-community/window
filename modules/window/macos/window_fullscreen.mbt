@@ -292,7 +292,7 @@ fn Window::exit_exclusive_fullscreen(self : Window) -> Bool {
         None => ()
       }
   }
-  set_window_exclusive_runtime_state(raw_id, false, (0 : Int).to_uint64())
+  set_window_exclusive_runtime_state(raw_id, false, (0 : Int32).to_uint64())
   match saved_style_mask {
     Some(style_mask) => set_window_style_mask_bits(raw_id, style_mask)
     None => ()
@@ -321,15 +321,15 @@ fn Window::exit_exclusive_fullscreen(self : Window) -> Bool {
 
 ///|
 fn fullscreen_removed_style_bits() -> UInt64 {
-  (13 : Int).to_uint64()
+  (13 : Int32).to_uint64()
 }
 
 ///|
 fn simple_fullscreen_presentation_options(borderless_game : Bool) -> UInt64 {
   if borderless_game {
-    (10 : Int).to_uint64()
+    (10 : Int32).to_uint64()
   } else {
-    (5 : Int).to_uint64()
+    (5 : Int32).to_uint64()
   }
 }
 
@@ -367,10 +367,10 @@ fn set_application_presentation_options(options : UInt64) -> Unit {
 ///|
 fn find_display_mode_handle(
   monitor_id : UInt64,
-  width : Int,
-  height : Int,
-  bit_depth : Int,
-  refresh_rate_millihertz : Int,
+  width : Int32,
+  height : Int32,
+  bit_depth : Int32,
+  refresh_rate_millihertz : Int32,
 ) -> NativeDisplayMode {
   native_find_display_mode_handle(
     monitor_id, width, height, bit_depth, refresh_rate_millihertz,
@@ -417,7 +417,7 @@ fn set_window_exclusive_runtime_state(
   display_id : UInt64,
 ) -> Unit {
   let _ = display_id
-  if registered_native_handle(window_handle) != (0 : Int).to_uint64() {
+  if registered_native_handle(window_handle) != (0 : Int32).to_uint64() {
     native_window_set_movable(window_handle, exclusive_fullscreen == false)
   }
 }
@@ -427,7 +427,7 @@ fn set_window_borderless_game(
   window_handle : NativeWindow,
   borderless_game : Bool,
 ) -> Unit {
-  if registered_native_handle(window_handle) != (0 : Int).to_uint64() &&
+  if registered_native_handle(window_handle) != (0 : Int32).to_uint64() &&
     native_window_is_fullscreen(window_handle) {
     set_application_presentation_options(
       simple_fullscreen_presentation_options(borderless_game),
@@ -441,7 +441,7 @@ fn set_window_fullscreen(
   fullscreen : Bool,
 ) -> Unit {
   let native_handle = registered_native_handle(window_handle)
-  if native_handle == (0 : Int).to_uint64() {
+  if native_handle == (0 : Int32).to_uint64() {
     return ()
   }
   let window_identity = native_window_identity(window_handle)

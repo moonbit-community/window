@@ -5,22 +5,24 @@
 
 ///|
 test "window_serde" {
-  let icon = CursorIcon::Default
+  let icon = @core.CursorIcon::Default
   assert_true("\{icon}" != "")
 }
 
 ///|
 test "events_serde" {
-  let phase = TouchPhase::Moved
-  let state = ElementState::Pressed
-  let button = MouseButton::Left
-  let delta = MouseScrollDelta::LineDelta(1.0, -1.0)
-  let key = Key::Character("a")
-  let named = NamedKey::Escape
-  let code = KeyCode::KeyA
-  let physical = PhysicalKey::Code(code)
-  let location = KeyLocation::Standard
-  let modifiers = ModifiersState::shift().union(ModifiersState::alt())
+  let phase = @core.TouchPhase::Moved
+  let state = @core.ElementState::Pressed
+  let button = @core.MouseButton::Left
+  let delta = @core.MouseScrollDelta::LineDelta(1.0, -1.0)
+  let key = @core.Key::Character("a")
+  let named = @core.NamedKey::Escape
+  let code = @core.KeyCode::KeyA
+  let physical = @core.PhysicalKey::Code(code)
+  let location = @core.KeyLocation::Standard
+  let modifiers = @core.ModifiersState::shift().union(
+    @core.ModifiersState::alt(),
+  )
 
   let _ = "\{phase}"
   let _ = "\{state}"

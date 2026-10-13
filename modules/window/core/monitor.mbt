@@ -1,15 +1,15 @@
 ///|
 pub struct VideoMode {
-  priv bit_depth_ : Int?
-  priv refresh_rate_millihertz_ : Int?
+  priv bit_depth_ : Int32?
+  priv refresh_rate_millihertz_ : Int32?
   priv surface_size_ : @dpi.PhysicalSize
 } derive(Eq, Debug)
 
 ///|
 pub fn VideoMode::VideoMode(
   surface_size : @dpi.PhysicalSize,
-  bit_depth : Int?,
-  refresh_rate_millihertz : Int?,
+  bit_depth : Int32?,
+  refresh_rate_millihertz : Int32?,
 ) -> VideoMode {
   {
     bit_depth_: bit_depth,
@@ -24,12 +24,12 @@ pub fn VideoMode::surface_size(self : VideoMode) -> @dpi.PhysicalSize {
 }
 
 ///|
-pub fn VideoMode::bit_depth(self : VideoMode) -> Int? {
+pub fn VideoMode::bit_depth(self : VideoMode) -> Int32? {
   self.bit_depth_
 }
 
 ///|
-pub fn VideoMode::refresh_rate_millihertz(self : VideoMode) -> Int? {
+pub fn VideoMode::refresh_rate_millihertz(self : VideoMode) -> Int32? {
   self.refresh_rate_millihertz_
 }
 

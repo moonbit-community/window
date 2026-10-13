@@ -34,7 +34,7 @@ fn clear_all_window_fullscreen_state() -> Unit {
 }
 
 ///|
-fn maximized_standard_frame_index(window_handle : UInt64) -> Int? {
+fn maximized_standard_frame_index(window_handle : UInt64) -> Int32? {
   let window_identity = window_handle
   maximized_standard_frame_entries.val.search_by(entry => {
     entry.window_handle == window_identity
@@ -75,7 +75,7 @@ fn clear_maximized_standard_frame_state(window_handle : UInt64) -> Unit {
 }
 
 ///|
-fn fullscreen_transition_index(window_handle : UInt64) -> Int? {
+fn fullscreen_transition_index(window_handle : UInt64) -> Int32? {
   let window_identity = window_handle
   fullscreen_transition_entries.val.search_by(entry => {
     entry.window_handle == window_identity
@@ -83,7 +83,7 @@ fn fullscreen_transition_index(window_handle : UInt64) -> Int? {
 }
 
 ///|
-fn fullscreen_transition_ensure_index(window_handle : UInt64) -> Int {
+fn fullscreen_transition_ensure_index(window_handle : UInt64) -> Int32 {
   match fullscreen_transition_index(window_handle) {
     Some(index) => index
     None => {

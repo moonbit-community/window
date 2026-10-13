@@ -106,7 +106,7 @@ pub struct XlibWindowHandle {
 ///|
 pub fn XlibWindowHandle::new(
   window : UInt64,
-  visual_id? : UInt64 = 0UL,
+  visual_id~ : UInt64 = 0UL,
 ) -> XlibWindowHandle raise HandleError {
   guard window != 0UL else { raise Unavailable }
   { window_: window, visual_id_: visual_id, }
@@ -125,13 +125,13 @@ pub fn XlibWindowHandle::visual_id(self : XlibWindowHandle) -> UInt64 {
 ///|
 pub struct XlibDisplayHandle {
   priv display_ : UInt64?
-  priv screen_ : Int
+  priv screen_ : Int32
 } derive(Eq, Debug)
 
 ///|
 pub fn XlibDisplayHandle::new(
   display : UInt64?,
-  screen : Int,
+  screen : Int32,
 ) -> XlibDisplayHandle {
   { display_: display, screen_: screen, }
 }
@@ -142,45 +142,45 @@ pub fn XlibDisplayHandle::display(self : XlibDisplayHandle) -> UInt64? {
 }
 
 ///|
-pub fn XlibDisplayHandle::screen(self : XlibDisplayHandle) -> Int {
+pub fn XlibDisplayHandle::screen(self : XlibDisplayHandle) -> Int32 {
   self.screen_
 }
 
 ///|
 pub struct XcbWindowHandle {
-  priv window_ : UInt
-  priv visual_id_ : UInt?
+  priv window_ : UInt32
+  priv visual_id_ : UInt32?
 } derive(Eq, Debug)
 
 ///|
 pub fn XcbWindowHandle::new(
-  window : UInt,
-  visual_id? : UInt,
+  window : UInt32,
+  visual_id? : UInt32,
 ) -> XcbWindowHandle raise HandleError {
   guard window != 0U else { raise Unavailable }
   { window_: window, visual_id_: visual_id, }
 }
 
 ///|
-pub fn XcbWindowHandle::window(self : XcbWindowHandle) -> UInt {
+pub fn XcbWindowHandle::window(self : XcbWindowHandle) -> UInt32 {
   self.window_
 }
 
 ///|
-pub fn XcbWindowHandle::visual_id(self : XcbWindowHandle) -> UInt? {
+pub fn XcbWindowHandle::visual_id(self : XcbWindowHandle) -> UInt32? {
   self.visual_id_
 }
 
 ///|
 pub struct XcbDisplayHandle {
   priv connection_ : UInt64?
-  priv screen_ : Int
+  priv screen_ : Int32
 } derive(Eq, Debug)
 
 ///|
 pub fn XcbDisplayHandle::new(
   connection : UInt64?,
-  screen : Int,
+  screen : Int32,
 ) -> XcbDisplayHandle {
   { connection_: connection, screen_: screen, }
 }
@@ -191,7 +191,7 @@ pub fn XcbDisplayHandle::connection(self : XcbDisplayHandle) -> UInt64? {
 }
 
 ///|
-pub fn XcbDisplayHandle::screen(self : XcbDisplayHandle) -> Int {
+pub fn XcbDisplayHandle::screen(self : XcbDisplayHandle) -> Int32 {
   self.screen_
 }
 

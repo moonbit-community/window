@@ -3,8 +3,8 @@ test "custom cursor rejects extreme negative dimensions without overflow" {
   let min_int = -2147483647 - 1
   let rejected_safely = try {
     ignore(
-      CustomCursorSource::from_rgba(
-        Bytes::make(4, (0 : Int).to_byte()),
+      @core.CustomCursorSource::from_rgba(
+        Bytes::make(4, (0 : Int32).to_byte()),
         min_int,
         -1,
         0,
@@ -21,9 +21,13 @@ test "custom cursor rejects extreme negative dimensions without overflow" {
 }
 
 ///|
-fn is_cursor_bad_position(text : String, cursor : Int, anchor : Int) -> Bool {
+fn is_cursor_bad_position(
+  text : String,
+  cursor : Int32,
+  anchor : Int32,
+) -> Bool {
   try {
-    ignore(ImeSurroundingText::ImeSurroundingText(text, cursor, anchor))
+    ignore(@core.ImeSurroundingText::ImeSurroundingText(text, cursor, anchor))
     false
   } catch {
     CursorBadPosition => true
@@ -37,67 +41,72 @@ test "ime_initial_request_caps_match" {
   let size : @dpi.Size = @dpi.LogicalSize::LogicalSize(0.0, 0.0).into_size()
 
   assert_true(
-    ImeEnableRequest::from_capabilities(
-      ImeCapabilities::default().with_cursor_area(),
-      ImeRequestData::default(),
+    @core.ImeEnableRequest::from_capabilities(
+      @core.ImeCapabilities::default().with_cursor_area(),
+      @core.ImeRequestData::default(),
     ) ==
     None,
   )
   assert_true(
-    ImeEnableRequest::from_capabilities(
-      ImeCapabilities::default().with_hint_and_purpose(),
-      ImeRequestData::default(),
+    @core.ImeEnableRequest::from_capabilities(
+      @core.ImeCapabilities::default().with_hint_and_purpose(),
+      @core.ImeRequestData::default(),
     ) ==
     None,
   )
   assert_true(
-    ImeEnableRequest::from_capabilities(
-      ImeCapabilities::default().with_cursor_area(),
-      ImeRequestData::default().with_hint_and_purpose(ImeHint::none(), Normal),
+    @core.ImeEnableRequest::from_capabilities(
+      @core.ImeCapabilities::default().with_cursor_area(),
+      @core.ImeRequestData::default().with_hint_and_purpose(
+        @core.ImeHint::none(),
+        Normal,
+      ),
     ) ==
     None,
   )
   assert_true(
-    ImeEnableRequest::from_capabilities(
-      ImeCapabilities::default(),
-      ImeRequestData::default()
-      .with_hint_and_purpose(ImeHint::none(), Normal)
+    @core.ImeEnableRequest::from_capabilities(
+      @core.ImeCapabilities::default(),
+      @core.ImeRequestData::default()
+      .with_hint_and_purpose(@core.ImeHint::none(), Normal)
       .with_cursor_area(position, size),
     ) ==
     None,
   )
   assert_true(
-    ImeEnableRequest::from_capabilities(
-      ImeCapabilities::default().with_cursor_area(),
-      ImeRequestData::default()
-      .with_hint_and_purpose(ImeHint::none(), Normal)
+    @core.ImeEnableRequest::from_capabilities(
+      @core.ImeCapabilities::default().with_cursor_area(),
+      @core.ImeRequestData::default()
+      .with_hint_and_purpose(@core.ImeHint::none(), Normal)
       .with_cursor_area(position, size),
     ) ==
     None,
   )
   assert_true(
-    ImeEnableRequest::from_capabilities(
-      ImeCapabilities::default().with_cursor_area(),
-      ImeRequestData::default().with_cursor_area(position, size),
+    @core.ImeEnableRequest::from_capabilities(
+      @core.ImeCapabilities::default().with_cursor_area(),
+      @core.ImeRequestData::default().with_cursor_area(position, size),
     )
     is Some(_),
   )
   assert_true(
-    ImeEnableRequest::from_capabilities(
-      ImeCapabilities::default().with_hint_and_purpose().with_cursor_area(),
-      ImeRequestData::default()
-      .with_hint_and_purpose(ImeHint::none(), Normal)
+    @core.ImeEnableRequest::from_capabilities(
+      @core.ImeCapabilities::default()
+      .with_hint_and_purpose()
+      .with_cursor_area(),
+      @core.ImeRequestData::default()
+      .with_hint_and_purpose(@core.ImeHint::none(), Normal)
       .with_cursor_area(position, size),
     )
     is Some(_),
   )
 
   let long_text = try! @utf8.decode(
-    Bytes::make(8000, (97 : Int).to_byte())[:],
+    Bytes::make(8000, (97 : Int32).to_byte())[:],
     ignore_bom=false,
   )
   let text_too_long = try {
-    ignore(ImeSurroundingText::ImeSurroundingText(long_text, 0, 0))
+    ignore(@core.ImeSurroundingText::ImeSurroundingText(long_text, 0, 0))
     false
   } catch {
     TextTooLong => true
@@ -111,7 +120,7 @@ test "ime_initial_request_caps_match" {
 
 ///|
 test "window_attributes_name_skip_taskbar_clip_children" {
-  let attrs = WindowAttributes::default()
+  let attrs = @core.WindowAttributes::default()
   assert_true(attrs.name() == None)
   assert_false(attrs.skip_taskbar())
   assert_true(attrs.clip_children())
@@ -130,7 +139,7 @@ test "window_attributes_name_skip_taskbar_clip_children" {
 test "parent windows preserve structured raw handles" {
   let appkit = try! @windowing.AppKitWindowHandle::new(42UL)
   let raw : @windowing.RawWindowHandle = AppKit(appkit)
-  let parent = ParentWindow::from_raw(raw)
+  let parent = @core.ParentWindow::from_raw(raw)
   assert_eq(parent.into_raw(), raw)
 }
 
@@ -151,7 +160,7 @@ impl WindowCursorHittest for DummyCursorHittestWindow with fn set_cursor_hittest
 fn[T : WindowCursorHittest] set_cursor_hittest_generic(
   window : T,
   hittest : Bool,
-) -> Unit raise RequestError {
+) -> Unit raise @core.RequestError {
   window.set_cursor_hittest(hittest)
 }
 
@@ -166,7 +175,7 @@ test "window_cursor_hittest_trait_usage" {
 
 ///|
 test "request_error_structured_payload" {
-  let unsupported = RequestError::not_supported(
+  let unsupported = @core.RequestError::not_supported(
     "Confined cursor grab is unavailable",
   )
   guard unsupported is NotSupported(not_supported) else {
@@ -178,7 +187,7 @@ test "request_error_structured_payload" {
     "Operation is not supported: Confined cursor grab is unavailable",
   )
 
-  let os_error = RequestError::os(
+  let os_error = @core.RequestError::os(
     "NSWindow cursor update failed",
     code=1001,
     domain="NSCocoaErrorDomain",
@@ -192,7 +201,7 @@ test "request_error_structured_payload" {
     "os error: NSWindow cursor update failed (domain=NSCocoaErrorDomain, code=1001)",
   )
 
-  let os_error_without_code = RequestError::os("Unknown AppKit failure")
+  let os_error_without_code = @core.RequestError::os("Unknown AppKit failure")
   guard os_error_without_code is Os(os_no_code) else {
     fail("expected RequestError::Os payload")
   }

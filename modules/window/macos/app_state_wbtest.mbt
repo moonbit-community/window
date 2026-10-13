@@ -23,7 +23,7 @@ fn app_state_deferred_callbacks_for_test() -> Array[DeferredCallback] {
 }
 
 ///|
-fn app_state_deferred_callback_for_test(index : Int) -> DeferredCallback? {
+fn app_state_deferred_callback_for_test(index : Int32) -> DeferredCallback? {
   if index < 0 || index >= app_state_deferred_callbacks_for_test().length() {
     None
   } else {
@@ -32,13 +32,13 @@ fn app_state_deferred_callback_for_test(index : Int) -> DeferredCallback? {
 }
 
 ///|
-fn app_state_deferred_callback_count_for_test() -> Int {
+fn app_state_deferred_callback_count_for_test() -> Int32 {
   app_state_deferred_callbacks_for_test().length()
 }
 
 ///|
 fn app_state_register_window_identity_for_test(
-  raw_id : Int,
+  raw_id : Int32,
   identity : UInt64,
 ) -> Unit {
   app_state_runtime.val.window_handles.push({
@@ -61,7 +61,7 @@ fn app_state_deferred_callback_names_for_test() -> Array[String] {
 }
 
 ///|
-fn app_state_pending_redraw_window_ids_for_test() -> Array[Int] {
+fn app_state_pending_redraw_window_ids_for_test() -> Array[Int32] {
   app_state_runtime.val.pending_redraw_window_ids
 }
 
@@ -162,26 +162,26 @@ pub impl ApplicationHandler for LaunchInitCallbacksApp with fn can_create_surfac
 test "min_timeout_handles_none_and_picks_smaller_timeout" {
   assert_true(min_timeout_ms(None, None) == None)
   assert_true(
-    min_timeout_ms(Some((10 : Int).to_int64()), None) ==
-    Some((10 : Int).to_int64()),
+    min_timeout_ms(Some((10 : Int32).to_int64()), None) ==
+    Some((10 : Int32).to_int64()),
   )
   assert_true(
-    min_timeout_ms(None, Some((20 : Int).to_int64())) ==
-    Some((20 : Int).to_int64()),
+    min_timeout_ms(None, Some((20 : Int32).to_int64())) ==
+    Some((20 : Int32).to_int64()),
   )
   assert_true(
-    min_timeout_ms(Some((30 : Int).to_int64()), Some((20 : Int).to_int64())) ==
-    Some((20 : Int).to_int64()),
+    min_timeout_ms(Some((30 : Int32).to_int64()), Some((20 : Int32).to_int64())) ==
+    Some((20 : Int32).to_int64()),
   )
   assert_true(
-    min_timeout_ms(Some((5 : Int).to_int64()), Some((20 : Int).to_int64())) ==
-    Some((5 : Int).to_int64()),
+    min_timeout_ms(Some((5 : Int32).to_int64()), Some((20 : Int32).to_int64())) ==
+    Some((5 : Int32).to_int64()),
   )
 }
 
 ///|
 test "queue_unique_window_id_is_deduplicated" {
-  let ids : Array[Int] = []
+  let ids : Array[Int32] = []
   app_state_queue_unique_window_id(ids, 7)
   app_state_queue_unique_window_id(ids, 7)
   app_state_queue_unique_window_id(ids, 8)
@@ -195,7 +195,7 @@ test "queue_unique_window_id_is_deduplicated" {
 ///|
 test "wait_cause_matches_control_flow" {
   reset_app_state_runtime_for_test()
-  let start = runtime_now_ms() - (100 : Int).to_int64()
+  let start = runtime_now_ms() - (100 : Int32).to_int64()
   app_state_set_start_time_for_test(Some(start))
 
   app_state_set_control_flow(Poll)
@@ -204,11 +204,11 @@ test "wait_cause_matches_control_flow" {
   app_state_set_control_flow(Wait)
   assert_eq(app_state_wait_cause(), WaitCancelled(start, None))
 
-  let future = runtime_now_ms() + (2000 : Int).to_int64()
+  let future = runtime_now_ms() + (2000 : Int32).to_int64()
   app_state_set_control_flow(WaitUntil(future))
   assert_eq(app_state_wait_cause(), WaitCancelled(start, Some(future)))
 
-  let past = runtime_now_ms() - (2000 : Int).to_int64()
+  let past = runtime_now_ms() - (2000 : Int32).to_int64()
   app_state_set_control_flow(WaitUntil(past))
   assert_eq(app_state_wait_cause(), ResumeTimeReached(start, past))
 }
@@ -290,7 +290,7 @@ test "internal_exit_preserves_stop_on_launch_flag" {
   reset_app_state_runtime_for_test()
   app_state_set_stop_on_launch(true)
   app_state_set_running(true)
-  set_window_fullscreen_transition_state((901 : Int).to_uint64(), true)
+  set_window_fullscreen_transition_state((901 : Int32).to_uint64(), true)
 
   app_state_internal_exit()
 
@@ -427,8 +427,8 @@ test "after_waiting_dispatches_new_events_with_wait_cause" {
       _ => ()
     }
   })
-  let start = runtime_now_ms() - (20 : Int).to_int64()
-  let requested_resume = runtime_now_ms() + (2000 : Int).to_int64()
+  let start = runtime_now_ms() - (20 : Int32).to_int64()
+  let requested_resume = runtime_now_ms() + (2000 : Int32).to_int64()
   app_state_set_start_time_for_test(Some(start))
   app_state_set_control_flow(WaitUntil(requested_resume))
 
@@ -490,7 +490,7 @@ test "after_waiting_noops_without_dispatch_handler" {
   reset_app_state_runtime_for_test()
   app_state_set_running(true)
   app_state_set_handler_in_use(false)
-  app_state_set_start_time_for_test(Some((42 : Int).to_int64()))
+  app_state_set_start_time_for_test(Some((42 : Int32).to_int64()))
   app_state_set_control_flow(Poll)
 
   app_state_on_after_waiting()

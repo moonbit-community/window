@@ -1,22 +1,22 @@
 ///|
 pub(all) enum NativeKeyCode {
   Unidentified
-  Android(Int)
-  MacOS(Int)
-  Windows(Int)
-  Xkb(Int)
-  Ohos(Int)
+  Android(Int32)
+  MacOS(Int32)
+  Windows(Int32)
+  Xkb(Int32)
+  Ohos(Int32)
 } derive(Eq, Debug)
 
 ///|
 pub(all) enum NativeKey {
   Unidentified
-  Android(Int)
-  MacOS(Int)
-  Windows(Int)
-  Xkb(Int)
+  Android(Int32)
+  MacOS(Int32)
+  Windows(Int32)
+  Xkb(Int32)
   Web(String)
-  Ohos(Int)
+  Ohos(Int32)
 } derive(Eq, Debug)
 
 ///|

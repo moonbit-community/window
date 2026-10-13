@@ -17,7 +17,7 @@ fn registered_native_handle(window_handle : NativeWindow) -> UInt64 {
 }
 
 ///|
-fn clamp_size(size : Int) -> Int {
+fn clamp_size(size : Int32) -> Int32 {
   if size <= 0 {
     1
   } else {
@@ -30,11 +30,11 @@ fn native_window_apply_cursor_obj(
   handle : NativeWindow,
   cursor_obj : UInt64,
 ) -> Bool {
-  if cursor_obj == (0 : Int).to_uint64() {
+  if cursor_obj == (0 : Int32).to_uint64() {
     return false
   }
   let content_view = native_window_content_view_objc_handle(handle)
-  if content_view == (0 : Int).to_uint64() {
+  if content_view == (0 : Int32).to_uint64() {
     return false
   }
   appkit_objc_msg_send_void(cursor_obj, objc_runtime_selector_handle("set"))
@@ -69,8 +69,8 @@ fn native_window_set_custom_cursor(
   custom_cursor : UInt64,
 ) -> Bool {
   let ns_cursor_class = objc_runtime_class_handle("NSCursor")
-  if custom_cursor == (0 : Int).to_uint64() ||
-    ns_cursor_class == (0 : Int).to_uint64() {
+  if custom_cursor == (0 : Int32).to_uint64() ||
+    ns_cursor_class == (0 : Int32).to_uint64() {
     return false
   }
   if appkit_objc_msg_send_bool_u64(
@@ -101,7 +101,7 @@ fn native_window_cursor_visible(handle : NativeWindow) -> Bool {
 }
 
 ///|
-fn native_window_set_cursor_grab(handle : NativeWindow, mode : Int) -> Int {
+fn native_window_set_cursor_grab(handle : NativeWindow, mode : Int32) -> Int32 {
   ignore(handle)
   if mode == 0 {
     native_cg_associate_mouse_and_mouse_cursor_position(true)
@@ -115,11 +115,11 @@ fn native_window_set_cursor_grab(handle : NativeWindow, mode : Int) -> Int {
 ///|
 fn native_window_set_cursor_position(
   handle : NativeWindow,
-  x : Int,
-  y : Int,
-) -> Int {
+  x : Int32,
+  y : Int32,
+) -> Int32 {
   let window = native_window_objc_handle(handle)
-  if window == (0 : Int).to_uint64() {
+  if window == (0 : Int32).to_uint64() {
     return -1
   }
   let frame_selector = objc_runtime_selector_handle("frame")
@@ -153,7 +153,7 @@ fn native_window_set_cursor_position(
 ///|
 fn native_window_set_maximized(handle : NativeWindow, maximized : Bool) -> Unit {
   let window = native_window_objc_handle(handle)
-  if window == (0 : Int).to_uint64() {
+  if window == (0 : Int32).to_uint64() {
     return ()
   }
   let is_zoomed = native_window_is_maximized(handle)
@@ -162,11 +162,11 @@ fn native_window_set_maximized(handle : NativeWindow, maximized : Bool) -> Unit 
   }
 
   let style_mask = native_window_style_mask(handle)
-  if (style_mask & (8 : Int).to_uint64()) != (0 : Int).to_uint64() {
+  if (style_mask & (8 : Int32).to_uint64()) != (0 : Int32).to_uint64() {
     appkit_objc_msg_send_void_u64(
       window,
       objc_runtime_selector_handle("zoom:"),
-      (0 : Int).to_uint64(),
+      (0 : Int32).to_uint64(),
     )
     return ()
   }
@@ -187,16 +187,16 @@ fn native_window_set_maximized(handle : NativeWindow, maximized : Bool) -> Unit 
       window,
       objc_runtime_selector_handle("screen"),
     )
-    if screen == (0 : Int).to_uint64() {
+    if screen == (0 : Int32).to_uint64() {
       let ns_screen_class = objc_runtime_class_handle("NSScreen")
-      if ns_screen_class != (0 : Int).to_uint64() {
+      if ns_screen_class != (0 : Int32).to_uint64() {
         screen = appkit_objc_msg_send_u64(
           ns_screen_class,
           objc_runtime_selector_handle("mainScreen"),
         )
       }
     }
-    if screen != (0 : Int).to_uint64() {
+    if screen != (0 : Int32).to_uint64() {
       let visible_frame = objc_runtime_selector_handle("visibleFrame")
       appkit_objc_msg_send_void_rect_bool(
         window,
@@ -230,15 +230,15 @@ fn native_window_set_maximized(handle : NativeWindow, maximized : Bool) -> Unit 
 }
 
 ///|
-fn native_create_window(width : Int, height : Int) -> NativeWindow {
+fn native_create_window(width : Int32, height : Int32) -> NativeWindow {
   appkit_create_window(width, height)
 }
 
 ///|
 fn native_application_presentation_options() -> UInt64 {
   let app = native_application_shared_handle()
-  if app == (0 : Int).to_uint64() {
-    return (0 : Int).to_uint64()
+  if app == (0 : Int32).to_uint64() {
+    return (0 : Int32).to_uint64()
   }
   appkit_objc_msg_send_u64(
     app,
@@ -249,7 +249,7 @@ fn native_application_presentation_options() -> UInt64 {
 ///|
 fn native_set_application_presentation_options(options : UInt64) -> Unit {
   let app = native_application_shared_handle()
-  if app == (0 : Int).to_uint64() {
+  if app == (0 : Int32).to_uint64() {
     return ()
   }
   appkit_objc_msg_send_void_u64(
@@ -262,7 +262,7 @@ fn native_set_application_presentation_options(options : UInt64) -> Unit {
 ///|
 fn window_title(window_handle : NativeWindow) -> String {
   let native_handle = registered_native_handle(window_handle)
-  if native_handle == (0 : Int).to_uint64() {
+  if native_handle == (0 : Int32).to_uint64() {
     ""
   } else {
     native_window_title(window_handle)
@@ -272,7 +272,7 @@ fn window_title(window_handle : NativeWindow) -> String {
 ///|
 fn window_tabbing_identifier(window_handle : NativeWindow) -> String {
   let native_handle = registered_native_handle(window_handle)
-  if native_handle == (0 : Int).to_uint64() {
+  if native_handle == (0 : Int32).to_uint64() {
     ""
   } else {
     native_window_tabbing_identifier(window_handle)
@@ -285,7 +285,7 @@ fn is_main_thread() -> Bool {
 }
 
 ///|
-fn create_window(width : Int, height : Int) -> NativeWindow {
+fn create_window(width : Int32, height : Int32) -> NativeWindow {
   let initial_width = clamp_size(width)
   let initial_height = clamp_size(height)
   native_create_window(initial_width, initial_height)
@@ -294,11 +294,11 @@ fn create_window(width : Int, height : Int) -> NativeWindow {
 ///|
 fn native_window_set_title(handle : NativeWindow, title : String) -> Unit {
   let window = native_window_objc_handle(handle)
-  if window == (0 : Int).to_uint64() {
+  if window == (0 : Int32).to_uint64() {
     return ()
   }
   let title_string = objc_nsstring_from_string(title)
-  if title_string != (0 : Int).to_uint64() {
+  if title_string != (0 : Int32).to_uint64() {
     appkit_objc_msg_send_void_u64(
       window,
       objc_runtime_selector_handle("setTitle:"),
@@ -310,11 +310,11 @@ fn native_window_set_title(handle : NativeWindow, title : String) -> Unit {
 ///|
 fn native_window_set_name(handle : NativeWindow, name : String) -> Unit {
   let window = native_window_objc_handle(handle)
-  if window == (0 : Int).to_uint64() {
+  if window == (0 : Int32).to_uint64() {
     return ()
   }
   let name_string = objc_nsstring_from_string(name)
-  if name_string == (0 : Int).to_uint64() {
+  if name_string == (0 : Int32).to_uint64() {
     return ()
   }
   let set_identifier = objc_runtime_selector_handle("setIdentifier:")
@@ -329,7 +329,7 @@ fn native_window_set_name(handle : NativeWindow, name : String) -> Unit {
 
 ///|
 fn native_window_set_resizable(handle : NativeWindow, resizable : Bool) -> Unit {
-  let resizable_mask = (8 : Int).to_uint64()
+  let resizable_mask = (8 : Int32).to_uint64()
   if resizable {
     native_window_set_style_mask(
       handle,
@@ -346,7 +346,7 @@ fn native_window_set_skip_taskbar(
   skip_taskbar : Bool,
 ) -> Unit {
   let window = native_window_objc_handle(handle)
-  if window == (0 : Int).to_uint64() {
+  if window == (0 : Int32).to_uint64() {
     return ()
   }
   let set_excluded_from_windows_menu = objc_runtime_selector_handle(
@@ -371,10 +371,10 @@ fn native_window_set_skip_taskbar(
     behavior = behavior | transient_behavior
     behavior = behavior | ignores_cycle_behavior
   } else {
-    if (behavior & transient_behavior) != (0 : Int).to_uint64() {
+    if (behavior & transient_behavior) != (0 : Int32).to_uint64() {
       behavior = behavior - transient_behavior
     }
-    if (behavior & ignores_cycle_behavior) != (0 : Int).to_uint64() {
+    if (behavior & ignores_cycle_behavior) != (0 : Int32).to_uint64() {
       behavior = behavior - ignores_cycle_behavior
     }
   }
@@ -391,7 +391,7 @@ fn native_window_set_clip_children(
   clip_children : Bool,
 ) -> Unit {
   let content_view = native_window_content_view_objc_handle(handle)
-  if content_view == (0 : Int).to_uint64() {
+  if content_view == (0 : Int32).to_uint64() {
     return ()
   }
   appkit_objc_msg_send_void_bool(
@@ -403,7 +403,7 @@ fn native_window_set_clip_children(
     content_view,
     objc_runtime_selector_handle("layer"),
   )
-  if layer != (0 : Int).to_uint64() {
+  if layer != (0 : Int32).to_uint64() {
     appkit_objc_msg_send_void_bool(
       layer,
       objc_runtime_selector_handle("setMasksToBounds:"),
@@ -415,11 +415,11 @@ fn native_window_set_clip_children(
 ///|
 fn native_window_set_content_size(
   handle : NativeWindow,
-  width : Int,
-  height : Int,
+  width : Int32,
+  height : Int32,
 ) -> Unit {
   let window = native_window_objc_handle(handle)
-  if window == (0 : Int).to_uint64() {
+  if window == (0 : Int32).to_uint64() {
     return ()
   }
   appkit_objc_msg_send_void_size(
@@ -441,11 +441,11 @@ fn native_window_set_content_size(
 ///|
 fn native_window_set_min_content_size(
   handle : NativeWindow,
-  width : Int,
-  height : Int,
+  width : Int32,
+  height : Int32,
 ) -> Unit {
   let window = native_window_objc_handle(handle)
-  if window == (0 : Int).to_uint64() {
+  if window == (0 : Int32).to_uint64() {
     return ()
   }
   appkit_objc_msg_send_void_size(
@@ -467,11 +467,11 @@ fn native_window_set_min_content_size(
 ///|
 fn native_window_set_max_content_size(
   handle : NativeWindow,
-  width : Int,
-  height : Int,
+  width : Int32,
+  height : Int32,
 ) -> Unit {
   let window = native_window_objc_handle(handle)
-  if window == (0 : Int).to_uint64() {
+  if window == (0 : Int32).to_uint64() {
     return ()
   }
   let max_value = native_cgfloat_max()
@@ -494,11 +494,11 @@ fn native_window_set_max_content_size(
 ///|
 fn native_window_set_resize_increments(
   handle : NativeWindow,
-  width : Int,
-  height : Int,
+  width : Int32,
+  height : Int32,
 ) -> Unit {
   let window = native_window_objc_handle(handle)
-  if window == (0 : Int).to_uint64() {
+  if window == (0 : Int32).to_uint64() {
     return ()
   }
   appkit_objc_msg_send_void_size(
@@ -540,16 +540,20 @@ fn window_surface_offset_y_from_frame_and_content(
 fn cursor_screen_y_from_content_rect(
   content_y : Double,
   content_height : Double,
-  cursor_y : Int,
+  cursor_y : Int32,
 ) -> Double {
   flip_window_screen_coordinate_y(content_y, content_height) +
   cursor_y.to_double()
 }
 
 ///|
-fn native_window_set_position(handle : NativeWindow, x : Int, y : Int) -> Unit {
+fn native_window_set_position(
+  handle : NativeWindow,
+  x : Int32,
+  y : Int32,
+) -> Unit {
   let window = native_window_objc_handle(handle)
-  if window == (0 : Int).to_uint64() {
+  if window == (0 : Int32).to_uint64() {
     return ()
   }
   let frame_selector = objc_runtime_selector_handle("frame")
@@ -563,9 +567,9 @@ fn native_window_set_position(handle : NativeWindow, x : Int, y : Int) -> Unit {
 }
 
 ///|
-fn native_window_content_width(handle : NativeWindow) -> Int {
+fn native_window_content_width(handle : NativeWindow) -> Int32 {
   let content_view = native_window_content_view_objc_handle(handle)
-  if content_view == (0 : Int).to_uint64() {
+  if content_view == (0 : Int32).to_uint64() {
     return 800
   }
   appkit_objc_msg_send_rect_width(
@@ -575,9 +579,9 @@ fn native_window_content_width(handle : NativeWindow) -> Int {
 }
 
 ///|
-fn native_window_content_height(handle : NativeWindow) -> Int {
+fn native_window_content_height(handle : NativeWindow) -> Int32 {
   let content_view = native_window_content_view_objc_handle(handle)
-  if content_view == (0 : Int).to_uint64() {
+  if content_view == (0 : Int32).to_uint64() {
     return 600
   }
   appkit_objc_msg_send_rect_height(
@@ -587,9 +591,9 @@ fn native_window_content_height(handle : NativeWindow) -> Int {
 }
 
 ///|
-fn native_window_min_content_width(handle : NativeWindow) -> Int {
+fn native_window_min_content_width(handle : NativeWindow) -> Int32 {
   let window = native_window_objc_handle(handle)
-  if window == (0 : Int).to_uint64() {
+  if window == (0 : Int32).to_uint64() {
     return 0
   }
   let width = appkit_objc_msg_send_size_width(
@@ -604,9 +608,9 @@ fn native_window_min_content_width(handle : NativeWindow) -> Int {
 }
 
 ///|
-fn native_window_min_content_height(handle : NativeWindow) -> Int {
+fn native_window_min_content_height(handle : NativeWindow) -> Int32 {
   let window = native_window_objc_handle(handle)
-  if window == (0 : Int).to_uint64() {
+  if window == (0 : Int32).to_uint64() {
     return 0
   }
   let height = appkit_objc_msg_send_size_height(
@@ -621,9 +625,9 @@ fn native_window_min_content_height(handle : NativeWindow) -> Int {
 }
 
 ///|
-fn native_window_max_content_width(handle : NativeWindow) -> Int {
+fn native_window_max_content_width(handle : NativeWindow) -> Int32 {
   let window = native_window_objc_handle(handle)
-  if window == (0 : Int).to_uint64() {
+  if window == (0 : Int32).to_uint64() {
     return 0
   }
   let width = appkit_objc_msg_send_size_width(
@@ -638,9 +642,9 @@ fn native_window_max_content_width(handle : NativeWindow) -> Int {
 }
 
 ///|
-fn native_window_max_content_height(handle : NativeWindow) -> Int {
+fn native_window_max_content_height(handle : NativeWindow) -> Int32 {
   let window = native_window_objc_handle(handle)
-  if window == (0 : Int).to_uint64() {
+  if window == (0 : Int32).to_uint64() {
     return 0
   }
   let height = appkit_objc_msg_send_size_height(
@@ -655,18 +659,18 @@ fn native_window_max_content_height(handle : NativeWindow) -> Int {
 }
 
 ///|
-fn native_window_outer_width(handle : NativeWindow) -> Int {
+fn native_window_outer_width(handle : NativeWindow) -> Int32 {
   let window = native_window_objc_handle(handle)
-  if window == (0 : Int).to_uint64() {
+  if window == (0 : Int32).to_uint64() {
     return 0
   }
   appkit_objc_msg_send_rect_width(window, objc_runtime_selector_handle("frame")).to_int()
 }
 
 ///|
-fn native_window_outer_height(handle : NativeWindow) -> Int {
+fn native_window_outer_height(handle : NativeWindow) -> Int32 {
   let window = native_window_objc_handle(handle)
-  if window == (0 : Int).to_uint64() {
+  if window == (0 : Int32).to_uint64() {
     return 0
   }
   appkit_objc_msg_send_rect_height(
@@ -676,9 +680,9 @@ fn native_window_outer_height(handle : NativeWindow) -> Int {
 }
 
 ///|
-fn native_window_resize_increment_width(handle : NativeWindow) -> Int {
+fn native_window_resize_increment_width(handle : NativeWindow) -> Int32 {
   let window = native_window_objc_handle(handle)
-  if window == (0 : Int).to_uint64() {
+  if window == (0 : Int32).to_uint64() {
     return 0
   }
   let width = appkit_objc_msg_send_size_width(
@@ -693,9 +697,9 @@ fn native_window_resize_increment_width(handle : NativeWindow) -> Int {
 }
 
 ///|
-fn native_window_resize_increment_height(handle : NativeWindow) -> Int {
+fn native_window_resize_increment_height(handle : NativeWindow) -> Int32 {
   let window = native_window_objc_handle(handle)
-  if window == (0 : Int).to_uint64() {
+  if window == (0 : Int32).to_uint64() {
     return 0
   }
   let height = appkit_objc_msg_send_size_height(
@@ -710,9 +714,9 @@ fn native_window_resize_increment_height(handle : NativeWindow) -> Int {
 }
 
 ///|
-fn native_window_safe_area_top(handle : NativeWindow) -> Int {
+fn native_window_safe_area_top(handle : NativeWindow) -> Int32 {
   let content_view = native_window_content_view_objc_handle(handle)
-  if content_view == (0 : Int).to_uint64() {
+  if content_view == (0 : Int32).to_uint64() {
     return 0
   }
   let safe_area_insets = objc_runtime_selector_handle("safeAreaInsets")
@@ -728,9 +732,9 @@ fn native_window_safe_area_top(handle : NativeWindow) -> Int {
 }
 
 ///|
-fn native_window_safe_area_left(handle : NativeWindow) -> Int {
+fn native_window_safe_area_left(handle : NativeWindow) -> Int32 {
   let content_view = native_window_content_view_objc_handle(handle)
-  if content_view == (0 : Int).to_uint64() {
+  if content_view == (0 : Int32).to_uint64() {
     return 0
   }
   let safe_area_insets = objc_runtime_selector_handle("safeAreaInsets")
@@ -746,9 +750,9 @@ fn native_window_safe_area_left(handle : NativeWindow) -> Int {
 }
 
 ///|
-fn native_window_safe_area_bottom(handle : NativeWindow) -> Int {
+fn native_window_safe_area_bottom(handle : NativeWindow) -> Int32 {
   let content_view = native_window_content_view_objc_handle(handle)
-  if content_view == (0 : Int).to_uint64() {
+  if content_view == (0 : Int32).to_uint64() {
     return 0
   }
   let safe_area_insets = objc_runtime_selector_handle("safeAreaInsets")
@@ -764,9 +768,9 @@ fn native_window_safe_area_bottom(handle : NativeWindow) -> Int {
 }
 
 ///|
-fn native_window_safe_area_right(handle : NativeWindow) -> Int {
+fn native_window_safe_area_right(handle : NativeWindow) -> Int32 {
   let content_view = native_window_content_view_objc_handle(handle)
-  if content_view == (0 : Int).to_uint64() {
+  if content_view == (0 : Int32).to_uint64() {
     return 0
   }
   let safe_area_insets = objc_runtime_selector_handle("safeAreaInsets")
@@ -782,18 +786,18 @@ fn native_window_safe_area_right(handle : NativeWindow) -> Int {
 }
 
 ///|
-fn native_window_x(handle : NativeWindow) -> Int {
+fn native_window_x(handle : NativeWindow) -> Int32 {
   let window = native_window_objc_handle(handle)
-  if window == (0 : Int).to_uint64() {
+  if window == (0 : Int32).to_uint64() {
     return 0
   }
   appkit_objc_msg_send_rect_x(window, objc_runtime_selector_handle("frame")).to_int()
 }
 
 ///|
-fn native_window_y(handle : NativeWindow) -> Int {
+fn native_window_y(handle : NativeWindow) -> Int32 {
   let window = native_window_objc_handle(handle)
-  if window == (0 : Int).to_uint64() {
+  if window == (0 : Int32).to_uint64() {
     return 0
   }
   let frame_selector = objc_runtime_selector_handle("frame")
@@ -803,9 +807,9 @@ fn native_window_y(handle : NativeWindow) -> Int {
 }
 
 ///|
-fn native_window_surface_x(handle : NativeWindow) -> Int {
+fn native_window_surface_x(handle : NativeWindow) -> Int32 {
   let window = native_window_objc_handle(handle)
-  if window == (0 : Int).to_uint64() {
+  if window == (0 : Int32).to_uint64() {
     return 0
   }
   let frame_selector = objc_runtime_selector_handle("frame")
@@ -823,9 +827,9 @@ fn native_window_surface_x(handle : NativeWindow) -> Int {
 }
 
 ///|
-fn native_window_surface_y(handle : NativeWindow) -> Int {
+fn native_window_surface_y(handle : NativeWindow) -> Int32 {
   let window = native_window_objc_handle(handle)
-  if window == (0 : Int).to_uint64() {
+  if window == (0 : Int32).to_uint64() {
     return 0
   }
   let frame_selector = objc_runtime_selector_handle("frame")
@@ -850,7 +854,7 @@ fn native_window_surface_y(handle : NativeWindow) -> Int {
 ///|
 fn native_window_title(handle : NativeWindow) -> String {
   let window = native_window_objc_handle(handle)
-  if window == (0 : Int).to_uint64() {
+  if window == (0 : Int32).to_uint64() {
     return ""
   }
   let title = appkit_objc_msg_send_u64(
@@ -868,11 +872,11 @@ fn native_window_set_tabbing_identifier(
   identifier : String,
 ) -> Unit {
   let window = native_window_objc_handle(handle)
-  if window == (0 : Int).to_uint64() {
+  if window == (0 : Int32).to_uint64() {
     return ()
   }
   let identifier_string = objc_nsstring_from_string(identifier)
-  if identifier_string != (0 : Int).to_uint64() {
+  if identifier_string != (0 : Int32).to_uint64() {
     appkit_objc_msg_send_void_u64(
       window,
       objc_runtime_selector_handle("setTabbingIdentifier:"),
@@ -884,7 +888,7 @@ fn native_window_set_tabbing_identifier(
 ///|
 fn native_window_tabbing_identifier(handle : NativeWindow) -> String {
   let window = native_window_objc_handle(handle)
-  if window == (0 : Int).to_uint64() {
+  if window == (0 : Int32).to_uint64() {
     return ""
   }
   let identifier = appkit_objc_msg_send_u64(
@@ -897,12 +901,12 @@ fn native_window_tabbing_identifier(handle : NativeWindow) -> String {
 }
 
 ///|
-fn native_window_request_user_attention(request_type : Int) -> Unit {
+fn native_window_request_user_attention(request_type : Int32) -> Unit {
   if request_type == 0 {
     return ()
   }
   let app = native_application_shared_handle()
-  if app == (0 : Int).to_uint64() {
+  if app == (0 : Int32).to_uint64() {
     return ()
   }
   // AppKit constants (NSRequestUserAttentionType):
@@ -916,9 +920,9 @@ fn native_window_request_user_attention(request_type : Int) -> Unit {
 }
 
 ///|
-fn native_window_theme(handle : NativeWindow) -> Int {
+fn native_window_theme(handle : NativeWindow) -> Int32 {
   let window = native_window_objc_handle(handle)
-  if window == (0 : Int).to_uint64() {
+  if window == (0 : Int32).to_uint64() {
     return 0
   }
   let appearance = appkit_objc_msg_send_u64(
@@ -929,16 +933,16 @@ fn native_window_theme(handle : NativeWindow) -> Int {
 }
 
 ///|
-fn native_window_set_theme(handle : NativeWindow, theme : Int) -> Unit {
+fn native_window_set_theme(handle : NativeWindow, theme : Int32) -> Unit {
   let window = native_window_objc_handle(handle)
-  if window == (0 : Int).to_uint64() {
+  if window == (0 : Int32).to_uint64() {
     return ()
   }
   if theme != 1 && theme != 2 {
     appkit_objc_msg_send_void_u64(
       window,
       objc_runtime_selector_handle("setAppearance:"),
-      (0 : Int).to_uint64(),
+      (0 : Int32).to_uint64(),
     )
     return ()
   }
@@ -948,11 +952,11 @@ fn native_window_set_theme(handle : NativeWindow, theme : Int) -> Unit {
     "NSAppearanceNameDarkAqua"
   }
   let appearance_name_string = objc_nsstring_from_string(appearance_name)
-  if appearance_name_string == (0 : Int).to_uint64() {
+  if appearance_name_string == (0 : Int32).to_uint64() {
     return ()
   }
   let appearance_class = objc_runtime_class_handle("NSAppearance")
-  if appearance_class == (0 : Int).to_uint64() {
+  if appearance_class == (0 : Int32).to_uint64() {
     return ()
   }
   let appearance = appkit_objc_msg_send_u64_u64(
@@ -968,9 +972,9 @@ fn native_window_set_theme(handle : NativeWindow, theme : Int) -> Unit {
 }
 
 ///|
-fn native_window_set_level(handle : NativeWindow, level : Int) -> Unit {
+fn native_window_set_level(handle : NativeWindow, level : Int32) -> Unit {
   let window = native_window_objc_handle(handle)
-  if window == (0 : Int).to_uint64() {
+  if window == (0 : Int32).to_uint64() {
     return ()
   }
   let native_level = native_appkit_window_level(level)
@@ -982,9 +986,9 @@ fn native_window_set_level(handle : NativeWindow, level : Int) -> Unit {
 }
 
 ///|
-fn native_window_level(handle : NativeWindow) -> Int {
+fn native_window_level(handle : NativeWindow) -> Int32 {
   let window = native_window_objc_handle(handle)
-  if window == (0 : Int).to_uint64() {
+  if window == (0 : Int32).to_uint64() {
     return 0
   }
   let level = appkit_objc_msg_send_i64(
@@ -1003,7 +1007,7 @@ fn native_window_level(handle : NativeWindow) -> Int {
 ///|
 fn native_window_is_visible(handle : NativeWindow) -> Bool {
   let window = native_window_objc_handle(handle)
-  if window == (0 : Int).to_uint64() {
+  if window == (0 : Int32).to_uint64() {
     return false
   }
   appkit_objc_msg_send_bool(window, objc_runtime_selector_handle("isVisible"))
@@ -1012,7 +1016,7 @@ fn native_window_is_visible(handle : NativeWindow) -> Bool {
 ///|
 fn native_window_has_focus(handle : NativeWindow) -> Bool {
   let window = native_window_objc_handle(handle)
-  if window == (0 : Int).to_uint64() {
+  if window == (0 : Int32).to_uint64() {
     return false
   }
   appkit_objc_msg_send_bool(window, objc_runtime_selector_handle("isKeyWindow"))
@@ -1021,20 +1025,20 @@ fn native_window_has_focus(handle : NativeWindow) -> Bool {
 ///|
 fn native_window_is_occluded(handle : NativeWindow) -> Bool {
   let window = native_window_objc_handle(handle)
-  if window == (0 : Int).to_uint64() {
+  if window == (0 : Int32).to_uint64() {
     return false
   }
   appkit_objc_msg_send_u64(
     window,
     objc_runtime_selector_handle("occlusionState"),
   ) ==
-  (0 : Int).to_uint64()
+  (0 : Int32).to_uint64()
 }
 
 ///|
 fn native_window_is_minimized(handle : NativeWindow) -> Bool {
   let window = native_window_objc_handle(handle)
-  if window == (0 : Int).to_uint64() {
+  if window == (0 : Int32).to_uint64() {
     return false
   }
   appkit_objc_msg_send_bool(
@@ -1045,19 +1049,19 @@ fn native_window_is_minimized(handle : NativeWindow) -> Bool {
 
 ///|
 fn native_window_is_resizable(handle : NativeWindow) -> Bool {
-  (native_window_style_mask(handle) & (8 : Int).to_uint64()) !=
-  (0 : Int).to_uint64()
+  (native_window_style_mask(handle) & (8 : Int32).to_uint64()) !=
+  (0 : Int32).to_uint64()
 }
 
 ///|
 fn native_window_is_maximized(handle : NativeWindow) -> Bool {
   let window = native_window_objc_handle(handle)
-  if window == (0 : Int).to_uint64() {
+  if window == (0 : Int32).to_uint64() {
     return false
   }
 
   let current_mask = native_window_style_mask(handle)
-  let required_mask = (1 : Int).to_uint64() | (8 : Int).to_uint64()
+  let required_mask = (1 : Int32).to_uint64() | (8 : Int32).to_uint64()
   let needs_temporary_mask = (current_mask & required_mask) != required_mask
   if needs_temporary_mask {
     native_window_set_style_mask(handle, required_mask)
@@ -1074,14 +1078,14 @@ fn native_window_is_maximized(handle : NativeWindow) -> Bool {
 
 ///|
 fn native_window_is_decorated(handle : NativeWindow) -> Bool {
-  (native_window_style_mask(handle) & (1 : Int).to_uint64()) !=
-  (0 : Int).to_uint64()
+  (native_window_style_mask(handle) & (1 : Int32).to_uint64()) !=
+  (0 : Int32).to_uint64()
 }
 
 ///|
 fn native_window_drag_resize_window(
   _handle : NativeWindow,
-  _direction : Int,
+  _direction : Int32,
 ) -> Bool {
   false
 }
@@ -1089,27 +1093,27 @@ fn native_window_drag_resize_window(
 ///|
 fn native_window_show_window_menu(
   _handle : NativeWindow,
-  _x : Int,
-  _y : Int,
+  _x : Int32,
+  _y : Int32,
 ) -> Bool {
   false
 }
 
 ///|
-fn native_window_drag_window(handle : NativeWindow) -> Int {
+fn native_window_drag_window(handle : NativeWindow) -> Int32 {
   let window = native_window_objc_handle(handle)
-  if window == (0 : Int).to_uint64() {
+  if window == (0 : Int32).to_uint64() {
     return 0
   }
   let app = native_application_shared_handle()
-  if app == (0 : Int).to_uint64() {
+  if app == (0 : Int32).to_uint64() {
     return -1
   }
   let event = appkit_objc_msg_send_u64(
     app,
     objc_runtime_selector_handle("currentEvent"),
   )
-  if event == (0 : Int).to_uint64() {
+  if event == (0 : Int32).to_uint64() {
     return -1
   }
   let perform_drag = objc_runtime_selector_handle("performWindowDragWithEvent:")
@@ -1131,7 +1135,7 @@ fn native_window_set_has_shadow(
   has_shadow : Bool,
 ) -> Unit {
   let window = native_window_objc_handle(handle)
-  if window == (0 : Int).to_uint64() {
+  if window == (0 : Int32).to_uint64() {
     return ()
   }
   appkit_objc_msg_send_void_bool(
@@ -1144,7 +1148,7 @@ fn native_window_set_has_shadow(
 ///|
 fn native_window_has_shadow(handle : NativeWindow) -> Bool {
   let window = native_window_objc_handle(handle)
-  if window == (0 : Int).to_uint64() {
+  if window == (0 : Int32).to_uint64() {
     return false
   }
   appkit_objc_msg_send_bool(window, objc_runtime_selector_handle("hasShadow"))
@@ -1156,7 +1160,7 @@ fn native_window_set_document_edited(
   edited : Bool,
 ) -> Unit {
   let window = native_window_objc_handle(handle)
-  if window == (0 : Int).to_uint64() {
+  if window == (0 : Int32).to_uint64() {
     return ()
   }
   appkit_objc_msg_send_void_bool(
@@ -1169,7 +1173,7 @@ fn native_window_set_document_edited(
 ///|
 fn native_window_is_document_edited(handle : NativeWindow) -> Bool {
   let window = native_window_objc_handle(handle)
-  if window == (0 : Int).to_uint64() {
+  if window == (0 : Int32).to_uint64() {
     return false
   }
   appkit_objc_msg_send_bool(
@@ -1184,7 +1188,7 @@ fn native_window_set_movable_by_background(
   movable : Bool,
 ) -> Unit {
   let window = native_window_objc_handle(handle)
-  if window == (0 : Int).to_uint64() {
+  if window == (0 : Int32).to_uint64() {
     return ()
   }
   appkit_objc_msg_send_void_bool(
@@ -1197,7 +1201,7 @@ fn native_window_set_movable_by_background(
 ///|
 fn native_window_set_movable(handle : NativeWindow, movable : Bool) -> Unit {
   let window = native_window_objc_handle(handle)
-  if window == (0 : Int).to_uint64() {
+  if window == (0 : Int32).to_uint64() {
     return ()
   }
   appkit_objc_msg_send_void_bool(
@@ -1213,7 +1217,7 @@ fn native_window_set_content_protected(
   content_protected : Bool,
 ) -> Unit {
   let window = native_window_objc_handle(handle)
-  if window == (0 : Int).to_uint64() {
+  if window == (0 : Int32).to_uint64() {
     return ()
   }
   let sharing_type = if content_protected { 0 } else { 1 }
@@ -1227,17 +1231,17 @@ fn native_window_set_content_protected(
 ///|
 fn native_window_is_content_protected(handle : NativeWindow) -> Bool {
   let window = native_window_objc_handle(handle)
-  if window == (0 : Int).to_uint64() {
+  if window == (0 : Int32).to_uint64() {
     return false
   }
   appkit_objc_msg_send_u64(window, objc_runtime_selector_handle("sharingType")) ==
-  (0 : Int).to_uint64()
+  (0 : Int32).to_uint64()
 }
 
 ///|
 fn native_window_is_fullscreen(handle : NativeWindow) -> Bool {
-  (native_window_style_mask(handle) & (16384 : Int).to_uint64()) !=
-  (0 : Int).to_uint64()
+  (native_window_style_mask(handle) & (16384 : Int32).to_uint64()) !=
+  (0 : Int32).to_uint64()
 }
 
 ///|
@@ -1246,23 +1250,23 @@ fn native_window_set_unified_titlebar(
   unified_titlebar : Bool,
 ) -> Unit {
   let window = native_window_objc_handle(handle)
-  if window == (0 : Int).to_uint64() {
+  if window == (0 : Int32).to_uint64() {
     return ()
   }
   if unified_titlebar {
     let toolbar_class = objc_runtime_class_handle("NSToolbar")
-    if toolbar_class == (0 : Int).to_uint64() {
+    if toolbar_class == (0 : Int32).to_uint64() {
       return ()
     }
     let toolbar_alloc = appkit_objc_msg_send_u64(
       toolbar_class,
       objc_runtime_selector_handle("alloc"),
     )
-    if toolbar_alloc == (0 : Int).to_uint64() {
+    if toolbar_alloc == (0 : Int32).to_uint64() {
       return ()
     }
     let identifier = objc_nsstring_from_string("window-unified-titlebar")
-    if identifier == (0 : Int).to_uint64() {
+    if identifier == (0 : Int32).to_uint64() {
       appkit_objc_release_raw_object(toolbar_alloc)
       return ()
     }
@@ -1271,7 +1275,7 @@ fn native_window_set_unified_titlebar(
       objc_runtime_selector_handle("initWithIdentifier:"),
       identifier,
     )
-    if toolbar_raw == (0 : Int).to_uint64() {
+    if toolbar_raw == (0 : Int32).to_uint64() {
       appkit_objc_release_raw_object(toolbar_alloc)
     }
     let toolbar = appkit_objc_wrap_owned_object(toolbar_raw)
@@ -1293,14 +1297,14 @@ fn native_window_set_unified_titlebar(
       appkit_objc_msg_send_void_u64(
         window,
         set_toolbar_style,
-        (3 : Int).to_uint64(),
+        (3 : Int32).to_uint64(),
       )
     }
   } else {
     appkit_objc_msg_send_void_u64(
       window,
       objc_runtime_selector_handle("setToolbar:"),
-      (0 : Int).to_uint64(),
+      (0 : Int32).to_uint64(),
     )
     let set_toolbar_style = objc_runtime_selector_handle("setToolbarStyle:")
     if appkit_objc_msg_send_bool_u64(
@@ -1312,7 +1316,7 @@ fn native_window_set_unified_titlebar(
       appkit_objc_msg_send_void_u64(
         window,
         set_toolbar_style,
-        (0 : Int).to_uint64(),
+        (0 : Int32).to_uint64(),
       )
     }
   }
@@ -1321,8 +1325,8 @@ fn native_window_set_unified_titlebar(
 ///|
 fn native_window_style_mask(handle : NativeWindow) -> UInt64 {
   let window = native_window_objc_handle(handle)
-  if window == (0 : Int).to_uint64() {
-    return (0 : Int).to_uint64()
+  if window == (0 : Int32).to_uint64() {
+    return (0 : Int32).to_uint64()
   }
   appkit_objc_msg_send_u64(window, objc_runtime_selector_handle("styleMask"))
 }
@@ -1333,7 +1337,7 @@ fn native_window_set_style_mask(
   style_mask : UInt64,
 ) -> Unit {
   let window = native_window_objc_handle(handle)
-  if window == (0 : Int).to_uint64() {
+  if window == (0 : Int32).to_uint64() {
     return ()
   }
   appkit_objc_msg_send_void_u64(
@@ -1345,7 +1349,7 @@ fn native_window_set_style_mask(
     window,
     objc_runtime_selector_handle("contentView"),
   )
-  if content_view != (0 : Int).to_uint64() &&
+  if content_view != (0 : Int32).to_uint64() &&
     appkit_objc_msg_send_bool(
       content_view,
       objc_runtime_selector_handle("acceptsFirstResponder"),
@@ -1369,9 +1373,9 @@ fn native_window_clear_style_mask_bits(
 }
 
 ///|
-fn native_window_num_tabs(handle : NativeWindow) -> Int {
+fn native_window_num_tabs(handle : NativeWindow) -> Int32 {
   let window = native_window_objc_handle(handle)
-  if window == (0 : Int).to_uint64() {
+  if window == (0 : Int32).to_uint64() {
     return 1
   }
   let tabbed_windows = objc_runtime_selector_handle("tabbedWindows")
@@ -1384,7 +1388,7 @@ fn native_window_num_tabs(handle : NativeWindow) -> Int {
     return 1
   }
   let tabbed = appkit_objc_msg_send_u64(window, tabbed_windows)
-  if tabbed == (0 : Int).to_uint64() {
+  if tabbed == (0 : Int32).to_uint64() {
     return 1
   }
   let count = appkit_objc_msg_send_u64(
@@ -1404,33 +1408,33 @@ fn native_window_set_titlebar_buttons_hidden(
   hidden : Bool,
 ) -> Unit {
   let window = native_window_objc_handle(handle)
-  if window == (0 : Int).to_uint64() {
+  if window == (0 : Int32).to_uint64() {
     return ()
   }
   let standard_button = objc_runtime_selector_handle("standardWindowButton:")
   let close_button = appkit_objc_msg_send_u64_u64(
     window,
     standard_button,
-    (0 : Int).to_uint64(),
+    (0 : Int32).to_uint64(),
   )
   let miniaturize_button = appkit_objc_msg_send_u64_u64(
     window,
     standard_button,
-    (1 : Int).to_uint64(),
+    (1 : Int32).to_uint64(),
   )
   let zoom_button = appkit_objc_msg_send_u64_u64(
     window,
     standard_button,
-    (2 : Int).to_uint64(),
+    (2 : Int32).to_uint64(),
   )
   let set_hidden = objc_runtime_selector_handle("setHidden:")
-  if close_button != (0 : Int).to_uint64() {
+  if close_button != (0 : Int32).to_uint64() {
     appkit_objc_msg_send_void_bool(close_button, set_hidden, hidden)
   }
-  if miniaturize_button != (0 : Int).to_uint64() {
+  if miniaturize_button != (0 : Int32).to_uint64() {
     appkit_objc_msg_send_void_bool(miniaturize_button, set_hidden, hidden)
   }
-  if zoom_button != (0 : Int).to_uint64() {
+  if zoom_button != (0 : Int32).to_uint64() {
     appkit_objc_msg_send_void_bool(zoom_button, set_hidden, hidden)
   }
 }
@@ -1442,8 +1446,8 @@ fn native_window_set_enabled_buttons(
   minimize : Bool,
   maximize : Bool,
 ) -> Unit {
-  let closable_style_mask = (2 : Int).to_uint64()
-  let minimizable_style_mask = (4 : Int).to_uint64()
+  let closable_style_mask = (2 : Int32).to_uint64()
+  let minimizable_style_mask = (4 : Int32).to_uint64()
   if close {
     native_window_set_style_mask(
       handle,
@@ -1461,15 +1465,15 @@ fn native_window_set_enabled_buttons(
     native_window_clear_style_mask_bits(handle, minimizable_style_mask)
   }
   let window = native_window_objc_handle(handle)
-  if window == (0 : Int).to_uint64() {
+  if window == (0 : Int32).to_uint64() {
     return ()
   }
   let zoom_button = appkit_objc_msg_send_u64_u64(
     window,
     objc_runtime_selector_handle("standardWindowButton:"),
-    (2 : Int).to_uint64(),
+    (2 : Int32).to_uint64(),
   )
-  if zoom_button != (0 : Int).to_uint64() {
+  if zoom_button != (0 : Int32).to_uint64() {
     appkit_objc_msg_send_void_bool(
       zoom_button,
       objc_runtime_selector_handle("setEnabled:"),
@@ -1479,25 +1483,25 @@ fn native_window_set_enabled_buttons(
 }
 
 ///|
-fn native_window_enabled_buttons_mask(handle : NativeWindow) -> Int {
+fn native_window_enabled_buttons_mask(handle : NativeWindow) -> Int32 {
   let window = native_window_objc_handle(handle)
-  if window == (0 : Int).to_uint64() {
+  if window == (0 : Int32).to_uint64() {
     return 0
   }
   let style = native_window_style_mask(handle)
   let mut bits = 0
-  if (style & (2 : Int).to_uint64()) != (0 : Int).to_uint64() {
+  if (style & (2 : Int32).to_uint64()) != (0 : Int32).to_uint64() {
     bits = bits | 1
   }
-  if (style & (4 : Int).to_uint64()) != (0 : Int).to_uint64() {
+  if (style & (4 : Int32).to_uint64()) != (0 : Int32).to_uint64() {
     bits = bits | 2
   }
   let zoom_button = appkit_objc_msg_send_u64_u64(
     window,
     objc_runtime_selector_handle("standardWindowButton:"),
-    (2 : Int).to_uint64(),
+    (2 : Int32).to_uint64(),
   )
-  if zoom_button != (0 : Int).to_uint64() &&
+  if zoom_button != (0 : Int32).to_uint64() &&
     appkit_objc_msg_send_bool(
       zoom_button,
       objc_runtime_selector_handle("isEnabled"),
@@ -1510,44 +1514,44 @@ fn native_window_enabled_buttons_mask(handle : NativeWindow) -> Int {
 ///|
 fn native_window_current_monitor_id(handle : NativeWindow) -> UInt64 {
   let window = native_window_objc_handle(handle)
-  if window == (0 : Int).to_uint64() {
-    return (0 : Int).to_uint64()
+  if window == (0 : Int32).to_uint64() {
+    return (0 : Int32).to_uint64()
   }
   let mut screen = appkit_objc_msg_send_u64(
     window,
     objc_runtime_selector_handle("screen"),
   )
-  if screen == (0 : Int).to_uint64() {
+  if screen == (0 : Int32).to_uint64() {
     let screen_class = objc_runtime_class_handle("NSScreen")
-    if screen_class == (0 : Int).to_uint64() {
-      return (0 : Int).to_uint64()
+    if screen_class == (0 : Int32).to_uint64() {
+      return (0 : Int32).to_uint64()
     }
     screen = appkit_objc_msg_send_u64(
       screen_class,
       objc_runtime_selector_handle("mainScreen"),
     )
   }
-  if screen == (0 : Int).to_uint64() {
-    return (0 : Int).to_uint64()
+  if screen == (0 : Int32).to_uint64() {
+    return (0 : Int32).to_uint64()
   }
   let description = appkit_objc_msg_send_u64(
     screen,
     objc_runtime_selector_handle("deviceDescription"),
   )
-  if description == (0 : Int).to_uint64() {
-    return (0 : Int).to_uint64()
+  if description == (0 : Int32).to_uint64() {
+    return (0 : Int32).to_uint64()
   }
   let key = objc_nsstring_from_string("NSScreenNumber")
-  if key == (0 : Int).to_uint64() {
-    return (0 : Int).to_uint64()
+  if key == (0 : Int32).to_uint64() {
+    return (0 : Int32).to_uint64()
   }
   let number = appkit_objc_msg_send_u64_u64(
     description,
     objc_runtime_selector_handle("objectForKey:"),
     key,
   )
-  if number == (0 : Int).to_uint64() {
-    return (0 : Int).to_uint64()
+  if number == (0 : Int32).to_uint64() {
+    return (0 : Int32).to_uint64()
   }
   appkit_objc_msg_send_u64(
     number,
@@ -1558,7 +1562,7 @@ fn native_window_current_monitor_id(handle : NativeWindow) -> UInt64 {
 ///|
 fn native_window_set_tabbing_mode_preferred(handle : NativeWindow) -> Unit {
   let window = native_window_objc_handle(handle)
-  if window == (0 : Int).to_uint64() {
+  if window == (0 : Int32).to_uint64() {
     return ()
   }
   let set_tabbing_mode = objc_runtime_selector_handle("setTabbingMode:")
@@ -1571,7 +1575,7 @@ fn native_window_set_tabbing_mode_preferred(handle : NativeWindow) -> Unit {
     appkit_objc_msg_send_void_u64(
       window,
       set_tabbing_mode,
-      (1 : Int).to_uint64(),
+      (1 : Int32).to_uint64(),
     )
   }
 }
@@ -1579,39 +1583,39 @@ fn native_window_set_tabbing_mode_preferred(handle : NativeWindow) -> Unit {
 ///|
 fn native_window_select_next_tab(handle : NativeWindow) -> Unit {
   let window = native_window_objc_handle(handle)
-  if window == (0 : Int).to_uint64() {
+  if window == (0 : Int32).to_uint64() {
     return ()
   }
   appkit_objc_msg_send_void_u64(
     window,
     objc_runtime_selector_handle("selectNextTab:"),
-    (0 : Int).to_uint64(),
+    (0 : Int32).to_uint64(),
   )
 }
 
 ///|
 fn native_window_select_previous_tab(handle : NativeWindow) -> Unit {
   let window = native_window_objc_handle(handle)
-  if window == (0 : Int).to_uint64() {
+  if window == (0 : Int32).to_uint64() {
     return ()
   }
   appkit_objc_msg_send_void_u64(
     window,
     objc_runtime_selector_handle("selectPreviousTab:"),
-    (0 : Int).to_uint64(),
+    (0 : Int32).to_uint64(),
   )
 }
 
 ///|
 fn native_window_select_tab_at_index(
   handle : NativeWindow,
-  index : Int,
+  index : Int32,
 ) -> Unit {
   if index < 0 {
     return ()
   }
   let window = native_window_objc_handle(handle)
-  if window == (0 : Int).to_uint64() {
+  if window == (0 : Int32).to_uint64() {
     return ()
   }
   let tabbed_windows = objc_runtime_selector_handle("tabbedWindows")
@@ -1624,7 +1628,7 @@ fn native_window_select_tab_at_index(
     return ()
   }
   let tabbed = appkit_objc_msg_send_u64(window, tabbed_windows)
-  if tabbed == (0 : Int).to_uint64() {
+  if tabbed == (0 : Int32).to_uint64() {
     return ()
   }
   let count = appkit_objc_msg_send_u64(
@@ -1639,11 +1643,11 @@ fn native_window_select_tab_at_index(
     objc_runtime_selector_handle("objectAtIndex:"),
     index.to_uint64(),
   )
-  if selected_window != (0 : Int).to_uint64() {
+  if selected_window != (0 : Int32).to_uint64() {
     appkit_objc_msg_send_void_u64(
       selected_window,
       objc_runtime_selector_handle("makeKeyAndOrderFront:"),
-      (0 : Int).to_uint64(),
+      (0 : Int32).to_uint64(),
     )
   }
 }
@@ -1651,7 +1655,7 @@ fn native_window_select_tab_at_index(
 ///|
 fn native_window_scale_factor(handle : NativeWindow) -> Double {
   let window = native_window_objc_handle(handle)
-  if window == (0 : Int).to_uint64() {
+  if window == (0 : Int32).to_uint64() {
     return 1.0
   }
   let scale = appkit_objc_msg_send_double(
@@ -1666,39 +1670,39 @@ fn native_window_scale_factor(handle : NativeWindow) -> Double {
 }
 
 ///|
-fn set_window_raw_id(window_handle : NativeWindow, raw_id : Int) -> Unit {
-  if native_window_objc_handle(window_handle) == (0 : Int).to_uint64() {
+fn set_window_raw_id(window_handle : NativeWindow, raw_id : Int32) -> Unit {
+  if native_window_objc_handle(window_handle) == (0 : Int32).to_uint64() {
     return ()
   }
   let set_raw_id = objc_runtime_selector_handle("setRawId:")
   let delegate = native_window_delegate_objc_handle(window_handle)
-  if delegate != (0 : Int).to_uint64() {
+  if delegate != (0 : Int32).to_uint64() {
     appkit_objc_msg_send_void_i32(delegate, set_raw_id, raw_id)
   }
   let content_view = native_window_content_view_objc_handle(window_handle)
-  if content_view != (0 : Int).to_uint64() {
+  if content_view != (0 : Int32).to_uint64() {
     appkit_objc_msg_send_void_i32(content_view, set_raw_id, raw_id)
   }
 }
 
 ///|
 fn show_window(window_handle : NativeWindow, active : Bool) -> Unit {
-  if registered_native_handle(window_handle) != (0 : Int).to_uint64() {
+  if registered_native_handle(window_handle) != (0 : Int32).to_uint64() {
     let window = native_window_objc_handle(window_handle)
-    if window == (0 : Int).to_uint64() {
+    if window == (0 : Int32).to_uint64() {
       return ()
     }
     if active {
       appkit_objc_msg_send_void_u64(
         window,
         objc_runtime_selector_handle("makeKeyAndOrderFront:"),
-        (0 : Int).to_uint64(),
+        (0 : Int32).to_uint64(),
       )
     } else {
       appkit_objc_msg_send_void_u64(
         window,
         objc_runtime_selector_handle("orderFront:"),
-        (0 : Int).to_uint64(),
+        (0 : Int32).to_uint64(),
       )
     }
   }
@@ -1706,9 +1710,9 @@ fn show_window(window_handle : NativeWindow, active : Bool) -> Unit {
 
 ///|
 fn native_set_visible(window_handle : NativeWindow, visible : Bool) -> Unit {
-  if registered_native_handle(window_handle) != (0 : Int).to_uint64() {
+  if registered_native_handle(window_handle) != (0 : Int32).to_uint64() {
     let window = native_window_objc_handle(window_handle)
-    if window == (0 : Int).to_uint64() {
+    if window == (0 : Int32).to_uint64() {
       return ()
     }
     appkit_objc_msg_send_void_u64(
@@ -1720,21 +1724,21 @@ fn native_set_visible(window_handle : NativeWindow, visible : Bool) -> Unit {
           "orderOut:"
         },
       ),
-      (0 : Int).to_uint64(),
+      (0 : Int32).to_uint64(),
     )
   }
 }
 
 ///|
 fn focus_window(window_handle : NativeWindow) -> Unit {
-  if registered_native_handle(window_handle) != (0 : Int).to_uint64() &&
+  if registered_native_handle(window_handle) != (0 : Int32).to_uint64() &&
     native_window_is_visible(window_handle) {
     let window = native_window_objc_handle(window_handle)
-    if window == (0 : Int).to_uint64() {
+    if window == (0 : Int32).to_uint64() {
       return ()
     }
     let app = native_application_shared_handle()
-    if app != (0 : Int).to_uint64() {
+    if app != (0 : Int32).to_uint64() {
       appkit_objc_msg_send_void_bool(
         app,
         objc_runtime_selector_handle("activateIgnoringOtherApps:"),
@@ -1744,16 +1748,16 @@ fn focus_window(window_handle : NativeWindow) -> Unit {
     appkit_objc_msg_send_void_u64(
       window,
       objc_runtime_selector_handle("makeKeyAndOrderFront:"),
-      (0 : Int).to_uint64(),
+      (0 : Int32).to_uint64(),
     )
   }
 }
 
 ///|
 fn center_window(window_handle : NativeWindow) -> Unit {
-  if registered_native_handle(window_handle) != (0 : Int).to_uint64() {
+  if registered_native_handle(window_handle) != (0 : Int32).to_uint64() {
     let window = native_window_objc_handle(window_handle)
-    if window != (0 : Int).to_uint64() {
+    if window != (0 : Int32).to_uint64() {
       appkit_objc_msg_send_void(window, objc_runtime_selector_handle("center"))
     }
   }
@@ -1761,9 +1765,9 @@ fn center_window(window_handle : NativeWindow) -> Unit {
 
 ///|
 fn set_window_minimized(window_handle : NativeWindow, minimized : Bool) -> Unit {
-  if registered_native_handle(window_handle) != (0 : Int).to_uint64() {
+  if registered_native_handle(window_handle) != (0 : Int32).to_uint64() {
     let window = native_window_objc_handle(window_handle)
-    if window == (0 : Int).to_uint64() {
+    if window == (0 : Int32).to_uint64() {
       return ()
     }
     appkit_objc_msg_send_void_u64(
@@ -1775,7 +1779,7 @@ fn set_window_minimized(window_handle : NativeWindow, minimized : Bool) -> Unit 
           "deminiaturize:"
         },
       ),
-      (0 : Int).to_uint64(),
+      (0 : Int32).to_uint64(),
     )
   }
 }
@@ -1786,7 +1790,7 @@ fn toggle_window_fullscreen(
   fullscreen : Bool,
 ) -> Unit {
   let window = native_window_objc_handle(window_handle)
-  if window == (0 : Int).to_uint64() {
+  if window == (0 : Int32).to_uint64() {
     return ()
   }
   let is_fullscreen = native_window_is_fullscreen(window_handle)
@@ -1800,7 +1804,7 @@ fn toggle_window_fullscreen(
     appkit_objc_msg_send_void_u64(
       window,
       objc_runtime_selector_handle("toggleFullScreen:"),
-      (0 : Int).to_uint64(),
+      (0 : Int32).to_uint64(),
     )
   }
 }
@@ -1808,11 +1812,11 @@ fn toggle_window_fullscreen(
 ///|
 fn set_window_blur(window_handle : NativeWindow, blur : Bool) -> Unit {
   let native_handle = registered_native_handle(window_handle)
-  if native_handle == (0 : Int).to_uint64() {
+  if native_handle == (0 : Int32).to_uint64() {
     return ()
   }
   let window = native_handle
-  if window == (0 : Int).to_uint64() {
+  if window == (0 : Int32).to_uint64() {
     return ()
   }
   let window_number = appkit_objc_msg_send_i64(
@@ -1837,11 +1841,11 @@ fn set_window_titlebar_transparent(
   titlebar_transparent : Bool,
 ) -> Unit {
   let native_handle = registered_native_handle(window_handle)
-  if native_handle == (0 : Int).to_uint64() {
+  if native_handle == (0 : Int32).to_uint64() {
     return ()
   }
   let window = native_handle
-  if window == (0 : Int).to_uint64() {
+  if window == (0 : Int32).to_uint64() {
     return ()
   }
   appkit_objc_msg_send_void_bool(
@@ -1857,11 +1861,11 @@ fn set_window_title_hidden(
   title_hidden : Bool,
 ) -> Unit {
   let native_handle = registered_native_handle(window_handle)
-  if native_handle == (0 : Int).to_uint64() {
+  if native_handle == (0 : Int32).to_uint64() {
     return ()
   }
   let window = native_handle
-  if window == (0 : Int).to_uint64() {
+  if window == (0 : Int32).to_uint64() {
     return ()
   }
   let visibility = if title_hidden { 1 } else { 0 }
@@ -1879,18 +1883,19 @@ fn set_parent_window(
 ) -> Bool {
   let native_handle = registered_native_handle(window_handle)
   let parent = native_objc_window_from_raw_handle(parent_window)
-  if native_handle == (0 : Int).to_uint64() || parent == (0 : Int).to_uint64() {
+  if native_handle == (0 : Int32).to_uint64() ||
+    parent == (0 : Int32).to_uint64() {
     false
   } else {
     let window = native_handle
-    if window == (0 : Int).to_uint64() || parent == (0 : Int).to_uint64() {
+    if window == (0 : Int32).to_uint64() || parent == (0 : Int32).to_uint64() {
       false
     } else {
       appkit_objc_msg_send_void_u64_u64(
         parent,
         objc_runtime_selector_handle("addChildWindow:ordered:"),
         window,
-        (1 : Int).to_uint64(),
+        (1 : Int32).to_uint64(),
       )
       true
     }
@@ -1901,7 +1906,7 @@ fn set_parent_window(
 fn set_window_cursor_hittest(
   window_handle : NativeWindow,
   hittest : Bool,
-) -> Int {
+) -> Int32 {
   let window = registered_borrowed_native_handle(window_handle)
   if window.is_null() {
     return -1
@@ -1934,11 +1939,11 @@ fn set_window_transparent(
   transparent : Bool,
 ) -> Unit {
   let native_handle = registered_native_handle(window_handle)
-  if native_handle == (0 : Int).to_uint64() {
+  if native_handle == (0 : Int32).to_uint64() {
     return ()
   }
   let window = native_handle
-  if window == (0 : Int).to_uint64() {
+  if window == (0 : Int32).to_uint64() {
     return ()
   }
   appkit_objc_msg_send_void_bool(
@@ -1947,7 +1952,7 @@ fn set_window_transparent(
     transparent == false,
   )
   let ns_color = objc_runtime_class_handle("NSColor")
-  if ns_color == (0 : Int).to_uint64() {
+  if ns_color == (0 : Int32).to_uint64() {
     return ()
   }
   let color_selector = if transparent {
@@ -1959,7 +1964,7 @@ fn set_window_transparent(
     ns_color,
     objc_runtime_selector_handle(color_selector),
   )
-  if color != (0 : Int).to_uint64() {
+  if color != (0 : Int32).to_uint64() {
     appkit_objc_msg_send_void_u64(
       window,
       objc_runtime_selector_handle("setBackgroundColor:"),
@@ -1972,11 +1977,11 @@ fn set_window_transparent(
 fn set_ime_allowed(window_handle : NativeWindow, allowed : Bool) -> Unit {
   set_window_ime_allowed_state(native_window_identity(window_handle), allowed)
   let native_handle = registered_native_handle(window_handle)
-  if native_handle == (0 : Int).to_uint64() {
+  if native_handle == (0 : Int32).to_uint64() {
     return ()
   }
   let content_view = native_window_content_view_objc_handle(window_handle)
-  if content_view == (0 : Int).to_uint64() {
+  if content_view == (0 : Int32).to_uint64() {
     return ()
   }
   if !allowed {
@@ -1988,7 +1993,7 @@ fn set_ime_allowed(window_handle : NativeWindow, allowed : Bool) -> Unit {
       content_view,
       objc_runtime_selector_handle("inputContext"),
     )
-    if input_context != (0 : Int).to_uint64() {
+    if input_context != (0 : Int32).to_uint64() {
       appkit_objc_msg_send_void(
         input_context,
         objc_runtime_selector_handle("discardMarkedText"),
@@ -2000,10 +2005,10 @@ fn set_ime_allowed(window_handle : NativeWindow, allowed : Bool) -> Unit {
 ///|
 fn set_ime_cursor_area(
   window_handle : NativeWindow,
-  x : Int,
-  y : Int,
-  width : Int,
-  height : Int,
+  x : Int32,
+  y : Int32,
+  width : Int32,
+  height : Int32,
 ) -> Unit {
   set_window_ime_cursor_area_state(
     native_window_identity(window_handle),
@@ -2013,18 +2018,18 @@ fn set_ime_cursor_area(
     height,
   )
   let native_handle = registered_native_handle(window_handle)
-  if native_handle == (0 : Int).to_uint64() {
+  if native_handle == (0 : Int32).to_uint64() {
     return ()
   }
   let content_view = native_window_content_view_objc_handle(window_handle)
-  if content_view == (0 : Int).to_uint64() {
+  if content_view == (0 : Int32).to_uint64() {
     return ()
   }
   let input_context = appkit_objc_msg_send_u64(
     content_view,
     objc_runtime_selector_handle("inputContext"),
   )
-  if input_context != (0 : Int).to_uint64() {
+  if input_context != (0 : Int32).to_uint64() {
     appkit_objc_msg_send_void(
       input_context,
       objc_runtime_selector_handle("invalidateCharacterCoordinates"),
@@ -2035,11 +2040,11 @@ fn set_ime_cursor_area(
 ///|
 fn window_transparent(window_handle : NativeWindow) -> Bool {
   let native_handle = registered_native_handle(window_handle)
-  if native_handle == (0 : Int).to_uint64() {
+  if native_handle == (0 : Int32).to_uint64() {
     false
   } else {
     let window = native_handle
-    if window == (0 : Int).to_uint64() {
+    if window == (0 : Int32).to_uint64() {
       false
     } else {
       appkit_objc_msg_send_bool(

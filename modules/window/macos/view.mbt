@@ -3,10 +3,10 @@
 
 ///|
 fn ime_from_native_payload(
-  ime_kind : Int,
+  ime_kind : Int32,
   ime_text : Bytes,
-  ime_cursor_start : Int,
-  ime_cursor_end : Int,
+  ime_cursor_start : Int32,
+  ime_cursor_end : Int32,
 ) -> @core.Ime? {
   match ime_kind {
     1 => Some(Enabled)
@@ -32,7 +32,7 @@ fn ime_from_native_payload(
 }
 
 ///|
-fn clamp_non_negative(value : Int) -> Int {
+fn clamp_non_negative(value : Int32) -> Int32 {
   if value < 0 {
     0
   } else {
@@ -41,7 +41,7 @@ fn clamp_non_negative(value : Int) -> Int {
 }
 
 ///|
-fn scroll_phase_from_native(phase : Int) -> @core.TouchPhase {
+fn scroll_phase_from_native(phase : Int32) -> @core.TouchPhase {
   match touch_phase_from_native(phase) {
     Some(phase) => phase
     None => Moved
@@ -61,7 +61,7 @@ fn queue_view_standard_key_binding(
 }
 
 ///|
-let view_modifier_window_ids : Ref[Array[Int]] = Ref([])
+let view_modifier_window_ids : Ref[Array[Int32]] = Ref([])
 
 ///|
 let view_modifier_window_values : Ref[Array[@core.ModifiersKeys]] = Ref([])
@@ -70,36 +70,36 @@ let view_modifier_window_values : Ref[Array[@core.ModifiersKeys]] = Ref([])
 priv struct PendingKeySnapshot {
   x : Double
   y : Double
-  state : Int
-  button : Int
-  modifiers : Int
-  scancode : Int
-  repeat : Int
-  pointer_source : Int
-  pointer_kind : Int
-  scroll_delta_kind : Int
+  state : Int32
+  button : Int32
+  modifiers : Int32
+  scancode : Int32
+  repeat : Int32
+  pointer_source : Int32
+  pointer_kind : Int32
+  scroll_delta_kind : Int32
   delta_x : Double
   delta_y : Double
-  phase : Int
+  phase : Int32
   text_with_all_modifiers : Bytes
   text_ignoring_modifiers : Bytes
   text_without_modifiers : Bytes
 }
 
 ///|
-let view_pending_key_window_ids : Ref[Array[Int]] = Ref([])
+let view_pending_key_window_ids : Ref[Array[Int32]] = Ref([])
 
 ///|
 let view_pending_key_snapshots : Ref[Array[PendingKeySnapshot]] = Ref([])
 
 ///|
-fn view_pending_key_index(raw_id : Int) -> Int? {
+fn view_pending_key_index(raw_id : Int32) -> Int32? {
   view_pending_key_window_ids.val.search_by(id => id == raw_id)
 }
 
 ///|
 fn view_set_pending_key_snapshot(
-  raw_id : Int,
+  raw_id : Int32,
   snapshot : PendingKeySnapshot,
 ) -> Unit {
   match view_pending_key_index(raw_id) {
@@ -112,7 +112,7 @@ fn view_set_pending_key_snapshot(
 }
 
 ///|
-fn view_take_pending_key_snapshot(raw_id : Int) -> PendingKeySnapshot? {
+fn view_take_pending_key_snapshot(raw_id : Int32) -> PendingKeySnapshot? {
   match view_pending_key_index(raw_id) {
     Some(index) => {
       ignore(view_pending_key_window_ids.val.remove(index))
@@ -123,12 +123,12 @@ fn view_take_pending_key_snapshot(raw_id : Int) -> PendingKeySnapshot? {
 }
 
 ///|
-fn view_clear_pending_key_snapshot(raw_id : Int) -> Unit {
+fn view_clear_pending_key_snapshot(raw_id : Int32) -> Unit {
   ignore(view_take_pending_key_snapshot(raw_id))
 }
 
 ///|
-fn queue_pending_key_input_event(raw_id : Int) -> Unit {
+fn queue_pending_key_input_event(raw_id : Int32) -> Unit {
   match view_take_pending_key_snapshot(raw_id) {
     Some(snapshot) =>
       queue_input_event(
@@ -161,7 +161,7 @@ fn queue_pending_key_input_event(raw_id : Int) -> Unit {
 }
 
 ///|
-fn view_pressed_modifiers(window_id : Int) -> @core.ModifiersKeys {
+fn view_pressed_modifiers(window_id : Int32) -> @core.ModifiersKeys {
   match view_modifier_window_ids.val.search_by(id => id == window_id) {
     Some(index) => view_modifier_window_values.val[index]
     None => @core.ModifiersKeys::none()
@@ -170,7 +170,7 @@ fn view_pressed_modifiers(window_id : Int) -> @core.ModifiersKeys {
 
 ///|
 fn view_set_pressed_modifiers(
-  window_id : Int,
+  window_id : Int32,
   pressed_modifiers : @core.ModifiersKeys,
 ) -> Unit {
   match view_modifier_window_ids.val.search_by(id => id == window_id) {
@@ -183,7 +183,7 @@ fn view_set_pressed_modifiers(
 }
 
 ///|
-fn view_clear_pressed_modifiers(window_id : Int) -> Unit {
+fn view_clear_pressed_modifiers(window_id : Int32) -> Unit {
   match view_modifier_window_ids.val.search_by(id => id == window_id) {
     Some(index) => {
       ignore(view_modifier_window_ids.val.remove(index))
@@ -233,13 +233,13 @@ let native_view_state_query_ime_cursor_height = 8
 let native_view_state_query_accepts_first_mouse = 9
 
 ///|
-let view_ime_window_ids : Ref[Array[Int]] = Ref([])
+let view_ime_window_ids : Ref[Array[Int32]] = Ref([])
 
 ///|
-let view_ime_states : Ref[Array[Int]] = Ref([])
+let view_ime_states : Ref[Array[Int32]] = Ref([])
 
 ///|
-let view_ime_old_states : Ref[Array[Int]] = Ref([])
+let view_ime_old_states : Ref[Array[Int32]] = Ref([])
 
 ///|
 let view_ime_forward_key_to_apps : Ref[Array[Bool]] = Ref([])
@@ -251,21 +251,21 @@ let view_ime_input_sources : Ref[Array[String]] = Ref([])
 let view_ime_has_marked_texts : Ref[Array[Bool]] = Ref([])
 
 ///|
-let view_ime_marked_text_lengths : Ref[Array[Int]] = Ref([])
+let view_ime_marked_text_lengths : Ref[Array[Int32]] = Ref([])
 
 ///|
-let view_ime_selected_range_locations : Ref[Array[Int]] = Ref([])
+let view_ime_selected_range_locations : Ref[Array[Int32]] = Ref([])
 
 ///|
-let view_ime_selected_range_lengths : Ref[Array[Int]] = Ref([])
+let view_ime_selected_range_lengths : Ref[Array[Int32]] = Ref([])
 
 ///|
-fn view_ime_index(raw_id : Int) -> Int? {
+fn view_ime_index(raw_id : Int32) -> Int32? {
   view_ime_window_ids.val.search_by(id => id == raw_id)
 }
 
 ///|
-fn view_ime_ensure_index(raw_id : Int) -> Int {
+fn view_ime_ensure_index(raw_id : Int32) -> Int32 {
   match view_ime_index(raw_id) {
     Some(index) => index
     None => {
@@ -284,7 +284,7 @@ fn view_ime_ensure_index(raw_id : Int) -> Int {
 }
 
 ///|
-fn view_ime_state(raw_id : Int) -> Int {
+fn view_ime_state(raw_id : Int32) -> Int32 {
   match view_ime_index(raw_id) {
     Some(index) => view_ime_states.val[index]
     None => view_ime_state_disabled
@@ -292,13 +292,13 @@ fn view_ime_state(raw_id : Int) -> Int {
 }
 
 ///|
-fn view_set_ime_state(raw_id : Int, state : Int) -> Unit {
+fn view_set_ime_state(raw_id : Int32, state : Int32) -> Unit {
   let index = view_ime_ensure_index(raw_id)
   view_ime_states.val[index] = state
 }
 
 ///|
-fn view_ime_old_state(raw_id : Int) -> Int {
+fn view_ime_old_state(raw_id : Int32) -> Int32 {
   match view_ime_index(raw_id) {
     Some(index) => view_ime_old_states.val[index]
     None => view_ime_state_disabled
@@ -306,13 +306,13 @@ fn view_ime_old_state(raw_id : Int) -> Int {
 }
 
 ///|
-fn view_set_ime_old_state(raw_id : Int, state : Int) -> Unit {
+fn view_set_ime_old_state(raw_id : Int32, state : Int32) -> Unit {
   let index = view_ime_ensure_index(raw_id)
   view_ime_old_states.val[index] = state
 }
 
 ///|
-fn view_ime_forward_key_to_app(raw_id : Int) -> Bool {
+fn view_ime_forward_key_to_app(raw_id : Int32) -> Bool {
   match view_ime_index(raw_id) {
     Some(index) => view_ime_forward_key_to_apps.val[index]
     None => false
@@ -320,13 +320,13 @@ fn view_ime_forward_key_to_app(raw_id : Int) -> Bool {
 }
 
 ///|
-fn view_set_ime_forward_key_to_app(raw_id : Int, forward : Bool) -> Unit {
+fn view_set_ime_forward_key_to_app(raw_id : Int32, forward : Bool) -> Unit {
   let index = view_ime_ensure_index(raw_id)
   view_ime_forward_key_to_apps.val[index] = forward
 }
 
 ///|
-fn view_ime_input_source(raw_id : Int) -> String {
+fn view_ime_input_source(raw_id : Int32) -> String {
   match view_ime_index(raw_id) {
     Some(index) => view_ime_input_sources.val[index]
     None => ""
@@ -334,13 +334,13 @@ fn view_ime_input_source(raw_id : Int) -> String {
 }
 
 ///|
-fn view_set_ime_input_source(raw_id : Int, input_source : String) -> Unit {
+fn view_set_ime_input_source(raw_id : Int32, input_source : String) -> Unit {
   let index = view_ime_ensure_index(raw_id)
   view_ime_input_sources.val[index] = input_source
 }
 
 ///|
-fn view_has_marked_text(raw_id : Int) -> Bool {
+fn view_has_marked_text(raw_id : Int32) -> Bool {
   match view_ime_index(raw_id) {
     Some(index) => view_ime_has_marked_texts.val[index]
     None => false
@@ -348,13 +348,13 @@ fn view_has_marked_text(raw_id : Int) -> Bool {
 }
 
 ///|
-fn view_set_has_marked_text(raw_id : Int, has_marked_text : Bool) -> Unit {
+fn view_set_has_marked_text(raw_id : Int32, has_marked_text : Bool) -> Unit {
   let index = view_ime_ensure_index(raw_id)
   view_ime_has_marked_texts.val[index] = has_marked_text
 }
 
 ///|
-fn view_marked_text_length(raw_id : Int) -> Int {
+fn view_marked_text_length(raw_id : Int32) -> Int32 {
   match view_ime_index(raw_id) {
     Some(index) => view_ime_marked_text_lengths.val[index]
     None => 0
@@ -362,13 +362,13 @@ fn view_marked_text_length(raw_id : Int) -> Int {
 }
 
 ///|
-fn view_set_marked_text_length(raw_id : Int, length : Int) -> Unit {
+fn view_set_marked_text_length(raw_id : Int32, length : Int32) -> Unit {
   let index = view_ime_ensure_index(raw_id)
   view_ime_marked_text_lengths.val[index] = clamp_non_negative(length)
 }
 
 ///|
-fn view_selected_range_location(raw_id : Int) -> Int {
+fn view_selected_range_location(raw_id : Int32) -> Int32 {
   match view_ime_index(raw_id) {
     Some(index) => view_ime_selected_range_locations.val[index]
     None => -1
@@ -376,7 +376,7 @@ fn view_selected_range_location(raw_id : Int) -> Int {
 }
 
 ///|
-fn view_selected_range_length(raw_id : Int) -> Int {
+fn view_selected_range_length(raw_id : Int32) -> Int32 {
   match view_ime_index(raw_id) {
     Some(index) => view_ime_selected_range_lengths.val[index]
     None => 0
@@ -384,7 +384,11 @@ fn view_selected_range_length(raw_id : Int) -> Int {
 }
 
 ///|
-fn view_set_selected_range(raw_id : Int, location : Int, length : Int) -> Unit {
+fn view_set_selected_range(
+  raw_id : Int32,
+  location : Int32,
+  length : Int32,
+) -> Unit {
   let index = view_ime_ensure_index(raw_id)
   if location < 0 {
     view_ime_selected_range_locations.val[index] = -1
@@ -396,15 +400,15 @@ fn view_set_selected_range(raw_id : Int, location : Int, length : Int) -> Unit {
 }
 
 ///|
-fn view_content_view_handle(raw_id : Int) -> UInt64 {
+fn view_content_view_handle(raw_id : Int32) -> UInt64 {
   match app_state_window_handle(raw_id) {
     Some(window_handle) => native_window_content_view_objc_handle(window_handle)
-    None => (0 : Int).to_uint64()
+    None => (0 : Int32).to_uint64()
   }
 }
 
 ///|
-fn view_ime_allowed(raw_id : Int) -> Bool {
+fn view_ime_allowed(raw_id : Int32) -> Bool {
   match app_state_window_identity(raw_id) {
     Some(window_identity) => window_ime_allowed_state(window_identity)
     None => false
@@ -412,14 +416,14 @@ fn view_ime_allowed(raw_id : Int) -> Bool {
 }
 
 ///|
-fn view_clear_marked_text(raw_id : Int) -> Unit {
+fn view_clear_marked_text(raw_id : Int32) -> Unit {
   view_set_has_marked_text(raw_id, false)
   view_set_marked_text_length(raw_id, 0)
   view_set_selected_range(raw_id, -1, 0)
 }
 
 ///|
-fn view_native_query_state(raw_id : Int, kind : Int) -> Int {
+fn view_native_query_state(raw_id : Int32, kind : Int32) -> Int32 {
   match kind {
     _ if kind == native_view_state_query_ime_allowed =>
       if view_ime_allowed(raw_id) {
@@ -468,23 +472,23 @@ fn view_native_query_state(raw_id : Int, kind : Int) -> Int {
 }
 
 ///|
-fn view_current_input_source(raw_id : Int) -> String {
+fn view_current_input_source(raw_id : Int32) -> String {
   let content_view = view_content_view_handle(raw_id)
-  if content_view == (0 : Int).to_uint64() {
+  if content_view == (0 : Int32).to_uint64() {
     return ""
   }
   let input_context = appkit_objc_msg_send_u64(
     content_view,
     objc_runtime_selector_handle("inputContext"),
   )
-  if input_context == (0 : Int).to_uint64() {
+  if input_context == (0 : Int32).to_uint64() {
     return ""
   }
   let input_source = appkit_objc_msg_send_u64(
     input_context,
     objc_runtime_selector_handle("selectedKeyboardInputSource"),
   )
-  if input_source == (0 : Int).to_uint64() {
+  if input_source == (0 : Int32).to_uint64() {
     return ""
   }
   let description = appkit_objc_msg_send_u64(
@@ -493,7 +497,7 @@ fn view_current_input_source(raw_id : Int) -> String {
   )
   text_from_native(
     objc_utf8_bytes_from_object(
-      if description == (0 : Int).to_uint64() {
+      if description == (0 : Int32).to_uint64() {
         input_source
       } else {
         description
@@ -503,8 +507,11 @@ fn view_current_input_source(raw_id : Int) -> String {
 }
 
 ///|
-fn view_utf8_offset_for_utf16_index(text_handle : UInt64, index : Int) -> Int {
-  if text_handle == (0 : Int).to_uint64() || index < 0 {
+fn view_utf8_offset_for_utf16_index(
+  text_handle : UInt64,
+  index : Int32,
+) -> Int32 {
+  if text_handle == (0 : Int32).to_uint64() || index < 0 {
     return -1
   }
   let length = appkit_objc_msg_send_i64(
@@ -520,7 +527,7 @@ fn view_utf8_offset_for_utf16_index(text_handle : UInt64, index : Int) -> Int {
     objc_runtime_selector_handle("substringToIndex:"),
     clamped.to_uint64(),
   )
-  if prefix == (0 : Int).to_uint64() {
+  if prefix == (0 : Int32).to_uint64() {
     -1
   } else {
     objc_utf8_bytes_from_object(prefix).length()
@@ -528,8 +535,8 @@ fn view_utf8_offset_for_utf16_index(text_handle : UInt64, index : Int) -> Int {
 }
 
 ///|
-fn view_utf16_length(text_handle : UInt64) -> Int {
-  if text_handle == (0 : Int).to_uint64() {
+fn view_utf16_length(text_handle : UInt64) -> Int32 {
+  if text_handle == (0 : Int32).to_uint64() {
     return 0
   }
   clamp_non_negative(
@@ -542,11 +549,11 @@ fn view_utf16_length(text_handle : UInt64) -> Int {
 
 ///|
 fn view_text_object_string_handle(text_object_handle : UInt64) -> UInt64 {
-  if text_object_handle == (0 : Int).to_uint64() {
-    return (0 : Int).to_uint64()
+  if text_object_handle == (0 : Int32).to_uint64() {
+    return (0 : Int32).to_uint64()
   }
   let nsstring_class = objc_runtime_class_handle("NSString")
-  if nsstring_class != (0 : Int).to_uint64() &&
+  if nsstring_class != (0 : Int32).to_uint64() &&
     appkit_objc_msg_send_bool_u64(
       text_object_handle,
       objc_runtime_selector_handle("isKindOfClass:"),
@@ -555,7 +562,7 @@ fn view_text_object_string_handle(text_object_handle : UInt64) -> UInt64 {
     return text_object_handle
   }
   let attributed_string_class = objc_runtime_class_handle("NSAttributedString")
-  if attributed_string_class != (0 : Int).to_uint64() &&
+  if attributed_string_class != (0 : Int32).to_uint64() &&
     appkit_objc_msg_send_bool_u64(
       text_object_handle,
       objc_runtime_selector_handle("isKindOfClass:"),
@@ -576,13 +583,13 @@ fn view_text_object_string_handle(text_object_handle : UInt64) -> UInt64 {
       objc_runtime_selector_handle("description"),
     )
   }
-  (0 : Int).to_uint64()
+  (0 : Int32).to_uint64()
 }
 
 ///|
 fn view_string_is_control(text_handle : UInt64) -> Bool {
   let string_handle = view_text_object_string_handle(text_handle)
-  if string_handle == (0 : Int).to_uint64() {
+  if string_handle == (0 : Int32).to_uint64() {
     return false
   }
   let length = appkit_objc_msg_send_i64(
@@ -595,19 +602,19 @@ fn view_string_is_control(text_handle : UInt64) -> Bool {
   let char0 = appkit_objc_msg_send_u64_u64(
     string_handle,
     objc_runtime_selector_handle("characterAtIndex:"),
-    (0 : Int).to_uint64(),
+    (0 : Int32).to_uint64(),
   ).to_int()
   char0 < 32 || char0 == 127
 }
 
 ///|
-fn view_queue_ime_event(raw_id : Int, ime : @core.Ime) -> Unit {
+fn view_queue_ime_event(raw_id : Int32, ime : @core.Ime) -> Unit {
   app_state_queue_window_callback(@core.WindowId::from_raw(raw_id), Ime(ime))
 }
 
 ///|
 fn text_from_cstr_handle(cstr_handle : UInt64) -> String {
-  if cstr_handle == (0 : Int).to_uint64() {
+  if cstr_handle == (0 : Int32).to_uint64() {
     ""
   } else {
     text_from_native(native_copy_utf8_cstr_bytes(cstr_handle))
@@ -615,7 +622,7 @@ fn text_from_cstr_handle(cstr_handle : UInt64) -> String {
 }
 
 ///|
-fn view_disable_ime(raw_id : Int) -> Unit {
+fn view_disable_ime(raw_id : Int32) -> Unit {
   view_clear_marked_text(raw_id)
   if view_ime_state(raw_id) != view_ime_state_disabled {
     view_set_ime_state(raw_id, view_ime_state_disabled)
@@ -624,13 +631,13 @@ fn view_disable_ime(raw_id : Int) -> Unit {
 }
 
 ///|
-fn view_ime_allows_key_up(raw_id : Int) -> Bool {
+fn view_ime_allows_key_up(raw_id : Int32) -> Bool {
   let state = view_ime_state(raw_id)
   state == view_ime_state_disabled || state == view_ime_state_ground
 }
 
 ///|
-fn view_clear_ime_state(raw_id : Int) -> Unit {
+fn view_clear_ime_state(raw_id : Int32) -> Unit {
   match view_ime_index(raw_id) {
     Some(index) => {
       ignore(view_ime_window_ids.val.remove(index))
@@ -648,7 +655,7 @@ fn view_clear_ime_state(raw_id : Int) -> Unit {
 }
 
 ///|
-fn queue_pointer_motion_event(raw_id : Int, x : Double, y : Double) -> Unit {
+fn queue_pointer_motion_event(raw_id : Int32, x : Double, y : Double) -> Unit {
   let empty_text = @utf8.encode(""[:], bom=false)
   queue_input_event(
     raw_id, 1, x, y, 0, 0, 0, 0, 0, 1, 1, 0, 0.0, 0.0, 0, empty_text, empty_text,
@@ -658,28 +665,28 @@ fn queue_pointer_motion_event(raw_id : Int, x : Double, y : Double) -> Unit {
 
 ///|
 fn queue_input_event(
-  raw_id : Int,
-  kind : Int,
+  raw_id : Int32,
+  kind : Int32,
   x : Double,
   y : Double,
-  state : Int,
-  button : Int,
-  modifiers : Int,
-  scancode : Int,
-  repeat : Int,
-  pointer_source : Int,
-  pointer_kind : Int,
-  scroll_delta_kind : Int,
+  state : Int32,
+  button : Int32,
+  modifiers : Int32,
+  scancode : Int32,
+  repeat : Int32,
+  pointer_source : Int32,
+  pointer_kind : Int32,
+  scroll_delta_kind : Int32,
   delta_x : Double,
   delta_y : Double,
-  phase : Int,
+  phase : Int32,
   text_with_all_modifiers : Bytes,
   text_ignoring_modifiers : Bytes,
   text_without_modifiers : Bytes,
-  ime_kind : Int,
+  ime_kind : Int32,
   ime_text : Bytes,
-  ime_cursor_start : Int,
-  ime_cursor_end : Int,
+  ime_cursor_start : Int32,
+  ime_cursor_end : Int32,
   path : Bytes,
 ) -> Unit {
   let window_id = @core.WindowId::from_raw(raw_id)
@@ -846,7 +853,7 @@ fn queue_input_event(
 }
 
 ///|
-fn native_modifiers_from_modifier_flags(modifier_flags : Int) -> Int {
+fn native_modifiers_from_modifier_flags(modifier_flags : Int32) -> Int32 {
   let mut modifiers = 0
   if (modifier_flags & 131_072) != 0 {
     modifiers = modifiers | 1
@@ -864,7 +871,7 @@ fn native_modifiers_from_modifier_flags(modifier_flags : Int) -> Int {
 }
 
 ///|
-fn option_as_alt_for_window(raw_id : Int) -> Int {
+fn option_as_alt_for_window(raw_id : Int32) -> Int32 {
   match app_state_window_handle(raw_id) {
     Some(window_handle) =>
       window_option_as_alt_native(native_window_identity(window_handle))
@@ -874,17 +881,17 @@ fn option_as_alt_for_window(raw_id : Int) -> Int {
 
 ///|
 fn queue_native_text_input_event(
-  raw_id : Int,
-  kind : Int,
-  state : Int,
+  raw_id : Int32,
+  kind : Int32,
+  state : Int32,
   text_handle : UInt64,
-  cursor_start : Int,
-  cursor_end : Int,
+  cursor_start : Int32,
+  cursor_end : Int32,
   path_handle : UInt64,
 ) -> Unit {
   ignore(cursor_end)
   let text_string_handle = view_text_object_string_handle(text_handle)
-  let text_bytes = if text_string_handle == (0 : Int).to_uint64() {
+  let text_bytes = if text_string_handle == (0 : Int32).to_uint64() {
     @utf8.encode(""[:], bom=false)
   } else {
     objc_utf8_bytes_from_object(text_string_handle)
@@ -1017,7 +1024,7 @@ fn initial_fullscreen_state(
 }
 
 ///|
-fn modifiers_state_from_native(modifiers : Int) -> @core.ModifiersState {
+fn modifiers_state_from_native(modifiers : Int32) -> @core.ModifiersState {
   let mut state = @core.ModifiersState::none()
   if (modifiers & 1) != 0 {
     state = state.union(@core.ModifiersState::shift())
@@ -1036,7 +1043,7 @@ fn modifiers_state_from_native(modifiers : Int) -> @core.ModifiersState {
 
 ///|
 fn modifiers_from_native(
-  modifiers : Int,
+  modifiers : Int32,
   pressed_mods : @core.ModifiersKeys,
 ) -> @core.Modifiers {
   @core.Modifiers::from_state(

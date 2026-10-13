@@ -1,21 +1,21 @@
 ///|
 priv struct NativeInputPayload {
-  raw_id : Int
-  kind : Int
-  event_type : Int
+  raw_id : Int32
+  kind : Int32
+  event_type : Int32
   x : Double
   y : Double
-  state : Int
-  button : Int
-  modifier_flags : Int
-  scancode : Int
-  repeat : Int
-  pointer_source : Int
-  pointer_kind : Int
-  scroll_delta_kind : Int
+  state : Int32
+  button : Int32
+  modifier_flags : Int32
+  scancode : Int32
+  repeat : Int32
+  pointer_source : Int32
+  pointer_kind : Int32
+  scroll_delta_kind : Int32
   delta_x : Double
   delta_y : Double
-  phase : Int
+  phase : Int32
   text_with_all_modifiers : UInt64
   text_ignoring_modifiers : UInt64
   text_without_modifiers : UInt64
@@ -23,12 +23,12 @@ priv struct NativeInputPayload {
 
 ///|
 priv struct NativeTextInputPayload {
-  raw_id : Int
-  kind : Int
-  state : Int
+  raw_id : Int32
+  kind : Int32
+  state : Int32
   text_handle : UInt64
-  cursor_start : Int
-  cursor_end : Int
+  cursor_start : Int32
+  cursor_end : Int32
   path_handle : UInt64
 }
 
@@ -41,22 +41,22 @@ priv struct NativeInputTextPayload {
 
 ///|
 priv struct NativeInputEventPayload {
-  raw_id : Int
-  kind : Int
-  event_type : Int
+  raw_id : Int32
+  kind : Int32
+  event_type : Int32
   x : Double
   y : Double
-  state : Int
-  button : Int
-  modifiers : Int
-  scancode : Int
-  repeat : Int
-  pointer_source : Int
-  pointer_kind : Int
-  scroll_delta_kind : Int
+  state : Int32
+  button : Int32
+  modifiers : Int32
+  scancode : Int32
+  repeat : Int32
+  pointer_source : Int32
+  pointer_kind : Int32
+  scroll_delta_kind : Int32
   delta_x : Double
   delta_y : Double
-  phase : Int
+  phase : Int32
   text : NativeInputTextPayload
 }
 
@@ -75,10 +75,10 @@ fn queue_native_text_input_payload(payload : NativeTextInputPayload) -> Unit {
 
 ///|
 fn native_input_keyboard_text_payload(
-  kind : Int,
-  event_type : Int,
-  modifier_flags : Int,
-  option_as_alt : Int,
+  kind : Int32,
+  event_type : Int32,
+  modifier_flags : Int32,
+  option_as_alt : Int32,
   text_with_all_modifiers : Bytes,
   text_ignoring_modifiers : Bytes,
   text_without_modifiers : Bytes,
@@ -146,7 +146,7 @@ fn native_input_payload_to_event(
 }
 
 ///|
-fn native_input_kind_tracks_pointer_motion(kind : Int) -> Bool {
+fn native_input_kind_tracks_pointer_motion(kind : Int32) -> Bool {
   kind == 4 ||
   kind == 5 ||
   kind == 13 ||
@@ -229,22 +229,22 @@ fn queue_native_input_event(payload : NativeInputPayload) -> Unit {
 
 ///|
 fn native_callback_input_event(
-  raw_id : Int,
-  kind : Int,
-  event_type : Int,
+  raw_id : Int32,
+  kind : Int32,
+  event_type : Int32,
   x : Double,
   y : Double,
-  state : Int,
-  button : Int,
-  modifier_flags : Int,
-  scancode : Int,
-  repeat : Int,
-  pointer_source : Int,
-  pointer_kind : Int,
-  scroll_delta_kind : Int,
+  state : Int32,
+  button : Int32,
+  modifier_flags : Int32,
+  scancode : Int32,
+  repeat : Int32,
+  pointer_source : Int32,
+  pointer_kind : Int32,
+  scroll_delta_kind : Int32,
   delta_x : Double,
   delta_y : Double,
-  phase : Int,
+  phase : Int32,
   text_with_all_modifiers : UInt64,
   text_ignoring_modifiers : UInt64,
   text_without_modifiers : UInt64,
@@ -274,12 +274,12 @@ fn native_callback_input_event(
 
 ///|
 fn native_callback_text_input_event(
-  raw_id : Int,
-  kind : Int,
-  state : Int,
+  raw_id : Int32,
+  kind : Int32,
+  state : Int32,
   text_handle : UInt64,
-  cursor_start : Int,
-  cursor_end : Int,
+  cursor_start : Int32,
+  cursor_end : Int32,
   path_handle : UInt64,
 ) -> Unit {
   queue_native_text_input_payload({

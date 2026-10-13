@@ -1,27 +1,27 @@
 ///|
-let modifiers_state_shift_bit : Int = 0b100
+let modifiers_state_shift_bit : Int32 = 0b100
 
 ///|
-let modifiers_state_control_bit : Int = 0b100 << 3
+let modifiers_state_control_bit : Int32 = 0b100 << 3
 
 ///|
-let modifiers_state_alt_bit : Int = 0b100 << 6
+let modifiers_state_alt_bit : Int32 = 0b100 << 6
 
 ///|
-let modifiers_state_meta_bit : Int = 0b100 << 9
+let modifiers_state_meta_bit : Int32 = 0b100 << 9
 
 ///|
-let modifiers_state_mask : Int = modifiers_state_shift_bit |
+let modifiers_state_mask : Int32 = modifiers_state_shift_bit |
   modifiers_state_control_bit |
   modifiers_state_alt_bit |
   modifiers_state_meta_bit
 
 ///|
-let modifiers_keys_mask : Int = 0xFF
+let modifiers_keys_mask : Int32 = 0xFF
 
 ///|
 pub struct ModifiersState {
-  priv bits : Int
+  priv bits : Int32
 } derive(Eq, Debug)
 
 ///|
@@ -50,12 +50,12 @@ pub fn ModifiersState::meta() -> ModifiersState {
 }
 
 ///|
-pub fn ModifiersState::from_bits(bits : Int) -> ModifiersState {
+pub fn ModifiersState::from_bits(bits : Int32) -> ModifiersState {
   { bits: bits & modifiers_state_mask, }
 }
 
 ///|
-pub fn ModifiersState::bits(self : ModifiersState) -> Int {
+pub fn ModifiersState::bits(self : ModifiersState) -> Int32 {
   self.bits
 }
 
@@ -108,7 +108,7 @@ pub(all) enum ModifiersKeyState {
 
 ///|
 pub struct ModifiersKeys {
-  priv bits : Int
+  priv bits : Int32
 } derive(Eq, Debug)
 
 ///|
@@ -157,12 +157,12 @@ pub fn ModifiersKeys::rmeta() -> ModifiersKeys {
 }
 
 ///|
-pub fn ModifiersKeys::from_bits(bits : Int) -> ModifiersKeys {
+pub fn ModifiersKeys::from_bits(bits : Int32) -> ModifiersKeys {
   { bits: bits & modifiers_keys_mask, }
 }
 
 ///|
-pub fn ModifiersKeys::bits(self : ModifiersKeys) -> Int {
+pub fn ModifiersKeys::bits(self : ModifiersKeys) -> Int32 {
   self.bits
 }
 

@@ -22,7 +22,7 @@ fn extra_function_key_to_code(text : String?) -> @core.PhysicalKey? {
 
 ///|
 fn physical_key_from_scancode(
-  scancode : Int,
+  scancode : Int32,
   text_with_all_modifiers : String?,
 ) -> @core.PhysicalKey {
   let code = match scancode {
@@ -372,7 +372,7 @@ fn dead_or_character_from_native_text(
 
 ///|
 fn key_without_modifiers_from_scancode(
-  scancode : Int,
+  scancode : Int32,
   physical_key : @core.PhysicalKey,
   text_without_modifiers : String?,
 ) -> @core.Key {
@@ -478,7 +478,7 @@ fn logical_key_from_scancode(
 
 ///|
 fn create_key_event(
-  scancode : Int,
+  scancode : Int32,
   state : @core.ElementState,
   repeat : Bool,
   modifiers : @core.Modifiers,
@@ -530,7 +530,7 @@ fn create_key_event(
 }
 
 ///|
-fn element_state_from_native(state : Int) -> @core.ElementState? {
+fn element_state_from_native(state : Int32) -> @core.ElementState? {
   match state {
     1 => Some(Pressed)
     2 => Some(Released)
@@ -539,12 +539,12 @@ fn element_state_from_native(state : Int) -> @core.ElementState? {
 }
 
 ///|
-fn mouse_button_from_native(button : Int) -> @core.MouseButton? {
+fn mouse_button_from_native(button : Int32) -> @core.MouseButton? {
   @core.MouseButton::try_from_u8(button)
 }
 
 ///|
-fn button_source_from_native(button : Int) -> @core.ButtonSource {
+fn button_source_from_native(button : Int32) -> @core.ButtonSource {
   match mouse_button_from_native(button) {
     Some(mouse) => Mouse(mouse)
     None => Unknown(button)
@@ -552,7 +552,7 @@ fn button_source_from_native(button : Int) -> @core.ButtonSource {
 }
 
 ///|
-fn pointer_source_from_native(source : Int) -> @core.PointerSource {
+fn pointer_source_from_native(source : Int32) -> @core.PointerSource {
   match source {
     1 => Mouse
     _ => Unknown
@@ -560,7 +560,7 @@ fn pointer_source_from_native(source : Int) -> @core.PointerSource {
 }
 
 ///|
-fn pointer_kind_from_native(kind : Int) -> @core.PointerKind {
+fn pointer_kind_from_native(kind : Int32) -> @core.PointerKind {
   match kind {
     1 => Mouse
     _ => Unknown
@@ -569,7 +569,7 @@ fn pointer_kind_from_native(kind : Int) -> @core.PointerKind {
 
 ///|
 fn scroll_delta_from_native(
-  kind : Int,
+  kind : Int32,
   x : Double,
   y : Double,
 ) -> @core.MouseScrollDelta? {
@@ -581,7 +581,7 @@ fn scroll_delta_from_native(
 }
 
 ///|
-fn touch_phase_from_native(phase : Int) -> @core.TouchPhase? {
+fn touch_phase_from_native(phase : Int32) -> @core.TouchPhase? {
   match phase {
     1 => Some(Started)
     2 => Some(Moved)
@@ -593,7 +593,7 @@ fn touch_phase_from_native(phase : Int) -> @core.TouchPhase? {
 
 ///|
 fn drag_event_from_native_payload(
-  kind : Int,
+  kind : Int32,
   position : @dpi.PhysicalPositionF64,
   path : Bytes,
   has_position : Bool,
@@ -623,8 +623,8 @@ fn drag_event_from_native_payload(
 
 ///|
 fn queue_drag_event_from_payload(
-  raw_id : Int,
-  kind : Int,
+  raw_id : Int32,
+  kind : Int32,
   position : @dpi.PhysicalPositionF64,
   path : Bytes,
   has_position : Bool,

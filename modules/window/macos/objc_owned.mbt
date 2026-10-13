@@ -3,7 +3,7 @@
 
 ///|
 fn native_objc_owned_null() -> NativeObjcObject {
-  appkit_objc_wrap_owned_object((0 : Int).to_uint64())
+  appkit_objc_wrap_owned_object((0 : Int32).to_uint64())
 }
 
 ///|
@@ -13,5 +13,5 @@ fn native_objc_owned_handle(handle : NativeObjcObject) -> UInt64 {
 
 ///|
 fn native_objc_owned_valid(handle : NativeObjcObject) -> Bool {
-  native_objc_owned_handle(handle) != (0 : Int).to_uint64()
+  native_objc_owned_handle(handle) != (0 : Int32).to_uint64()
 }

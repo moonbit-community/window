@@ -1,7 +1,7 @@
 ///|
 // Port target: winit-reference/winit/examples/run_on_demand.rs
 struct App {
-  mut run_index : Int
+  mut run_index : Int32
   mut window_id : @core.WindowId?
   mut window : @macos.Window?
 }

@@ -15,7 +15,7 @@ pub(all) enum MenuAction {
 ///|
 pub(all) struct KeyEquivalent {
   key : String
-  masks : Int?
+  masks : Int32?
 } derive(Eq, Debug)
 
 ///|
@@ -75,18 +75,18 @@ let default_menu_initialized : Ref[Bool] = Ref(false)
 ///|
 fn native_appkit_new_menu(title : String) -> NativeObjcObject {
   let ns_menu_class = objc_runtime_class_handle("NSMenu")
-  if ns_menu_class == (0 : Int).to_uint64() {
+  if ns_menu_class == (0 : Int32).to_uint64() {
     return native_objc_owned_null()
   }
   let menu_alloc = appkit_objc_msg_send_u64(
     ns_menu_class,
     objc_runtime_selector_handle("alloc"),
   )
-  if menu_alloc == (0 : Int).to_uint64() {
+  if menu_alloc == (0 : Int32).to_uint64() {
     return native_objc_owned_null()
   }
   let title_handle = objc_nsstring_from_string(title)
-  if title_handle == (0 : Int).to_uint64() {
+  if title_handle == (0 : Int32).to_uint64() {
     appkit_objc_release_raw_object(menu_alloc)
     return native_objc_owned_null()
   }
@@ -95,7 +95,7 @@ fn native_appkit_new_menu(title : String) -> NativeObjcObject {
     objc_runtime_selector_handle("initWithTitle:"),
     title_handle,
   )
-  if menu == (0 : Int).to_uint64() {
+  if menu == (0 : Int32).to_uint64() {
     appkit_objc_release_raw_object(menu_alloc)
   }
   appkit_objc_wrap_owned_object(menu)
@@ -107,29 +107,29 @@ fn native_appkit_new_menu_item(
   action_selector_name : String,
   key_equivalent : String,
   target : UInt64,
-  key_modifier_mask : Int,
+  key_modifier_mask : Int32,
 ) -> NativeObjcObject {
   let ns_menu_item_class = objc_runtime_class_handle("NSMenuItem")
-  if ns_menu_item_class == (0 : Int).to_uint64() {
+  if ns_menu_item_class == (0 : Int32).to_uint64() {
     return native_objc_owned_null()
   }
   let item_alloc = appkit_objc_msg_send_u64(
     ns_menu_item_class,
     objc_runtime_selector_handle("alloc"),
   )
-  if item_alloc == (0 : Int).to_uint64() {
+  if item_alloc == (0 : Int32).to_uint64() {
     return native_objc_owned_null()
   }
   let item = appkit_objc_msg_send_u64(
     item_alloc,
     objc_runtime_selector_handle("init"),
   )
-  if item == (0 : Int).to_uint64() {
+  if item == (0 : Int32).to_uint64() {
     appkit_objc_release_raw_object(item_alloc)
     return native_objc_owned_null()
   }
   let title_handle = objc_nsstring_from_string(title)
-  if title_handle != (0 : Int).to_uint64() {
+  if title_handle != (0 : Int32).to_uint64() {
     appkit_objc_msg_send_void_u64(
       item,
       objc_runtime_selector_handle("setTitle:"),
@@ -144,14 +144,14 @@ fn native_appkit_new_menu_item(
     )
   }
   let key_handle = objc_nsstring_from_string(key_equivalent)
-  if key_handle != (0 : Int).to_uint64() {
+  if key_handle != (0 : Int32).to_uint64() {
     appkit_objc_msg_send_void_u64(
       item,
       objc_runtime_selector_handle("setKeyEquivalent:"),
       key_handle,
     )
   }
-  if target != (0 : Int).to_uint64() {
+  if target != (0 : Int32).to_uint64() {
     appkit_objc_msg_send_void_u64(
       item,
       objc_runtime_selector_handle("setTarget:"),
@@ -175,7 +175,7 @@ fn native_appkit_add_menu_item(
 ) -> Unit {
   let menu_raw = native_objc_owned_handle(menu)
   let item_raw = native_objc_owned_handle(item)
-  if menu_raw == (0 : Int).to_uint64() || item_raw == (0 : Int).to_uint64() {
+  if menu_raw == (0 : Int32).to_uint64() || item_raw == (0 : Int32).to_uint64() {
     return ()
   }
   appkit_objc_msg_send_void_u64(
@@ -188,18 +188,18 @@ fn native_appkit_add_menu_item(
 ///|
 fn native_appkit_add_separator_item(menu : NativeObjcObject) -> Unit {
   let menu_raw = native_objc_owned_handle(menu)
-  if menu_raw == (0 : Int).to_uint64() {
+  if menu_raw == (0 : Int32).to_uint64() {
     return ()
   }
   let ns_menu_item_class = objc_runtime_class_handle("NSMenuItem")
-  if ns_menu_item_class == (0 : Int).to_uint64() {
+  if ns_menu_item_class == (0 : Int32).to_uint64() {
     return ()
   }
   let separator = appkit_objc_msg_send_u64(
     ns_menu_item_class,
     objc_runtime_selector_handle("separatorItem"),
   )
-  if separator != (0 : Int).to_uint64() {
+  if separator != (0 : Int32).to_uint64() {
     appkit_objc_msg_send_void_u64(
       menu_raw,
       objc_runtime_selector_handle("addItem:"),
@@ -211,28 +211,28 @@ fn native_appkit_add_separator_item(menu : NativeObjcObject) -> Unit {
 ///|
 fn native_application_initialize_default_menu(enabled : Bool) -> Unit {
   let app = native_application_shared_handle()
-  if app == (0 : Int).to_uint64() {
+  if app == (0 : Int32).to_uint64() {
     return ()
   }
   if !enabled {
     appkit_objc_msg_send_void_u64(
       app,
       objc_runtime_selector_handle("setMainMenu:"),
-      (0 : Int).to_uint64(),
+      (0 : Int32).to_uint64(),
     )
     return ()
   }
   let process_info_class = objc_runtime_class_handle("NSProcessInfo")
-  let process_info = if process_info_class == (0 : Int).to_uint64() {
-    (0 : Int).to_uint64()
+  let process_info = if process_info_class == (0 : Int32).to_uint64() {
+    (0 : Int32).to_uint64()
   } else {
     appkit_objc_msg_send_u64(
       process_info_class,
       objc_runtime_selector_handle("processInfo"),
     )
   }
-  let process_name_handle = if process_info == (0 : Int).to_uint64() {
-    (0 : Int).to_uint64()
+  let process_name_handle = if process_info == (0 : Int32).to_uint64() {
+    (0 : Int32).to_uint64()
   } else {
     appkit_objc_msg_send_u64(
       process_info,
@@ -254,7 +254,7 @@ fn native_application_initialize_default_menu(enabled : Bool) -> Unit {
     "",
     "",
     "",
-    (0 : Int).to_uint64(),
+    (0 : Int32).to_uint64(),
     -1,
   )
   let app_menu = native_appkit_new_menu("")
@@ -285,7 +285,7 @@ fn native_application_initialize_default_menu(enabled : Bool) -> Unit {
       "Services",
       "",
       "",
-      (0 : Int).to_uint64(),
+      (0 : Int32).to_uint64(),
       -1,
     )
     let services_menu = native_appkit_new_menu("Services")

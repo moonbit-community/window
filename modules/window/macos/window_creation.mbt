@@ -94,7 +94,7 @@ fn new_window(
     clamp_size(size.width().to_int()),
     clamp_size(size.height().to_int()),
   )
-  guard native_window_objc_handle(raw_window_handle) != (0 : Int).to_uint64() else {
+  guard native_window_objc_handle(raw_window_handle) != (0 : Int32).to_uint64() else {
     raise Ignored
   }
   match attributes.parent_window() {

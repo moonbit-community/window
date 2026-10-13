@@ -5,14 +5,14 @@ fn primary_monitor_for_test() -> @core.MonitorHandle? {
 
 ///|
 extern "C" fn native_test_display_refresh_rate_off_main(
-  monitor_id : UInt,
-) -> Int = "mbw_test_display_refresh_rate_off_main"
+  monitor_id : UInt32,
+) -> Int32 = "mbw_test_display_refresh_rate_off_main"
 
 ///|
 extern "C" fn native_test_refresh_rate_millihertz_from_cvtime(
-  time_scale : Int,
-  time_value : Int,
-) -> Int = "mbw_test_refresh_rate_millihertz_from_cvtime"
+  time_scale : Int32,
+  time_value : Int32,
+) -> Int32 = "mbw_test_refresh_rate_millihertz_from_cvtime"
 
 ///|
 test "CoreVideo refresh fallback preserves fractional rates" {
@@ -31,7 +31,7 @@ test "CoreVideo refresh fallback preserves fractional rates" {
 ///|
 test "uuid_stable" {
   let primary_id = cg_main_display_id()
-  assert_true(primary_id > (0 : Int).to_uint64())
+  assert_true(primary_id > (0 : Int32).to_uint64())
 
   let handle_a = monitor_from_native_id(primary_id)
   let handle_b = monitor_from_native_id(primary_id)
@@ -69,9 +69,9 @@ test "uuid_stable" {
 ///|
 test "monitorhandle_from_zero" {
   let primary_id = cg_main_display_id()
-  assert_true(primary_id > (0 : Int).to_uint64())
+  assert_true(primary_id > (0 : Int32).to_uint64())
 
-  let handle0 = monitor_from_native_id((0 : Int).to_uint64())
+  let handle0 = monitor_from_native_id((0 : Int32).to_uint64())
   let handle1 = monitor_from_native_id(primary_id)
   assert_true(handle0 is Some(_))
   assert_true(handle1 is Some(_))
@@ -90,12 +90,12 @@ test "monitorhandle_from_zero" {
 
 ///|
 test "from_invalid_id" {
-  assert_true(monitor_from_native_id((10000 : Int).to_uint64()) == None)
+  assert_true(monitor_from_native_id((10000 : Int32).to_uint64()) == None)
 }
 
 ///|
 test "invalid_monitor_handle" {
-  assert_true(monitor_from_native_id((10000 : Int).to_uint64()) == None)
+  assert_true(monitor_from_native_id((10000 : Int32).to_uint64()) == None)
 }
 
 ///|
@@ -106,9 +106,9 @@ test "primary_monitor_has_ns_screen_handle" {
     Some(monitor) =>
       match monitor_ns_screen(monitor) {
         Some(screen) => {
-          assert_true(screen.objc_handle() != (0 : Int).to_uint64())
+          assert_true(screen.objc_handle() != (0 : Int32).to_uint64())
           screen.drop()
-          assert_eq(screen.objc_handle(), (0 : Int).to_uint64())
+          assert_eq(screen.objc_handle(), (0 : Int32).to_uint64())
           screen.drop()
         }
         None => fail("primary monitor NSScreen unavailable")
@@ -120,7 +120,7 @@ test "primary_monitor_has_ns_screen_handle" {
 ///|
 test "primary monitor resolves its AppKit backing scale factor" {
   assert_eq(
-    native_monitor_backing_scale_factor((10000 : Int).reinterpret_as_uint()),
+    native_monitor_backing_scale_factor((10000 : Int32).reinterpret_as_uint()),
     0.0,
   )
   match primary_monitor_for_test() {

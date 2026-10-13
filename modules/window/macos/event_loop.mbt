@@ -45,26 +45,26 @@ pub fn EventLoop::owned_display_handle(
 ///|
 fn native_application_hide() -> Unit {
   let app = native_application_shared_handle()
-  if app == (0 : Int).to_uint64() {
+  if app == (0 : Int32).to_uint64() {
     return ()
   }
   appkit_objc_msg_send_void_u64(
     app,
     objc_runtime_selector_handle("hide:"),
-    (0 : Int).to_uint64(),
+    (0 : Int32).to_uint64(),
   )
 }
 
 ///|
 fn native_application_hide_other_applications() -> Unit {
   let app = native_application_shared_handle()
-  if app == (0 : Int).to_uint64() {
+  if app == (0 : Int32).to_uint64() {
     return ()
   }
   appkit_objc_msg_send_void_u64(
     app,
     objc_runtime_selector_handle("hideOtherApplications:"),
-    (0 : Int).to_uint64(),
+    (0 : Int32).to_uint64(),
   )
 }
 
@@ -73,7 +73,7 @@ fn native_application_set_allows_automatic_window_tabbing(
   enabled : Bool,
 ) -> Unit {
   let window_class = objc_runtime_class_handle("NSWindow")
-  if window_class == (0 : Int).to_uint64() {
+  if window_class == (0 : Int32).to_uint64() {
     return ()
   }
   let responds_to_selector = objc_runtime_selector_handle("respondsToSelector:")
@@ -86,7 +86,7 @@ fn native_application_set_allows_automatic_window_tabbing(
 ///|
 fn native_application_allows_automatic_window_tabbing() -> Bool {
   let window_class = objc_runtime_class_handle("NSWindow")
-  if window_class == (0 : Int).to_uint64() {
+  if window_class == (0 : Int32).to_uint64() {
     return false
   }
   let responds_to_selector = objc_runtime_selector_handle("respondsToSelector:")
@@ -99,9 +99,9 @@ fn native_application_allows_automatic_window_tabbing() -> Bool {
 }
 
 ///|
-fn native_application_theme() -> Int {
+fn native_application_theme() -> Int32 {
   let app = native_application_shared_handle()
-  if app == (0 : Int).to_uint64() {
+  if app == (0 : Int32).to_uint64() {
     return 0
   }
   let appearance = appkit_objc_msg_send_u64(
@@ -114,14 +114,14 @@ fn native_application_theme() -> Int {
 ///|
 fn native_application_close_all_windows() -> Unit {
   let app = native_application_shared_handle()
-  if app == (0 : Int).to_uint64() {
+  if app == (0 : Int32).to_uint64() {
     return ()
   }
   let windows = appkit_objc_msg_send_u64(
     app,
     objc_runtime_selector_handle("windows"),
   )
-  if windows == (0 : Int).to_uint64() {
+  if windows == (0 : Int32).to_uint64() {
     return ()
   }
   appkit_objc_msg_send_void_u64(
@@ -134,11 +134,11 @@ fn native_application_close_all_windows() -> Unit {
 ///|
 fn native_post_application_defined_event(at_start : Bool) -> Unit {
   let app = native_application_shared_handle()
-  if app == (0 : Int).to_uint64() {
+  if app == (0 : Int32).to_uint64() {
     return ()
   }
   let ns_event_class = objc_runtime_class_handle("NSEvent")
-  if ns_event_class == (0 : Int).to_uint64() {
+  if ns_event_class == (0 : Int32).to_uint64() {
     return ()
   }
   // NSEventTypeApplicationDefined = 15.
@@ -151,12 +151,12 @@ fn native_post_application_defined_event(at_start : Bool) -> Unit {
     0.0,
     0.0,
     0,
-    (0 : Int).to_uint64(),
+    (0 : Int32).to_uint64(),
     0,
     0,
-    (0 : Int).to_uint64(),
+    (0 : Int32).to_uint64(),
   )
-  if event == (0 : Int).to_uint64() {
+  if event == (0 : Int32).to_uint64() {
     return ()
   }
   appkit_objc_msg_send_void_u64_u64(
@@ -164,9 +164,9 @@ fn native_post_application_defined_event(at_start : Bool) -> Unit {
     objc_runtime_selector_handle("postEvent:atStart:"),
     event,
     if at_start {
-      (1 : Int).to_uint64()
+      (1 : Int32).to_uint64()
     } else {
-      (0 : Int).to_uint64()
+      (0 : Int32).to_uint64()
     },
   )
 }
@@ -179,7 +179,7 @@ fn native_event_loop_wake_up_appkit() -> Unit {
 ///|
 fn native_application_run() -> Unit {
   let app = native_application_shared_handle()
-  if app == (0 : Int).to_uint64() {
+  if app == (0 : Int32).to_uint64() {
     return ()
   }
   appkit_objc_msg_send_void(app, objc_runtime_selector_handle("run"))
@@ -188,13 +188,13 @@ fn native_application_run() -> Unit {
 ///|
 fn native_application_stop_immediately() -> Unit {
   let app = native_application_shared_handle()
-  if app == (0 : Int).to_uint64() {
+  if app == (0 : Int32).to_uint64() {
     return ()
   }
   appkit_objc_msg_send_void_u64(
     app,
     objc_runtime_selector_handle("stop:"),
-    (0 : Int).to_uint64(),
+    (0 : Int32).to_uint64(),
   )
   native_post_application_defined_event(true)
 }
@@ -262,7 +262,7 @@ pub fn EventLoop::primary_monitor(_self : EventLoop) -> @core.MonitorHandle? {
 ///|
 fn activation_policy_to_native(
   activation_policy : @core.ActivationPolicy?,
-) -> Int {
+) -> Int32 {
   match activation_policy {
     Some(Regular) => 0
     Some(Accessory) => 1
@@ -696,7 +696,10 @@ fn EventLoop::try_start_running(
 }
 
 ///|
-fn EventLoop::configure_pump_wait(self : EventLoop, timeout_ms : Int?) -> Unit {
+fn EventLoop::configure_pump_wait(
+  self : EventLoop,
+  timeout_ms : Int32?,
+) -> Unit {
   let _ = self
   match timeout_ms {
     Some(timeout_ms) if timeout_ms <= 0 => {
@@ -817,7 +820,7 @@ pub fn[A : ApplicationHandler] EventLoop::try_run_app_on_demand(
 /// `pump_app_events()` every tick.
 pub fn[A : ApplicationHandler] EventLoop::pump_app_events(
   self : EventLoop,
-  timeout_ms : Int?,
+  timeout_ms : Int32?,
   app : A,
 ) -> @core.PumpStatus {
   try! self.try_pump_app_events(timeout_ms, app)
@@ -828,7 +831,7 @@ pub fn[A : ApplicationHandler] EventLoop::pump_app_events(
 /// process main thread.
 pub fn[A : ApplicationHandler] EventLoop::try_pump_app_events(
   self : EventLoop,
-  timeout_ms : Int?,
+  timeout_ms : Int32?,
   app : A,
 ) -> @core.PumpStatus raise @core.EventLoopError {
   ensure_event_loop_run_thread()

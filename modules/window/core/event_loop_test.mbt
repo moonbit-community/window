@@ -1,18 +1,20 @@
 ///|
 test "platform_event_loop_attributes_any_thread_defaults_false" {
-  let attributes = PlatformEventLoopAttributes::default()
+  let attributes = @core.PlatformEventLoopAttributes::default()
   assert_false(attributes.any_thread())
 }
 
 ///|
 test "platform_event_loop_attributes_with_any_thread_updates_value" {
-  let attributes = PlatformEventLoopAttributes::default().with_any_thread(true)
+  let attributes = @core.PlatformEventLoopAttributes::default().with_any_thread(
+    true,
+  )
   assert_true(attributes.any_thread())
 }
 
 ///|
 test "event_loop_error_structured_payload" {
-  let not_supported = EventLoopError::not_supported(
+  let not_supported = @core.EventLoopError::not_supported(
     "Multiple event loops are not supported",
   )
   guard not_supported is NotSupported(err) else {
@@ -20,7 +22,7 @@ test "event_loop_error_structured_payload" {
   }
   assert_eq(err.reason(), "Multiple event loops are not supported")
 
-  let os_error = EventLoopError::os(
+  let os_error = @core.EventLoopError::os(
     "Failed to initialize NSApplication",
     code=4096,
     domain="NSCocoaErrorDomain",

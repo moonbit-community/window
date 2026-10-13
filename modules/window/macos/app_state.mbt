@@ -10,24 +10,24 @@ priv enum DeferredCallback {
   AboutToWait
   ProxyWakeUp
   WindowEvent(@core.WindowId, @core.WindowEvent)
-  ScaleFactorChanged(Int, @core.WindowId, Double, Int, Int)
+  ScaleFactorChanged(Int32, @core.WindowId, Double, Int32, Int32)
   DeviceEvent(@core.DeviceEvent)
   StandardKeyBinding(@core.WindowId, String)
 }
 
 ///|
 priv struct WindowHandleEntry {
-  raw_id : Int
+  raw_id : Int32
   identity : UInt64
   native_handle : NativeWindow?
 }
 
 ///|
 priv struct AppStateRuntime {
-  mut activation_policy : Int
+  mut activation_policy : Int32
   mut default_menu : Bool
   mut activate_ignoring_other_apps : Bool
-  mut next_window_id : Int
+  mut next_window_id : Int32
   mut stop_on_launch : Bool
   mut stop_before_wait : Bool
   mut stop_after_wait : Bool
@@ -41,7 +41,7 @@ priv struct AppStateRuntime {
   waker : EventLoopWaker
   mut start_time_ms : Int64?
   mut wait_timeout_ms : Int64?
-  mut pending_redraw_window_ids : Array[Int]
+  mut pending_redraw_window_ids : Array[Int32]
   mut window_handles : Array[WindowHandleEntry]
   mut deferred_callbacks : Array[DeferredCallback]
   mut dispatch_callback : ((DeferredCallback) -> Unit)?
@@ -78,21 +78,25 @@ fn AppStateRuntime::AppStateRuntime() -> AppStateRuntime {
 let app_state_runtime : Ref[AppStateRuntime] = Ref(AppStateRuntime())
 
 ///|
-let app_state_window_position_raw_ids : Ref[Array[Int]] = Ref([])
+let app_state_window_position_raw_ids : Ref[Array[Int32]] = Ref([])
 
 ///|
-let app_state_window_position_xs : Ref[Array[Int]] = Ref([])
+let app_state_window_position_xs : Ref[Array[Int32]] = Ref([])
 
 ///|
-let app_state_window_position_ys : Ref[Array[Int]] = Ref([])
+let app_state_window_position_ys : Ref[Array[Int32]] = Ref([])
 
 ///|
-fn app_state_window_position_index(raw_id : Int) -> Int? {
+fn app_state_window_position_index(raw_id : Int32) -> Int32? {
   app_state_window_position_raw_ids.val.search_by(id => id == raw_id)
 }
 
 ///|
-fn app_state_set_window_position_state(raw_id : Int, x : Int, y : Int) -> Unit {
+fn app_state_set_window_position_state(
+  raw_id : Int32,
+  x : Int32,
+  y : Int32,
+) -> Unit {
   match app_state_window_position_index(raw_id) {
     Some(index) => {
       app_state_window_position_xs.val[index] = x
@@ -107,7 +111,7 @@ fn app_state_set_window_position_state(raw_id : Int, x : Int, y : Int) -> Unit {
 }
 
 ///|
-fn app_state_clear_window_position_state(raw_id : Int) -> Unit {
+fn app_state_clear_window_position_state(raw_id : Int32) -> Unit {
   match app_state_window_position_index(raw_id) {
     Some(index) => {
       ignore(app_state_window_position_raw_ids.val.remove(index))
@@ -120,10 +124,10 @@ fn app_state_clear_window_position_state(raw_id : Int) -> Unit {
 
 ///|
 fn app_state_queue_window_moved_if_changed(
-  raw_id : Int,
+  raw_id : Int32,
   window_id : @core.WindowId,
-  logical_x : Int,
-  logical_y : Int,
+  logical_x : Int32,
+  logical_y : Int32,
 ) -> Unit {
   let should_queue = match app_state_window_position_index(raw_id) {
     Some(index) =>
@@ -154,8 +158,8 @@ fn native_event_loop_wake_up() -> Unit {
 
 ///|
 fn app_state_device_event_from_native(
-  native_event_kind : Int,
-  button : Int,
+  native_event_kind : Int32,
+  button : Int32,
   delta_x : Double,
   delta_y : Double,
 ) -> @core.DeviceEvent? {
@@ -267,8 +271,8 @@ fn app_state_queue_proxy_wake_up() -> Unit {
 
 ///|
 fn app_state_queue_device_event(
-  native_event_kind : Int,
-  button : Int,
+  native_event_kind : Int32,
+  button : Int32,
   delta_x : Double,
   delta_y : Double,
 ) -> Unit {
@@ -282,7 +286,7 @@ fn app_state_queue_device_event(
 }
 
 ///|
-fn app_state_window_scale_factor(raw_id : Int) -> Double {
+fn app_state_window_scale_factor(raw_id : Int32) -> Double {
   match app_state_window_handle(raw_id) {
     Some(window_handle) => native_window_scale_factor(window_handle)
     None => 1.0
@@ -291,9 +295,9 @@ fn app_state_window_scale_factor(raw_id : Int) -> Double {
 
 ///|
 fn app_state_logical_size_to_physical(
-  raw_id : Int,
-  width : Int,
-  height : Int,
+  raw_id : Int32,
+  width : Int32,
+  height : Int32,
 ) -> @dpi.PhysicalSize {
   @dpi.LogicalSize::LogicalSize(width.to_double(), height.to_double()).to_physical(
     app_state_window_scale_factor(raw_id),
@@ -302,9 +306,9 @@ fn app_state_logical_size_to_physical(
 
 ///|
 fn app_state_logical_position_to_physical(
-  raw_id : Int,
-  x : Int,
-  y : Int,
+  raw_id : Int32,
+  x : Int32,
+  y : Int32,
 ) -> @dpi.PhysicalPosition {
   @dpi.LogicalPosition::LogicalPosition(x.to_double(), y.to_double()).to_physical(
     app_state_window_scale_factor(raw_id),
@@ -313,11 +317,11 @@ fn app_state_logical_position_to_physical(
 
 ///|
 fn app_state_queue_native_window_event(
-  kind : Int,
-  raw_id : Int,
-  arg0 : Int,
-  arg1 : Int,
-  _arg2 : Int,
+  kind : Int32,
+  raw_id : Int32,
+  arg0 : Int32,
+  arg1 : Int32,
+  _arg2 : Int32,
   argd : Double,
 ) -> Unit {
   ignore(_arg2)
@@ -563,11 +567,11 @@ fn native_callback_will_terminate() -> Unit {
 
 ///|
 fn native_callback_drag_event(
-  raw_id : Int,
-  kind : Int,
+  raw_id : Int32,
+  kind : Int32,
   x : Double,
   y : Double,
-  has_position : Int,
+  has_position : Int32,
   path_cstr : UInt64,
 ) -> Unit {
   queue_drag_event_from_payload(
@@ -581,8 +585,8 @@ fn native_callback_drag_event(
 
 ///|
 fn native_callback_device_event(
-  kind : Int,
-  button : Int,
+  kind : Int32,
+  button : Int32,
   delta_x : Double,
   delta_y : Double,
 ) -> Unit {
@@ -590,7 +594,11 @@ fn native_callback_device_event(
 }
 
 ///|
-fn native_callback_sync_query(raw_id : Int, kind : Int, _arg0 : UInt64) -> Int {
+fn native_callback_sync_query(
+  raw_id : Int32,
+  kind : Int32,
+  _arg0 : UInt64,
+) -> Int32 {
   match kind {
     _ => view_native_query_state(raw_id, kind)
   }
@@ -639,7 +647,7 @@ fn app_state_on_after_waiting() -> Unit {
 }
 
 ///|
-fn native_callback_lifecycle(kind : Int) -> Unit {
+fn native_callback_lifecycle(kind : Int32) -> Unit {
   match kind {
     1 => native_callback_did_finish_launching()
     2 => native_callback_will_terminate()
@@ -651,11 +659,11 @@ fn native_callback_lifecycle(kind : Int) -> Unit {
 
 ///|
 fn native_callback_window_event(
-  kind : Int,
-  raw_id : Int,
-  arg0 : Int,
-  arg1 : Int,
-  arg2 : Int,
+  kind : Int32,
+  raw_id : Int32,
+  arg0 : Int32,
+  arg1 : Int32,
+  arg2 : Int32,
   argd : Double,
 ) -> Unit {
   app_state_queue_native_window_event(kind, raw_id, arg0, arg1, arg2, argd)
@@ -663,7 +671,7 @@ fn native_callback_window_event(
 
 ///|
 fn app_state_register_window_handle(
-  raw_id : Int,
+  raw_id : Int32,
   window_handle : NativeWindow,
 ) -> Unit {
   let next_entries : Array[WindowHandleEntry] = []
@@ -697,7 +705,7 @@ fn app_state_register_window_handle(
 }
 
 ///|
-fn app_state_unregister_window_handle(raw_id : Int) -> Unit {
+fn app_state_unregister_window_handle(raw_id : Int32) -> Unit {
   let remaining_entries : Array[WindowHandleEntry] = []
   for entry in app_state_runtime.val.window_handles {
     if entry.raw_id != raw_id {
@@ -709,7 +717,7 @@ fn app_state_unregister_window_handle(raw_id : Int) -> Unit {
 }
 
 ///|
-fn app_state_window_handle(raw_id : Int) -> NativeWindow? {
+fn app_state_window_handle(raw_id : Int32) -> NativeWindow? {
   match
     app_state_runtime.val.window_handles.search_by(entry => {
       entry.raw_id == raw_id
@@ -720,7 +728,7 @@ fn app_state_window_handle(raw_id : Int) -> NativeWindow? {
 }
 
 ///|
-fn app_state_window_identity(raw_id : Int) -> UInt64? {
+fn app_state_window_identity(raw_id : Int32) -> UInt64? {
   match
     app_state_runtime.val.window_handles.search_by(entry => {
       entry.raw_id == raw_id
@@ -731,7 +739,7 @@ fn app_state_window_identity(raw_id : Int) -> UInt64? {
 }
 
 ///|
-fn app_state_window_raw_id(window_handle : NativeWindow) -> Int? {
+fn app_state_window_raw_id(window_handle : NativeWindow) -> Int32? {
   let window_identity = native_window_identity(window_handle)
   match
     app_state_runtime.val.window_handles.search_by(entry => {
@@ -752,7 +760,7 @@ fn app_state_has_window_handle(window_handle : NativeWindow) -> Bool {
 }
 
 ///|
-fn app_state_process_queued_fullscreen_request(raw_id : Int) -> Unit {
+fn app_state_process_queued_fullscreen_request(raw_id : Int32) -> Unit {
   match app_state_window_handle(raw_id) {
     Some(window_handle) =>
       if !window_in_fullscreen_transition(window_handle) {
@@ -770,7 +778,7 @@ fn app_state_process_queued_fullscreen_request(raw_id : Int) -> Unit {
 }
 
 ///|
-fn app_state_next_window_id() -> Int {
+fn app_state_next_window_id() -> Int32 {
   let raw_id = app_state_runtime.val.next_window_id
   app_state_runtime.val.next_window_id = raw_id + 1
   raw_id
@@ -794,7 +802,7 @@ fn app_state_queue_standard_key_binding_callback(
 
 ///|
 fn app_state_configure_launch_policy(
-  activation_policy : Int,
+  activation_policy : Int32,
   default_menu : Bool,
   activate_ignoring_other_apps : Bool,
 ) -> Unit {
@@ -805,7 +813,7 @@ fn app_state_configure_launch_policy(
 
 ///|
 fn app_state_setup_global(
-  activation_policy : Int,
+  activation_policy : Int32,
   default_menu : Bool,
   activate_ignoring_other_apps : Bool,
 ) -> Unit {
@@ -897,27 +905,27 @@ fn native_application_is_bundled() -> Bool {
   let running_application_class = objc_runtime_class_handle(
     "NSRunningApplication",
   )
-  if running_application_class == (0 : Int).to_uint64() {
+  if running_application_class == (0 : Int32).to_uint64() {
     return false
   }
   let app = appkit_objc_msg_send_u64(
     running_application_class,
     objc_runtime_selector_handle("currentApplication"),
   )
-  if app == (0 : Int).to_uint64() {
+  if app == (0 : Int32).to_uint64() {
     return false
   }
   appkit_objc_msg_send_u64(
     app,
     objc_runtime_selector_handle("bundleIdentifier"),
   ) !=
-  (0 : Int).to_uint64()
+  (0 : Int32).to_uint64()
 }
 
 ///|
-fn native_application_set_activation_policy(activation_policy : Int) -> Unit {
+fn native_application_set_activation_policy(activation_policy : Int32) -> Unit {
   let app = native_application_shared_handle()
-  if app == (0 : Int).to_uint64() {
+  if app == (0 : Int32).to_uint64() {
     return ()
   }
   let policy = if activation_policy < 0 { 0 } else { activation_policy }
@@ -933,7 +941,7 @@ fn native_application_set_activate_ignoring_other_apps(
   activate_ignoring_other_apps : Bool,
 ) -> Unit {
   let app = native_application_shared_handle()
-  if app == (0 : Int).to_uint64() {
+  if app == (0 : Int32).to_uint64() {
     return ()
   }
   appkit_objc_msg_send_void_bool(
@@ -1044,7 +1052,10 @@ fn[A : ApplicationHandler] app_state_did_finish_launching_and_dispatch(
 }
 
 ///|
-fn app_state_queue_unique_window_id(ids : Array[Int], window_id : Int) -> Unit {
+fn app_state_queue_unique_window_id(
+  ids : Array[Int32],
+  window_id : Int32,
+) -> Unit {
   match ids.search_by(id => id == window_id) {
     Some(_) => ()
     None => ids.push(window_id)
@@ -1052,7 +1063,7 @@ fn app_state_queue_unique_window_id(ids : Array[Int], window_id : Int) -> Unit {
 }
 
 ///|
-fn app_state_take_window_id(ids : Array[Int], window_id : Int) -> Bool {
+fn app_state_take_window_id(ids : Array[Int32], window_id : Int32) -> Bool {
   match ids.search_by(id => id == window_id) {
     Some(index) => {
       ignore(ids.remove(index))
@@ -1063,7 +1074,7 @@ fn app_state_take_window_id(ids : Array[Int], window_id : Int) -> Bool {
 }
 
 ///|
-fn app_state_queue_redraw(window_id : Int) -> Unit {
+fn app_state_queue_redraw(window_id : Int32) -> Unit {
   app_state_queue_unique_window_id(
     app_state_runtime.val.pending_redraw_window_ids,
     window_id,
@@ -1072,14 +1083,14 @@ fn app_state_queue_redraw(window_id : Int) -> Unit {
 }
 
 ///|
-fn app_state_take_all_redraws() -> Array[Int] {
+fn app_state_take_all_redraws() -> Array[Int32] {
   let redraws = app_state_runtime.val.pending_redraw_window_ids
   app_state_runtime.val.pending_redraw_window_ids = []
   redraws
 }
 
 ///|
-fn app_state_clear_window_redraw(window_id : Int) -> Unit {
+fn app_state_clear_window_redraw(window_id : Int32) -> Unit {
   ignore(
     app_state_take_window_id(
       app_state_runtime.val.pending_redraw_window_ids,

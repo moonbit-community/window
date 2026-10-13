@@ -8,7 +8,7 @@ struct App {
 ///|
 struct WindowData {
   window : @macos.Window
-  color : Int
+  color : Int32
 }
 
 ///|
@@ -17,7 +17,7 @@ fn App::App() -> App {
 }
 
 ///|
-fn int_pow(base : Int, exp : Int) -> Int {
+fn int_pow(base : Int32, exp : Int32) -> Int32 {
   let mut value = 1
   let mut i = 0
   while i < exp {
@@ -28,12 +28,12 @@ fn int_pow(base : Int, exp : Int) -> Int {
 }
 
 ///|
-fn child_color(child_index : Int) -> Int {
-  (0xff000000 : Int) + int_pow(3, (child_index + 2) % 16)
+fn child_color(child_index : Int32) -> Int32 {
+  (0xff000000 : Int32) + int_pow(3, (child_index + 2) % 16)
 }
 
 ///|
-fn App::window_data_index(self : App, window_id : @core.WindowId) -> Int? {
+fn App::window_data_index(self : App, window_id : @core.WindowId) -> Int32? {
   self.windows.search_by(entry => entry.window.id() == window_id)
 }
 

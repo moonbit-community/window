@@ -81,7 +81,7 @@ pub(all) enum MouseButton {
 } derive(Eq, Debug)
 
 ///|
-pub fn MouseButton::try_from_u8(button : Int) -> MouseButton? {
+pub fn MouseButton::try_from_u8(button : Int32) -> MouseButton? {
   match button {
     0 => Some(Left)
     1 => Some(Right)
@@ -121,46 +121,46 @@ pub fn MouseButton::try_from_u8(button : Int) -> MouseButton? {
 
 ///|
 pub struct FingerId {
-  raw : Int
+  raw : Int32
 } derive(Eq, Debug)
 
 ///|
-pub fn FingerId::from_raw(raw : Int) -> FingerId {
+pub fn FingerId::from_raw(raw : Int32) -> FingerId {
   { raw, }
 }
 
 ///|
-pub fn FingerId::into_raw(self : FingerId) -> Int {
+pub fn FingerId::into_raw(self : FingerId) -> Int32 {
   self.raw
 }
 
 ///|
 pub struct AxisId {
-  raw : Int
+  raw : Int32
 } derive(Eq, Debug)
 
 ///|
-pub fn AxisId::from_raw(raw : Int) -> AxisId {
+pub fn AxisId::from_raw(raw : Int32) -> AxisId {
   { raw, }
 }
 
 ///|
-pub fn AxisId::into_raw(self : AxisId) -> Int {
+pub fn AxisId::into_raw(self : AxisId) -> Int32 {
   self.raw
 }
 
 ///|
 pub struct ButtonId {
-  raw : Int
+  raw : Int32
 } derive(Eq, Debug)
 
 ///|
-pub fn ButtonId::from_raw(raw : Int) -> ButtonId {
+pub fn ButtonId::from_raw(raw : Int32) -> ButtonId {
   { raw, }
 }
 
 ///|
-pub fn ButtonId::into_raw(self : ButtonId) -> Int {
+pub fn ButtonId::into_raw(self : ButtonId) -> Int32 {
   self.raw
 }
 
@@ -219,7 +219,7 @@ pub fn TabletToolKind::default() -> TabletToolKind {
 pub struct TabletToolData {
   force : Force?
   tangential_force : Double?
-  twist : Int?
+  twist : Int32?
   tilt : TabletToolTilt?
   angle : TabletToolAngle?
 } derive(Eq, Debug)
@@ -228,7 +228,7 @@ pub struct TabletToolData {
 pub fn TabletToolData::TabletToolData(
   force : Force?,
   tangential_force : Double?,
-  twist : Int?,
+  twist : Int32?,
   tilt : TabletToolTilt?,
   angle : TabletToolAngle?,
 ) -> TabletToolData {
@@ -246,7 +246,7 @@ pub fn TabletToolData::tangential_force(self : TabletToolData) -> Double? {
 }
 
 ///|
-pub fn TabletToolData::twist(self : TabletToolData) -> Int? {
+pub fn TabletToolData::twist(self : TabletToolData) -> Int32? {
   self.twist
 }
 
@@ -276,22 +276,22 @@ pub fn TabletToolData::angle(self : TabletToolData) -> TabletToolAngle? {
 
 ///|
 pub struct TabletToolTilt {
-  x : Int
-  y : Int
+  x : Int32
+  y : Int32
 } derive(Eq, Debug)
 
 ///|
-pub fn TabletToolTilt::TabletToolTilt(x : Int, y : Int) -> TabletToolTilt {
+pub fn TabletToolTilt::TabletToolTilt(x : Int32, y : Int32) -> TabletToolTilt {
   { x, y, }
 }
 
 ///|
-pub fn TabletToolTilt::x(self : TabletToolTilt) -> Int {
+pub fn TabletToolTilt::x(self : TabletToolTilt) -> Int32 {
   self.x
 }
 
 ///|
-pub fn TabletToolTilt::y(self : TabletToolTilt) -> Int {
+pub fn TabletToolTilt::y(self : TabletToolTilt) -> Int32 {
   self.y
 }
 
@@ -410,7 +410,7 @@ pub fn TabletToolAngle::tilt(self : TabletToolAngle) -> TabletToolTilt {
 pub(all) enum TabletToolButton {
   Contact
   Barrel
-  Other(Int)
+  Other(Int32)
 } derive(Eq, Debug)
 
 ///|
@@ -446,7 +446,7 @@ pub(all) enum ButtonSource {
   Mouse(MouseButton)
   Touch(FingerId, Force?)
   TabletTool(TabletToolKind, TabletToolButton, TabletToolData)
-  Unknown(Int)
+  Unknown(Int32)
 } derive(Eq, Debug)
 
 ///|
@@ -470,7 +470,7 @@ fn radians_to_degrees(radians : Double) -> Double {
 }
 
 ///|
-fn int_abs(value : Int) -> Int {
+fn int_abs(value : Int32) -> Int32 {
   if value < 0 {
     -value
   } else {
@@ -489,22 +489,25 @@ fn double_abs(value : Double) -> Double {
 
 ///|
 pub struct ImeCursorRange {
-  end : Int
-  start : Int
+  end : Int32
+  start : Int32
 } derive(Eq, Debug)
 
 ///|
-pub fn ImeCursorRange::ImeCursorRange(start : Int, end : Int) -> ImeCursorRange {
+pub fn ImeCursorRange::ImeCursorRange(
+  start : Int32,
+  end : Int32,
+) -> ImeCursorRange {
   { start, end, }
 }
 
 ///|
-pub fn ImeCursorRange::start(self : ImeCursorRange) -> Int {
+pub fn ImeCursorRange::start(self : ImeCursorRange) -> Int32 {
   self.start
 }
 
 ///|
-pub fn ImeCursorRange::end(self : ImeCursorRange) -> Int {
+pub fn ImeCursorRange::end(self : ImeCursorRange) -> Int32 {
   self.end
 }
 
@@ -513,7 +516,7 @@ pub(all) enum Ime {
   Enabled
   Preedit(String, ImeCursorRange?)
   Commit(String)
-  DeleteSurrounding(Int, Int)
+  DeleteSurrounding(Int32, Int32)
   Disabled
 } derive(Eq, Debug)
 
@@ -611,7 +614,7 @@ pub(all) enum WindowEvent {
   PanGesture(DeviceId?, @dpi.PhysicalPositionF64, TouchPhase)
   DoubleTapGesture(DeviceId?)
   RotationGesture(DeviceId?, Double, TouchPhase)
-  TouchpadPressure(DeviceId?, Double, Int)
+  TouchpadPressure(DeviceId?, Double, Int32)
   MouseWheel(DeviceId?, MouseScrollDelta, TouchPhase)
   ScaleFactorChanged(Double, SurfaceSizeWriter)
   ThemeChanged(Theme)
@@ -642,7 +645,7 @@ pub(all) enum WinitWindowEvent {
   PanGesture(DeviceId?, @dpi.PhysicalPositionF64, TouchPhase)
   DoubleTapGesture(DeviceId?)
   RotationGesture(DeviceId?, Double, TouchPhase)
-  TouchpadPressure(DeviceId?, Double, Int)
+  TouchpadPressure(DeviceId?, Double, Int32)
   ScaleFactorChanged(Double, SurfaceSizeWriter)
   ThemeChanged(Theme)
   Occluded(Bool)

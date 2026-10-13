@@ -4,13 +4,13 @@ priv struct WindowPlatformStateEntry {
   mut ime_allowed : Bool
   mut cursor_visible : Bool
   mut accepts_first_mouse : Bool
-  mut option_as_alt : Int
-  mut ime_purpose : Int
-  mut ime_hints : Int
-  mut ime_cursor_x : Int
-  mut ime_cursor_y : Int
-  mut ime_cursor_width : Int
-  mut ime_cursor_height : Int
+  mut option_as_alt : Int32
+  mut ime_purpose : Int32
+  mut ime_hints : Int32
+  mut ime_cursor_x : Int32
+  mut ime_cursor_y : Int32
+  mut ime_cursor_width : Int32
+  mut ime_cursor_height : Int32
 }
 
 ///|
@@ -36,7 +36,7 @@ fn default_window_platform_state_entry(
 let window_platform_state_entries : Ref[Array[WindowPlatformStateEntry]] = Ref([])
 
 ///|
-fn window_platform_state_index(window_handle : UInt64) -> Int? {
+fn window_platform_state_index(window_handle : UInt64) -> Int32? {
   let window_identity = window_handle
   window_platform_state_entries.val.search_by(entry => {
     entry.window_handle == window_identity
@@ -44,7 +44,7 @@ fn window_platform_state_index(window_handle : UInt64) -> Int? {
 }
 
 ///|
-fn window_platform_state_ensure_index(window_handle : UInt64) -> Int {
+fn window_platform_state_ensure_index(window_handle : UInt64) -> Int32 {
   match window_platform_state_index(window_handle) {
     Some(index) => index
     None => {
@@ -98,14 +98,14 @@ fn window_cursor_visible_state(window_handle : UInt64) -> Bool {
 ///|
 fn set_window_option_as_alt_state(
   window_handle : UInt64,
-  option_as_alt : Int,
+  option_as_alt : Int32,
 ) -> Unit {
   let index = window_platform_state_ensure_index(window_handle)
   window_platform_state_entries.val[index].option_as_alt = option_as_alt
 }
 
 ///|
-fn window_option_as_alt_native(window_handle : UInt64) -> Int {
+fn window_option_as_alt_native(window_handle : UInt64) -> Int32 {
   match window_platform_state_index(window_handle) {
     Some(index) => window_platform_state_entries.val[index].option_as_alt
     None => 0
@@ -130,13 +130,16 @@ fn window_accepts_first_mouse_state(window_handle : UInt64) -> Bool {
 }
 
 ///|
-fn set_window_ime_purpose_state(window_handle : UInt64, purpose : Int) -> Unit {
+fn set_window_ime_purpose_state(
+  window_handle : UInt64,
+  purpose : Int32,
+) -> Unit {
   let index = window_platform_state_ensure_index(window_handle)
   window_platform_state_entries.val[index].ime_purpose = purpose
 }
 
 ///|
-fn window_ime_purpose_state(window_handle : UInt64) -> Int {
+fn window_ime_purpose_state(window_handle : UInt64) -> Int32 {
   match window_platform_state_index(window_handle) {
     Some(index) => window_platform_state_entries.val[index].ime_purpose
     None => 0
@@ -144,13 +147,13 @@ fn window_ime_purpose_state(window_handle : UInt64) -> Int {
 }
 
 ///|
-fn set_window_ime_hints_state(window_handle : UInt64, hints : Int) -> Unit {
+fn set_window_ime_hints_state(window_handle : UInt64, hints : Int32) -> Unit {
   let index = window_platform_state_ensure_index(window_handle)
   window_platform_state_entries.val[index].ime_hints = hints
 }
 
 ///|
-fn window_ime_hints_state(window_handle : UInt64) -> Int {
+fn window_ime_hints_state(window_handle : UInt64) -> Int32 {
   match window_platform_state_index(window_handle) {
     Some(index) => window_platform_state_entries.val[index].ime_hints
     None => 0
@@ -160,10 +163,10 @@ fn window_ime_hints_state(window_handle : UInt64) -> Int {
 ///|
 fn set_window_ime_cursor_area_state(
   window_handle : UInt64,
-  x : Int,
-  y : Int,
-  width : Int,
-  height : Int,
+  x : Int32,
+  y : Int32,
+  width : Int32,
+  height : Int32,
 ) -> Unit {
   let index = window_platform_state_ensure_index(window_handle)
   let entry = window_platform_state_entries.val[index]
@@ -174,7 +177,7 @@ fn set_window_ime_cursor_area_state(
 }
 
 ///|
-fn window_ime_cursor_x_state(window_handle : UInt64) -> Int {
+fn window_ime_cursor_x_state(window_handle : UInt64) -> Int32 {
   match window_platform_state_index(window_handle) {
     Some(index) => window_platform_state_entries.val[index].ime_cursor_x
     None => 0
@@ -182,7 +185,7 @@ fn window_ime_cursor_x_state(window_handle : UInt64) -> Int {
 }
 
 ///|
-fn window_ime_cursor_y_state(window_handle : UInt64) -> Int {
+fn window_ime_cursor_y_state(window_handle : UInt64) -> Int32 {
   match window_platform_state_index(window_handle) {
     Some(index) => window_platform_state_entries.val[index].ime_cursor_y
     None => 0
@@ -190,7 +193,7 @@ fn window_ime_cursor_y_state(window_handle : UInt64) -> Int {
 }
 
 ///|
-fn window_ime_cursor_width_state(window_handle : UInt64) -> Int {
+fn window_ime_cursor_width_state(window_handle : UInt64) -> Int32 {
   match window_platform_state_index(window_handle) {
     Some(index) => window_platform_state_entries.val[index].ime_cursor_width
     None => 1
@@ -198,7 +201,7 @@ fn window_ime_cursor_width_state(window_handle : UInt64) -> Int {
 }
 
 ///|
-fn window_ime_cursor_height_state(window_handle : UInt64) -> Int {
+fn window_ime_cursor_height_state(window_handle : UInt64) -> Int32 {
   match window_platform_state_index(window_handle) {
     Some(index) => window_platform_state_entries.val[index].ime_cursor_height
     None => 1

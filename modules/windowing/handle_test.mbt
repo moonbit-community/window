@@ -1,6 +1,6 @@
 ///|
 priv struct TestWindowProvider {
-  raw : RawWindowHandle
+  raw : @windowing.RawWindowHandle
 }
 
 ///|
@@ -10,7 +10,7 @@ impl WindowHandleProvider for TestWindowProvider with fn raw_window_handle(self)
 
 ///|
 priv struct TestDisplayProvider {
-  raw : RawDisplayHandle
+  raw : @windowing.RawDisplayHandle
 }
 
 ///|
@@ -22,15 +22,15 @@ impl DisplayHandleProvider for TestDisplayProvider with fn raw_display_handle(
 
 ///|
 test "AppKit handle providers preserve structured handles" {
-  let appkit_window = AppKitWindowHandle::new(42UL)
+  let appkit_window = @windowing.AppKitWindowHandle::new(42UL)
   let window_provider : TestWindowProvider = { raw: AppKit(appkit_window), }
-  let window = WindowHandle::from_provider(
+  let window = @windowing.WindowHandle::from_provider(
     window_provider as &WindowHandleProvider,
   )
   assert_eq(window.as_raw(), AppKit(appkit_window))
-  let appkit_display = AppKitDisplayHandle::new()
+  let appkit_display = @windowing.AppKitDisplayHandle::new()
   let display_provider : TestDisplayProvider = { raw: AppKit(appkit_display), }
-  let display = DisplayHandle::from_provider(
+  let display = @windowing.DisplayHandle::from_provider(
     display_provider as &DisplayHandleProvider,
   )
   assert_eq(display.as_raw(), AppKit(appkit_display))
@@ -38,19 +38,19 @@ test "AppKit handle providers preserve structured handles" {
 
 ///|
 test "pointer-backed window handles reject null values" {
-  let appkit = try AppKitWindowHandle::new(0UL) catch {
+  let appkit = try @windowing.AppKitWindowHandle::new(0UL) catch {
     Unavailable => None
   } noraise {
     handle => Some(handle)
   }
   assert_eq(appkit, None)
-  let win32 = try Win32WindowHandle::new(0UL) catch {
+  let win32 = try @windowing.Win32WindowHandle::new(0UL) catch {
     Unavailable => None
   } noraise {
     handle => Some(handle)
   }
   assert_eq(win32, None)
-  let wayland = try WaylandWindowHandle::new(0UL) catch {
+  let wayland = try @windowing.WaylandWindowHandle::new(0UL) catch {
     Unavailable => None
   } noraise {
     handle => Some(handle)
@@ -60,13 +60,13 @@ test "pointer-backed window handles reject null values" {
 
 ///|
 test "placeholder platform handles retain platform-specific fields" {
-  let win32 = Win32WindowHandle::new(7UL, hinstance=9UL)
+  let win32 = @windowing.Win32WindowHandle::new(7UL, hinstance=9UL)
   assert_eq(win32.hwnd(), 7UL)
   assert_eq(win32.hinstance(), Some(9UL))
-  let xlib = XlibWindowHandle::new(11UL, visual_id=13UL)
+  let xlib = @windowing.XlibWindowHandle::new(11UL, visual_id=13UL)
   assert_eq(xlib.window(), 11UL)
   assert_eq(xlib.visual_id(), 13UL)
-  let xcb = XcbWindowHandle::new(17U, visual_id=19U)
+  let xcb = @windowing.XcbWindowHandle::new(17U, visual_id=19U)
   assert_eq(xcb.window(), 17U)
   assert_eq(xcb.visual_id(), Some(19U))
 }
