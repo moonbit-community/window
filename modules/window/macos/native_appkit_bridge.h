@@ -33,6 +33,7 @@ typedef void (*mbw_drag_event_trampoline_t)(void *closure, int32_t raw_id, int32
                                             uint64_t path_cstr);
 typedef int32_t (*mbw_sync_query_trampoline_t)(void *closure, int32_t raw_id, int32_t kind,
                                                uint64_t arg0);
+typedef void (*mbw_menu_action_trampoline_t)(void *closure, int32_t action_id);
 typedef void (*mbw_lifecycle_trampoline_t)(void *closure, int32_t kind);
 typedef void (*mbw_send_event_impl_t)(id self, SEL _cmd, NSEvent *event);
 typedef struct MBWObjcOwnedObjectHandle MBWObjcOwnedObjectHandle;

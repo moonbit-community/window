@@ -13,6 +13,7 @@ options(
     "native_monitor_appkit.m",
     "native_appkit_main_thread.m",
     "native_appkit_callbacks.m",
+    "native_appkit_menu.m",
     "native_appkit_observers.m",
     "native_appkit_window.m",
     "native_appkit.m",
