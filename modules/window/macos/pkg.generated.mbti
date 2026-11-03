@@ -65,7 +65,7 @@ pub fn EventLoop::new_with_platform_attributes(@core.PlatformEventLoopAttributes
 pub fn EventLoop::output(Self, &Logger) -> Unit
 pub fn EventLoop::owned_display_handle(Self) -> @windowing.DisplayHandle
 pub fn EventLoop::primary_monitor(Self) -> @core.MonitorHandle?
-pub fn[A : ApplicationHandler] EventLoop::pump_app_events(Self, Int?, A) -> @core.PumpStatus
+pub fn[A : ApplicationHandler] EventLoop::pump_app_events(Self, Int32?, A) -> @core.PumpStatus
 pub fn EventLoop::raw_display_handle(Self) -> @windowing.RawDisplayHandle raise @windowing.HandleError
 pub fn[A : ApplicationHandler] EventLoop::run_app(Self, A) -> Unit
 pub fn[A : ApplicationHandler] EventLoop::run_app_on_demand(Self, A) -> Unit
@@ -77,7 +77,7 @@ pub fn EventLoop::to_string(Self) -> String
 pub fn EventLoop::try_create_window(Self, @core.WindowAttributes) -> Window raise @core.RequestError
 pub fn EventLoop::try_new() -> Self raise @core.EventLoopError
 pub fn EventLoop::try_new_with_platform_attributes(@core.PlatformEventLoopAttributes) -> Self raise @core.EventLoopError
-pub fn[A : ApplicationHandler] EventLoop::try_pump_app_events(Self, Int?, A) -> @core.PumpStatus raise @core.EventLoopError
+pub fn[A : ApplicationHandler] EventLoop::try_pump_app_events(Self, Int32?, A) -> @core.PumpStatus raise @core.EventLoopError
 pub fn[A : ApplicationHandler] EventLoop::try_run_app(Self, A) -> Unit raise @core.EventLoopError
 pub fn[A : ApplicationHandler] EventLoop::try_run_app_on_demand(Self, A) -> Unit raise @core.EventLoopError
 pub fn EventLoop::window_target(Self) -> ActiveEventLoop
@@ -118,7 +118,7 @@ pub impl Show for EventLoopProxy
 
 pub(all) struct KeyEquivalent {
   key : String
-  masks : Int?
+  masks : Int32?
 } derive(Eq, @debug.Debug)
 pub fn KeyEquivalent::equal(Self, Self) -> Bool
 pub fn KeyEquivalent::not_equal(Self, Self) -> Bool
@@ -218,7 +218,7 @@ pub fn Window::max_surface_size(Self) -> @dpi.PhysicalSize?
 pub fn Window::min_inner_size(Self) -> @dpi.PhysicalSize?
 pub fn Window::min_surface_size(Self) -> @dpi.PhysicalSize?
 pub fn Window::not_equal(Self, Self) -> Bool
-pub fn Window::num_tabs(Self) -> Int
+pub fn Window::num_tabs(Self) -> Int32
 pub fn Window::option_as_alt(Self) -> @core.OptionAsAlt
 pub fn Window::outer_position(Self) -> @dpi.PhysicalPosition raise @core.RequestError
 pub fn Window::outer_size(Self) -> @dpi.PhysicalSize
@@ -238,7 +238,7 @@ pub fn Window::safe_area(Self) -> @dpi.PhysicalInsets
 pub fn Window::scale_factor(Self) -> Double
 pub fn Window::select_next_tab(Self) -> Unit
 pub fn Window::select_previous_tab(Self) -> Unit
-pub fn Window::select_tab_at_index(Self, Int) -> Unit
+pub fn Window::select_tab_at_index(Self, Int32) -> Unit
 pub fn Window::set_blur(Self, Bool) -> Unit
 pub fn Window::set_borderless_game(Self, Bool) -> Unit
 pub fn Window::set_content_protected(Self, Bool) -> Unit

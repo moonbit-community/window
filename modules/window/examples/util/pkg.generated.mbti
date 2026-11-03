@@ -12,13 +12,13 @@ pub fn fill_window(@macos.Window) -> Unit
 
 pub fn fill_window_with_animated_color(@macos.Window, Int64) -> Unit
 
-pub fn fill_window_with_color(@macos.Window, Int) -> Unit
+pub fn fill_window_with_color(@macos.Window, Int32) -> Unit
 
-pub fn fill_window_with_safe_area_colors(@macos.Window, Int, Int) -> Unit
+pub fn fill_window_with_safe_area_colors(@macos.Window, Int32, Int32) -> Unit
 
 pub fn now_millis() -> Int64
 
-pub fn sleep_millis(Int) -> Unit
+pub fn sleep_millis(Int32) -> Unit
 
 pub fn tracing_init() -> Unit
 
