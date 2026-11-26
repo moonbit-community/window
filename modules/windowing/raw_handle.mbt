@@ -1,7 +1,8 @@
 ///|
+#derive(Eq, Debug)
 pub struct AppKitWindowHandle {
   priv ns_view_ : UInt64
-} derive(Eq, Debug)
+}
 
 ///|
 pub fn AppKitWindowHandle::new(
@@ -17,9 +18,10 @@ pub fn AppKitWindowHandle::ns_view(self : AppKitWindowHandle) -> UInt64 {
 }
 
 ///|
+#derive(Eq, Debug)
 pub struct AppKitDisplayHandle {
   priv _unit : Unit
-} derive(Eq, Debug)
+}
 
 ///|
 pub fn AppKitDisplayHandle::new() -> AppKitDisplayHandle {
@@ -27,10 +29,11 @@ pub fn AppKitDisplayHandle::new() -> AppKitDisplayHandle {
 }
 
 ///|
+#derive(Eq, Debug)
 pub struct Win32WindowHandle {
   priv hwnd_ : UInt64
   priv hinstance_ : UInt64?
-} derive(Eq, Debug)
+}
 
 ///|
 pub fn Win32WindowHandle::new(
@@ -52,9 +55,10 @@ pub fn Win32WindowHandle::hinstance(self : Win32WindowHandle) -> UInt64? {
 }
 
 ///|
+#derive(Eq, Debug)
 pub struct WindowsDisplayHandle {
   priv _unit : Unit
-} derive(Eq, Debug)
+}
 
 ///|
 pub fn WindowsDisplayHandle::new() -> WindowsDisplayHandle {
@@ -62,9 +66,10 @@ pub fn WindowsDisplayHandle::new() -> WindowsDisplayHandle {
 }
 
 ///|
+#derive(Eq, Debug)
 pub struct WaylandWindowHandle {
   priv surface_ : UInt64
-} derive(Eq, Debug)
+}
 
 ///|
 pub fn WaylandWindowHandle::new(
@@ -80,9 +85,10 @@ pub fn WaylandWindowHandle::surface(self : WaylandWindowHandle) -> UInt64 {
 }
 
 ///|
+#derive(Eq, Debug)
 pub struct WaylandDisplayHandle {
   priv display_ : UInt64
-} derive(Eq, Debug)
+}
 
 ///|
 pub fn WaylandDisplayHandle::new(
@@ -98,10 +104,11 @@ pub fn WaylandDisplayHandle::display(self : WaylandDisplayHandle) -> UInt64 {
 }
 
 ///|
+#derive(Eq, Debug)
 pub struct XlibWindowHandle {
   priv window_ : UInt64
   priv visual_id_ : UInt64
-} derive(Eq, Debug)
+}
 
 ///|
 pub fn XlibWindowHandle::new(
@@ -123,10 +130,11 @@ pub fn XlibWindowHandle::visual_id(self : XlibWindowHandle) -> UInt64 {
 }
 
 ///|
+#derive(Eq, Debug)
 pub struct XlibDisplayHandle {
   priv display_ : UInt64?
   priv screen_ : Int32
-} derive(Eq, Debug)
+}
 
 ///|
 pub fn XlibDisplayHandle::new(
@@ -147,10 +155,11 @@ pub fn XlibDisplayHandle::screen(self : XlibDisplayHandle) -> Int32 {
 }
 
 ///|
+#derive(Eq, Debug)
 pub struct XcbWindowHandle {
   priv window_ : UInt32
   priv visual_id_ : UInt32?
-} derive(Eq, Debug)
+}
 
 ///|
 pub fn XcbWindowHandle::new(
@@ -172,10 +181,11 @@ pub fn XcbWindowHandle::visual_id(self : XcbWindowHandle) -> UInt32? {
 }
 
 ///|
+#derive(Eq, Debug)
 pub struct XcbDisplayHandle {
   priv connection_ : UInt64?
   priv screen_ : Int32
-} derive(Eq, Debug)
+}
 
 ///|
 pub fn XcbDisplayHandle::new(
@@ -196,22 +206,24 @@ pub fn XcbDisplayHandle::screen(self : XcbDisplayHandle) -> Int32 {
 }
 
 ///|
+#derive(Eq, Debug)
 pub(all) enum RawWindowHandle {
   AppKit(AppKitWindowHandle)
   Win32(Win32WindowHandle)
   Wayland(WaylandWindowHandle)
   Xlib(XlibWindowHandle)
   Xcb(XcbWindowHandle)
-} derive(Eq, Debug)
+}
 
 ///|
+#derive(Eq, Debug)
 pub(all) enum RawDisplayHandle {
   AppKit(AppKitDisplayHandle)
   Windows(WindowsDisplayHandle)
   Wayland(WaylandDisplayHandle)
   Xlib(XlibDisplayHandle)
   Xcb(XcbDisplayHandle)
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend AppKitDisplayHandle with Debug::{to_repr}

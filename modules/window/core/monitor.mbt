@@ -1,9 +1,10 @@
 ///|
+#derive(Eq, Debug)
 pub struct VideoMode {
   priv bit_depth_ : Int32?
   priv refresh_rate_millihertz_ : Int32?
   priv surface_size_ : @dpi.PhysicalSize
-} derive(Eq, Debug)
+}
 
 ///|
 pub fn VideoMode::VideoMode(

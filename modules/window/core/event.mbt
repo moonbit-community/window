@@ -1,7 +1,8 @@
 ///|
+#derive(Debug)
 pub struct SurfaceSizeWriter {
   size : Ref[@dpi.PhysicalSize]
-} derive(Debug)
+}
 
 ///|
 pub fn SurfaceSizeWriter::SurfaceSizeWriter(
@@ -26,18 +27,20 @@ pub fn SurfaceSizeWriter::request_surface_size(
 }
 
 ///|
+#derive(Eq, Debug)
 pub(all) enum StartCause {
   Init
   Poll
   WaitCancelled(Int64, Int64?)
   ResumeTimeReached(Int64, Int64)
-} derive(Eq, Debug)
+}
 
 ///|
+#derive(Eq, Debug)
 pub(all) enum ElementState {
   Pressed
   Released
-} derive(Eq, Debug)
+}
 
 ///|
 pub fn ElementState::is_pressed(self : ElementState) -> Bool {
@@ -45,6 +48,7 @@ pub fn ElementState::is_pressed(self : ElementState) -> Bool {
 }
 
 ///|
+#derive(Eq, Debug)
 pub(all) enum MouseButton {
   Left
   Right
@@ -78,7 +82,7 @@ pub(all) enum MouseButton {
   Button30
   Button31
   Button32
-} derive(Eq, Debug)
+}
 
 ///|
 pub fn MouseButton::try_from_u8(button : Int32) -> MouseButton? {
@@ -120,9 +124,10 @@ pub fn MouseButton::try_from_u8(button : Int32) -> MouseButton? {
 }
 
 ///|
+#derive(Eq, Debug)
 pub struct FingerId {
   raw : Int32
-} derive(Eq, Debug)
+}
 
 ///|
 pub fn FingerId::from_raw(raw : Int32) -> FingerId {
@@ -135,9 +140,10 @@ pub fn FingerId::into_raw(self : FingerId) -> Int32 {
 }
 
 ///|
+#derive(Eq, Debug)
 pub struct AxisId {
   raw : Int32
-} derive(Eq, Debug)
+}
 
 ///|
 pub fn AxisId::from_raw(raw : Int32) -> AxisId {
@@ -150,9 +156,10 @@ pub fn AxisId::into_raw(self : AxisId) -> Int32 {
 }
 
 ///|
+#derive(Eq, Debug)
 pub struct ButtonId {
   raw : Int32
-} derive(Eq, Debug)
+}
 
 ///|
 pub fn ButtonId::from_raw(raw : Int32) -> ButtonId {
@@ -165,24 +172,27 @@ pub fn ButtonId::into_raw(self : ButtonId) -> Int32 {
 }
 
 ///|
+#derive(Eq, Debug)
 pub(all) enum MouseScrollDelta {
   LineDelta(Double, Double)
   PixelDelta(@dpi.PhysicalPositionF64)
-} derive(Eq, Debug)
+}
 
 ///|
+#derive(Eq, Debug)
 pub(all) enum TouchPhase {
   Started
   Moved
   Ended
   Cancelled
-} derive(Eq, Debug)
+}
 
 ///|
+#derive(Eq, Debug)
 pub(all) enum Force {
   Calibrated(Double, Double)
   Normalized(Double)
-} derive(Eq, Debug)
+}
 
 ///|
 pub fn Force::normalized(self : Force, angle : TabletToolAngle?) -> Double {
@@ -199,6 +209,7 @@ pub fn Force::normalized(self : Force, angle : TabletToolAngle?) -> Double {
 }
 
 ///|
+#derive(Eq, Debug)
 pub(all) enum TabletToolKind {
   Pen
   Eraser
@@ -208,7 +219,7 @@ pub(all) enum TabletToolKind {
   Finger
   Mouse
   Lens
-} derive(Eq, Debug)
+}
 
 ///|
 pub fn TabletToolKind::default() -> TabletToolKind {
@@ -216,13 +227,14 @@ pub fn TabletToolKind::default() -> TabletToolKind {
 }
 
 ///|
+#derive(Eq, Debug)
 pub struct TabletToolData {
   force : Force?
   tangential_force : Double?
   twist : Int32?
   tilt : TabletToolTilt?
   angle : TabletToolAngle?
-} derive(Eq, Debug)
+}
 
 ///|
 pub fn TabletToolData::TabletToolData(
@@ -275,10 +287,11 @@ pub fn TabletToolData::angle(self : TabletToolData) -> TabletToolAngle? {
 }
 
 ///|
+#derive(Eq, Debug)
 pub struct TabletToolTilt {
   x : Int32
   y : Int32
-} derive(Eq, Debug)
+}
 
 ///|
 pub fn TabletToolTilt::TabletToolTilt(x : Int32, y : Int32) -> TabletToolTilt {
@@ -337,10 +350,11 @@ pub fn TabletToolTilt::angle(self : TabletToolTilt) -> TabletToolAngle {
 }
 
 ///|
+#derive(Eq, Debug)
 pub struct TabletToolAngle {
   altitude : Double
   azimuth : Double
-} derive(Eq, Debug)
+}
 
 ///|
 pub fn TabletToolAngle::TabletToolAngle(
@@ -407,11 +421,12 @@ pub fn TabletToolAngle::tilt(self : TabletToolAngle) -> TabletToolTilt {
 }
 
 ///|
+#derive(Eq, Debug)
 pub(all) enum TabletToolButton {
   Contact
   Barrel
   Other(Int32)
-} derive(Eq, Debug)
+}
 
 ///|
 pub fn TabletToolButton::mouse_button(self : TabletToolButton) -> MouseButton? {
@@ -426,28 +441,31 @@ pub fn TabletToolButton::mouse_button(self : TabletToolButton) -> MouseButton? {
 }
 
 ///|
+#derive(Eq, Debug)
 pub(all) enum PointerKind {
   Mouse
   Touch(FingerId)
   TabletTool(TabletToolKind)
   Unknown
-} derive(Eq, Debug)
+}
 
 ///|
+#derive(Eq, Debug)
 pub(all) enum PointerSource {
   Mouse
   Touch(FingerId, Force?)
   TabletTool(TabletToolKind, TabletToolData)
   Unknown
-} derive(Eq, Debug)
+}
 
 ///|
+#derive(Eq, Debug)
 pub(all) enum ButtonSource {
   Mouse(MouseButton)
   Touch(FingerId, Force?)
   TabletTool(TabletToolKind, TabletToolButton, TabletToolData)
   Unknown(Int32)
-} derive(Eq, Debug)
+}
 
 ///|
 pub fn ButtonSource::mouse_button(self : ButtonSource) -> MouseButton? {
@@ -488,10 +506,11 @@ fn double_abs(value : Double) -> Double {
 }
 
 ///|
+#derive(Eq, Debug)
 pub struct ImeCursorRange {
   end : Int32
   start : Int32
-} derive(Eq, Debug)
+}
 
 ///|
 pub fn ImeCursorRange::ImeCursorRange(
@@ -512,18 +531,20 @@ pub fn ImeCursorRange::end(self : ImeCursorRange) -> Int32 {
 }
 
 ///|
+#derive(Eq, Debug)
 pub(all) enum Ime {
   Enabled
   Preedit(String, ImeCursorRange?)
   Commit(String)
   DeleteSurrounding(Int32, Int32)
   Disabled
-} derive(Eq, Debug)
+}
 
 ///|
+#derive(Eq, Debug)
 pub struct DeviceId {
   raw : Int64
-} derive(Eq, Debug)
+}
 
 ///|
 pub fn DeviceId::from_raw(raw : Int64) -> DeviceId {
@@ -536,10 +557,11 @@ pub fn DeviceId::into_raw(self : DeviceId) -> Int64 {
 }
 
 ///|
+#derive(Eq, Debug)
 pub struct RawKeyEvent {
   physical_key : PhysicalKey
   state : ElementState
-} derive(Eq, Debug)
+}
 
 ///|
 pub fn RawKeyEvent::RawKeyEvent(
@@ -560,20 +582,22 @@ pub fn RawKeyEvent::state(self : RawKeyEvent) -> ElementState {
 }
 
 ///|
+#derive(Eq, Debug)
 pub(all) enum DeviceEvent {
   PointerMotion(Double, Double)
   MouseWheel(MouseScrollDelta)
   Button(ButtonId, ElementState)
   Key(RawKeyEvent)
-} derive(Eq, Debug)
+}
 
 ///|
+#derive(Eq, Debug)
 pub(all) enum WinitDeviceEvent {
   MouseMotion(Double, Double)
   MouseWheel(MouseScrollDelta)
   Button(ButtonId, ElementState)
   Key(RawKeyEvent)
-} derive(Eq, Debug)
+}
 
 ///|
 pub fn DeviceEvent::into_winit_event(self : DeviceEvent) -> WinitDeviceEvent {
@@ -586,6 +610,7 @@ pub fn DeviceEvent::into_winit_event(self : DeviceEvent) -> WinitDeviceEvent {
 }
 
 ///|
+#derive(Debug)
 pub(all) enum WindowEvent {
   ActivationTokenDone(AsyncRequestSerial, ActivationToken)
   SurfaceResized(@dpi.PhysicalSize)
@@ -608,7 +633,7 @@ pub(all) enum WindowEvent {
     ElementState,
     @dpi.PhysicalPositionF64,
     Bool,
-    ButtonSource
+    ButtonSource,
   )
   PinchGesture(DeviceId?, Double, TouchPhase)
   PanGesture(DeviceId?, @dpi.PhysicalPositionF64, TouchPhase)
@@ -620,9 +645,10 @@ pub(all) enum WindowEvent {
   ThemeChanged(Theme)
   Occluded(Bool)
   RedrawRequested
-} derive(Debug)
+}
 
 ///|
+#derive(Debug)
 pub(all) enum WinitWindowEvent {
   ActivationTokenDone(AsyncRequestSerial, ActivationToken)
   Resized(@dpi.PhysicalSize)
@@ -650,7 +676,7 @@ pub(all) enum WinitWindowEvent {
   ThemeChanged(Theme)
   Occluded(Bool)
   RedrawRequested
-} derive(Debug)
+}
 
 ///|
 pub fn WindowEvent::into_winit_events(

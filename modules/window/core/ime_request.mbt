@@ -67,13 +67,14 @@ pub fn ImeCapabilities::without_surrounding_text(
 }
 
 ///|
+#derive(Eq, Debug)
 pub struct ImeRequestData {
   priv mut cursor_area_position : @dpi.Position?
   priv mut cursor_area_size : @dpi.Size?
   priv mut hint : ImeHint?
   priv mut purpose : ImePurpose?
   priv mut surrounding_text : ImeSurroundingText?
-} derive(Eq, Debug)
+}
 
 ///|
 pub fn ImeRequestData::default() -> ImeRequestData {
@@ -220,10 +221,11 @@ pub fn ImeRequestData::into_request(self : ImeRequestData) -> ImeRequest {
 }
 
 ///|
+#derive(Eq, Debug)
 pub struct ImeEnableRequest {
   priv capabilities : ImeCapabilities
   priv request_data : ImeRequestData
-} derive(Eq, Debug)
+}
 
 ///|
 pub fn ImeEnableRequest::from_capabilities(

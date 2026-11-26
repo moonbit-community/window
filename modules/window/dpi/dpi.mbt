@@ -10,10 +10,11 @@ pub fn validate_scale_factor(scale_factor : Double) -> Bool {
 }
 
 ///|
+#derive(Eq, Debug)
 pub struct LogicalSize {
   width : Double
   height : Double
-} derive(Eq, Debug)
+}
 
 ///|
 pub fn LogicalSize::LogicalSize(width : Double, height : Double) -> LogicalSize {
@@ -45,10 +46,11 @@ pub fn LogicalSize::to_physical(
 }
 
 ///|
+#derive(Eq, Debug)
 pub struct PhysicalSize {
   width : Int32
   height : Int32
-} derive(Eq, Debug)
+}
 
 ///|
 pub fn PhysicalSize::PhysicalSize(
@@ -83,10 +85,11 @@ pub fn PhysicalSize::to_logical(
 }
 
 ///|
+#derive(Eq, Debug)
 pub struct LogicalPosition {
   x : Double
   y : Double
-} derive(Eq, Debug)
+}
 
 ///|
 pub fn LogicalPosition::LogicalPosition(
@@ -126,10 +129,11 @@ pub fn LogicalPosition::into_position(self : LogicalPosition) -> Position {
 }
 
 ///|
+#derive(Eq, Debug)
 pub struct PhysicalPosition {
   x : Int32
   y : Int32
-} derive(Eq, Debug)
+}
 
 ///|
 pub fn PhysicalPosition::PhysicalPosition(
@@ -169,10 +173,11 @@ pub fn PhysicalPosition::into_position(self : PhysicalPosition) -> Position {
 }
 
 ///|
+#derive(Eq, Debug)
 pub struct PhysicalPositionF64 {
   x : Double
   y : Double
-} derive(Eq, Debug)
+}
 
 ///|
 pub fn PhysicalPositionF64::PhysicalPositionF64(
@@ -193,10 +198,11 @@ pub fn PhysicalPositionF64::y(self : PhysicalPositionF64) -> Double {
 }
 
 ///|
+#derive(Eq, Debug)
 pub(all) enum Position {
   Logical(LogicalPosition)
   Physical(PhysicalPosition)
-} derive(Eq, Debug)
+}
 
 ///|
 pub fn Position::from_logical(position : LogicalPosition) -> Position {
@@ -231,12 +237,13 @@ pub fn Position::to_logical(
 }
 
 ///|
+#derive(Eq, Debug)
 pub struct PhysicalInsets {
   top : Int32
   left : Int32
   bottom : Int32
   right : Int32
-} derive(Eq, Debug)
+}
 
 ///|
 pub fn PhysicalInsets::PhysicalInsets(
@@ -269,10 +276,11 @@ pub fn PhysicalInsets::right(self : PhysicalInsets) -> Int32 {
 }
 
 ///|
+#derive(Eq, Debug)
 pub(all) enum Size {
   Logical(LogicalSize)
   Physical(PhysicalSize)
-} derive(Eq, Debug)
+}
 
 ///|
 pub fn LogicalSize::into_size(self : LogicalSize) -> Size {

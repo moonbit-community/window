@@ -1,10 +1,12 @@
 ///|
+#derive(Eq, Debug)
 pub(all) enum Theme {
   Light
   Dark
-} derive(Eq, Debug)
+}
 
 ///|
+#derive(Eq, Debug)
 pub(all) enum ImePurpose {
   Normal
   Password
@@ -17,12 +19,13 @@ pub(all) enum ImePurpose {
   Date
   Time
   DateTime
-} derive(Eq, Debug)
+}
 
 ///|
+#derive(Eq, Debug)
 pub struct ImeHint {
   priv bits : Int32
-} derive(Eq, Debug)
+}
 
 ///|
 pub fn ImeHint::none() -> ImeHint {
@@ -100,18 +103,20 @@ pub fn ImeHint::bits(self : ImeHint) -> Int32 {
 }
 
 ///|
+#derive(Debug)
 pub(all) suberror ImeSurroundingTextError {
   TextTooLong
   CursorBadPosition
   AnchorBadPosition
-} derive(Debug)
+}
 
 ///|
+#derive(Eq, Debug)
 pub struct ImeSurroundingText {
   priv anchor : Int32
   priv cursor : Int32
   priv text : String
-} derive(Eq, Debug)
+}
 
 ///|
 pub fn ImeSurroundingText::ImeSurroundingText(
@@ -155,11 +160,12 @@ pub fn ImeSurroundingText::anchor(self : ImeSurroundingText) -> Int32 {
 }
 
 ///|
+#derive(Eq, Debug)
 pub struct ImeCapabilities {
   priv mut cursor_area : Bool
   priv mut hint_and_purpose : Bool
   priv mut surrounding_text : Bool
-} derive(Eq, Debug)
+}
 
 ///|
 pub fn ImeCapabilities::ImeCapabilities(
@@ -186,23 +192,26 @@ pub fn ImeCapabilities::surrounding_text(self : ImeCapabilities) -> Bool {
 }
 
 ///|
+#derive(Eq, Debug)
 pub(all) enum ImeRequest {
   Enable(ImeEnableRequest)
   Update(ImeRequestData)
   Disable
-} derive(Eq, Debug)
+}
 
 ///|
+#derive(Debug)
 pub(all) suberror ImeRequestError {
   NotEnabled
   AlreadyEnabled
   NotSupported
-} derive(Debug)
+}
 
 ///|
+#derive(Eq, Debug)
 pub struct NotSupportedError {
   priv reason : String
-} derive(Eq, Debug)
+}
 
 ///|
 pub fn NotSupportedError::NotSupportedError(
@@ -217,11 +226,12 @@ pub fn NotSupportedError::reason(self : NotSupportedError) -> String {
 }
 
 ///|
+#derive(Eq, Debug)
 pub struct OsError {
   priv message : String
   priv code : Int32?
   priv domain : String?
-} derive(Eq, Debug)
+}
 
 ///|
 pub fn OsError::OsError(
@@ -248,11 +258,12 @@ pub fn OsError::domain(self : OsError) -> String? {
 }
 
 ///|
+#derive(Debug)
 pub(all) suberror RequestError {
   NotSupported(NotSupportedError)
   Ignored
   Os(OsError)
-} derive(Debug)
+}
 
 ///|
 pub fn RequestError::not_supported(reason : String) -> RequestError {
@@ -276,9 +287,10 @@ pub(open) trait WindowCursorHittest {
 }
 
 ///|
+#derive(Eq, Debug)
 pub struct ActivationToken {
   priv token : String
-} derive(Eq, Debug)
+}
 
 ///|
 pub fn ActivationToken::from_raw(token : String) -> ActivationToken {
@@ -296,20 +308,23 @@ pub fn ActivationToken::as_raw(self : ActivationToken) -> String {
 }
 
 ///|
+#derive(Eq, Debug)
 pub(all) enum WindowLevel {
   Normal
   AlwaysOnTop
   AlwaysOnBottom
-} derive(Eq, Debug)
+}
 
 ///|
+#derive(Eq, Debug)
 pub(all) enum CursorGrabMode {
   None
   Locked
   Confined
-} derive(Eq, Debug)
+}
 
 ///|
+#derive(Eq, Debug)
 pub(all) enum ResizeDirection {
   East
   North
@@ -319,15 +334,17 @@ pub(all) enum ResizeDirection {
   SouthEast
   SouthWest
   West
-} derive(Eq, Debug)
+}
 
 ///|
+#derive(Eq, Debug)
 pub(all) enum UserAttentionType {
   Critical
   Informational
-} derive(Eq, Debug)
+}
 
 ///|
+#derive(Eq, Debug)
 pub(all) enum CursorIcon {
   Default
   ContextMenu
@@ -363,7 +380,7 @@ pub(all) enum CursorIcon {
   Crosshair
   Move
   NotAllowed
-} derive(Eq, Debug)
+}
 
 ///|
 pub(all) type CustomCursorHandle
@@ -414,31 +431,35 @@ pub fn CustomCursor::into_raw(self : CustomCursor) -> UInt64 {
 }
 
 ///|
+#derive(Eq, Debug)
 pub(all) enum Cursor {
   Icon(CursorIcon)
   Custom(CustomCursor)
-} derive(Eq, Debug)
+}
 
 ///|
+#derive(Eq, Debug)
 pub(all) enum CustomCursorSource {
   Rgba(Bytes, Int32, Int32, Int32, Int32)
   Url(String, Int32, Int32)
   Animation(Int32, Array[CustomCursor])
-} derive(Eq, Debug)
+}
 
 ///|
+#derive(Debug)
 pub(all) suberror BadCustomCursorSource {
   TooLarge(Int32, Int32)
   ByteCountNotDivisibleBy4(Int32)
   DimensionsVsPixelCount(Int32, Int32, Int32, Int32)
   HotspotOutOfBounds(Int32, Int32, Int32, Int32)
-} derive(Debug)
+}
 
 ///|
+#derive(Debug)
 pub(all) suberror BadCustomCursorAnimation {
   Empty
   NonPositiveFrameDuration(Int32)
-} derive(Debug)
+}
 
 ///|
 pub fn CustomCursorSource::from_rgba(
@@ -483,18 +504,20 @@ pub fn CustomCursorSource::from_animation(
 }
 
 ///|
+#derive(Eq, Debug)
 pub(all) enum Fullscreen {
   Borderless(MonitorHandle?)
   Exclusive(MonitorHandle, VideoMode)
-} derive(Eq, Debug)
+}
 
 ///|
+#derive(Eq, Debug)
 pub(all) enum OptionAsAlt {
   OnlyLeft
   OnlyRight
   Both
   None
-} derive(Eq, Debug)
+}
 
 ///|
 pub fn OptionAsAlt::default() -> OptionAsAlt {
@@ -502,9 +525,10 @@ pub fn OptionAsAlt::default() -> OptionAsAlt {
 }
 
 ///|
+#derive(Eq, Debug)
 pub struct ScreenEdge {
   priv bits : Int32
-} derive(Eq, Debug)
+}
 
 ///|
 pub fn ScreenEdge::none() -> ScreenEdge {
@@ -557,6 +581,7 @@ pub fn ScreenEdge::bits(self : ScreenEdge) -> Int32 {
 }
 
 ///|
+#derive(Eq, Debug)
 pub struct PlatformWindowAttributes {
   priv mut accepts_first_mouse : Bool
   priv mut disallow_hidpi : Bool
@@ -572,7 +597,7 @@ pub struct PlatformWindowAttributes {
   priv mut titlebar_transparent : Bool
   priv mut unified_titlebar : Bool
   priv mut panel : Bool
-} derive(Eq, Debug)
+}
 
 ///|
 pub fn PlatformWindowAttributes::default() -> PlatformWindowAttributes {
@@ -817,17 +842,19 @@ pub fn PlatformWindowAttributes::panel(self : PlatformWindowAttributes) -> Bool 
 }
 
 ///|
+#derive(Debug)
 pub(all) suberror BadIcon {
   ByteCountNotDivisibleBy4(Int32)
   DimensionsVsPixelCount(Int32, Int32, Int32, Int32)
-} derive(Debug)
+}
 
 ///|
+#derive(Eq, Debug)
 pub struct Icon {
   priv height : Int32
   priv rgba : Bytes
   priv width : Int32
-} derive(Eq, Debug)
+}
 
 ///|
 pub fn Icon::Icon(
@@ -863,11 +890,12 @@ pub fn Icon::rgba(self : Icon) -> Bytes {
 }
 
 ///|
+#derive(Eq, Debug)
 pub struct WindowButtons {
   priv mut close : Bool
   priv mut maximize : Bool
   priv mut minimize : Bool
-} derive(Eq, Debug)
+}
 
 ///|
 pub fn WindowButtons::all() -> WindowButtons {
@@ -922,9 +950,10 @@ pub fn WindowButtons::minimize(self : WindowButtons) -> Bool {
 }
 
 ///|
+#derive(Eq, Debug)
 pub struct WindowId {
   priv raw : Int32
-} derive(Eq, Debug)
+}
 
 ///|
 pub fn WindowId::from_raw(raw : Int32) -> WindowId {
@@ -937,9 +966,10 @@ pub fn WindowId::into_raw(self : WindowId) -> Int32 {
 }
 
 ///|
+#derive(Eq, Debug)
 pub struct ParentWindow {
   priv raw : @windowing.RawWindowHandle
-} derive(Eq, Debug)
+}
 
 ///|
 pub fn ParentWindow::from_raw(raw : @windowing.RawWindowHandle) -> ParentWindow {
@@ -961,6 +991,7 @@ pub fn ParentWindow::into_raw(
 }
 
 ///|
+#derive(Eq, Debug)
 pub struct WindowAttributes {
   priv mut active : Bool
   priv mut blur : Bool
@@ -991,7 +1022,7 @@ pub struct WindowAttributes {
   priv mut title : String
   priv mut visible : Bool
   priv mut window_level : WindowLevel
-} derive(Eq, Debug)
+}
 
 ///|
 pub fn WindowAttributes::default() -> WindowAttributes {

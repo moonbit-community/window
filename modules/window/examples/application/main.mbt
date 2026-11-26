@@ -1,5 +1,6 @@
 ///|
 // Port target: winit-reference/winit/examples/application.rs
+#derive(Eq, Debug)
 enum Action {
   CloseWindow
   PrintHelp
@@ -28,7 +29,7 @@ enum Action {
   ToggleAnimatedFillColor
   ToggleContinuousRedraw
   EmitSurfaceSize
-} derive(Eq, Debug)
+}
 
 ///|
 fn Action::help(self : Action) -> String {

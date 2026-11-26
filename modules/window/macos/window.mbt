@@ -2,6 +2,7 @@
 // Port target: winit-reference/winit-appkit/src/window.rs
 
 ///|
+#derive(Eq, Debug)
 pub struct Window {
   priv id : @core.WindowId
   priv raw_window_handle : NativeWindow
@@ -27,7 +28,7 @@ pub struct Window {
   priv mut exclusive_fullscreen_saved_style_mask_state : UInt64?
   priv mut exclusive_fullscreen_saved_outer_position_state : @dpi.PhysicalPosition?
   priv mut exclusive_fullscreen_saved_outer_size_state : @dpi.PhysicalSize?
-} derive(Eq, Debug)
+}
 
 ///|
 pub type WindowAttributesMacOS = @core.PlatformWindowAttributes

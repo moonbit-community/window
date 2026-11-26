@@ -12,7 +12,8 @@ import {
 // Errors
 
 // Types and methods
-type Action derive(Eq, @debug.Debug)
+#derive(Eq, @debug.Debug)
+type Action
 
 type Application
 pub impl @macos.ApplicationHandler for Application

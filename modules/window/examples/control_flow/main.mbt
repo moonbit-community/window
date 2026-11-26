@@ -1,10 +1,11 @@
 ///|
 // Port target: winit-reference/winit/examples/control_flow.rs
+#derive(Eq, Debug)
 enum Mode {
   Wait
   WaitUntil
   Poll
-} derive(Eq, Debug)
+}
 
 ///|
 struct ControlFlowDemo {

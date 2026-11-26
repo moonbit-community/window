@@ -2,9 +2,10 @@
 // Port target: winit-reference/winit-appkit/src/event_loop.rs
 
 ///|
+#derive(Eq, Debug)
 pub struct EventLoopProxy {
   priv _unit : Unit
-} derive(Eq, Debug)
+}
 
 ///|
 pub fn EventLoopProxy::wake_up(_self : EventLoopProxy) -> Unit {
@@ -272,22 +273,25 @@ fn activation_policy_to_native(
 }
 
 ///|
+#derive(Debug)
 pub struct EventLoop {
   priv did_finish_launching_observer_ : NotificationObserver?
   priv will_terminate_observer_ : NotificationObserver?
   priv before_waiting_observer_ : MainRunLoopObserver?
   priv after_waiting_observer_ : MainRunLoopObserver?
-} derive(Debug)
+}
 
 ///|
+#derive(Eq, Debug)
 pub struct EventLoopBuilder {
   priv mut platform_attributes_ : @core.PlatformEventLoopAttributes
-} derive(Eq, Debug)
+}
 
 ///|
+#derive(Debug)
 pub struct ActiveEventLoop {
   priv inner : EventLoop
-} derive(Debug)
+}
 
 ///|
 let event_loop_global_created : Ref[Bool] = Ref(false)

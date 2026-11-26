@@ -1,9 +1,10 @@
 ///|
+#derive(Eq, Debug)
 pub(all) enum ControlFlow {
   Poll
   Wait
   WaitUntil(Int64)
-} derive(Eq, Debug)
+}
 
 ///|
 pub fn ControlFlow::default() -> ControlFlow {
@@ -11,11 +12,12 @@ pub fn ControlFlow::default() -> ControlFlow {
 }
 
 ///|
+#derive(Eq, Debug)
 pub(all) enum DeviceEvents {
   Always
   WhenFocused
   Never
-} derive(Eq, Debug)
+}
 
 ///|
 pub fn DeviceEvents::default() -> DeviceEvents {
@@ -23,18 +25,20 @@ pub fn DeviceEvents::default() -> DeviceEvents {
 }
 
 ///|
+#derive(Eq, Debug)
 pub(all) enum PumpStatus {
   Continue
   Exit(Int32)
-} derive(Eq, Debug)
+}
 
 ///|
+#derive(Eq, Debug)
 pub(all) suberror EventLoopError {
   RecreationAttempt
   ExitFailure(Int32)
   NotSupported(NotSupportedError)
   Os(OsError)
-} derive(Eq, Debug)
+}
 
 ///|
 pub fn EventLoopError::not_supported(reason : String) -> EventLoopError {
@@ -51,11 +55,12 @@ pub fn EventLoopError::os(
 }
 
 ///|
+#derive(Eq, Debug)
 pub(all) enum ActivationPolicy {
   Regular
   Accessory
   Prohibited
-} derive(Eq, Debug)
+}
 
 ///|
 pub fn ActivationPolicy::default() -> ActivationPolicy {
@@ -63,12 +68,13 @@ pub fn ActivationPolicy::default() -> ActivationPolicy {
 }
 
 ///|
+#derive(Eq, Debug)
 pub struct PlatformEventLoopAttributes {
   priv mut activation_policy : ActivationPolicy?
   priv mut default_menu : Bool
   priv mut activate_ignoring_other_apps : Bool
   priv mut any_thread : Bool
-} derive(Eq, Debug)
+}
 
 ///|
 pub fn PlatformEventLoopAttributes::default() -> PlatformEventLoopAttributes {
@@ -150,9 +156,10 @@ pub fn PlatformEventLoopAttributes::any_thread(
 }
 
 ///|
+#derive(Eq, Debug)
 pub struct AsyncRequestSerial {
   raw : Int32
-} derive(Eq, Debug)
+}
 
 ///|
 let async_request_serial_counter : Ref[Int32] = Ref(0)

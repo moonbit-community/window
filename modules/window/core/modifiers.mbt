@@ -20,9 +20,10 @@ let modifiers_state_mask : Int32 = modifiers_state_shift_bit |
 let modifiers_keys_mask : Int32 = 0xFF
 
 ///|
+#derive(Eq, Debug)
 pub struct ModifiersState {
   priv bits : Int32
-} derive(Eq, Debug)
+}
 
 ///|
 pub fn ModifiersState::none() -> ModifiersState {
@@ -101,15 +102,17 @@ pub fn ModifiersState::is_empty(self : ModifiersState) -> Bool {
 }
 
 ///|
+#derive(Eq, Debug)
 pub(all) enum ModifiersKeyState {
   Pressed
   Unknown
-} derive(Eq, Debug)
+}
 
 ///|
+#derive(Eq, Debug)
 pub struct ModifiersKeys {
   priv bits : Int32
-} derive(Eq, Debug)
+}
 
 ///|
 pub fn ModifiersKeys::none() -> ModifiersKeys {
@@ -196,10 +199,11 @@ pub fn ModifiersKeys::is_empty(self : ModifiersKeys) -> Bool {
 }
 
 ///|
+#derive(Eq, Debug)
 pub struct Modifiers {
   priv pressed_mods : ModifiersKeys
   priv state : ModifiersState
-} derive(Eq, Debug)
+}
 
 ///|
 pub fn Modifiers::Modifiers(

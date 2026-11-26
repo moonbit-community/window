@@ -14,9 +14,10 @@ pub fn monitor_ns_screen(@core.MonitorHandle) -> NSScreenHandle?
 // Errors
 
 // Types and methods
+#derive(@debug.Debug)
 pub struct ActiveEventLoop {
   // private fields
-} derive(@debug.Debug)
+}
 pub fn ActiveEventLoop::allows_automatic_window_tabbing(Self) -> Bool
 pub fn ActiveEventLoop::available_monitors(Self) -> Array[@core.MonitorHandle]
 pub fn ActiveEventLoop::control_flow(Self) -> @core.ControlFlow
@@ -43,9 +44,10 @@ pub impl @windowing.DisplayHandleProvider for ActiveEventLoop
 pub impl @windowing.HasDisplayHandle for ActiveEventLoop
 pub impl Show for ActiveEventLoop
 
+#derive(@debug.Debug)
 pub struct EventLoop {
   // private fields
-} derive(@debug.Debug)
+}
 pub fn EventLoop::EventLoop() -> Self
 pub fn EventLoop::allows_automatic_window_tabbing(Self) -> Bool
 pub fn EventLoop::available_monitors(Self) -> Array[@core.MonitorHandle]
@@ -85,9 +87,10 @@ pub impl @windowing.DisplayHandleProvider for EventLoop
 pub impl @windowing.HasDisplayHandle for EventLoop
 pub impl Show for EventLoop
 
+#derive(Eq, @debug.Debug)
 pub struct EventLoopBuilder {
   // private fields
-} derive(Eq, @debug.Debug)
+}
 pub fn EventLoopBuilder::EventLoopBuilder() -> Self
 pub fn EventLoopBuilder::build(Self) -> EventLoop
 pub fn EventLoopBuilder::default() -> Self
@@ -105,9 +108,10 @@ pub fn EventLoopBuilder::with_default_menu(Self, Bool) -> Self
 pub fn EventLoopBuilder::with_platform_attributes(Self, @core.PlatformEventLoopAttributes) -> Self
 pub impl Show for EventLoopBuilder
 
+#derive(Eq, @debug.Debug)
 pub struct EventLoopProxy {
   // private fields
-} derive(Eq, @debug.Debug)
+}
 pub fn EventLoopProxy::equal(Self, Self) -> Bool
 pub fn EventLoopProxy::not_equal(Self, Self) -> Bool
 pub fn EventLoopProxy::output(Self, &Logger) -> Unit
@@ -116,10 +120,11 @@ pub fn EventLoopProxy::to_string(Self) -> String
 pub fn EventLoopProxy::wake_up(Self) -> Unit
 pub impl Show for EventLoopProxy
 
+#derive(Eq, @debug.Debug)
 pub(all) struct KeyEquivalent {
   key : String
   masks : Int32?
-} derive(Eq, @debug.Debug)
+}
 pub fn KeyEquivalent::equal(Self, Self) -> Bool
 pub fn KeyEquivalent::not_equal(Self, Self) -> Bool
 pub fn KeyEquivalent::output(Self, &Logger) -> Unit
@@ -129,6 +134,7 @@ pub impl Show for KeyEquivalent
 
 type MainRunLoopObserver
 
+#derive(Eq, @debug.Debug)
 pub(all) enum MenuAction {
   About
   Services
@@ -137,7 +143,7 @@ pub(all) enum MenuAction {
   ShowAll
   Quit
   Separator
-} derive(Eq, @debug.Debug)
+}
 pub fn MenuAction::equal(Self, Self) -> Bool
 pub fn MenuAction::not_equal(Self, Self) -> Bool
 pub fn MenuAction::output(Self, &Logger) -> Unit
@@ -145,11 +151,12 @@ pub fn MenuAction::to_repr(Self) -> @debug.Repr
 pub fn MenuAction::to_string(Self) -> String
 pub impl Show for MenuAction
 
+#derive(Eq, @debug.Debug)
 pub(all) struct MenuItemDescriptor {
   title : String
   action : MenuAction
   key_equivalent : KeyEquivalent?
-} derive(Eq, @debug.Debug)
+}
 pub fn MenuItemDescriptor::equal(Self, Self) -> Bool
 pub fn MenuItemDescriptor::not_equal(Self, Self) -> Bool
 pub fn MenuItemDescriptor::output(Self, &Logger) -> Unit
@@ -171,9 +178,10 @@ type NativeWindow
 
 type NotificationObserver
 
+#derive(Eq, @debug.Debug)
 pub struct Window {
   // private fields
-} derive(Eq, @debug.Debug)
+}
 pub fn Window::Window(EventLoop, @core.WindowAttributes) -> Self raise @core.RequestError
 pub fn Window::available_monitors(Self) -> Array[@core.MonitorHandle]
 pub fn Window::content_view_handle(Self) -> UInt64 raise @core.RequestError

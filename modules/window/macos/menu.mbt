@@ -2,6 +2,7 @@
 // Port target: winit-reference/winit-appkit/src/menu.rs
 
 ///|
+#derive(Eq, Debug)
 pub(all) enum MenuAction {
   About
   Services
@@ -10,20 +11,22 @@ pub(all) enum MenuAction {
   ShowAll
   Quit
   Separator
-} derive(Eq, Debug)
+}
 
 ///|
+#derive(Eq, Debug)
 pub(all) struct KeyEquivalent {
   key : String
   masks : Int32?
-} derive(Eq, Debug)
+}
 
 ///|
+#derive(Eq, Debug)
 pub(all) struct MenuItemDescriptor {
   title : String
   action : MenuAction
   key_equivalent : KeyEquivalent?
-} derive(Eq, Debug)
+}
 
 ///|
 fn menu_item_descriptor(

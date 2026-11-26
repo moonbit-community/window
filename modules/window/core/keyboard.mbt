@@ -1,4 +1,5 @@
 ///|
+#derive(Eq, Debug)
 pub(all) enum NativeKeyCode {
   Unidentified
   Android(Int32)
@@ -6,9 +7,10 @@ pub(all) enum NativeKeyCode {
   Windows(Int32)
   Xkb(Int32)
   Ohos(Int32)
-} derive(Eq, Debug)
+}
 
 ///|
+#derive(Eq, Debug)
 pub(all) enum NativeKey {
   Unidentified
   Android(Int32)
@@ -17,7 +19,7 @@ pub(all) enum NativeKey {
   Xkb(Int32)
   Web(String)
   Ohos(Int32)
-} derive(Eq, Debug)
+}
 
 ///|
 pub fn NativeKey::from_key_code(code : NativeKeyCode) -> NativeKey {
@@ -32,6 +34,7 @@ pub fn NativeKey::from_key_code(code : NativeKeyCode) -> NativeKey {
 }
 
 ///|
+#derive(Eq, Debug)
 pub(all) enum KeyCode {
   Unidentified
   KeyA
@@ -250,7 +253,7 @@ pub(all) enum KeyCode {
   Super
   Turbo
   Power
-} derive(Eq, Debug)
+}
 
 ///|
 pub fn KeyCode::default() -> KeyCode {
@@ -258,10 +261,11 @@ pub fn KeyCode::default() -> KeyCode {
 }
 
 ///|
+#derive(Eq, Debug)
 pub(all) enum PhysicalKey {
   Code(KeyCode)
   Unidentified(NativeKeyCode)
-} derive(Eq, Debug)
+}
 
 ///|
 pub fn PhysicalKey::from_key_code(code : KeyCode) -> PhysicalKey {
@@ -282,14 +286,16 @@ pub fn PhysicalKey::into_key_code(self : PhysicalKey) -> KeyCode {
 }
 
 ///|
+#derive(Eq, Debug)
 pub(all) enum KeyLocation {
   Standard
   Left
   Right
   Numpad
-} derive(Eq, Debug)
+}
 
 ///|
+#derive(Eq, Debug)
 pub(all) enum NamedKey {
   Unidentified
   Enter
@@ -598,7 +604,7 @@ pub(all) enum NamedKey {
   Teletext
   VideoModeNext
   Wink
-} derive(Eq, Debug)
+}
 
 ///|
 pub fn NamedKey::default() -> NamedKey {
@@ -606,12 +612,13 @@ pub fn NamedKey::default() -> NamedKey {
 }
 
 ///|
+#derive(Eq, Debug)
 pub(all) enum Key {
   Named(NamedKey)
   Character(String)
   Dead(String?)
   Unidentified(NativeKey)
-} derive(Eq, Debug)
+}
 
 ///|
 pub fn Key::from_named(named : NamedKey) -> Key {
@@ -644,6 +651,7 @@ pub fn Key::to_text(self : Key) -> String? {
 }
 
 ///|
+#derive(Eq, Debug)
 pub struct KeyEvent {
   key_without_modifiers : Key
   location : KeyLocation
@@ -653,7 +661,7 @@ pub struct KeyEvent {
   state : ElementState
   text : String?
   text_with_all_modifiers : String?
-} derive(Eq, Debug)
+}
 
 ///|
 pub fn KeyEvent::KeyEvent(

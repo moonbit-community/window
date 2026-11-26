@@ -11,10 +11,11 @@ pub fn validate_scale_factor(Double) -> Bool
 // Errors
 
 // Types and methods
+#derive(Eq, @debug.Debug)
 pub struct LogicalPosition {
   x : Double
   y : Double
-} derive(Eq, @debug.Debug)
+}
 pub fn LogicalPosition::LogicalPosition(Double, Double) -> Self
 pub fn LogicalPosition::equal(Self, Self) -> Bool
 pub fn LogicalPosition::into_position(Self) -> Position
@@ -27,10 +28,11 @@ pub fn LogicalPosition::x(Self) -> Double
 pub fn LogicalPosition::y(Self) -> Double
 pub impl Show for LogicalPosition
 
+#derive(Eq, @debug.Debug)
 pub struct LogicalSize {
   width : Double
   height : Double
-} derive(Eq, @debug.Debug)
+}
 pub fn LogicalSize::LogicalSize(Double, Double) -> Self
 pub fn LogicalSize::equal(Self, Self) -> Bool
 pub fn LogicalSize::height(Self) -> Double
@@ -43,12 +45,13 @@ pub fn LogicalSize::to_string(Self) -> String
 pub fn LogicalSize::width(Self) -> Double
 pub impl Show for LogicalSize
 
+#derive(Eq, @debug.Debug)
 pub struct PhysicalInsets {
   top : Int32
   left : Int32
   bottom : Int32
   right : Int32
-} derive(Eq, @debug.Debug)
+}
 pub fn PhysicalInsets::PhysicalInsets(Int32, Int32, Int32, Int32) -> Self
 pub fn PhysicalInsets::bottom(Self) -> Int32
 pub fn PhysicalInsets::equal(Self, Self) -> Bool
@@ -61,10 +64,11 @@ pub fn PhysicalInsets::to_string(Self) -> String
 pub fn PhysicalInsets::top(Self) -> Int32
 pub impl Show for PhysicalInsets
 
+#derive(Eq, @debug.Debug)
 pub struct PhysicalPosition {
   x : Int32
   y : Int32
-} derive(Eq, @debug.Debug)
+}
 pub fn PhysicalPosition::PhysicalPosition(Int32, Int32) -> Self
 pub fn PhysicalPosition::equal(Self, Self) -> Bool
 pub fn PhysicalPosition::into_position(Self) -> Position
@@ -77,10 +81,11 @@ pub fn PhysicalPosition::x(Self) -> Int32
 pub fn PhysicalPosition::y(Self) -> Int32
 pub impl Show for PhysicalPosition
 
+#derive(Eq, @debug.Debug)
 pub struct PhysicalPositionF64 {
   x : Double
   y : Double
-} derive(Eq, @debug.Debug)
+}
 pub fn PhysicalPositionF64::PhysicalPositionF64(Double, Double) -> Self
 pub fn PhysicalPositionF64::equal(Self, Self) -> Bool
 pub fn PhysicalPositionF64::not_equal(Self, Self) -> Bool
@@ -91,10 +96,11 @@ pub fn PhysicalPositionF64::x(Self) -> Double
 pub fn PhysicalPositionF64::y(Self) -> Double
 pub impl Show for PhysicalPositionF64
 
+#derive(Eq, @debug.Debug)
 pub struct PhysicalSize {
   width : Int32
   height : Int32
-} derive(Eq, @debug.Debug)
+}
 pub fn PhysicalSize::PhysicalSize(Int32, Int32) -> Self
 pub fn PhysicalSize::equal(Self, Self) -> Bool
 pub fn PhysicalSize::height(Self) -> Int32
@@ -107,10 +113,11 @@ pub fn PhysicalSize::to_string(Self) -> String
 pub fn PhysicalSize::width(Self) -> Int32
 pub impl Show for PhysicalSize
 
+#derive(Eq, @debug.Debug)
 pub(all) enum Position {
   Logical(LogicalPosition)
   Physical(PhysicalPosition)
-} derive(Eq, @debug.Debug)
+}
 pub fn Position::equal(Self, Self) -> Bool
 pub fn Position::from_logical(LogicalPosition) -> Self
 pub fn Position::from_physical(PhysicalPosition) -> Self
@@ -122,10 +129,11 @@ pub fn Position::to_repr(Self) -> @debug.Repr
 pub fn Position::to_string(Self) -> String
 pub impl Show for Position
 
+#derive(Eq, @debug.Debug)
 pub(all) enum Size {
   Logical(LogicalSize)
   Physical(PhysicalSize)
-} derive(Eq, @debug.Debug)
+}
 pub fn Size::equal(Self, Self) -> Bool
 pub fn Size::from_logical(LogicalSize) -> Self
 pub fn Size::from_physical(PhysicalSize) -> Self

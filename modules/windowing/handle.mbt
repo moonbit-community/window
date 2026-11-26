@@ -1,7 +1,8 @@
 ///|
+#derive(Eq, Debug)
 pub(all) suberror HandleError {
   Unavailable
-} derive(Eq, Debug)
+}
 
 ///|
 pub(open) trait WindowHandleProvider {
